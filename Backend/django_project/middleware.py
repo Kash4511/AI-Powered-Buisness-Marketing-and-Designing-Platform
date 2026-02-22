@@ -11,13 +11,25 @@ class CatchAllMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.path.startswith("/api/") or request.method == "OPTIONS":
-            return self.get_response(request)
         try:
-            return self.get_response(request)
+            response = self.get_response(request)
         except Exception as e:
+            if request.path.startswith("/api/") or request.method == "OPTIONS":
+                raise
             data = {"error": "Fatal server error", "details": str(e)}
             if settings.DEBUG:
                 data["trace"] = traceback.format_exc()
             logger.exception("Unhandled exception in CatchAllMiddleware")
             return JsonResponse(data, status=500)
+
+        if request.path.startswith("/api/"):
+            origin = request.META.get("HTTP_ORIGIN")
+            allow_all = getattr(settings, "CORS_ALLOW_ALL_ORIGINS", False)
+            allowed_origins = set(getattr(settings, "CORS_ALLOWED_ORIGINS", []))
+            if origin and (allow_all or origin in allowed_origins):
+                response["Access-Control-Allow-Origin"] = origin
+                response["Vary"] = "Origin"
+                response["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+                response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+
+        return response
