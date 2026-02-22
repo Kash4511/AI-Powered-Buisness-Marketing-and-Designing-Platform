@@ -235,7 +235,7 @@ def generate_pdf(request):
                 })
                 ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
                 ai_client.debug_ai_content(ai_content)
-                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile)
+                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
                 if not str(template_vars.get('companyName', '')).strip():
                     template_vars['companyName'] = firm_profile.get('firm_name') or ''
                 logger.info('GeneratePDFView: after AI generate', extra={

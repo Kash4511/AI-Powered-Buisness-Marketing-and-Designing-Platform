@@ -310,8 +310,10 @@ class PerplexityClient:
                     }
                 ],
                 "contact": {
-                    "title": "<use call_to_action>",
-                    "description": "<3-4 detailed sentences about contacting the firm>",
+                    "title": "<value-driven CTA headline, not 'Contact us'>",
+                    "description": "<2–4 sentences describing a concrete offer tied to pain_points and desired_outcome>",
+                    "offer_name": "<short name of the concrete offer (audit, checklist, estimator, framework, or assessment)>",
+                    "action_cta": "<1 sentence with a specific next step; avoid generic 'contact us/learn more'>",
                     "phone": "<phone_number>",
                     "email": "<work_email>",
                     "website": "<firm_website>",
@@ -327,14 +329,23 @@ class PerplexityClient:
             "- Generate concise sections: each section has 1 paragraph; each subsection 1–2 sentences.\n"
             "- Terms must include a summary and 3 paragraphs (2–3 sentences each).\n"
             "- Contents.items must have 6 descriptive entries aligned to the sections.\n"
+            "- The contact section must describe a specific offer (audit, checklist, estimator, framework, or assessment) that is clearly linked to main_topic and audience_pain_points.\n"
+            "- contact.offer_name and contact.action_cta must be specific and must not use generic phrases like 'Contact us', 'Get in touch', or 'Learn more'.\n"
+            "- contact.description must clearly state what the reader receives, who it is for, and the outcome, grounded in desired_outcome and audience_pain_points.\n"
             "- NO extra text outside JSON, NO Markdown, NO comments.\n"
             "- Do NOT use any placeholder like 'TEST DOCUMENT'.\n"
         )
 
         return prompt
         
-    def map_to_template_vars(self, ai_content: Dict[str, Any], firm_profile: Optional[Dict[str, Any]] = None) -> Dict[str, str]:
+    def map_to_template_vars(
+        self,
+        ai_content: Dict[str, Any],
+        firm_profile: Optional[Dict[str, Any]] = None,
+        user_answers: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, str]:
         firm_profile = firm_profile or {}
+        user_answers = user_answers or {}
         style = ai_content.get("style", {})
         cover = ai_content.get("cover", {})
         contents = ai_content.get("contents", {})
@@ -372,6 +383,13 @@ class PerplexityClient:
         email = contact.get("email") or firm_profile.get("work_email", "")
         phone = contact.get("phone") or firm_profile.get("phone_number", "")
         website = contact.get("website") or firm_profile.get("firm_website", "")
+
+        ua_main_topic = (user_answers.get("main_topic") or "").strip()
+        ua_target_audience = user_answers.get("target_audience")
+        ua_pain_points = user_answers.get("audience_pain_points") or user_answers.get("pain_points")
+        ua_desired_outcome = (user_answers.get("desired_outcome") or "").strip()
+        ua_call_to_action = (user_answers.get("call_to_action") or "").strip()
+        ua_industry = (user_answers.get("industry") or firm_profile.get("industry") or "").strip()
 
         # Terms and contents
         terms_title = terms.get("title", "Terms of Use")
@@ -434,11 +452,9 @@ class PerplexityClient:
             return truncate_text(text, 150)
 
         def truncate_description(text: str) -> str:
-            """Allow a longer, richer cover description (~140 chars)."""
             return truncate_text(text, 140)
 
         def finalize_line(text: str) -> str:
-            """Ensure clean sentence endings and one-line fit."""
             t = (text or '').strip()
             if not t:
                 return ''
@@ -521,7 +537,6 @@ class PerplexityClient:
             return norm
 
         def sloganize(text: str) -> str:
-            """Create a short slogan from a longer description."""
             t = (text or '').strip()
             if not t:
                 return ''
@@ -533,7 +548,6 @@ class PerplexityClient:
             return finalize_line(t)
 
         def clean_subtitle(text: str) -> str:
-            """Remove stray dots or punctuation-only subtitles."""
             t = (text or '').strip()
             if not t:
                 return ''
@@ -541,6 +555,152 @@ class PerplexityClient:
             if len(t) <= 2 or all(c in '.,;:!?-' for c in t) or re.fullmatch(r"[.\s-]+", t):
                 return ''
             return t
+
+        def detect_generic_cta(text: str) -> bool:
+            t = (text or "").strip().lower()
+            if not t:
+                return True
+            if len(t) < 25:
+                return True
+            generic_phrases = [
+                "contact us",
+                "get in touch",
+                "reach out",
+                "learn more",
+                "call us today",
+                "contact our team",
+                "contact kyro",
+                "schedule a call",
+                "book a call",
+                "book a meeting",
+                "request more information",
+            ]
+            for phrase in generic_phrases:
+                if phrase in t:
+                    return True
+            words = t.split()
+            if len(words) <= 6 and "@" not in t and "http" not in t:
+                return True
+            return False
+
+        def audience_phrase(raw) -> str:
+            if not raw:
+                return ""
+            if isinstance(raw, str):
+                return raw.strip()
+            if isinstance(raw, list):
+                parts = [str(x).strip() for x in raw if str(x).strip()]
+                return ", ".join(parts)
+            return str(raw).strip()
+
+        def pain_points_list(raw) -> List[str]:
+            if not raw:
+                return []
+            if isinstance(raw, str):
+                pieces = re.split(r"[;,]", raw)
+                return [p.strip() for p in pieces if p.strip()]
+            if isinstance(raw, list):
+                return [str(p).strip() for p in raw if str(p).strip()]
+            return [str(raw).strip()]
+
+        def select_offer_name(topic: str, industry: str) -> str:
+            t = (topic or "").lower()
+            ind = (industry or "").lower()
+            base = t + " " + ind
+            if re.search(r"smart home|smart-home|home automation|connected home", base):
+                return "Smart Home Cost Audit"
+            if re.search(r"sustainable|sustainability|green building|net zero|net-zero|low carbon", base):
+                if re.search(r"material", base):
+                    return "Material Selection Framework"
+                return "Design ROI Estimator"
+            if re.search(r"passive house|passivhaus", base):
+                return "Energy Savings Assessment"
+            if re.search(r"retrofit|renovation|remodel", base):
+                return "Project Retrofit Assessment"
+            if topic:
+                return f"{topic.strip().title()} Strategy Session"
+            return "Project Strategy Session"
+
+        def build_value_description(offer_name: str, topic: str, aud_phrase: str, pains: List[str], desired: str) -> str:
+            audience_part = f" for {aud_phrase}" if aud_phrase else ""
+            topic_part = topic or "your project"
+            if pains:
+                pp = ", ".join(pains[:3])
+                pain_part = f" focusing on challenges like {pp}"
+            else:
+                pain_part = ""
+            outcome_part = desired or "help you move forward with confidence"
+            s1 = f"Get a {offer_name}{audience_part} to review your plans for {topic_part}{pain_part}"
+            s2 = f"You will walk away with clear, practical next steps designed to {outcome_part}"
+            if not re.search(r"[.!?]$", s1):
+                s1 += "."
+            if not re.search(r"[.!?]$", s2):
+                s2 += "."
+            return f"{s1} {s2}"
+
+        def build_action_cta(offer_name: str, aud_phrase: str, desired: str, email_value: str, website_value: str, call_text: str) -> str:
+            base = (call_text or "").strip()
+            if base and not detect_generic_cta(base):
+                if not re.search(r"[.!?]$", base):
+                    base += "."
+                return base
+            parts: List[str] = []
+            if aud_phrase:
+                parts.append(f"If you are {aud_phrase},")
+            else:
+                parts.append("If this guide resonates with you,")
+            parts.append(f"schedule your {offer_name} now")
+            contact_bits: List[str] = []
+            if email_value:
+                contact_bits.append(f"email {email_value}")
+            if website_value:
+                contact_bits.append(f"visit {website_value}")
+            if contact_bits:
+                parts.append("– " + " or ".join(contact_bits))
+            text = " ".join(parts).strip()
+            if desired:
+                text = text.rstrip(".")
+                text += f" to {desired.strip()}."
+            elif not re.search(r"[.!?]$", text):
+                text += "."
+            return text
+
+        def render_final_cta() -> Dict[str, str]:
+            topic = ua_main_topic
+            aud_phrase = audience_phrase(ua_target_audience)
+            pains = pain_points_list(ua_pain_points)
+            desired = ua_desired_outcome
+            offer_name_ai = (contact.get("offer_name") or "").strip()
+            offer_name_value = offer_name_ai or select_offer_name(topic, ua_industry)
+            desc_ai = (contact.get("description") or "").strip()
+            title_ai = (contact.get("title") or "").strip()
+            action_ai = (contact.get("action_cta") or "").strip()
+            combined_ai = " ".join([title_ai, desc_ai, action_ai]).strip()
+            is_generic = detect_generic_cta(combined_ai)
+            value_desc = build_value_description(offer_name_value, topic, aud_phrase, pains, desired)
+            if not is_generic and desc_ai:
+                if len(desc_ai.split()) < 25:
+                    final_desc = f"{desc_ai.strip()} {value_desc}"
+                else:
+                    final_desc = desc_ai.strip()
+            else:
+                final_desc = value_desc
+            action_text = build_action_cta(offer_name_value, aud_phrase, desired, email, website, ua_call_to_action)
+            diff_ai = (contact.get("differentiator") or "").strip()
+            if diff_ai:
+                diff_text = diff_ai
+            else:
+                base_topic = topic or "your project"
+                diff_text = f"{offer_name_value} is delivered by {company_name} with a focus on practical, implementable guidance for {base_topic} so you can act quickly and confidently."
+            section_title = "Next Step"
+            offer_heading = offer_name_value
+            return {
+                "section_title": section_title,
+                "description": final_desc,
+                "offer_name": offer_heading,
+                "differentiator": diff_text,
+                "action_text": action_text,
+            }
 
         now_year = datetime.now().year
 
@@ -677,7 +837,7 @@ class PerplexityClient:
             "sectionTitle5": truncate_title(clean_title(get_section(2).get("title", ""))),
             "sectionTitle6": truncate_title(clean_title(get_section(3).get("title", ""))),
             "sectionTitle7": truncate_title(clean_title(get_section(4).get("title", ""))),
-            "sectionTitle8": "REACH OUT TO OUR TEAM",
+            "sectionTitle8": "Next Step",
 
             # Page numbers in headers ("PAGE N") and footers (N)
             "pageNumberHeader2": page_hdr(2),
@@ -778,14 +938,22 @@ class PerplexityClient:
             "quoteAuthor2": company_name or "",
 
             # Page 9 (Contact) - with length limits
-            "contactTitle": "Contact Us",
-            "contactDescription": truncate_content(normalize_main_content(contact.get("description", ""), contact.get("title", "Contact"))),
-            "differentiatorTitle": "Contact us",
-            "differentiator": finalize_line(truncate_text(contact.get("differentiator", ""), 180)),
+            "contactTitle": contact.get("title", "") or "Next Step",
+            "contactDescription": "",
+            "differentiatorTitle": "",
+            "differentiator": "",
+            "ctaText": "",
             # Quality metrics
             "qualityWarnings": "",
             "qualityHasWarnings": False,
         }
+
+        final_cta = render_final_cta()
+        template_vars["sectionTitle8"] = final_cta.get("section_title", template_vars.get("sectionTitle8", "Next Step"))
+        template_vars["contactDescription"] = truncate_content(final_cta.get("description", ""))
+        template_vars["differentiatorTitle"] = final_cta.get("offer_name", "") or template_vars.get("differentiatorTitle", "")
+        template_vars["differentiator"] = finalize_line(truncate_text(final_cta.get("differentiator", ""), 180))
+        template_vars["ctaText"] = finalize_line(truncate_text(final_cta.get("action_text", ""), 180))
 
         # Build basic quality warnings for client-side display
         warnings: List[str] = []
