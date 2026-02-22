@@ -241,9 +241,9 @@
         }
 
         .page-section-label {
-            font-family: 'DM Mono', monospace;
-            font-size: 8px;
-            letter-spacing: 0.35em;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.18em;
             text-transform: uppercase;
             color: var(--ink-light);
         }
@@ -263,9 +263,9 @@
         }
 
         .editorial-chapter {
-            font-family: 'DM Mono', monospace;
-            font-size: 8px;
-            letter-spacing: 0.4em;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.22em;
             color: var(--brown-light);
             text-transform: uppercase;
             margin-bottom: 16px;
@@ -437,13 +437,25 @@
         }
 
         .img-label {
-            font-family: 'DM Mono', monospace;
-            font-size: 9px;
-            letter-spacing: 0.3em;
-            color: var(--ink-light);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            color: var(--ink-mid);
             text-transform: uppercase;
             position: relative;
             z-index: 2;
+        }
+
+        .image-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .image-strip .img-full {
+            height: 110px;
+            margin: 0;
         }
 
         .img-half { height: 120px; }
@@ -894,18 +906,15 @@
                 </div>
             </div>
 
-            <div class="stat-row">
-                <div class="stat-cell">
-                    <div class="stat-big">{{page4Stat1Value}}</div>
-                    <div class="stat-desc">{{page4Stat1Desc}}</div>
+            <div class="image-strip">
+                <div class="img-full img-half">
+                    <span class="img-label">{{imageLabel2}}</span>
                 </div>
-                <div class="stat-cell">
-                    <div class="stat-big">{{page4Stat2Value}}<span class="stat-unit">{{page4Stat2Unit}}</span></div>
-                    <div class="stat-desc">{{page4Stat2Desc}}</div>
+                <div class="img-full img-half">
+                    <span class="img-label">{{imageLabel3}}</span>
                 </div>
-                <div class="stat-cell">
-                    <div class="stat-big">{{page4Stat3Value}}<span class="stat-unit">{{page4Stat3Unit}}</span></div>
-                    <div class="stat-desc">{{page4Stat3Desc}}</div>
+                <div class="img-full img-half">
+                    <span class="img-label">{{imageLabel4a}}</span>
                 </div>
             </div>
 
@@ -1137,17 +1146,6 @@
 
             <div class="sec-head">{{differentiatorTitle}}</div>
             <p class="body-text">{{differentiator}}</p>
-
-            <div class="two-col">
-                <div class="col-card">
-                    <div class="col-card-head"><h4>{{colCard3Title}}</h4></div>
-                    <div class="col-card-body"><p>{{colCard3Content}}</p></div>
-                </div>
-                <div class="col-card">
-                    <div class="col-card-head"><h4>{{colCard4Title}}</h4></div>
-                    <div class="col-card-body"><p>{{colCard4Content}}</p></div>
-                </div>
-            </div>
         </div>
 
         <div class="page-footer">

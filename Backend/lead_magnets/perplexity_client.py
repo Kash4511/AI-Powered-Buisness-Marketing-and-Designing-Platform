@@ -376,6 +376,37 @@ class PerplexityClient:
             or "#F4A460"
         )
 
+        cream_color = (
+            firm_profile.get("cream_color")
+            or firm_profile.get("background_color")
+            or "#F6F1EB"
+        )
+        cream_dark_color = (
+            firm_profile.get("cream_dark_color")
+            or firm_profile.get("background_dark_color")
+            or "#E0D4C3"
+        )
+        ink_color = (
+            firm_profile.get("ink_color")
+            or firm_profile.get("text_color")
+            or "#111111"
+        )
+        ink_mid_color = (
+            firm_profile.get("ink_mid_color")
+            or firm_profile.get("text_color_muted")
+            or "#222222"
+        )
+        ink_light_color = (
+            firm_profile.get("ink_light_color")
+            or firm_profile.get("text_color_subtle")
+            or "#666666"
+        )
+        rule_color = (
+            firm_profile.get("rule_color")
+            or firm_profile.get("divider_color")
+            or cream_dark_color
+        )
+
         # Firm info: prefer AI cover/contact, fallback to firm_profile
         company_name = cover.get("company_name") or firm_profile.get("firm_name", "")
         company_subtitle = cover.get("company_tagline") or firm_profile.get("tagline", "")
@@ -981,12 +1012,12 @@ class PerplexityClient:
         }
 
         template_vars["primaryMidColor"] = primary_color
-        template_vars["creamColor"] = "#F6F1EB"
-        template_vars["creamDarkColor"] = "#E0D4C3"
-        template_vars["inkColor"] = "#111111"
-        template_vars["inkMidColor"] = "#222222"
-        template_vars["inkLightColor"] = "#666666"
-        template_vars["ruleColor"] = "#D6C9B8"
+        template_vars["creamColor"] = cream_color
+        template_vars["creamDarkColor"] = cream_dark_color
+        template_vars["inkColor"] = ink_color
+        template_vars["inkMidColor"] = ink_mid_color
+        template_vars["inkLightColor"] = ink_light_color
+        template_vars["ruleColor"] = rule_color
 
         headline_lines = split_headline_lines(enhanced_title)
         aud_phrase_for_cover = audience_phrase(ua_target_audience)
