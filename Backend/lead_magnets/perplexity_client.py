@@ -798,7 +798,6 @@ class PerplexityClient:
             t = (text or '').strip()
             if count_words(t) >= min_words:
                 return t
-            # Add more fallback content until minimum reached
             th = (topic_hint or 'the topic').strip()
             additions = [
                 f"The discussion focuses on key considerations for {th}.",
@@ -809,20 +808,27 @@ class PerplexityClient:
                 if count_words(t) >= min_words:
                     break
                 t = (t + " " + finalize_line(line)).strip()
-            # Soft cap; final truncation handled by truncate functions downstream
             words = t.split()
             if len(words) > max_words:
                 t = " ".join(words[:max_words])
             return t
 
         def normalize_main_content(text: str, title_hint: str) -> str:
-            # Normalize whitespace and complete sentences
             t = re.sub(r"\s+", " ", (text or '').strip())
             t = ensure_min_sentences(t, min_sentences=3, max_sentences=5, topic_hint=title_hint)
             t = ensure_min_words(t, min_words=60, max_words=220, topic_hint=title_hint)
             return t
 
-        # Create a short, professional title for the PDF
+        def split_headline_lines(title: str) -> List[str]:
+            words = re.findall(r"\S+", (title or ""))
+            if not words:
+                return ["", "", ""]
+            if len(words) <= 4:
+                return [" ".join(words), "", ""]
+            if len(words) <= 8:
+                return [" ".join(words[:4]), " ".join(words[4:]), ""]
+            return [" ".join(words[:4]), " ".join(words[4:8]), " ".join(words[8:])]
+
         raw_title = (cover.get("title") or "Professional Guide").strip()
 
         def clean_title(title: str) -> str:
@@ -854,12 +860,9 @@ class PerplexityClient:
             return truncate_title(t) if 'truncate_title' in locals() else t[:60]
 
         main_title = clean_title(raw_title)
-        # Do NOT append company name to title; keep it short and professional
         enhanced_title = main_title
         
-        # Build template variables dict comprehensively
         template_vars = {
-            # Cover and theme - enhanced with firm info
             "documentTitle": enhanced_title.upper(),
             "mainTitle": enhanced_title,
             "documentSubtitle": sloganize(cover.get("subtitle", "")),
@@ -870,13 +873,9 @@ class PerplexityClient:
             "accentColor": accent_color,
             "logoUrl": logo_url,
             "leadMagnetDescription": truncate_content(final_description),
-
-            # Contact info (used on cover and contact page)
             "phoneNumber": phone,
             "emailAddress": email,
             "website": website,
-
-            # Header texts per page (step indicators)
             "headerText1": step(1),
             "headerText2": step(2),
             "headerText3": step(3),
@@ -885,8 +884,6 @@ class PerplexityClient:
             "headerText6": step(6),
             "headerText7": step(7),
             "headerText8": step(8),
-
-            # Section titles used in headers - explicitly set for pages 2 and 3
             "sectionTitle1": "Terms of Use",
             "sectionTitle2": "Contents",
             "sectionTitle3": truncate_title(clean_title(get_section(0).get("title", ""))),
@@ -895,8 +892,6 @@ class PerplexityClient:
             "sectionTitle6": truncate_title(clean_title(get_section(3).get("title", ""))),
             "sectionTitle7": truncate_title(clean_title(get_section(4).get("title", ""))),
             "sectionTitle8": "Next Step",
-
-            # Page numbers in headers ("PAGE N") and footers (N)
             "pageNumberHeader2": page_hdr(2),
             "pageNumberHeader3": page_hdr(3),
             "pageNumberHeader4": page_hdr(4),
@@ -914,8 +909,6 @@ class PerplexityClient:
             "pageNumber7": 7,
             "pageNumber8": 8,
             "pageNumber9": 9,
-
-            # Contents page
             "contentsTitle": contents.get("title", "Contents"),
             "contentItem1": truncate_title(clean_title(get_or(content_items, 0, get_section(0).get("title", "")))),
             "contentItem2": truncate_title(clean_title(get_or(content_items, 1, get_section(1).get("title", "")))),
@@ -923,8 +916,6 @@ class PerplexityClient:
             "contentItem4": truncate_title(clean_title(get_or(content_items, 3, get_section(3).get("title", "")))),
             "contentItem5": truncate_title(clean_title(get_or(content_items, 4, get_section(4).get("title", "")))),
             "contentItem6": truncate_title(clean_title(get_or(content_items, 5, contact.get("title", "Contact & Next Steps")))),
-
-            # Terms
             "termsTitle": terms_title,
             "termsSummary": truncate_content(terms_summary),
             "termsParagraph1": truncate_content(get_or(terms_paragraphs, 0, "")),
@@ -932,11 +923,7 @@ class PerplexityClient:
             "termsParagraph3": truncate_content(get_or(terms_paragraphs, 2, "")),
             "termsParagraph4": truncate_content(get_or(terms_paragraphs, 3, "")),
             "termsParagraph5": truncate_content(get_or(terms_paragraphs, 4, "")),
-
-            # Footer
             "footerText": f"© {now_year} {company_name}. All rights reserved.",
-
-            # Page 4 (Section 1) - with length limits
             "customTitle1": truncate_title(clean_title(get_section(0).get("title", ""))),
             "customContent1": truncate_content(standardize_sustainable_terms(normalize_main_content(get_section(0).get("content", ""), get_section(0).get("title", "Section 1")))),
             "subheading1": truncate_title(get_sub(0, 0).get("title", "")),
@@ -945,8 +932,6 @@ class PerplexityClient:
             "boxContent1": truncate_subcontent(get_sub(0, 1).get("content", "")),
             "accentBoxTitle1": truncate_title(get_sub(0, 0).get("title", "")),
             "accentBoxContent1": truncate_subcontent(get_sub(0, 0).get("content", "")),
-
-            # Page 5 (Section 2) - with length limits and quote handling
             "customTitle2": truncate_title(clean_title(get_section(1).get("title", ""))),
             "customContent2": truncate_content(standardize_sustainable_terms(normalize_main_content(get_section(1).get("content", ""), get_section(1).get("title", "Section 2")))),
             "subheading2": truncate_title(get_sub(1, 0).get("title", "")),
@@ -955,11 +940,8 @@ class PerplexityClient:
             "listItem2": finalize_line(truncate_text(get_or(split_sentences(get_section(1).get("content", "")), 1, ""), 90)),
             "listItem3": finalize_line(truncate_text(get_or(split_sentences(get_section(1).get("content", "")), 2, ""), 90)),
             "listItem4": finalize_line(truncate_text(get_or(split_sentences(get_section(1).get("content", "")), 3, ""), 90)),
-            # Quote: fill only if we have content; otherwise leave empty for template to hide
             "quoteText1": truncate_subcontent(split_sentences(get_section(1).get("content", ""))[0] if split_sentences(get_section(1).get("content", "")) else ""),
             "quoteAuthor1": company_name or "",
-
-            # Page 6 (Section 3) - with length limits
             "customTitle3": truncate_title(clean_title(get_section(2).get("title", ""))),
             "customContent3": truncate_content(standardize_sustainable_terms(normalize_main_content(get_section(2).get("content", ""), get_section(2).get("title", "Section 3")))),
             "accentBoxTitle2": truncate_title(get_sub(2, 0).get("title", "")),
@@ -968,8 +950,6 @@ class PerplexityClient:
             "subcontent3": truncate_subcontent(get_sub(2, 1).get("content", "")),
             "boxTitle2": truncate_title(get_sub(2, 0).get("title", "")),
             "boxContent2": truncate_subcontent(get_sub(2, 0).get("content", "")),
-
-            # Page 7 (Section 4) - with length limits
             "customTitle4": truncate_title(clean_title(get_section(3).get("title", ""))),
             "customContent4": truncate_content(standardize_sustainable_terms(normalize_main_content(get_section(3).get("content", ""), get_section(3).get("title", "Section 4")))),
             "columnBoxTitle1": truncate_title(get_sub(3, 0).get("title", "")),
@@ -980,8 +960,6 @@ class PerplexityClient:
             "boxContent3": truncate_subcontent(get_sub(3, 0).get("content", "")),
             "subheading4": truncate_title(get_sub(3, 1).get("title", "")),
             "subcontent4": truncate_subcontent(get_sub(3, 1).get("content", "")),
-
-            # Page 8 (Section 5) - with length limits
             "customTitle5": truncate_title(clean_title(get_section(4).get("title", ""))),
             "customContent5": truncate_content(standardize_sustainable_terms(normalize_main_content(get_section(4).get("content", ""), get_section(4).get("title", "Section 5")))),
             "accentBoxTitle3": truncate_title(get_sub(4, 0).get("title", "")),
@@ -993,17 +971,121 @@ class PerplexityClient:
             "numberedItem4": finalize_line(truncate_text(get_or(split_sentences(get_section(4).get("content", "")), 3, ""), 90)),
             "quoteText2": truncate_subcontent(split_sentences(get_section(4).get("content", ""))[0] if split_sentences(get_section(4).get("content", "")) else ""),
             "quoteAuthor2": company_name or "",
-
-            # Page 9 (Contact) - with length limits
             "contactTitle": contact.get("title", "") or "Next Step",
             "contactDescription": "",
             "differentiatorTitle": "",
             "differentiator": "",
             "ctaText": "",
-            # Quality metrics
             "qualityWarnings": "",
             "qualityHasWarnings": False,
         }
+
+        template_vars["primaryMidColor"] = primary_color
+        template_vars["creamColor"] = "#F6F1EB"
+        template_vars["creamDarkColor"] = "#E0D4C3"
+        template_vars["inkColor"] = "#111111"
+        template_vars["inkMidColor"] = "#222222"
+        template_vars["inkLightColor"] = "#666666"
+        template_vars["ruleColor"] = "#D6C9B8"
+
+        headline_lines = split_headline_lines(enhanced_title)
+        aud_phrase_for_cover = audience_phrase(ua_target_audience)
+        series_label_base = ua_main_topic or enhanced_title or company_name or "Insights"
+        template_vars["coverSeriesLabel"] = series_label_base.upper()
+        eyebrow_source = aud_phrase_for_cover or ua_industry or "Insight Report"
+        template_vars["coverEyebrow"] = eyebrow_source.upper()
+        template_vars["coverHeadlineLine1"] = headline_lines[0]
+        template_vars["coverHeadlineLine2"] = headline_lines[1] or headline_lines[0]
+        template_vars["coverHeadlineLine3"] = headline_lines[2]
+        template_vars["coverTagline"] = company_subtitle or f"{now_year} Edition"
+
+        template_vars["termsHeadlineLine1"] = truncate_title(terms_title)
+        if terms_summary:
+            template_vars["termsHeadlineLine2"] = truncate_title(terms_summary)
+        else:
+            template_vars["termsHeadlineLine2"] = "How to use this guide"
+        pull_source = terms_summary or get_or(terms_paragraphs, 0, "")
+        pull_sentences = split_sentences(pull_source)
+        template_vars["termsPullQuote"] = truncate_subcontent(pull_sentences[0] if pull_sentences else "")
+
+        template_vars["tocHeadlineLine1"] = enhanced_title
+        template_vars["tocHeadlineLine2"] = ua_main_topic.title() if ua_main_topic else company_name or ""
+        template_vars["tocSubtitle"] = truncate_content(final_description)
+        template_vars["contentItem1Sub"] = truncate_title(template_vars.get("subheading1", ""))
+        template_vars["contentItem2Sub"] = truncate_title(template_vars.get("subheading2", ""))
+        template_vars["contentItem3Sub"] = truncate_title(template_vars.get("subheading3", ""))
+        template_vars["contentItem4Sub"] = truncate_title(template_vars.get("subheading4", ""))
+        template_vars["contentItem5Sub"] = truncate_title(template_vars.get("subheading5", ""))
+        template_vars["contentItem6Sub"] = "Next steps and action plan"
+
+        template_vars["sectionLabel3"] = template_vars.get("sectionTitle3", "")
+        template_vars["sectionLabel4"] = template_vars.get("sectionTitle4", "")
+        template_vars["sectionLabel5"] = template_vars.get("sectionTitle5", "")
+        template_vars["sectionLabel6"] = template_vars.get("sectionTitle6", "")
+        template_vars["sectionLabel7"] = template_vars.get("sectionTitle7", "")
+        template_vars["sectionLabel8"] = template_vars.get("sectionTitle8", "")
+
+        template_vars["chapterLabel1"] = "CHAPTER 01"
+        template_vars["chapterLabel2"] = "CHAPTER 02"
+        template_vars["chapterLabel3"] = "CHAPTER 03"
+        template_vars["chapterLabel4"] = "CHAPTER 04"
+        template_vars["chapterLabel5"] = "CHAPTER 05"
+
+        pains_for_stats = pain_points_list(ua_pain_points)
+        sections_count = len(sections) if sections else 5
+        pain_count = len(pains_for_stats) if pains_for_stats else 3
+        template_vars["stat1Value"] = str(sections_count)
+        template_vars["stat1Label"] = "Sections in this issue"
+        template_vars["stat2Value"] = str(pain_count)
+        template_vars["stat2Label"] = "Pain points addressed"
+        template_vars["stat3Value"] = "1"
+        template_vars["stat3Label"] = "Action plan at the end"
+
+        template_vars["page4Stat1Value"] = str(sections_count)
+        template_vars["page4Stat1Desc"] = "Core sections you will explore"
+        template_vars["page4Stat2Value"] = str(pain_count)
+        template_vars["page4Stat2Unit"] = ""
+        template_vars["page4Stat2Desc"] = "Pain points reframed as opportunities"
+        template_vars["page4Stat3Value"] = "1"
+        template_vars["page4Stat3Unit"] = "PLAYBOOK"
+        template_vars["page4Stat3Desc"] = "Structured next steps at the end"
+
+        template_vars["page6Stat1Value"] = "100"
+        template_vars["page6Stat1Desc"] = "Focused on practical decisions"
+        template_vars["page6Stat2Value"] = str(now_year)
+        template_vars["page6Stat2Desc"] = "Edition year"
+        template_vars["page6Stat3Value"] = "3"
+        template_vars["page6Stat3Unit"] = "+"
+        template_vars["page6Stat3Desc"] = "Ways to move forward"
+
+        if not template_vars.get("quoteText1"):
+            sec2_sentences = split_sentences(get_section(1).get("content", ""))
+            template_vars["quoteText1"] = truncate_subcontent(sec2_sentences[0] if sec2_sentences else "")
+        template_vars["pullQuote1"] = template_vars.get("quoteText1", "")
+
+        template_vars["calloutLabel1"] = template_vars.get("accentBoxTitle1", "") or "Key insight"
+        template_vars["calloutContent1"] = template_vars.get("accentBoxContent1", "")
+        template_vars["calloutLabel2"] = template_vars.get("accentBoxTitle2", "") or "In practice"
+        template_vars["calloutContent2"] = template_vars.get("accentBoxContent2", "")
+
+        template_vars["infoBoxLabel1"] = template_vars.get("accentBoxTitle2", "") or "Design note"
+        template_vars["infoBoxContent1"] = template_vars.get("accentBoxContent2", "")
+        template_vars["infoBoxLabel2"] = template_vars.get("accentBoxTitle3", "") or "Implementation tip"
+        template_vars["infoBoxContent2"] = template_vars.get("accentBoxContent3", "")
+        template_vars["infoBoxLabel3"] = template_vars.get("boxTitle3", "") or template_vars.get("customTitle4", "")
+        template_vars["infoBoxContent3"] = template_vars.get("boxContent3", "")
+
+        template_vars["colCard1Title"] = template_vars.get("columnBoxTitle1", "") or "Scenario 1"
+        template_vars["colCard1Content"] = template_vars.get("columnBoxContent1", "")
+        template_vars["colCard2Title"] = template_vars.get("columnTitle2", "") or "Scenario 2"
+        template_vars["colCard2Content"] = template_vars.get("columnContent2", "")
+
+        template_vars["imageLabel1"] = truncate_title(get_section(0).get("title", "") or template_vars.get("contentItem1", "Overview"))
+        template_vars["imageLabel2"] = truncate_title(get_section(1).get("title", "") or template_vars.get("contentItem2", "Details"))
+        template_vars["imageLabel3"] = truncate_title(get_section(2).get("title", "") or template_vars.get("contentItem3", "Strategy"))
+        template_vars["imageLabel4a"] = truncate_title(template_vars.get("subheading4", "") or template_vars.get("contentItem4", "Design Focus"))
+        template_vars["imageLabel4b"] = truncate_title(template_vars.get("columnTitle2", "") or template_vars.get("contentItem4", "Implementation"))
+        template_vars["imageLabel5"] = truncate_title(get_section(4).get("title", "") or template_vars.get("contentItem5", "Checklist"))
 
         final_cta = render_final_cta()
         template_vars["sectionTitle8"] = final_cta.get("section_title", template_vars.get("sectionTitle8", "Next Step"))
@@ -1011,6 +1093,20 @@ class PerplexityClient:
         template_vars["differentiatorTitle"] = final_cta.get("offer_name", "") or template_vars.get("differentiatorTitle", "")
         template_vars["differentiator"] = finalize_line(truncate_text(final_cta.get("differentiator", ""), 180))
         template_vars["ctaText"] = finalize_line(truncate_text(final_cta.get("action_text", ""), 180))
+
+        template_vars["ctaHeadlineLine1"] = template_vars.get("sectionTitle8", "Next Step")
+        template_vars["ctaHeadlineLine2"] = final_cta.get("offer_name", "")
+        template_vars["ctaEyebrow"] = "Action Plan"
+        template_vars["ctaTitle"] = final_cta.get("offer_name", "") or template_vars.get("contactTitle", "")
+
+        template_vars["contactLabel1"] = "Email"
+        template_vars["contactValue1"] = email or template_vars.get("emailAddress", "")
+        template_vars["contactLabel2"] = "Website"
+        template_vars["contactValue2"] = website or template_vars.get("website", "")
+        template_vars["contactLabel3"] = "Phone"
+        template_vars["contactValue3"] = phone or template_vars.get("phoneNumber", "")
+
+        template_vars["chapterLabel6"] = "NEXT STEP"
 
         # Build basic quality warnings for client-side display
         warnings: List[str] = []
