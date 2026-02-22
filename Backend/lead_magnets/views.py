@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import uuid
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -124,20 +125,23 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-@api_view(["POST"])
+@api_view(["POST", "OPTIONS"])
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf(request):
     try:
+        debug_id = str(uuid.uuid4())
         logger.info('GeneratePDFView: request received', extra={
             'user': str(getattr(request.user, 'id', 'anonymous')),
-            'path': str(getattr(request, 'path', ''))
+            'path': str(getattr(request, 'path', '')),
+            'debug_id': debug_id,
         })
         try:
             payload_repr = str(request.data)
         except Exception:
             payload_repr = 'unserializable'
         logger.info('GeneratePDFView: request payload snapshot', extra={
-            'payload': payload_repr[:2000]
+            'payload': payload_repr[:2000],
+            'debug_id': debug_id,
         })
         template_id = request.data.get('template_id')
         lead_magnet_id = request.data.get('lead_magnet_id')
@@ -146,16 +150,31 @@ def generate_pdf(request):
         architectural_images = request.data.get('architectural_images', []) or []
 
         if not template_id:
-            return Response({'error': 'template_id is required', 'details': 'Missing template_id'}, status=status.HTTP_400_BAD_REQUEST)
+            payload = {
+                'status': 'error',
+                'error': 'template_id is required',
+                'details': 'Missing template_id',
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
         if not lead_magnet_id:
-            return Response({'error': 'lead_magnet_id is required', 'details': 'Missing lead_magnet_id'}, status=status.HTTP_400_BAD_REQUEST)
+            payload = {
+                'status': 'error',
+                'error': 'lead_magnet_id is required',
+                'details': 'Missing lead_magnet_id',
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
 
         lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
         if str(lead_magnet.status) == 'in-progress':
             status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={lead_magnet_id}")
             logger.info('GeneratePDFView: 409 conflict - already in progress', extra={
                 'lead_magnet_id': lead_magnet_id,
-                'user': str(getattr(request.user, 'id', 'anonymous'))
+                'user': str(getattr(request.user, 'id', 'anonymous')),
+                'debug_id': debug_id,
             })
             return Response({
                 'status': 'in_progress',
@@ -163,7 +182,9 @@ def generate_pdf(request):
                 'details': 'Please wait or retry after completion',
                 'lead_magnet_id': lead_magnet_id,
                 'status_url': status_url,
-                'retry_after_seconds': 3
+                'retry_after_seconds': 3,
+                'pdf_url': None,
+                'debug_id': debug_id,
             }, status=status.HTTP_409_CONFLICT)
         lead_magnet.status = 'in-progress'
         lead_magnet.save(update_fields=['status'])
@@ -201,7 +222,15 @@ def generate_pdf(request):
                 missing_firm.remove('firm_name')
             
             if missing_firm:
-                return Response({'error': f'Missing required fields: {", ".join(missing_firm)}', 'fields': missing_firm}, status=status.HTTP_400_BAD_REQUEST)
+                payload = {
+                    'status': 'error',
+                    'error': f'Missing required fields: {", ".join(missing_firm)}',
+                    'details': 'Missing required firm profile fields',
+                    'fields': missing_firm,
+                    'pdf_url': None,
+                    'debug_id': debug_id,
+                }
+                return Response(payload, status=status.HTTP_400_BAD_REQUEST)
 
         ai_client = PerplexityClient()
         template_service = DocRaptorService()
@@ -229,40 +258,98 @@ def generate_pdf(request):
                         pass
 
                 if not answers_for_ai:
-                    return Response({'error': 'AI content not available', 'details': 'Could not find generation data. Please recreate the lead magnet.'}, status=status.HTTP_400_BAD_REQUEST)
+                    payload = {
+                        'status': 'error',
+                        'error': 'AI content not available',
+                        'details': 'Could not find generation data. Please recreate the lead magnet.',
+                        'pdf_url': None,
+                        'debug_id': debug_id,
+                    }
+                    return Response(payload, status=status.HTTP_400_BAD_REQUEST)
                 logger.info('GeneratePDFView: before AI generate', extra={
-                    'lead_magnet_id': str(lead_magnet_id)
+                    'lead_magnet_id': str(lead_magnet_id),
+                    'debug_id': debug_id,
                 })
                 if isinstance(answers_for_ai, dict):
                     raw_desc = getattr(lead_magnet, "description", "") or ""
                     answers_for_ai.setdefault("lead_magnet_description", raw_desc)
 
                 ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
+                logger.info('GeneratePDFView: ai_content received', extra={
+                    'lead_magnet_id': str(lead_magnet_id),
+                    'has_sections': bool(getattr(ai_content, 'get', lambda *_: None)('sections') if isinstance(ai_content, dict) else False),
+                    'debug_id': debug_id,
+                })
                 ai_client.debug_ai_content(ai_content)
+                if not isinstance(ai_content, dict):
+                    payload = {
+                        'status': 'error',
+                        'error': 'AI content generation failed',
+                        'details': 'AI response had unexpected format.',
+                        'pdf_url': None,
+                        'debug_id': debug_id,
+                    }
+                    return Response(payload, status=status.HTTP_502_BAD_GATEWAY)
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
                 if not str(template_vars.get('companyName', '')).strip():
                     template_vars['companyName'] = firm_profile.get('firm_name') or ''
                 logger.info('GeneratePDFView: after AI generate', extra={
-                    'template_keys': list(template_vars.keys())
+                    'template_keys': list(template_vars.keys()),
+                    'debug_id': debug_id,
                 })
                 if template_selection:
                     template_selection.ai_generated_content = ai_content
                     template_selection.captured_answers = answers_for_ai
                     template_selection.save(update_fields=['ai_generated_content', 'captured_answers'])
             except requests.exceptions.Timeout as e:
-                return Response({'error': 'AI content generation timed out', 'details': str(e)}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+                payload = {
+                    'status': 'error',
+                    'error': 'AI content generation timed out',
+                    'details': str(e),
+                    'pdf_url': None,
+                    'debug_id': debug_id,
+                }
+                return Response(payload, status=status.HTTP_504_GATEWAY_TIMEOUT)
             except requests.exceptions.RequestException as e:
-                return Response({'error': 'AI content generation failed', 'details': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+                payload = {
+                    'status': 'error',
+                    'error': 'AI content generation failed',
+                    'details': str(e),
+                    'pdf_url': None,
+                    'debug_id': debug_id,
+                }
+                return Response(payload, status=status.HTTP_502_BAD_GATEWAY)
             except Exception as e:
                 import traceback
                 trace = traceback.format_exc() if settings.DEBUG else None
                 if 'JSON' in str(e) or 'parse' in str(e).lower():
-                    return Response({'error': 'AI content generation failed', 'details': 'AI response was not valid JSON. Please try again.'}, status=status.HTTP_502_BAD_GATEWAY)
+                    payload = {
+                        'status': 'error',
+                        'error': 'AI content generation failed',
+                        'details': 'AI response was not valid JSON. Please try again.',
+                        'pdf_url': None,
+                        'debug_id': debug_id,
+                    }
+                    return Response(payload, status=status.HTTP_502_BAD_GATEWAY)
                 
                 if 'API_KEY' in str(e):
-                    return Response({'error': 'Service Configuration Error', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                    payload = {
+                        'status': 'error',
+                        'error': 'Service Configuration Error',
+                        'details': str(e),
+                        'pdf_url': None,
+                        'debug_id': debug_id,
+                    }
+                    return Response(payload, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-                payload = {'error': 'AI content generation failed', 'details': str(e), 'type': type(e).__name__}
+                payload = {
+                    'status': 'error',
+                    'error': 'AI content generation failed',
+                    'details': str(e),
+                    'type': type(e).__name__,
+                    'pdf_url': None,
+                    'debug_id': debug_id,
+                }
                 if trace:
                     payload['trace'] = trace
                 return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -301,31 +388,66 @@ def generate_pdf(request):
         required_keys = ['mainTitle', 'companyName']
         missing = [k for k in required_keys if not str(template_vars.get(k, '')).strip()]
         if missing:
-            return Response({
+            payload = {
+                'status': 'error',
                 'error': 'Missing critical content for PDF generation',
                 'details': f"Required content missing: {', '.join(missing)}",
-                'missing_keys': missing
-            }, status=status.HTTP_400_BAD_REQUEST)
+                'missing_keys': missing,
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             logger.info('GeneratePDFView: before PDF generation', extra={
-                'lead_magnet_id': str(lead_magnet_id)
+                'lead_magnet_id': str(lead_magnet_id),
+                'debug_id': debug_id,
             })
             result = template_service.generate_pdf_with_ai_content(template_id, template_vars)
             logger.info('GeneratePDFView: after PDF generation', extra={
                 'lead_magnet_id': str(lead_magnet_id),
-                'success': bool(result.get('success'))
+                'success': bool(result.get('success')),
+                'debug_id': debug_id,
             })
         except MemoryError:
-            return Response({'error': 'PDF generation failed', 'details': 'Memory limit exceeded', 'type': 'MemoryError'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            payload = {
+                'status': 'error',
+                'error': 'PDF generation failed',
+                'details': 'Memory limit exceeded',
+                'type': 'MemoryError',
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except requests.exceptions.Timeout as e:
-            return Response({'error': 'PDF generation timed out', 'details': str(e)}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+            payload = {
+                'status': 'error',
+                'error': 'PDF generation timed out',
+                'details': str(e),
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_504_GATEWAY_TIMEOUT)
         except requests.exceptions.RequestException as e:
-            return Response({'error': 'PDF generation failed', 'details': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+            payload = {
+                'status': 'error',
+                'error': 'PDF generation failed',
+                'details': str(e),
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_502_BAD_GATEWAY)
         except Exception as e:
             import traceback
             trace = traceback.format_exc() if settings.DEBUG else None
-            payload = {'error': 'Exception during PDF generation', 'details': str(e), 'type': type(e).__name__}
+            payload = {
+                'status': 'error',
+                'error': 'Exception during PDF generation',
+                'details': str(e),
+                'type': type(e).__name__,
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
             if trace:
                 payload['trace'] = trace
             return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -347,14 +469,23 @@ def generate_pdf(request):
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             logger.info('GeneratePDFView: generation completed', extra={
                 'lead_magnet_id': lead_magnet_id,
-                'user': str(getattr(request.user, 'id', 'anonymous'))
+                'user': str(getattr(request.user, 'id', 'anonymous')),
+                'debug_id': debug_id,
             })
+            response['X-Debug-ID'] = debug_id
+            response['X-Status'] = 'success'
             return response
         else:
             error_message = result.get('error', 'Unknown error during PDF generation')
             details = result.get('details', '')
             full_error = f"{error_message}: {details}" if details else error_message
-            payload = {'error': 'PDF generation failed', 'details': full_error}
+            payload = {
+                'status': 'error',
+                'error': 'PDF generation failed',
+                'details': full_error,
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
             
             missing_keys = result.get('missing_keys')
             if missing_keys:
@@ -368,7 +499,15 @@ def generate_pdf(request):
             
             return Response(payload, status=(status.HTTP_400_BAD_REQUEST if missing_keys or 'Empty template variables' in error_message else status.HTTP_500_INTERNAL_SERVER_ERROR))
     except LeadMagnet.DoesNotExist:
-        return Response({'error': 'Lead magnet not found', 'details': f"Lead magnet with ID {request.data.get('lead_magnet_id')} not found"}, status=status.HTTP_404_NOT_FOUND)
+        debug_id = str(uuid.uuid4())
+        payload = {
+            'status': 'error',
+            'error': 'Lead magnet not found',
+            'details': f"Lead magnet with ID {request.data.get('lead_magnet_id')} not found",
+            'pdf_url': None,
+            'debug_id': debug_id,
+        }
+        return Response(payload, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         import traceback
         trace = traceback.format_exc() if settings.DEBUG else None
@@ -376,12 +515,21 @@ def generate_pdf(request):
             payload_repr = str(request.data)
         except Exception:
             payload_repr = 'unserializable'
+        debug_id = str(uuid.uuid4())
         logger.exception('GeneratePDFView: unexpected exception', extra={
             'user': str(getattr(request.user, 'id', 'anonymous')),
             'path': str(getattr(request, 'path', '')),
-            'payload': payload_repr[:2000]
+            'payload': payload_repr[:2000],
+            'debug_id': debug_id,
         })
-        payload = {'error': 'PDF generation failed', 'details': str(e), 'type': type(e).__name__}
+        payload = {
+            'status': 'error',
+            'error': 'PDF generation failed',
+            'details': str(e),
+            'type': type(e).__name__,
+            'pdf_url': None,
+            'debug_id': debug_id,
+        }
         if trace:
             payload['trace'] = trace
         return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
