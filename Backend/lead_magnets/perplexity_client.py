@@ -444,12 +444,10 @@ class PerplexityClient:
             return truncate_text(text, 80)
 
         def truncate_content(text: str) -> str:
-            """Limit main content to prevent overflow - much shorter for clean pages"""
-            return truncate_text(text, 400)
+            return truncate_text(text, 520)
 
         def truncate_subcontent(text: str) -> str:
-            """Limit subcontent/box content - shorter for clean layout"""
-            return truncate_text(text, 150)
+            return truncate_text(text, 200)
 
         def truncate_description(text: str) -> str:
             return truncate_text(text, 140)
