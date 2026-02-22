@@ -233,6 +233,10 @@ def generate_pdf(request):
                 logger.info('GeneratePDFView: before AI generate', extra={
                     'lead_magnet_id': str(lead_magnet_id)
                 })
+                if isinstance(answers_for_ai, dict):
+                    raw_desc = getattr(lead_magnet, "description", "") or ""
+                    answers_for_ai.setdefault("lead_magnet_description", raw_desc)
+
                 ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
                 ai_client.debug_ai_content(ai_content)
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)

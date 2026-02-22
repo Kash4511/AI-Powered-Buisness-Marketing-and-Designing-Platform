@@ -702,6 +702,64 @@ class PerplexityClient:
                 "action_text": action_text,
             }
 
+        ua_description_raw = (user_answers.get("lead_magnet_description") or user_answers.get("description") or "").strip()
+
+        def is_invalid_description(text: str) -> bool:
+            t = (text or "").strip()
+            if not t:
+                return True
+            if len(t) < 12:
+                return True
+            if len(t.split()) <= 3:
+                return True
+            if not re.search(r"[A-Za-z]", t):
+                return True
+            low = t.lower()
+            bad_tokens = ["hh", "asdf", "lorem ipsum", "lipsum", "placeholder", "tbd", "test", "testing"]
+            if any(bt in low for bt in bad_tokens):
+                return True
+            if re.fullmatch(r"[A-Za-z]{1,4}", t):
+                return True
+            return False
+
+        def build_professional_description() -> str:
+            topic = ua_main_topic or "your next project"
+            aud = audience_phrase(ua_target_audience)
+            pains = pain_points_list(ua_pain_points)
+            desired = ua_desired_outcome or "move from ideas to a confident plan"
+            parts: List[str] = []
+            intro = "This guide is designed"
+            if aud:
+                intro += f" for {aud}"
+            intro += f" to help you navigate {topic} with clarity"
+            parts.append(finalize_line(intro))
+            if pains:
+                pain_text = ", ".join(pains[:3])
+                parts.append(finalize_line(f"It focuses on real-world challenges such as {pain_text}, breaking them down into practical decisions you can make."))
+            outcome_sentence = f"By the end, you will have tangible next steps and insights you can apply immediately to {desired}."
+            parts.append(finalize_line(outcome_sentence))
+            combined = " ".join(parts)
+            return combined
+
+        def rewrite_or_replace_description() -> str:
+            if is_invalid_description(ua_description_raw):
+                return build_professional_description()
+            t = ua_description_raw.strip()
+            t = re.sub(r"\s+", " ", t)
+            t = t.strip()
+            first = t[0].upper()
+            t = first + t[1:]
+            if not re.search(r"[.!?]$", t):
+                t += "."
+            if ua_main_topic:
+                if ua_main_topic.lower() not in t.lower():
+                    t = f"{ua_main_topic.strip().title()}: {t}"
+            if ua_desired_outcome and ua_desired_outcome.lower() not in t.lower():
+                t += f" It is built to help you {ua_desired_outcome.strip()}."
+            return t
+
+        final_description = rewrite_or_replace_description()
+
         now_year = datetime.now().year
 
         # Build template variables dict
@@ -813,6 +871,7 @@ class PerplexityClient:
             "secondaryColor": secondary_color,
             "accentColor": accent_color,
             "logoUrl": logo_url,
+            "leadMagnetDescription": truncate_content(final_description),
 
             # Contact info (used on cover and contact page)
             "phoneNumber": phone,
