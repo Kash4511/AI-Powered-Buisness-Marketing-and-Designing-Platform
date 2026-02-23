@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from corsheaders.defaults import default_headers, default_methods
 
 # Load environment variables
 try:
@@ -221,7 +222,7 @@ SIMPLE_JWT = {
 # -----------------------------
 # CORS + CSRF
 # -----------------------------
-CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "https://django-six-gamma.vercel.app",
@@ -233,19 +234,14 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_URLS_REGEX = r'^/api/.*$'
 
-# Restrict CORS to known frontends for security; do not allow all origins
 CORS_ALLOW_ALL_ORIGINS = False
 
-CORS_ALLOW_HEADERS = ["*"]
-
-CORS_ALLOW_METHODS = [
-    "DELETE",
-    "GET",
-    "OPTIONS",
-    "PATCH",
-    "POST",
-    "PUT",
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "authorization",
+    "Authorization",
 ]
+
+CORS_ALLOW_METHODS = list(default_methods)
 
 # -----------------------------
 # Auto Field

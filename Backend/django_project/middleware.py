@@ -37,8 +37,13 @@ class CatchAllMiddleware:
             if origin and (allow_all or origin in allowed_origins):
                 response["Access-Control-Allow-Origin"] = origin
                 response["Vary"] = "Origin"
-                response["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-                response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                response["Access-Control-Allow-Credentials"] = "true"
+                response["Access-Control-Allow-Headers"] = (
+                    "Authorization, Content-Type, X-CSRFToken"
+                )
+                response["Access-Control-Allow-Methods"] = (
+                    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                )
 
             auth_header = request.META.get("HTTP_AUTHORIZATION", "")
             if response.status_code == 401 and not auth_header:

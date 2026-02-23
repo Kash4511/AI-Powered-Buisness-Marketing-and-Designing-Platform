@@ -60,4 +60,13 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return self.request.user
+        request = self.request
+        auth_header = request.headers.get("Authorization", "")
+        logger.info(
+            "UserProfileView: profile access",
+            extra={
+                "user": str(getattr(request.user, "id", "")),
+                "has_auth_header": bool(auth_header),
+            },
+        )
+        return request.user
