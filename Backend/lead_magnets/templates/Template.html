@@ -17,20 +17,20 @@
         --primary:   {{primaryColor}};
         --secondary: {{secondaryColor}};
 
-        /* Auto-derived palette */
-        --primary-10:  color-mix(in srgb, var(--primary) 10%, white);
-        --primary-20:  color-mix(in srgb, var(--primary) 20%, white);
-        --primary-40:  color-mix(in srgb, var(--primary) 40%, white);
-        --primary-80:  color-mix(in srgb, var(--primary) 80%, black);
+        /* Auto-derived palette (server-side) */
+        --primary-10:  {{primary10Color}};
+        --primary-20:  {{primary20Color}};
+        --primary-40:  {{primary40Color}};
+        --primary-80:  {{primary80Color}};
 
-        --secondary-10: color-mix(in srgb, var(--secondary) 10%, white);
-        --secondary-20: color-mix(in srgb, var(--secondary) 20%, white);
-        --secondary-60: color-mix(in srgb, var(--secondary) 60%, white);
-        --secondary-dark: color-mix(in srgb, var(--secondary) 80%, black);
+        --secondary-10: {{secondary10Color}};
+        --secondary-20: {{secondary20Color}};
+        --secondary-60: {{secondary60Color}};
+        --secondary-dark: {{secondaryDarkColor}};
 
-        --rule:  color-mix(in srgb, var(--primary) 18%, transparent);
-        --text:  color-mix(in srgb, var(--primary) 85%, black);
-        --muted: color-mix(in srgb, var(--primary) 48%, white);
+        --rule:  {{ruleColor}};
+        --text:  {{textColor}};
+        --muted: {{mutedColor}};
 
         /* Page geometry */
         --page-w: 210mm;
@@ -87,8 +87,8 @@
         content: '';
         position: absolute; inset: 0;
         background:
-            radial-gradient(ellipse 90% 70% at 80% 20%, color-mix(in srgb, var(--secondary) 25%, transparent) 0%, transparent 55%),
-            radial-gradient(ellipse 60% 80% at 10% 90%, color-mix(in srgb, var(--primary) 40%, transparent) 0%, transparent 50%);
+            radial-gradient(ellipse 90% 70% at 80% 20%, var(--secondary-20) 0%, transparent 55%),
+            radial-gradient(ellipse 60% 80% at 10% 90%, var(--primary-40) 0%, transparent 50%);
     }
 
     .cover-grid {
@@ -103,7 +103,7 @@
     .cover-accent-bar {
         position: absolute; top: 0; right: 72px;
         width: 2px; height: 100%;
-        background: linear-gradient(to bottom, transparent, var(--secondary) 25%, color-mix(in srgb, var(--secondary) 50%, white) 75%, transparent);
+        background: linear-gradient(to bottom, transparent, var(--secondary-20) 25%, var(--secondary-60) 75%, transparent);
         opacity: 0.45;
     }
 
@@ -368,7 +368,7 @@
     /* Body text */
     .body-t {
         font-size: 12.5px; line-height: 1.88;
-        color: color-mix(in srgb, var(--text) 85%, white);
+        color: var(--text);
         margin-bottom: 14px;
     }
 
@@ -496,8 +496,8 @@
         content: ''; position: absolute; inset: 0;
         background: repeating-linear-gradient(
             -48deg, transparent, transparent 10px,
-            color-mix(in srgb, var(--primary) 6%, transparent) 10px,
-            color-mix(in srgb, var(--primary) 6%, transparent) 20px
+            var(--primary-10) 10px,
+            var(--primary-10) 20px
         );
     }
 
@@ -519,7 +519,7 @@
 
     .imgbox-icon {
         width: 46px; height: 46px;
-        border: 1.5px solid color-mix(in srgb, var(--secondary) 40%, white);
+        border: 1.5px solid var(--secondary-20);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         background: rgba(255,255,255,0.4);

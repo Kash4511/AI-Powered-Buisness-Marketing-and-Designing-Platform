@@ -850,6 +850,75 @@ class PerplexityClient:
             t = ensure_min_words(t, min_words=60, max_words=220, topic_hint=title_hint)
             return t
 
+        def _clamp_channel(x: float) -> int:
+            return max(0, min(255, int(round(x))))
+
+        def _hex_to_rgb(color: str) -> Tuple[int, int, int]:
+            c = (color or "").strip()
+            if not c:
+                return (0, 0, 0)
+            if c.startswith("#"):
+                c = c[1:]
+            if len(c) == 3:
+                c = "".join(ch * 2 for ch in c)
+            if len(c) != 6:
+                return (0, 0, 0)
+            try:
+                r = int(c[0:2], 16)
+                g = int(c[2:4], 16)
+                b = int(c[4:6], 16)
+                return (r, g, b)
+            except ValueError:
+                return (0, 0, 0)
+
+        def _rgb_to_hex(r: int, g: int, b: int) -> str:
+            return "#{:02x}{:02x}{:02x}".format(_clamp_channel(r), _clamp_channel(g), _clamp_channel(b))
+
+        def _mix_rgb(
+            base: Tuple[int, int, int],
+            other: Tuple[int, int, int],
+            base_percent: float,
+        ) -> Tuple[int, int, int]:
+            ratio = max(0.0, min(1.0, base_percent))
+            br, bg, bb = base
+            or_, og, ob = other
+            r = br * ratio + or_ * (1.0 - ratio)
+            g = bg * ratio + og * (1.0 - ratio)
+            b = bb * ratio + ob * (1.0 - ratio)
+            return (
+                _clamp_channel(r),
+                _clamp_channel(g),
+                _clamp_channel(b),
+            )
+
+        def _derive_palette(primary_hex: str, secondary_hex: str) -> Dict[str, str]:
+            white = (255, 255, 255)
+            black = (0, 0, 0)
+            primary = _hex_to_rgb(primary_hex or "#000000")
+            secondary = _hex_to_rgb(secondary_hex or "#000000")
+
+            palette = {}
+            palette["primary10"] = _rgb_to_hex(*_mix_rgb(primary, white, 0.10))
+            palette["primary20"] = _rgb_to_hex(*_mix_rgb(primary, white, 0.20))
+            palette["primary40"] = _rgb_to_hex(*_mix_rgb(primary, white, 0.40))
+            palette["primary80"] = _rgb_to_hex(*_mix_rgb(primary, black, 0.80))
+
+            palette["secondary10"] = _rgb_to_hex(*_mix_rgb(secondary, white, 0.10))
+            palette["secondary20"] = _rgb_to_hex(*_mix_rgb(secondary, white, 0.20))
+            palette["secondary60"] = _rgb_to_hex(*_mix_rgb(secondary, white, 0.60))
+            palette["secondaryDark"] = _rgb_to_hex(*_mix_rgb(secondary, black, 0.80))
+
+            rule_rgb = _mix_rgb(primary, white, 0.18)
+            palette["ruleColor"] = _rgb_to_hex(*rule_rgb)
+
+            text_rgb = _mix_rgb(primary, black, 0.85)
+            palette["textColor"] = _rgb_to_hex(*text_rgb)
+
+            muted_rgb = _mix_rgb(primary, white, 0.48)
+            palette["mutedColor"] = _rgb_to_hex(*muted_rgb)
+
+            return palette
+
         def split_headline_lines(title: str) -> List[str]:
             words = re.findall(r"\S+", (title or ""))
             if not words:
@@ -893,6 +962,8 @@ class PerplexityClient:
         main_title = clean_title(raw_title)
         enhanced_title = main_title
         
+        palette = _derive_palette(primary_color, secondary_color)
+
         template_vars = {
             "documentTitle": enhanced_title.upper(),
             "mainTitle": enhanced_title,
@@ -1010,6 +1081,18 @@ class PerplexityClient:
             "qualityWarnings": "",
             "qualityHasWarnings": False,
         }
+
+        template_vars["primary10Color"] = palette["primary10"]
+        template_vars["primary20Color"] = palette["primary20"]
+        template_vars["primary40Color"] = palette["primary40"]
+        template_vars["primary80Color"] = palette["primary80"]
+        template_vars["secondary10Color"] = palette["secondary10"]
+        template_vars["secondary20Color"] = palette["secondary20"]
+        template_vars["secondary60Color"] = palette["secondary60"]
+        template_vars["secondaryDarkColor"] = palette["secondaryDark"]
+        template_vars["ruleColor"] = palette["ruleColor"]
+        template_vars["textColor"] = palette["textColor"]
+        template_vars["mutedColor"] = palette["mutedColor"]
 
         template_vars["primaryMidColor"] = primary_color
         template_vars["creamColor"] = cream_color
