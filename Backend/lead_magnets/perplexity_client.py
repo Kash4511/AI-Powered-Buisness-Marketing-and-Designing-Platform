@@ -1082,6 +1082,77 @@ class PerplexityClient:
             "qualityHasWarnings": False,
         }
 
+        template_vars["customTitle6"] = truncate_title(clean_title(get_section(5).get("title", "")))
+        template_vars["customContent6"] = truncate_content(
+            standardize_sustainable_terms(
+                normalize_main_content(
+                    get_section(5).get("content", ""),
+                    get_section(5).get("title", "Section 6"),
+                )
+            )
+        )
+        template_vars["customTitle7"] = truncate_title(clean_title(get_section(6).get("title", "")))
+        template_vars["customContent7"] = truncate_content(
+            standardize_sustainable_terms(
+                normalize_main_content(
+                    get_section(6).get("content", ""),
+                    get_section(6).get("title", "Section 7"),
+                )
+            )
+        )
+        template_vars["customTitle8"] = truncate_title(clean_title(get_section(7).get("title", "")))
+        template_vars["customContent8"] = truncate_content(
+            standardize_sustainable_terms(
+                normalize_main_content(
+                    get_section(7).get("content", ""),
+                    get_section(7).get("title", "Section 8"),
+                )
+            )
+        )
+        template_vars["customTitle9"] = truncate_title(clean_title(get_section(8).get("title", "")))
+        template_vars["customContent9"] = truncate_content(
+            standardize_sustainable_terms(
+                normalize_main_content(
+                    get_section(8).get("content", ""),
+                    get_section(8).get("title", "Section 9"),
+                )
+            )
+        )
+        template_vars["customTitle10"] = truncate_title(clean_title(get_section(9).get("title", "")))
+        template_vars["customContent10"] = truncate_content(
+            standardize_sustainable_terms(
+                normalize_main_content(
+                    get_section(9).get("content", ""),
+                    get_section(9).get("title", "Section 10"),
+                )
+            )
+        )
+
+        sec1_sentences = split_sentences(template_vars["customContent1"])
+        if len(sec1_sentences) > 2:
+            template_vars["customContent1b"] = truncate_content(" ".join(sec1_sentences[2:]))
+        else:
+            template_vars["customContent1b"] = ""
+
+        sec8_sentences = split_sentences(template_vars["customContent8"])
+        if len(sec8_sentences) > 2:
+            template_vars["customContent8b"] = truncate_content(" ".join(sec8_sentences[2:]))
+        else:
+            template_vars["customContent8b"] = ""
+
+        sec10_sentences = split_sentences(template_vars["customContent10"])
+        if len(sec10_sentences) > 2:
+            template_vars["customContent10b"] = truncate_content(" ".join(sec10_sentences[2:]))
+        else:
+            template_vars["customContent10b"] = ""
+
+        captions1 = split_sentences(get_section(0).get("content", ""))
+        captions2 = split_sentences(get_section(1).get("content", ""))
+        captions3 = split_sentences(get_section(2).get("content", ""))
+        template_vars["imageCaption1"] = truncate_subcontent(get_or(captions1, 0, ""))
+        template_vars["imageCaption2"] = truncate_subcontent(get_or(captions2, 0, ""))
+        template_vars["imageCaption3"] = truncate_subcontent(get_or(captions3, 0, ""))
+
         template_vars["primary10Color"] = palette["primary10"]
         template_vars["primary20Color"] = palette["primary20"]
         template_vars["primary40Color"] = palette["primary40"]

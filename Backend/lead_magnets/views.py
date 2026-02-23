@@ -205,6 +205,27 @@ def generate_pdf(request):
         user_answers = request.data.get('user_answers', {}) or {}
         architectural_images = request.data.get('architectural_images', []) or []
 
+        if user_answers and not isinstance(user_answers, dict):
+            payload = {
+                'status': 'error',
+                'message': 'Invalid user_answers payload',
+                'error': 'Invalid user_answers payload',
+                'details': 'user_answers must be an object with key/value pairs',
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
+        if architectural_images and not isinstance(architectural_images, list):
+            payload = {
+                'status': 'error',
+                'message': 'Invalid architectural_images payload',
+                'error': 'Invalid architectural_images payload',
+                'details': 'architectural_images must be a list of base64 strings',
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
+
         if not template_id:
             payload = {
                 'status': 'error',
@@ -221,6 +242,19 @@ def generate_pdf(request):
                 'message': 'lead_magnet_id is required',
                 'error': 'lead_magnet_id is required',
                 'details': 'Missing lead_magnet_id',
+                'pdf_url': None,
+                'debug_id': debug_id,
+            }
+            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            lead_magnet_id = int(lead_magnet_id)
+        except (TypeError, ValueError):
+            payload = {
+                'status': 'error',
+                'message': 'Invalid lead_magnet_id',
+                'error': 'Invalid lead_magnet_id',
+                'details': 'lead_magnet_id must be a valid integer',
                 'pdf_url': None,
                 'debug_id': debug_id,
             }
