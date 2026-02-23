@@ -1061,6 +1061,11 @@ class PerplexityClient:
         template_vars["chapterLabel3"] = "CHAPTER 03"
         template_vars["chapterLabel4"] = "CHAPTER 04"
         template_vars["chapterLabel5"] = "CHAPTER 05"
+        template_vars["chapterLabel6"] = "CHAPTER 06"
+        template_vars["chapterLabel7"] = "CHAPTER 07"
+        template_vars["chapterLabel8"] = "CHAPTER 08"
+        template_vars["chapterLabel9"] = "CHAPTER 09"
+        template_vars["chapterLabel10"] = "CHAPTER 10"
 
         pains_for_stats = pain_points_list(ua_pain_points)
         sections_count = len(sections) if sections else 5
@@ -1089,6 +1094,15 @@ class PerplexityClient:
         template_vars["page6Stat3Unit"] = "+"
         template_vars["page6Stat3Desc"] = "Ways to move forward"
 
+        template_vars["page9Stat1Value"] = template_vars.get("page4Stat1Value", template_vars.get("stat1Value", "3"))
+        template_vars["page9Stat1Desc"] = "Key ideas in this chapter"
+        template_vars["page9Stat2Value"] = template_vars.get("page4Stat2Value", template_vars.get("stat2Value", "3"))
+        template_vars["page9Stat2Unit"] = template_vars.get("page4Stat2Unit", "")
+        template_vars["page9Stat2Desc"] = "Pain points reframed here"
+        template_vars["page9Stat3Value"] = template_vars.get("page4Stat3Value", "1")
+        template_vars["page9Stat3Unit"] = template_vars.get("page4Stat3Unit", "PLAYBOOK")
+        template_vars["page9Stat3Desc"] = "Action framework on these pages"
+
         if not template_vars.get("quoteText1"):
             sec2_sentences = split_sentences(get_section(1).get("content", ""))
             template_vars["quoteText1"] = truncate_subcontent(sec2_sentences[0] if sec2_sentences else "")
@@ -1098,6 +1112,10 @@ class PerplexityClient:
         template_vars["calloutContent1"] = template_vars.get("accentBoxContent1", "")
         template_vars["calloutLabel2"] = template_vars.get("accentBoxTitle2", "") or "In practice"
         template_vars["calloutContent2"] = template_vars.get("accentBoxContent2", "")
+        template_vars["calloutLabel3"] = "Quick win"
+        template_vars["calloutContent3"] = truncate_subcontent(get_or(split_sentences(get_section(5).get("content", "")), 0, ""))
+        template_vars["calloutLabel4"] = "Next step"
+        template_vars["calloutContent4"] = truncate_subcontent(get_or(split_sentences(get_section(7).get("content", "")), 0, ""))
 
         template_vars["infoBoxLabel1"] = template_vars.get("accentBoxTitle2", "") or "Design note"
         template_vars["infoBoxContent1"] = template_vars.get("accentBoxContent2", "")
@@ -1105,6 +1123,14 @@ class PerplexityClient:
         template_vars["infoBoxContent2"] = template_vars.get("accentBoxContent3", "")
         template_vars["infoBoxLabel3"] = template_vars.get("boxTitle3", "") or template_vars.get("customTitle4", "")
         template_vars["infoBoxContent3"] = template_vars.get("boxContent3", "")
+        template_vars["infoBoxLabel4"] = "What this means in practice"
+        template_vars["infoBoxContent4"] = truncate_subcontent(get_or(split_sentences(get_section(5).get("content", "")), 1, ""))
+        template_vars["infoBoxLabel5"] = "Watch for"
+        template_vars["infoBoxContent5"] = truncate_subcontent(get_or(split_sentences(get_section(6).get("content", "")), 0, ""))
+        template_vars["infoBoxLabel6"] = "When to use this"
+        template_vars["infoBoxContent6"] = truncate_subcontent(get_or(split_sentences(get_section(7).get("content", "")), 1, ""))
+        template_vars["infoBoxLabel7"] = "If you remember one thing"
+        template_vars["infoBoxContent7"] = truncate_subcontent(get_or(split_sentences(get_section(8).get("content", "")), 0, ""))
 
         template_vars["colCard1Title"] = template_vars.get("columnBoxTitle1", "") or "Scenario 1"
         template_vars["colCard1Content"] = template_vars.get("columnBoxContent1", "")
@@ -1117,6 +1143,9 @@ class PerplexityClient:
         template_vars["imageLabel4a"] = truncate_title(template_vars.get("subheading4", "") or template_vars.get("contentItem4", "Design Focus"))
         template_vars["imageLabel4b"] = truncate_title(template_vars.get("columnTitle2", "") or template_vars.get("contentItem4", "Implementation"))
         template_vars["imageLabel5"] = truncate_title(get_section(4).get("title", "") or template_vars.get("contentItem5", "Checklist"))
+        template_vars["imageLabel6"] = truncate_title(get_section(5).get("title", "") or template_vars.get("contentItem5", "Scenario"))
+        template_vars["imageLabel7"] = truncate_title(get_section(6).get("title", "") or template_vars.get("contentItem5", "Playbook"))
+        template_vars["imageLabel8"] = truncate_title(get_section(7).get("title", "") or template_vars.get("contentItem6", "Action"))
 
         final_cta = render_final_cta()
         template_vars["sectionTitle8"] = final_cta.get("section_title", template_vars.get("sectionTitle8", "Next Step"))
@@ -1136,8 +1165,6 @@ class PerplexityClient:
         template_vars["contactValue2"] = website or template_vars.get("website", "")
         template_vars["contactLabel3"] = "Phone"
         template_vars["contactValue3"] = phone or template_vars.get("phoneNumber", "")
-
-        template_vars["chapterLabel6"] = "NEXT STEP"
 
         # Build basic quality warnings for client-side display
         warnings: List[str] = []

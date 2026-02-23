@@ -28,6 +28,50 @@ from .models import Template
 
 logger = logging.getLogger(__name__)
 
+
+def _is_meaningful_text(value: str) -> bool:
+    if not isinstance(value, str):
+        return False
+    s = value.strip()
+    if len(s) < 5:
+        return False
+    return True
+
+
+def _generate_desired_outcome(main_topic, target_audience) -> str:
+    topic = str(main_topic or '').strip() or 'your work'
+    if isinstance(target_audience, list) and target_audience:
+        audience = ', '.join(str(a) for a in target_audience)
+    else:
+        audience = 'your ideal clients'
+    return f"Give {audience} a clear, confident roadmap for {topic}."
+
+
+def _generate_call_to_action(main_topic, target_audience) -> str:
+    topic = str(main_topic or '').strip() or 'your next project'
+    if isinstance(target_audience, list) and target_audience:
+        audience = ', '.join(str(a) for a in target_audience)
+    else:
+        audience = 'your clients'
+    return f"Invite {audience} to schedule a consultation to plan their {topic}."
+
+
+def _repair_generation_fields(source: dict) -> dict:
+    main_topic = source.get('main_topic')
+    target_audience = source.get('target_audience')
+    desired = source.get('desired_outcome')
+    cta = source.get('call_to_action')
+    repaired = {}
+    if not _is_meaningful_text(desired):
+        repaired_desired = _generate_desired_outcome(main_topic, target_audience)
+        source['desired_outcome'] = repaired_desired
+        repaired['desired_outcome'] = repaired_desired
+    if not _is_meaningful_text(cta):
+        repaired_cta = _generate_call_to_action(main_topic, target_audience)
+        source['call_to_action'] = repaired_cta
+        repaired['call_to_action'] = repaired_cta
+    return repaired
+
 class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
@@ -152,6 +196,7 @@ def generate_pdf(request):
         if not template_id:
             payload = {
                 'status': 'error',
+                'message': 'template_id is required',
                 'error': 'template_id is required',
                 'details': 'Missing template_id',
                 'pdf_url': None,
@@ -161,6 +206,7 @@ def generate_pdf(request):
         if not lead_magnet_id:
             payload = {
                 'status': 'error',
+                'message': 'lead_magnet_id is required',
                 'error': 'lead_magnet_id is required',
                 'details': 'Missing lead_magnet_id',
                 'pdf_url': None,
@@ -178,6 +224,7 @@ def generate_pdf(request):
             })
             return Response({
                 'status': 'in_progress',
+                'message': 'Generation already in progress',
                 'error': 'Generation already in progress',
                 'details': 'Please wait or retry after completion',
                 'lead_magnet_id': lead_magnet_id,
@@ -224,6 +271,7 @@ def generate_pdf(request):
             if missing_firm:
                 payload = {
                     'status': 'error',
+                    'message': f'Missing required fields: {", ".join(missing_firm)}',
                     'error': f'Missing required fields: {", ".join(missing_firm)}',
                     'details': 'Missing required firm profile fields',
                     'fields': missing_firm,
@@ -260,6 +308,7 @@ def generate_pdf(request):
                 if not answers_for_ai:
                     payload = {
                         'status': 'error',
+                        'message': 'AI content not available',
                         'error': 'AI content not available',
                         'details': 'Could not find generation data. Please recreate the lead magnet.',
                         'pdf_url': None,
@@ -273,6 +322,13 @@ def generate_pdf(request):
                 if isinstance(answers_for_ai, dict):
                     raw_desc = getattr(lead_magnet, "description", "") or ""
                     answers_for_ai.setdefault("lead_magnet_description", raw_desc)
+                    repaired = _repair_generation_fields(answers_for_ai)
+                    if repaired:
+                        logger.info('GeneratePDFView: repaired generation fields', extra={
+                            'lead_magnet_id': str(lead_magnet_id),
+                            'repaired_fields': repaired,
+                            'debug_id': debug_id,
+                        })
 
                 ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
                 logger.info('GeneratePDFView: ai_content received', extra={
@@ -284,6 +340,7 @@ def generate_pdf(request):
                 if not isinstance(ai_content, dict):
                     payload = {
                         'status': 'error',
+                        'message': 'AI content generation failed',
                         'error': 'AI content generation failed',
                         'details': 'AI response had unexpected format.',
                         'pdf_url': None,
@@ -304,6 +361,7 @@ def generate_pdf(request):
             except requests.exceptions.Timeout as e:
                 payload = {
                     'status': 'error',
+                    'message': 'AI content generation timed out',
                     'error': 'AI content generation timed out',
                     'details': str(e),
                     'pdf_url': None,
@@ -313,6 +371,7 @@ def generate_pdf(request):
             except requests.exceptions.RequestException as e:
                 payload = {
                     'status': 'error',
+                    'message': 'AI content generation failed',
                     'error': 'AI content generation failed',
                     'details': str(e),
                     'pdf_url': None,
@@ -325,6 +384,7 @@ def generate_pdf(request):
                 if 'JSON' in str(e) or 'parse' in str(e).lower():
                     payload = {
                         'status': 'error',
+                        'message': 'AI content generation failed',
                         'error': 'AI content generation failed',
                         'details': 'AI response was not valid JSON. Please try again.',
                         'pdf_url': None,
@@ -335,6 +395,7 @@ def generate_pdf(request):
                 if 'API_KEY' in str(e):
                     payload = {
                         'status': 'error',
+                        'message': 'Service Configuration Error',
                         'error': 'Service Configuration Error',
                         'details': str(e),
                         'pdf_url': None,
@@ -344,6 +405,7 @@ def generate_pdf(request):
 
                 payload = {
                     'status': 'error',
+                    'message': 'AI content generation failed',
                     'error': 'AI content generation failed',
                     'details': str(e),
                     'type': type(e).__name__,
@@ -354,6 +416,14 @@ def generate_pdf(request):
                     payload['trace'] = trace
                 return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
+            if isinstance(user_answers, dict):
+                repaired = _repair_generation_fields(user_answers)
+                if repaired:
+                    logger.info('GeneratePDFView: repaired generation fields (no AI)', extra={
+                        'lead_magnet_id': str(lead_magnet_id),
+                        'repaired_fields': repaired,
+                        'debug_id': debug_id,
+                    })
             template_vars = {
                 'primaryColor': firm_profile.get('primary_brand_color') or '',
                 'secondaryColor': firm_profile.get('secondary_brand_color') or '',
@@ -390,6 +460,7 @@ def generate_pdf(request):
         if missing:
             payload = {
                 'status': 'error',
+                'message': 'Missing critical content for PDF generation',
                 'error': 'Missing critical content for PDF generation',
                 'details': f"Required content missing: {', '.join(missing)}",
                 'missing_keys': missing,
@@ -412,6 +483,7 @@ def generate_pdf(request):
         except MemoryError:
             payload = {
                 'status': 'error',
+                'message': 'PDF generation failed',
                 'error': 'PDF generation failed',
                 'details': 'Memory limit exceeded',
                 'type': 'MemoryError',
@@ -422,6 +494,7 @@ def generate_pdf(request):
         except requests.exceptions.Timeout as e:
             payload = {
                 'status': 'error',
+                'message': 'PDF generation timed out',
                 'error': 'PDF generation timed out',
                 'details': str(e),
                 'pdf_url': None,
@@ -431,6 +504,7 @@ def generate_pdf(request):
         except requests.exceptions.RequestException as e:
             payload = {
                 'status': 'error',
+                'message': 'PDF generation failed',
                 'error': 'PDF generation failed',
                 'details': str(e),
                 'pdf_url': None,
@@ -442,6 +516,7 @@ def generate_pdf(request):
             trace = traceback.format_exc() if settings.DEBUG else None
             payload = {
                 'status': 'error',
+                'message': 'Exception during PDF generation',
                 'error': 'Exception during PDF generation',
                 'details': str(e),
                 'type': type(e).__name__,
@@ -481,6 +556,7 @@ def generate_pdf(request):
             full_error = f"{error_message}: {details}" if details else error_message
             payload = {
                 'status': 'error',
+                'message': 'PDF generation failed',
                 'error': 'PDF generation failed',
                 'details': full_error,
                 'pdf_url': None,
@@ -502,6 +578,7 @@ def generate_pdf(request):
         debug_id = str(uuid.uuid4())
         payload = {
             'status': 'error',
+            'message': 'Lead magnet not found',
             'error': 'Lead magnet not found',
             'details': f"Lead magnet with ID {request.data.get('lead_magnet_id')} not found",
             'pdf_url': None,
@@ -524,6 +601,7 @@ def generate_pdf(request):
         })
         payload = {
             'status': 'error',
+            'message': 'PDF generation failed',
             'error': 'PDF generation failed',
             'details': str(e),
             'type': type(e).__name__,

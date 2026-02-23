@@ -4,11 +4,13 @@ import requests
 from typing import Dict, Any, List
 from django.conf import settings
 from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class DocRaptorService:
-    """Service for handling PDF template operations using DocRaptor API"""
-    
     def __init__(self):
         self.api_key = os.getenv('DOCRAPTOR_API_KEY')
         self.base_url = "https://api.docraptor.com/docs"
@@ -32,14 +34,16 @@ class DocRaptorService:
             loader=FileSystemLoader(self.templates_dir),
             autoescape=select_autoescape(['html'])
         )
-        # Choose template by id; default to main Template.html
         template_name = 'Template.html'
         if str(template_id).lower() in ('brand-assets', 'brand_assets', 'brand-assets-preview'):
             template_name = 'BrandAssetsPreview.html'
         template = env.get_template(template_name)
         rendered_html = template.render(**variables)
-
-        # Debugging output
+        logger.info('DocRaptorService: template rendered', extra={
+            'template_id': template_id,
+            'template_name': template_name,
+            'variables_count': len(variables),
+        })
         missing = [k for k, v in variables.items() if not v]
         sample_keys = list(variables.keys())[:10]
         print(f"🧩 Render complete")
@@ -48,11 +52,8 @@ class DocRaptorService:
         print(f"🔍 Missing values: {missing[:10]}")
         print(f"🧪 Rendered length: {len(rendered_html)}")
 
-        # Clean and save preview
         rendered_html = clean_rendered_html(rendered_html)
         self._save_preview_html(template_id, rendered_html)
-
-        # Also save a root-level debug output for quick inspection
         try:
             debug_out = os.path.join(settings.BASE_DIR, 'debug_output.html')
             with open(debug_out, 'w', encoding='utf-8') as f:
@@ -89,13 +90,14 @@ class DocRaptorService:
         return pdf
 
     def generate_pdf(self, template_id: str, variables: Dict[str, Any]) -> Dict[str, Any]:
-        print("🛠️ DEBUG: generate_pdf called")
-        print(f"🛠️ DEBUG: DocRaptor API Key present: {bool(self.api_key)}")
-        print(f"🛠️ DEBUG: DocRaptor test mode: {self.test_mode}")
-        # Fail fast if all variables are empty
+        logger.info('DocRaptorService: generate_pdf called', extra={
+            'template_id': template_id,
+            'has_api_key': bool(self.api_key),
+            'test_mode': self.test_mode,
+        })
         has_any_value = any(bool(v) for v in variables.values())
         if not has_any_value:
-            print("❌ All template variables are empty — AI output missing or mapping failed.")
+            logger.warning('DocRaptorService: all template variables empty')
             return {
                 'success': False,
                 'error': 'Empty template variables',
@@ -113,7 +115,9 @@ class DocRaptorService:
             }
 
         try:
-            print("🛠️ DEBUG: Posting to DocRaptor API...")
+            logger.info('DocRaptorService: posting to DocRaptor API', extra={
+                'template_id': template_id,
+            })
             doc_data = {
                 'user_credentials': self.api_key,
                 'doc': {
@@ -130,7 +134,9 @@ class DocRaptorService:
                 timeout=20
             )
             if response.status_code == 200:
-                print("✅ DEBUG: DocRaptor API success")
+                logger.info('DocRaptorService: DocRaptor API success', extra={
+                    'template_id': template_id,
+                })
                 return {
                     'success': True,
                     'pdf_data': response.content,
@@ -139,28 +145,40 @@ class DocRaptorService:
                     'template_id': template_id
                 }
             else:
-                print(f"❌ DEBUG: DocRaptor error {response.status_code}: {response.text}")
+                logger.error('DocRaptorService: DocRaptor API error', extra={
+                    'template_id': template_id,
+                    'status_code': response.status_code,
+                })
                 return {
                     'success': False,
                     'error': f'DocRaptor API error: {response.status_code}',
                     'details': response.text
                 }
         except requests.exceptions.Timeout as e:
-            print(f"❌ DEBUG: DocRaptor request timeout: {e}")
+            logger.error('DocRaptorService: DocRaptor request timeout', extra={
+                'template_id': template_id,
+                'error': str(e),
+            })
             return {
                 'success': False,
                 'error': 'DocRaptor request timeout',
                 'details': str(e)
             }
         except requests.exceptions.RequestException as e:
-            print(f"❌ DEBUG: DocRaptor request error: {e}")
+            logger.error('DocRaptorService: DocRaptor request error', extra={
+                'template_id': template_id,
+                'error': str(e),
+            })
             return {
                 'success': False,
                 'error': 'DocRaptor request failed',
                 'details': str(e)
             }
         except Exception as e:
-            print(f"❌ DEBUG: DocRaptor request failed: {e}")
+            logger.error('DocRaptorService: DocRaptor request failed', extra={
+                'template_id': template_id,
+                'error': str(e),
+            })
             return {
                 'success': False,
                 'error': 'DocRaptor request failed',
