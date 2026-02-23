@@ -32,4 +32,15 @@ class CatchAllMiddleware:
                 response["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
                 response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
 
+            auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+            if response.status_code == 401 and not auth_header:
+                logger.warning(
+                    "API request missing Authorization header",
+                    extra={
+                        "path": request.path,
+                        "method": request.method,
+                        "origin": origin,
+                    },
+                )
+
         return response

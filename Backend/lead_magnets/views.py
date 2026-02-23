@@ -170,9 +170,21 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
         )
 
 @api_view(["POST", "OPTIONS"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def generate_pdf(request):
     try:
+        if request.method == "OPTIONS":
+            return Response(status=status.HTTP_200_OK)
+
+        if not getattr(request, "user", None) or not request.user.is_authenticated:
+            return Response(
+                {
+                    "error": "Request failed",
+                    "details": {"detail": "Authentication credentials were not provided."},
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         debug_id = str(uuid.uuid4())
         logger.info('GeneratePDFView: request received', extra={
             'user': str(getattr(request.user, 'id', 'anonymous')),
