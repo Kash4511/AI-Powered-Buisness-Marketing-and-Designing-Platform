@@ -234,14 +234,16 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_URLS_REGEX = r'^/api/.*$'
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    "authorization",
-    "Authorization",
+CORS_ALLOW_HEADERS = ["*"]
+
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://django-six-gamma.vercel.app",
+    "https://django-msvx.onrender.com",
 ]
-
-CORS_ALLOW_METHODS = list(default_methods)
 
 # -----------------------------
 # Auto Field

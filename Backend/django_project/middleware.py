@@ -32,9 +32,7 @@ class CatchAllMiddleware:
 
         if request.path.startswith("/api/"):
             origin = request.META.get("HTTP_ORIGIN")
-            allow_all = getattr(settings, "CORS_ALLOW_ALL_ORIGINS", False)
-            allowed_origins = set(getattr(settings, "CORS_ALLOWED_ORIGINS", []))
-            if origin and (allow_all or origin in allowed_origins):
+            if origin:
                 response["Access-Control-Allow-Origin"] = origin
                 response["Vary"] = "Origin"
                 response["Access-Control-Allow-Credentials"] = "true"
