@@ -11,6 +11,14 @@ class CatchAllMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        logger.info(
+            "HTTP request",
+            extra={
+                "method": request.method,
+                "path": request.path,
+                "origin": request.META.get("HTTP_ORIGIN"),
+            },
+        )
         try:
             response = self.get_response(request)
         except Exception as e:
