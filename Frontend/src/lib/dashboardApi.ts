@@ -321,16 +321,36 @@ export const dashboardApi = {
       const response = await apiClient.post(`${API_BASE_URL}/generate-pdf/`, request, {
         responseType: 'blob'
       });
-      const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `lead-magnet-${request.lead_magnet_id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      return;
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const arrayBuffer = await blob.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // Check for PDF magic bytes: %PDF
+      if (uint8Array.length >= 4 && 
+          uint8Array[0] === 0x25 && uint8Array[1] === 0x50 && 
+          uint8Array[2] === 0x44 && uint8Array[3] === 0x46) {
+        
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `lead-magnet-${request.lead_magnet_id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        return;
+      } else {
+        // Likely a JSON error hidden in a blob
+        const text = await blob.text();
+        let errorData: any;
+        try {
+          errorData = JSON.parse(text);
+        } catch {
+          errorData = { error: 'Invalid PDF response', details: text.substring(0, 200) };
+        }
+        throw new Error(errorData.error || errorData.message || 'PDF generation failed');
+      }
     } catch (error) {
       const err = error as AxiosError;
       if (err.response && err.response.status === 409) {

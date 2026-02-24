@@ -95,29 +95,50 @@ class DocRaptorService:
             'has_api_key': bool(self.api_key),
             'test_mode': self.test_mode,
         })
-        has_any_value = any(bool(v) for v in variables.values())
-        if not has_any_value:
-            logger.warning('DocRaptorService: all template variables empty')
+        
+        # Hard validation: critical fields MUST be present
+        required_keys = ['mainTitle', 'companyName']
+        missing = [k for k in required_keys if not str(variables.get(k, '')).strip()]
+        if missing:
+            logger.error('DocRaptorService: missing required fields', extra={'missing': missing})
             return {
                 'success': False,
-                'error': 'Empty template variables',
-                'details': 'AI output missing or mapping failed'
+                'error': 'Missing critical content',
+                'details': f"The following fields are required but missing: {', '.join(missing)}"
             }
 
-        rendered_html = self.render_template_with_vars(template_id, variables)
+        try:
+            rendered_html = self.render_template_with_vars(template_id, variables)
+        except Exception as e:
+            logger.error('DocRaptorService: template rendering failed', exc_info=True)
+            return {
+                'success': False,
+                'error': 'Template rendering failed',
+                'details': str(e)
+            }
 
         if not self.api_key:
-            print("❌ DEBUG: No DocRaptor API key configured")
+            logger.error('DocRaptorService: DocRaptor API key missing')
             return {
                 'success': False,
                 'error': 'DocRaptor API key missing',
-                'details': 'Set DOCRAPTOR_API_KEY in environment to enable PDF generation'
+                'details': 'PDF generation is disabled because the API key is not configured.'
             }
 
         try:
             logger.info('DocRaptorService: posting to DocRaptor API', extra={
                 'template_id': template_id,
+                'html_size': len(rendered_html)
             })
+            
+            # Guard: HTML size limit (approx 1.5MB) to prevent memory spikes
+            if len(rendered_html) > 1.5 * 1024 * 1024:
+                return {
+                    'success': False,
+                    'error': 'Content too large',
+                    'details': 'The generated content exceeds the memory safety limit for PDF rendering.'
+                }
+
             doc_data = {
                 'user_credentials': self.api_key,
                 'doc': {
@@ -131,12 +152,11 @@ class DocRaptorService:
                 self.base_url,
                 json=doc_data,
                 headers={'Content-Type': 'application/json'},
-                timeout=20
+                timeout=45  # Production safe timeout
             )
+            
             if response.status_code == 200:
-                logger.info('DocRaptorService: DocRaptor API success', extra={
-                    'template_id': template_id,
-                })
+                logger.info('DocRaptorService: DocRaptor API success')
                 return {
                     'success': True,
                     'pdf_data': response.content,
@@ -145,43 +165,35 @@ class DocRaptorService:
                     'template_id': template_id
                 }
             else:
-                logger.error('DocRaptorService: DocRaptor API error', extra={
-                    'template_id': template_id,
-                    'status_code': response.status_code,
-                })
+                logger.error(f'DocRaptorService: DocRaptor API error {response.status_code}', extra={'response': response.text})
                 return {
                     'success': False,
-                    'error': f'DocRaptor API error: {response.status_code}',
+                    'error': f'PDF engine error ({response.status_code})',
                     'details': response.text
                 }
-        except requests.exceptions.Timeout as e:
-            logger.error('DocRaptorService: DocRaptor request timeout', extra={
-                'template_id': template_id,
-                'error': str(e),
-            })
+        except requests.exceptions.Timeout:
             return {
                 'success': False,
-                'error': 'DocRaptor request timeout',
-                'details': str(e)
+                'error': 'PDF generation timed out',
+                'details': 'The request to the PDF generation service timed out. Please try with less content.'
             }
         except requests.exceptions.RequestException as e:
-            logger.error('DocRaptorService: DocRaptor request error', extra={
-                'template_id': template_id,
-                'error': str(e),
-            })
             return {
                 'success': False,
-                'error': 'DocRaptor request failed',
+                'error': 'PDF generation service unreachable',
                 'details': str(e)
             }
-        except Exception as e:
-            logger.error('DocRaptorService: DocRaptor request failed', extra={
-                'template_id': template_id,
-                'error': str(e),
-            })
+        except MemoryError:
             return {
                 'success': False,
-                'error': 'DocRaptor request failed',
+                'error': 'Memory limit exceeded',
+                'details': 'The server ran out of memory while generating the PDF.'
+            }
+        except Exception as e:
+            logger.error('DocRaptorService: unexpected error during PDF generation', exc_info=True)
+            return {
+                'success': False,
+                'error': 'Unexpected PDF generation error',
                 'details': str(e)
             }
 

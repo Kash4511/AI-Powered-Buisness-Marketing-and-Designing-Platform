@@ -158,64 +158,100 @@ class PerplexityClient:
             print(f"🔴 DEBUG AI CONTENT ERROR: {e}")
 
 
+    def _is_meaningless(self, value: Any) -> bool:
+        """Strict check for meaningless or placeholder inputs."""
+        if not value:
+            return True
+        v = str(value).strip()
+        if not v:
+            return True
+        
+        # Too short to carry semantic meaning (e.g. "h", "hh", "k", "m")
+        if len(v) < 3:
+            return True
+            
+        # Common placeholder patterns
+        lowered = v.lower()
+        placeholders = {
+            "test", "testing", "hh", "h", "k", "m", "d", "dd", "none", "na", "n/a", 
+            "empty", "placeholder", "asdf", "qwerty", "ok", "yes", "no", ".", "..", "..."
+        }
+        if lowered in placeholders:
+            return True
+            
+        # Random character strings (low vowel count or weird consonant clusters)
+        if len(v) > 4 and not re.search(r'[aeiouy]', lowered):
+            return True
+            
+        return False
+
     def _create_content_prompt(self, user_answers: Dict[str, Any], firm_profile: Dict[str, Any]) -> str:
         """
         Build a strict, dynamic prompt that forces the AI to generate
         complete, content-heavy JSON using the provided firm profile and
         user answers. The AI MUST return valid JSON only.
         """
+        # Filter meaningless user answers
+        filtered_answers = {}
+        for k, v in user_answers.items():
+            if not self._is_meaningless(v):
+                filtered_answers[k] = v
+            else:
+                # Still include the key but with None to signal it should be ignored
+                filtered_answers[k] = None
+
         # Firm profile inputs
         firm_name = (firm_profile.get('firm_name') or '').strip()
         work_email = (firm_profile.get('work_email') or '').strip()
         phone = (firm_profile.get('phone_number') or '').strip()
         website = (firm_profile.get('firm_website') or '').strip()
         tagline = (firm_profile.get('tagline') or '').strip()
-        logo_url = (user_answers.get('brand_logo_url') or firm_profile.get('logo_url') or '').strip()
+        logo_url = (filtered_answers.get('brand_logo_url') or firm_profile.get('logo_url') or '').strip()
 
         # Brand colors: prefer user_answers brand_* then firm_profile brand_*, then generic; no hardcoded defaults
         primary_color = (
-            (user_answers.get('brand_primary_color') or '').strip()
+            (filtered_answers.get('brand_primary_color') or '').strip()
             or (firm_profile.get('brand_primary_color') or '').strip()
             or (firm_profile.get('primary_brand_color') or '').strip()
-            or (firm_profile.get('primary_color') or '').strip()
+            or (firm_profile.get('primary_color', '') or '').strip()
         )
         secondary_color = (
-            (user_answers.get('brand_secondary_color') or '').strip()
+            (filtered_answers.get('brand_secondary_color') or '').strip()
             or (firm_profile.get('brand_secondary_color') or '').strip()
             or (firm_profile.get('secondary_brand_color') or '').strip()
-            or (firm_profile.get('secondary_color') or '').strip()
+            or (firm_profile.get('secondary_color', '') or '').strip()
         )
         accent_color = (
-            (user_answers.get('brand_accent_color') or '').strip()
+            (filtered_answers.get('brand_accent_color') or '').strip()
             or (firm_profile.get('brand_accent_color') or '').strip()
             or (firm_profile.get('accent_brand_color') or '').strip()
-            or (firm_profile.get('accent_color') or '').strip()
+            or (firm_profile.get('accent_color', '') or '').strip()
         )
 
         # User-provided context
-        main_topic = (user_answers.get('main_topic') or '').strip()
-        lead_magnet_type = (user_answers.get('lead_magnet_type') or '').strip()
-        target_audience = user_answers.get('target_audience') or []
-        desired_outcome = (user_answers.get('desired_outcome') or '').strip()
-        audience_pain_points = user_answers.get('audience_pain_points') or []
-        call_to_action = (user_answers.get('call_to_action') or '').strip()
-        industry = (user_answers.get('industry') or '').strip()
+        main_topic = (filtered_answers.get('main_topic') or '').strip()
+        lead_magnet_type = (filtered_answers.get('lead_magnet_type') or '').strip()
+        target_audience = filtered_answers.get('target_audience') or []
+        desired_outcome = (filtered_answers.get('desired_outcome') or '').strip()
+        audience_pain_points = filtered_answers.get('audience_pain_points') or []
+        call_to_action = (filtered_answers.get('call_to_action') or '').strip()
+        industry = (filtered_answers.get('industry') or '').strip()
 
         # AI customization: style should follow the topic unless a specific industry is provided
         if industry:
-            if industry == "Commercial":
-                prompt_style = "Use a sleek, modern color palette and emphasize adaptive reuse."
-            else:
-                prompt_style = f"Use a style aligned with the {industry} domain and audience."
+            prompt_style = f"Expert level, professional {industry} style. High value, actionable content."
         else:
-            prompt_style = "Use a style appropriate to the user's main_topic; do not assume architecture or sustainability."
+            prompt_style = "Professional, authoritative, and expert level. Focus on providing high-value insights."
 
-        # Compose a strict instruction. Model must output ONLY JSON with the exact schema.
+        # Compose a strict instruction.
         prompt = (
-            "You are a senior content strategist. Generate a comprehensive, professional lead magnet in JSON. "
-            "Follow ALL requirements. Output MUST be valid JSON ONLY (no Markdown, no prose). "
-            "Do not include any test or placeholder text. Use the inputs exactly.\n\n"
-            "Style Instructions: " + prompt_style + "\n\n" +
+            "You are a senior expert content strategist. Generate a high-value, professional lead magnet in JSON format. "
+            "STRICT RULES:\n"
+            "1. If a user input field is provided but marked as null or empty, IGNORE it and generate the best expert content based on the 'main_topic' and 'lead_magnet_type'.\n"
+            "2. If a user input field is meaningful, ADAPT it professionally into the content. Do not just copy-paste; elevate it.\n"
+            "3. Content must be expert-level, topic-relevant, and highly professional. No generic or placeholder text.\n"
+            "4. Output MUST be valid JSON ONLY. No prose, no markdown code blocks.\n\n"
+            "Style: " + prompt_style + "\n\n" +
             "Inputs:\n" +
             json.dumps({
                 "firm_profile": {
@@ -317,7 +353,7 @@ class PerplexityClient:
                     "phone": "<phone_number>",
                     "email": "<work_email>",
                     "website": "<firm_website>",
-                    "differentiator_title": "Why Choose " + (firm_name or "Us"),
+                    "differentiator_title": "Why Choose <firm_name>",
                     "differentiator": "<3-5 sentences highlighting unique value with specific examples>"
                 }
             }, ensure_ascii=False) + "\n\n" +
