@@ -174,10 +174,11 @@ def generate_pdf(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        ai_client = PerplexityClient()
         validation_errors = []
-        if not str(lead_magnet.title or '').strip(): validation_errors.append("title is missing")
-        if not str(gen_data.main_topic or '').strip(): validation_errors.append("main_topic is missing")
-        if not str(gen_data.lead_magnet_type or '').strip(): validation_errors.append("lead_magnet_type is missing")
+        if ai_client._is_meaningless(lead_magnet.title): validation_errors.append("title is missing or invalid")
+        if ai_client._is_meaningless(gen_data.main_topic): validation_errors.append("main_topic is missing or invalid")
+        if ai_client._is_meaningless(gen_data.lead_magnet_type): validation_errors.append("lead_magnet_type is missing or invalid")
 
         if validation_errors:
             return Response(
@@ -224,7 +225,6 @@ def generate_pdf(request):
             answers_for_ai.update(user_answers)
 
         # 5. AI Content Generation
-        ai_client = PerplexityClient()
         template_vars = {}
 
         if use_ai_content:
@@ -233,14 +233,16 @@ def generate_pdf(request):
                 if not ai_content or not isinstance(ai_content, dict):
                     return Response(
                         {"error": "AI generated invalid content format", "success": False},
-                        status=status.HTTP_502_BAD_GATEWAY
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
             except Exception as e:
                 logger.error(f"AI Generation Error: {str(e)}", exc_info=True)
+                # Distinguish timeout from other errors
+                status_code = status.HTTP_504_GATEWAY_TIMEOUT if "timeout" in str(e).lower() else status.HTTP_500_INTERNAL_SERVER_ERROR
                 return Response(
                     {"error": f"AI Generation failed: {str(e)}", "success": False},
-                    status=status.HTTP_502_BAD_GATEWAY
+                    status=status_code
                 )
         else:
             # Basic non-AI mapping
@@ -260,9 +262,11 @@ def generate_pdf(request):
         try:
             result = template_service.generate_pdf(template_id, template_vars)
             if not result.get('success'):
+                err = result.get('error', 'PDF generation failed')
+                status_code = status.HTTP_504_GATEWAY_TIMEOUT if "timeout" in err.lower() else status.HTTP_500_INTERNAL_SERVER_ERROR
                 return Response(
-                    {"error": result.get('error', 'PDF generation failed'), "details": result.get('details'), "success": False},
-                    status=status.HTTP_502_BAD_GATEWAY
+                    {"error": err, "details": result.get('details'), "success": False},
+                    status=status_code
                 )
             
             pdf_data = result.get('pdf_data')

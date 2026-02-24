@@ -31,26 +31,20 @@ class PerplexityClient:
             print("❌ PERPLEXITY_API_KEY missing")
             raise Exception("PERPLEXITY_API_KEY is not configured; cannot generate AI content. Please add PERPLEXITY_API_KEY=your_key_here to your Backend/.env file")
 
-        max_retries = 2
-        retry_count = 0
-        models_to_try = ["sonar-pro", "sonar"]
+        # Render 30s limit requires fast AI. sonar-pro is expert but slow. 
+        # We'll use 15s timeout and no retries.
+        model_to_use = "sonar" # Switch to sonar for speed to avoid 502s
+        try:
+            print(f"Generating AI content with model: {model_to_use} (15s timeout)...")
 
-        while retry_count <= max_retries:
-            model_to_use = models_to_try[1] if retry_count == max_retries else models_to_try[0]
-            try:
-                if retry_count > 0:
-                    print(f"🔄 Retrying AI content generation (attempt {retry_count + 1}/{max_retries + 1}) with model: {model_to_use}...")
-                else:
-                    print(f"Generating AI content with model: {model_to_use}...")
-
-                response = requests.post(
-                    self.base_url,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    json={
+            response = requests.post(
+                self.base_url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                json={
                         "model": model_to_use,
                         "messages": [
                             {
@@ -62,26 +56,20 @@ class PerplexityClient:
                                 "content": self._create_content_prompt(user_answers, firm_profile)
                             }
                         ],
-                        "max_tokens": 4000,
+                        "max_tokens": 2500, # Lower token count = faster generation
                         "temperature": 0.7
                     },
-                    timeout=20
+                    timeout=15 # Hard limit for AI
                 )
-                break
-            except requests.exceptions.Timeout:
-                retry_count += 1
-                if retry_count > max_retries:
-                    print("❌ Perplexity API timeout after multiple attempts")
-                    raise Exception("Perplexity API timeout after multiple attempts (20s each)")
-                else:
-                    print(f"⚠️ API timeout on attempt {retry_count}, retrying...")
-                    continue
-            except requests.exceptions.RequestException as e:
-                print(f"❌ Perplexity API request error: {e}")
-                raise Exception(f"Perplexity API request error: {e}")
-            except Exception as e:
-                print(f"❌ Error calling Perplexity API: {str(e)}")
-                raise
+        except requests.exceptions.Timeout:
+            print("❌ Perplexity API timeout (15s)")
+            raise Exception("AI content generation timed out (15s limit). Please try again.")
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Perplexity API request error: {e}")
+            raise Exception(f"Perplexity API request error: {e}")
+        except Exception as e:
+            print(f"❌ Error calling Perplexity API: {str(e)}")
+            raise
 
         print(f"Perplexity response status: {response.status_code}")
         if response.status_code != 200:
@@ -362,14 +350,12 @@ class PerplexityClient:
             "- Use firm_name, work_email, phone_number, firm_website, tagline EXACTLY as provided.\n"
             "- Use brand colors EXACTLY as provided (primary, secondary, accent). If any input color is missing, set that field to an empty string rather than inventing a color.\n"
             "- Include logo_url if provided; else set to an empty string.\n"
-            "- Generate concise sections: each section has 1 paragraph; each subsection 1–2 sentences.\n"
-            "- Terms must include a summary and 3 paragraphs (2–3 sentences each).\n"
+            "- Generate concise sections: each section has 1 paragraph; each subsection 1–2 sentences. Be direct and avoid fluff.\n"
+            "- Terms must include a summary and 3 short paragraphs.\n"
             "- Contents.items must have 6 descriptive entries aligned to the sections.\n"
-            "- The contact section must describe a specific offer (audit, checklist, estimator, framework, or assessment) that is clearly linked to main_topic and audience_pain_points.\n"
-            "- contact.offer_name and contact.action_cta must be specific and must not use generic phrases like 'Contact us', 'Get in touch', or 'Learn more'.\n"
-            "- contact.description must clearly state what the reader receives, who it is for, and the outcome, grounded in desired_outcome and audience_pain_points.\n"
+            "- The contact section must describe a specific offer that is clearly linked to main_topic and audience_pain_points.\n"
             "- NO extra text outside JSON, NO Markdown, NO comments.\n"
-            "- Do NOT use any placeholder like 'TEST DOCUMENT'.\n"
+            "- Output MUST be valid JSON ONLY.\n"
         )
 
         return prompt

@@ -152,7 +152,7 @@ class DocRaptorService:
                 self.base_url,
                 json=doc_data,
                 headers={'Content-Type': 'application/json'},
-                timeout=45  # Production safe timeout
+                timeout=12  # Render limit is 30s. AI takes ~15s. DocRaptor gets 12s.
             )
             
             if response.status_code == 200:
