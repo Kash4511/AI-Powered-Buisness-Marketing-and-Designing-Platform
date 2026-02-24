@@ -169,7 +169,7 @@ def generate_pdf(request):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 3. Hard Validation of Generation Data
+        # 3. Apply Semantic Ignore Mode
         gen_data = getattr(lead_magnet, 'generation_data', None)
         if not gen_data:
             return Response(
@@ -178,14 +178,52 @@ def generate_pdf(request):
             )
 
         ai_client = PerplexityClient()
+        
+        # Merge generation_data with user_answers
+        all_answers = {
+            'lead_magnet_type': gen_data.lead_magnet_type,
+            'main_topic': gen_data.main_topic,
+            'target_audience': gen_data.target_audience,
+            'audience_pain_points': gen_data.audience_pain_points,
+            'desired_outcome': gen_data.desired_outcome,
+            'call_to_action': gen_data.call_to_action,
+            'special_requests': gen_data.special_requests,
+        }
+        if isinstance(user_answers, dict):
+            all_answers.update(user_answers)
+
+        # Filter weak inputs
+        semantic_result = ai_client.get_semantic_data(all_answers)
+        cleaned_data = semantic_result["cleaned_data"]
+        ignored_fields = semantic_result["ignored_fields"]
+        
+        logger.info(f"📊 Semantic Ignore Mode: Cleaned keys: {list(cleaned_data.keys())} | Ignored fields: {ignored_fields}")
+
+        # Hard validation on critical semantic fields
         validation_errors = []
-        if ai_client._is_meaningless(lead_magnet.title): validation_errors.append("title is missing or invalid")
-        if ai_client._is_meaningless(gen_data.main_topic): validation_errors.append("main_topic is missing or invalid")
-        if ai_client._is_meaningless(gen_data.lead_magnet_type): validation_errors.append("lead_magnet_type is missing or invalid")
+        
+        # Check title
+        if ai_client._is_meaningful(lead_magnet.title):
+            cleaned_data['title'] = lead_magnet.title
+        else:
+            validation_errors.append("title is missing or invalid (must be a meaningful name)")
+
+        # Check main_topic
+        if 'main_topic' not in cleaned_data:
+            validation_errors.append("main_topic is missing or invalid (must be a real topic, not filler like 'h')")
+            
+        # Check lead_magnet_type
+        if 'lead_magnet_type' not in cleaned_data:
+            validation_errors.append("lead_magnet_type is missing or invalid")
 
         if validation_errors:
+            logger.warning(f"❌ Validation failed for user {request.user.id}: {validation_errors}")
             return Response(
-                {"error": f"Validation failed: {', '.join(validation_errors)}", "success": False},
+                {
+                    "error": "Input validation failed. Please provide meaningful text for Title and Topic.",
+                    "details": validation_errors,
+                    "success": False
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -214,47 +252,36 @@ def generate_pdf(request):
                 'industry': 'Architecture',
             }
 
-        answers_for_ai = {
-            'lead_magnet_type': gen_data.lead_magnet_type,
-            'main_topic': gen_data.main_topic,
-            'target_audience': gen_data.target_audience,
-            'audience_pain_points': gen_data.audience_pain_points,
-            'desired_outcome': gen_data.desired_outcome,
-            'call_to_action': gen_data.call_to_action,
-            'special_requests': gen_data.special_requests,
-        }
-        # Merge user_answers if provided (they override generation_data)
-        if isinstance(user_answers, dict):
-            answers_for_ai.update(user_answers)
-
         # 5. AI Content Generation
         template_vars = {}
 
         if use_ai_content:
             try:
-                ai_content = ai_client.generate_lead_magnet_json(answers_for_ai, firm_profile)
+                logger.info("🤖 AI Generation Start")
+                ai_content = ai_client.generate_lead_magnet_json(cleaned_data, firm_profile)
+                logger.info("🤖 AI Generation End")
+                
                 if not ai_content or not isinstance(ai_content, dict):
                     return Response(
                         {"error": "AI generated invalid content format", "success": False},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
-                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
+                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, cleaned_data)
             except Exception as e:
                 logger.error(f"AI Generation Error: {str(e)}", exc_info=True)
-                # Distinguish timeout from other errors
                 status_code = status.HTTP_504_GATEWAY_TIMEOUT if "timeout" in str(e).lower() else status.HTTP_500_INTERNAL_SERVER_ERROR
                 return Response(
                     {"error": f"AI Generation failed: {str(e)}", "success": False},
                     status=status_code
                 )
         else:
-            # Basic non-AI mapping
+            # Basic non-AI mapping using cleaned data
             template_vars = {
                 'primaryColor': firm_profile.get('primary_brand_color') or '',
                 'secondaryColor': firm_profile.get('secondary_brand_color') or '',
                 'companyName': firm_profile.get('firm_name') or '',
-                'mainTitle': answers_for_ai.get('main_topic') or lead_magnet.title,
-                'documentSubtitle': answers_for_ai.get('desired_outcome') or '',
+                'mainTitle': cleaned_data.get('main_topic') or lead_magnet.title,
+                'documentSubtitle': cleaned_data.get('desired_outcome') or 'Professional Insights',
                 'emailAddress': firm_profile.get('work_email') or '',
                 'phoneNumber': firm_profile.get('phone_number') or '',
                 'website': firm_profile.get('firm_website') or '',
@@ -263,7 +290,10 @@ def generate_pdf(request):
         # 6. PDF Generation
         template_service = DocRaptorService()
         try:
+            logger.info("📄 PDF Generation Start")
             result = template_service.generate_pdf(template_id, template_vars)
+            logger.info("📄 PDF Generation End")
+            
             if not result.get('success'):
                 err = result.get('error', 'PDF generation failed')
                 status_code = status.HTTP_504_GATEWAY_TIMEOUT if "timeout" in err.lower() else status.HTTP_500_INTERNAL_SERVER_ERROR
