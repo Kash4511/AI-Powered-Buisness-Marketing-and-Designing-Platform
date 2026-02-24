@@ -299,10 +299,17 @@ class PerplexityClient:
             return {}
 
         # 4. Core Mapping
+        def clean_sig(s):
+            if not isinstance(s, str): return ""
+            return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else s
+
+        main_title = ai_content.get("title") or clean_sig(user_answers.get("main_topic")) or "Expert Guide"
+        summary = ai_content.get("summary") or clean_sig(user_answers.get("desired_outcome")) or "Professional Insights"
+
         template_vars = {
-            "mainTitle": ai_content.get("title") or user_answers.get("main_topic") or "Expert Guide",
-            "documentTitle": (ai_content.get("title") or user_answers.get("main_topic") or "Expert Guide").upper(),
-            "documentSubtitle": ai_content.get("summary") or user_answers.get("desired_outcome") or "Professional Insights",
+            "mainTitle": main_title,
+            "documentTitle": str(main_title).upper(),
+            "documentSubtitle": summary,
             "companyName": company_name,
             "primaryColor": primary_color,
             "secondaryColor": secondary_color,
@@ -311,7 +318,7 @@ class PerplexityClient:
             "emailAddress": email,
             "phoneNumber": phone,
             "website": website,
-            "leadMagnetDescription": ai_content.get("summary", ""),
+            "leadMagnetDescription": summary,
             
             # Section Titles
             "sectionTitle3": get_sec(0).get("title", "Overview"),

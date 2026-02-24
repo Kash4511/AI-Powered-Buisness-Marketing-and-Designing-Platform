@@ -196,13 +196,13 @@ def generate_pdf(request):
         signals = ai_client.get_semantic_signals(all_answers)
         
         # Logging signal status
-         inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
-         reinterpreted = [k for k, v in signals.items() if v.startswith("REINTERPRET")]
-         logger.info(f"📊 Semantic Reinterpretation: Inferred: {inferred} | Reinterpreted: {reinterpreted}")
- 
-         # 4. Prepare Context for AI/PDF
-         try:
-             fp = FirmProfile.objects.get(user=request.user)
+        inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
+        reinterpreted = [k for k, v in signals.items() if v.startswith("REINTERPRET")]
+        logger.info(f"📊 Semantic Reinterpretation: Inferred: {inferred} | Reinterpreted: {reinterpreted}")
+
+        # 4. Prepare Context for AI/PDF
+        try:
+            fp = FirmProfile.objects.get(user=request.user)
             firm_profile = {
                 'firm_name': fp.firm_name or request.user.email.split('@')[0],
                 'work_email': fp.work_email or request.user.email,
@@ -231,30 +231,30 @@ def generate_pdf(request):
         if use_ai_content:
             try:
                 logger.info("🤖 AI Generation Start")
-                ai_content = ai_client.generate_lead_magnet_json(cleaned_data, firm_profile)
+                ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
                 logger.info("🤖 AI Generation End")
                 
                 if not ai_content or not isinstance(ai_content, dict):
                     return Response(
                         {"error": "AI generated invalid content format", "success": False},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        status=status.HTTP_502_BAD_GATEWAY
                     )
-                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, cleaned_data)
+                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
             except Exception as e:
                 logger.error(f"AI Generation Error: {str(e)}", exc_info=True)
-                status_code = status.HTTP_504_GATEWAY_TIMEOUT if "timeout" in str(e).lower() else status.HTTP_500_INTERNAL_SERVER_ERROR
                 return Response(
                     {"error": f"AI Generation failed: {str(e)}", "success": False},
-                    status=status_code
+                    status=status.HTTP_502_BAD_GATEWAY
                 )
         else:
-            # Basic non-AI mapping using cleaned data
+            # Basic non-AI mapping using signals (stripping REINTERPRET prefix for display)
+            def clean_sig(s): return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else ""
             template_vars = {
                 'primaryColor': firm_profile.get('primary_brand_color') or '',
                 'secondaryColor': firm_profile.get('secondary_brand_color') or '',
                 'companyName': firm_profile.get('firm_name') or '',
-                'mainTitle': cleaned_data.get('main_topic') or lead_magnet.title,
-                'documentSubtitle': cleaned_data.get('desired_outcome') or 'Professional Insights',
+                'mainTitle': clean_sig(signals.get('main_topic')) or lead_magnet.title,
+                'documentSubtitle': clean_sig(signals.get('desired_outcome')) or 'Professional Insights',
                 'emailAddress': firm_profile.get('work_email') or '',
                 'phoneNumber': firm_profile.get('phone_number') or '',
                 'website': firm_profile.get('firm_website') or '',
@@ -269,10 +269,9 @@ def generate_pdf(request):
             
             if not result.get('success'):
                 err = result.get('error', 'PDF generation failed')
-                status_code = status.HTTP_504_GATEWAY_TIMEOUT if "timeout" in err.lower() else status.HTTP_500_INTERNAL_SERVER_ERROR
                 return Response(
                     {"error": err, "details": result.get('details'), "success": False},
-                    status=status_code
+                    status=status.HTTP_502_BAD_GATEWAY
                 )
             
             pdf_data = result.get('pdf_data')
