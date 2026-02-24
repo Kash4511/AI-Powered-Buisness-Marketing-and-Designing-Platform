@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import requests
 import re
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 try:
     from dotenv import load_dotenv
@@ -197,19 +197,30 @@ class PerplexityClient:
         logo_url = (filtered_answers.get('brand_logo_url') or firm_profile.get('logo_url') or '').strip()
 
         # Brand colors: prefer user_answers brand_* then firm_profile brand_*, then generic; no hardcoded defaults
-        primary_color = (
+        # Ensure we always have valid hex strings (starting with #)
+        def _safe_color(c):
+            if not c: return ""
+            c = str(c).strip()
+            if not c.startswith('#'):
+                # Basic check for 3/6 char hex without #
+                if re.match(r'^[A-Fa-f0-9]{3}$|^[A-Fa-f0-9]{6}$', c):
+                    return '#' + c
+                return "" # Invalid color format
+            return c
+
+        primary_color = _safe_color(
             (filtered_answers.get('brand_primary_color') or '').strip()
             or (firm_profile.get('brand_primary_color') or '').strip()
             or (firm_profile.get('primary_brand_color') or '').strip()
             or (firm_profile.get('primary_color', '') or '').strip()
         )
-        secondary_color = (
+        secondary_color = _safe_color(
             (filtered_answers.get('brand_secondary_color') or '').strip()
             or (firm_profile.get('brand_secondary_color') or '').strip()
             or (firm_profile.get('secondary_brand_color') or '').strip()
             or (firm_profile.get('secondary_color', '') or '').strip()
         )
-        accent_color = (
+        accent_color = _safe_color(
             (filtered_answers.get('brand_accent_color') or '').strip()
             or (firm_profile.get('brand_accent_color') or '').strip()
             or (firm_profile.get('accent_brand_color') or '').strip()
@@ -365,16 +376,22 @@ class PerplexityClient:
         ai_content: Dict[str, Any],
         firm_profile: Optional[Dict[str, Any]] = None,
         user_answers: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, str]:
+    ) -> Dict[str, Any]:
+        """Safely map AI generated JSON content to template variables with extensive type checking."""
+        if not isinstance(ai_content, dict):
+            logger.error(f"AI content is not a dict: {type(ai_content)}")
+            ai_content = {}
+
         firm_profile = firm_profile or {}
         user_answers = user_answers or {}
-        style = ai_content.get("style", {})
-        cover = ai_content.get("cover", {})
-        contents = ai_content.get("contents", {})
-        sections = ai_content.get("sections", [])
-        contact = ai_content.get("contact", {})
-        terms = ai_content.get("terms", {})
-        brand = ai_content.get("brand", {})
+        
+        style = ai_content.get("style") if isinstance(ai_content.get("style"), dict) else {}
+        cover = ai_content.get("cover") if isinstance(ai_content.get("cover"), dict) else {}
+        contents = ai_content.get("contents") if isinstance(ai_content.get("contents"), dict) else {}
+        sections = ai_content.get("sections") if isinstance(ai_content.get("sections"), list) else []
+        contact = ai_content.get("contact") if isinstance(ai_content.get("contact"), dict) else {}
+        terms = ai_content.get("terms") if isinstance(ai_content.get("terms"), dict) else {}
+        brand = ai_content.get("brand") if isinstance(ai_content.get("brand"), dict) else {}
 
         # Colors: prefer AI style, fallback to firm_profile brand, then sensible defaults
         primary_color = (
@@ -450,14 +467,16 @@ class PerplexityClient:
         terms_paragraphs = terms.get("paragraphs", [])
         content_items = contents.get("items", [])
 
-        # Helper functions
+        # Helper functions with type checking
         def get_section(idx):
-            return sections[idx] if idx < len(sections) else {"title": "", "content": "", "subsections": []}
+            res = sections[idx] if idx < len(sections) else {"title": "", "content": "", "subsections": []}
+            return res if isinstance(res, dict) else {"title": "", "content": "", "subsections": []}
 
         def get_sub(section_idx, sub_idx):
             sec = get_section(section_idx)
-            subs = sec.get("subsections", [])
-            return subs[sub_idx] if sub_idx < len(subs) else {"title": "", "content": ""}
+            subs = sec.get("subsections", []) if isinstance(sec.get("subsections"), list) else []
+            res = subs[sub_idx] if sub_idx < len(subs) else {"title": "", "content": ""}
+            return res if isinstance(res, dict) else {"title": "", "content": ""}
 
         # Content length limiters to prevent overflow
         def truncate_text(text: str, max_chars: int) -> str:
@@ -816,9 +835,11 @@ class PerplexityClient:
         # Build template variables dict
         # Helpers
         def split_sentences(text: str) -> List[str]:
+            if not isinstance(text, str): return []
             parts = re.split(r"(?<=[.!?])\s+", (text or '').strip())
             return [p.strip() for p in parts if p.strip()]
         def get_or(items: List[str], idx: int, default: str = '') -> str:
+            if not isinstance(items, list): return default
             return items[idx] if idx < len(items) and items[idx] else default
         def step(n: int) -> str:
             return f"STEP {str(n).zfill(2)}"
@@ -1323,7 +1344,17 @@ class PerplexityClient:
         template_vars["imageLabel7"] = truncate_title(get_section(6).get("title", "") or template_vars.get("contentItem5", "Playbook"))
         template_vars["imageLabel8"] = truncate_title(get_section(7).get("title", "") or template_vars.get("contentItem6", "Action"))
 
-        final_cta = render_final_cta()
+        try:
+            final_cta = render_final_cta()
+        except Exception as e:
+            logger.error(f"Error rendering final CTA: {e}", exc_info=True)
+            final_cta = {
+                "section_title": "Next Step",
+                "description": "",
+                "offer_name": "Project Strategy Session",
+                "differentiator": "",
+                "action_text": "Contact us to get started."
+            }
         template_vars["sectionTitle8"] = final_cta.get("section_title", template_vars.get("sectionTitle8", "Next Step"))
         template_vars["contactDescription"] = truncate_content(final_cta.get("description", ""))
         template_vars["differentiatorTitle"] = final_cta.get("offer_name", "") or template_vars.get("differentiatorTitle", "")

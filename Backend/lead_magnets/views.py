@@ -139,8 +139,11 @@ def generate_pdf(request):
         if request.method == "OPTIONS":
             return Response(status=status.HTTP_200_OK)
 
+        logger.info(f"🚀 Starting PDF generation for request: {request.data}")
+
         # 1. Auth check
         if not getattr(request, "user", None) or not request.user.is_authenticated:
+            logger.warning("❌ Auth failed for generate_pdf")
             return Response(
                 {"error": "Authentication required", "success": False},
                 status=status.HTTP_401_UNAUTHORIZED,
