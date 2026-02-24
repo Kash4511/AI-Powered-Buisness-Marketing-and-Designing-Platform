@@ -179,24 +179,6 @@ class PerplexityClient:
                 
             return json_str
 
-    def debug_ai_content(self, ai_content: Dict[str, Any]):
-        """Debug function to see what the AI actually returned"""
-        try:
-            logger.info("🔍 DEBUG AI CONTENT STRUCTURE:")
-            logger.info(f"Style: {ai_content.get('style', {})}")
-            logger.info(f"Cover: {ai_content.get('cover', {})}")
-            logger.info(f"Contents items: {ai_content.get('contents', {}).get('items', [])}")
-            sections = ai_content.get('sections', [])
-            logger.info(f"Number of sections: {len(sections)}")
-            for i, section in enumerate(sections):
-                title = section.get('title', 'NO TITLE')
-                content = section.get('content', 'NO CONTENT')
-                logger.info(f"Section {i}: {title}")
-                logger.info(f"  Content: {str(content)[:100]}...")
-            logger.info(f"Contact: {ai_content.get('contact', {})}")
-        except Exception as e:
-            logger.error(f"🔴 DEBUG AI CONTENT ERROR: {e}")
-
 
     def _is_meaningful(self, value: Any) -> bool:
         """
@@ -567,19 +549,22 @@ class PerplexityClient:
             if not isinstance(s, str): return ""
             return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else s
 
-        main_title = str(ai_content.get("title") or clean_sig(user_answers.get("main_topic")) or "Expert Guide").strip()
-        summary = str(ai_content.get("summary") or clean_sig(user_answers.get("desired_outcome")) or "Professional Insights").strip()
+        main_topic = clean_sig(user_answers.get("main_topic")) or "Strategic Framework"
+        main_title = str(ai_content.get("title") or f"{main_topic}: Executive Guide").strip()
+        summary = str(ai_content.get("summary") or "A comprehensive guide to strategic excellence.").strip()
         
         # Split title for cover lines safely
         title_parts = main_title.split(":", 1)
         headline_1 = title_parts[0].strip()
-        headline_2 = title_parts[1].strip() if len(title_parts) > 1 else "Executive Guide"
+        headline_2 = title_parts[1].strip() if len(title_parts) > 1 else "Professional Report"
 
         # Extract CTA parts
         cta_obj = ai_content.get("call_to_action", {})
         if not isinstance(cta_obj, dict): cta_obj = {}
 
+        # Derived Page Content for the complex Template.html
         template_vars = {
+            # --- Metadata ---
             "mainTitle": main_title,
             "documentTitle": main_title.upper(),
             "documentSubtitle": summary,
@@ -593,7 +578,7 @@ class PerplexityClient:
             "website": website,
             "leadMagnetDescription": summary,
             
-            # Derived Palette
+            # --- Colors ---
             "primary10Color": p_vars.get("10") or primary_color,
             "primary20Color": p_vars.get("20") or primary_color,
             "primary40Color": p_vars.get("40") or primary_color,
@@ -605,53 +590,111 @@ class PerplexityClient:
             "ruleColor": p_vars.get("20") or primary_color,
             "textColor": "#333333",
             "mutedColor": "#666666",
-            
-            # Cover Page mapping
-            "coverSeriesLabel": "STRATEGIC REPORT",
-            "coverEyebrow": "EXCLUSIVE INSIGHTS",
+
+            # --- Page 1 (Cover) ---
+            "coverSeriesLabel": "EXECUTIVE SERIES",
+            "coverEyebrow": "STRATEGIC ANALYSIS",
             "coverHeadlineLine1": headline_1,
             "coverHeadlineLine2": headline_2,
             "coverHeadlineLine3": company_name,
             "coverTagline": str(ai_content.get("outcome_statement") or summary).strip(),
-            
-            # Page 1 stats (synthesized or generic)
             "stat1Value": "100%", "stat1Label": "PROFESSIONAL",
-            "stat2Value": "AI", "stat2Label": "DRIVEN",
-            "stat3Value": "2026", "stat3Label": "EDITION",
+            "stat2Value": "AI", "stat2Label": "OPTIMIZED",
+            "stat3Value": datetime.now().year, "stat3Label": "EDITION",
 
-            # Section Titles
+            # --- Page 2 (Terms) ---
             "sectionTitle1": "Introduction",
-            "sectionTitle2": "Strategic Overview",
-            "sectionTitle3": str(get_sec(0).get("title") or ""),
-            "sectionTitle4": str(get_sec(1).get("title") or ""),
-            "sectionTitle5": str(get_sec(2).get("title") or ""),
-            "sectionTitle6": str(get_sec(3).get("title") or ""),
-            "sectionTitle7": str(get_sec(4).get("title") or ""),
-            
-            # Chapter Labels
-            "chapterLabel1": "CHAPTER 01",
-            "chapterLabel2": "CHAPTER 02",
-            "chapterLabel3": "CHAPTER 03",
-            
-            # Section Content - Guarding missing keys and ensuring string types
+            "termsHeadlineLine1": "Strategic",
+            "termsHeadlineLine2": "Perspective",
+            "termsParagraph1": summary,
+            "termsParagraph2": "This guide provides expert insights designed to facilitate professional growth and strategic alignment.",
+            "termsPullQuote": "Strategy is not about being different, but about making a difference.",
+            "termsParagraph3": "Our approach combines data-driven analysis with practical implementation frameworks.",
+            "termsParagraph4": "We empower organizations to navigate complexity with clarity and purpose.",
+
+            # --- Page 3 (TOC) ---
+            "sectionTitle2": "Contents",
+            "tocHeadlineLine1": "Strategic",
+            "tocHeadlineLine2": "Roadmap",
+            "tocSubtitle": "An overview of the key insights and frameworks included in this guide.",
+            "contentItem1": "Introduction", "contentItem1Sub": "Setting the stage for excellence",
+            "contentItem2": "Strategic Overview", "contentItem2Sub": "The landscape of opportunity",
+            "contentItem3": str(get_sec(0).get("title") or "Foundations"), "contentItem3Sub": "Core principles for success",
+            "contentItem4": str(get_sec(1).get("title") or "Strategy"), "contentItem4Sub": "Driving measurable impact",
+            "contentItem5": str(get_sec(2).get("title") or "Execution"), "contentItem5Sub": "Turning vision into reality",
+            "contentItem6": "Best Practices", "contentItem6Sub": "Maintaining the edge",
+            "contentItem7": "Next Steps", "contentItem7Sub": "Taking the lead",
+            "contentItem8": "Conclusion", "contentItem8Sub": "Final reflections",
+            "contentItem9": "Resources", "contentItem9Sub": "Tools for growth",
+            "contentItem10": "Action Plan", "contentItem10Sub": "Your path forward",
+
+            # --- Page 4 (Chapter 1) ---
+            "sectionLabel3": "CHAPTER 01",
+            "chapterLabel1": "01",
             "customTitle1": str(get_sec(0).get("title") or ""),
             "customContent1": str(get_sec(0).get("content") or ""),
+            "customContent1b": "", # Extra paragraph space
+            "imageLabel1": "STRATEGY HERO",
+            "imageCaption1": "Mapping the path to strategic alignment.",
+            "subheading1": "Core Insight",
+            "subcontent1": "Achieving sustainable growth requires a balance of innovation and operational discipline.",
+            "calloutLabel1": "KEY TAKEAWAY",
+            "calloutContent1": "Success is measured by the clarity of your intent and the consistency of your execution.",
+
+            # --- Page 5 (Chapter 2) ---
+            "sectionLabel4": "CHAPTER 02",
+            "chapterLabel2": "02",
             "customTitle2": str(get_sec(1).get("title") or ""),
             "customContent2": str(get_sec(1).get("content") or ""),
+            "pullQuote1": str((ai_content.get("key_insights") or ["Focus on what matters most to drive results."])[0]),
+            "subheading2": "Analysis",
+            "subcontent2": "Deep-dive analysis reveals the hidden opportunities within your current framework.",
+            "listItem1": "Identify core value drivers",
+            "listItem2": "Optimize resource allocation",
+            "listItem3": "Enhance stakeholder engagement",
+            "listItem4": "Measure and iterate",
+            "listFollowup2": "By following these steps, organizations can achieve a more resilient operational model.",
+
+            # --- Page 6 (Chapter 3) ---
+            "sectionLabel5": "CHAPTER 03",
+            "chapterLabel3": "03",
             "customTitle3": str(get_sec(2).get("title") or ""),
             "customContent3": str(get_sec(2).get("content") or ""),
+            "imageLabel2": "OPERATIONAL VIEW",
+            "imageCaption2": "Visualizing the components of successful execution.",
+            "page6Stat1Value": "85%", "page6Stat1Desc": "Improvement in alignment",
+            "page6Stat2Value": "2.4x", "page6Stat2Desc": "Increase in efficiency",
+            "page6Stat3Value": "10k", "page6Stat3Unit": "+", "page6Stat3Desc": "Data points analyzed",
+            "subheading3": "Framework",
+            "subcontent3": "Our proven framework simplifies complex challenges into actionable strategic pillars.",
+            "infoBoxLabel1": "QUICK TIP",
+            "infoBoxContent1": "Always validate your assumptions against real-world performance metrics.",
+
+            # --- Page 7 (Chapter 4) ---
+            "sectionLabel6": "CHAPTER 04",
+            "chapterLabel4": "04",
             "customTitle4": str(get_sec(3).get("title") or ""),
             "customContent4": str(get_sec(3).get("content") or ""),
+            "colCard1Title": "INNOVATION", "colCard1Content": "Staying ahead requires a culture of continuous learning and adaptation.",
+            "colCard2Title": "AGILITY", "colCard2Content": "The ability to pivot quickly is the ultimate competitive advantage.",
+            "subheading4": "Best Practices",
+            "subcontent4": "Consistency is the bridge between goals and accomplishment.",
+            "calloutLabel2": "PRO TIP",
+            "calloutContent2": "Automate routine tasks to free up cognitive bandwidth for high-value strategic work.",
+
+            # --- Page 8 (Chapter 5) ---
+            "sectionLabel7": "CHAPTER 05",
+            "chapterLabel5": "05",
             "customTitle5": str(get_sec(4).get("title") or ""),
             "customContent5": str(get_sec(4).get("content") or ""),
-            
-            # Contact / CTA Page
+
+            # --- Contact / CTA Page ---
             "ctaHeadlineLine1": "READY TO",
             "ctaHeadlineLine2": "TAKE ACTION?",
             "ctaEyebrow": "NEXT STEPS",
-            "ctaTitle": str(cta_obj.get("headline") or ""),
-            "ctaText": str(cta_obj.get("description") or ""),
-            "ctaButtonText": str(cta_obj.get("button_text") or ""),
+            "ctaTitle": str(cta_obj.get("headline") or "Start Your Journey"),
+            "ctaText": str(cta_obj.get("description") or "We are ready to help you turn these insights into measurable growth."),
+            "ctaButtonText": str(cta_obj.get("button_text") or "Connect Now"),
             "contactLabel1": "EMAIL", "contactValue1": email,
             "contactLabel2": "PHONE", "contactValue2": phone,
             "contactLabel3": "WEB", "contactValue3": website,
@@ -659,7 +702,7 @@ class PerplexityClient:
         }
 
         # Logging for observability
-        print(f"📊 Template Mapping: {len(sections)} sections mapped. Title: '{main_title[:30]}...'")
+        logger.info(f"📊 Template Mapping: {len(sections)} sections mapped. Title: '{main_title[:30]}...'")
 
         # Add page numbering and headers (standard for our templates)
         for i in range(1, 15):

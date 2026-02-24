@@ -646,16 +646,15 @@ class FormaAIConversationView(APIView):
             ai_content = ai_client.normalize_ai_output(raw_ai_content)
             
             # Step 4: Content Guarantee Layer
-            # Ensure no empty sections before rendering
-            ai_content['sections'] = ai_client.ensure_section_content(ai_content.get('sections', []), signals, firm_profile)
-            
-            ai_client.debug_ai_content(ai_content)
-        except Exception as e:
+             # Ensure no empty sections before rendering
+             ai_content['sections'] = ai_client.ensure_section_content(ai_content.get('sections', []), signals, firm_profile)
+             
+         except Exception as e:
             ai_error = f"AI generation failed: {str(e)}"
             logger.error(f"FormaAI AI Error: {ai_error}\n{traceback.format_exc()}")
             conversation.messages.append({'role': 'assistant', 'content': ai_error})
             conversation.save()
-            return Response({'error': 'AI content generation failed', 'details': ai_error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'AI content generation failed', 'details': ai_error}, status=status.HTTP_502_BAD_GATEWAY)
 
         # Map AI JSON to template variables (Structure Safe)
         template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
@@ -772,20 +771,13 @@ class GenerateDocumentPreviewView(APIView):
 
             final_html = render_template(template_html, template_vars)
 
-            # Optionally save preview HTML alongside existing preview method
-            service = DocRaptorService()
-            preview_path = service._save_preview_html(template_id, final_html)
-
             return Response({
                 'success': True,
-                'preview_html': final_html,
-                'preview_path': preview_path
+                'preview_html': final_html
             }, status=status.HTTP_200_OK)
         except Exception as e:
-            import traceback
-            print(f"❌ GenerateDocumentPreviewView error: {e}")
-            print(traceback.format_exc())
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"❌ GenerateDocumentPreviewView error: {e}\n{traceback.format_exc()}")
+            return Response({'error': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
 
 class BrandAssetsPDFPreviewView(APIView):
     """Generate a PDF preview of saved brand assets (company info, colors, logo)."""
