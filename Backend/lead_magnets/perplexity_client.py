@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import requests
 import re
+import logging
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 try:
@@ -10,6 +11,7 @@ try:
 except ImportError:
     load_dotenv = None
 
+logger = logging.getLogger(__name__)
 
 class PerplexityClient:
     """Client for interacting with Perplexity AI API for lead magnet content generation"""
@@ -24,7 +26,7 @@ class PerplexityClient:
                 pass
         self.api_key = os.getenv('PERPLEXITY_API_KEY')
         self.base_url = "https://api.perplexity.ai/chat/completions"
-        print(f"DEBUG: PerplexityClient initialized; key present: {bool(self.api_key)}")
+        logger.info(f"PerplexityClient initialized; key present: {bool(self.api_key)}")
         
     def interpret_field(self, field_value: Any) -> str:
         """
@@ -60,17 +62,17 @@ class PerplexityClient:
 
     def generate_lead_magnet_json(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         if not self.api_key:
-            print("❌ PERPLEXITY_API_KEY missing")
+            logger.error("❌ PERPLEXITY_API_KEY missing")
             raise Exception("PERPLEXITY_API_KEY is not configured")
 
         model_to_use = "sonar"
         try:
-            print(f"Generating AI content with signals (15s timeout)...")
+            logger.info(f"Generating AI content with signals (12s timeout)...")
             
             # Log which fields are being inferred vs reinterpreted
             inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
             reinterpreted = [k for k, v in signals.items() if v.startswith("REINTERPRET")]
-            print(f"📊 AI Signal Mapping: Inferred: {inferred} | Reinterpreted: {reinterpreted}")
+            logger.info(f"📊 AI Signal Mapping: Inferred: {inferred} | Reinterpreted: {reinterpreted}")
 
             response = requests.post(
                 self.base_url,
@@ -84,31 +86,31 @@ class PerplexityClient:
                         "messages": [
                             {
                                 "role": "system",
-                                "content": "You are an expert professional content generator. You only output valid JSON."
+                                "content": "You are a professional strategist. Output ONLY valid JSON. Be concise but deep."
                             },
                             {
                                 "role": "user",
                                 "content": self._create_content_prompt(signals, firm_profile)
                             }
                         ],
-                        "max_tokens": 2500,
+                        "max_tokens": 1200,
                         "temperature": 0.7
                     },
-                    timeout=15
+                    timeout=12
                 )
         except requests.exceptions.Timeout:
-            print("❌ Perplexity API timeout (15s)")
-            raise Exception("AI content generation timed out (15s limit). Please try again.")
+            logger.error("❌ Perplexity API timeout (12s)")
+            raise Exception("AI content generation timed out (12s limit).")
         except requests.exceptions.RequestException as e:
-            print(f"❌ Perplexity API request error: {e}")
+            logger.error(f"❌ Perplexity API request error: {e}")
             raise Exception(f"Perplexity API request error: {e}")
         except Exception as e:
-            print(f"❌ Error calling Perplexity API: {str(e)}")
+            logger.error(f"❌ Error calling Perplexity API: {str(e)}")
             raise
 
-        print(f"Perplexity response status: {response.status_code}")
+        logger.info(f"Perplexity response status: {response.status_code}")
         if response.status_code != 200:
-            print(f"❌ Perplexity API error: {response.status_code} - {response.text}")
+            logger.error(f"❌ Perplexity API error: {response.status_code} - {response.text}")
             raise Exception(f"Perplexity API error: {response.status_code} - {response.text}")
 
         result = response.json()
@@ -118,10 +120,9 @@ class PerplexityClient:
             content = json.loads(json_content)
             return content
         except json.JSONDecodeError as e:
-            print(f"❌ Failed to parse JSON from Perplexity response: {e}")
-            print(f"Raw content: {repr(message_content)}")
-            print(f"Extracted JSON: {repr(json_content)}")
-            raise Exception("Invalid JSON returned from Perplexity API")
+            logger.error(f"❌ Failed to parse JSON from Perplexity response: {e}")
+            logger.error(f"RAW CONTENT PREVIEW: {repr(message_content)[:200]}...")
+            raise Exception("Invalid JSON returned from Perplexity API. Raw content logged to server.")
 
     def _extract_json_from_markdown(self, content: str) -> str:
         """
@@ -143,21 +144,20 @@ class PerplexityClient:
     def debug_ai_content(self, ai_content: Dict[str, Any]):
         """Debug function to see what the AI actually returned"""
         try:
-            print("🔍 DEBUG AI CONTENT STRUCTURE:")
-            print(f"Style: {ai_content.get('style', {})}")
-            print(f"Cover: {ai_content.get('cover', {})}")
-            print(f"Contents items: {ai_content.get('contents', {}).get('items', [])}")
+            logger.info("🔍 DEBUG AI CONTENT STRUCTURE:")
+            logger.info(f"Style: {ai_content.get('style', {})}")
+            logger.info(f"Cover: {ai_content.get('cover', {})}")
+            logger.info(f"Contents items: {ai_content.get('contents', {}).get('items', [])}")
             sections = ai_content.get('sections', [])
-            print(f"Number of sections: {len(sections)}")
+            logger.info(f"Number of sections: {len(sections)}")
             for i, section in enumerate(sections):
                 title = section.get('title', 'NO TITLE')
                 content = section.get('content', 'NO CONTENT')
-                print(f"Section {i}: {title}")
-                print(f"  Content: {str(content)[:100]}...")
-                print(f"  Subsections: {len(section.get('subsections', []))}")
-            print(f"Contact: {ai_content.get('contact', {})}")
+                logger.info(f"Section {i}: {title}")
+                logger.info(f"  Content: {str(content)[:100]}...")
+            logger.info(f"Contact: {ai_content.get('contact', {})}")
         except Exception as e:
-            print(f"🔴 DEBUG AI CONTENT ERROR: {e}")
+            logger.error(f"🔴 DEBUG AI CONTENT ERROR: {e}")
 
 
     def _is_meaningful(self, value: Any) -> bool:
@@ -184,7 +184,7 @@ class PerplexityClient:
         lowered = v.lower()
         fillers = {
             "test", "testing", "none", "n/a", "na", "null", "empty", "ok", "yes", "no", 
-            "placeholder", "asdf", "qwerty", "lorem", "ipsum", "...", "h", "ok."
+            "placeholder", "asdf", "qwerty", "lorem", "ipsum", "...", "h", "ok.", ".", "-"
         }
         if lowered in fillers:
             return False
@@ -231,10 +231,7 @@ class PerplexityClient:
             "sections": [
                 {{
                     "title": "Section Title",
-                    "content": "A substantial, professional paragraph (min 60 words) providing deep insight.",
-                    "subsections": [
-                        {{"title": "Key Point", "content": "Professional detail"}}
-                    ]
+                    "content": "A substantial, professional paragraph (min 40 words) providing deep insight."
                 }}
             ],
             "key_insights": ["Strategic Insight 1", "Strategic Insight 2", "Strategic Insight 3"],
@@ -246,7 +243,7 @@ class PerplexityClient:
             }}
         }}
         
-        IMPORTANT: Provide at least 5 deep-dive sections.
+        IMPORTANT: Provide 3-4 deep-dive sections. Do not include nested subsections; keep sections flat.
         """
         return prompt.strip()
         
@@ -353,8 +350,28 @@ class PerplexityClient:
         if not normalized["sections"]:
             normalized["sections"] = []
 
-        print(f"✅ AI Normalization Complete: {len(normalized['sections'])} sections secured.")
+        logger.info(f"✅ AI Normalization Complete: {len(normalized['sections'])} sections secured.")
         return normalized
+
+    def _derive_colors(self, hex_color: str) -> Dict[str, str]:
+        """Derives opacity variants of a hex color for the template."""
+        if not hex_color or not hex_color.startswith("#") or len(hex_color) != 7:
+            return {}
+        
+        # Simple implementation: just return rgba versions for the CSS variables
+        try:
+            r = int(hex_color[1:3], 16)
+            g = int(hex_color[3:5], 16)
+            b = int(hex_color[5:7], 16)
+            return {
+                "10": f"rgba({r}, {g}, {b}, 0.1)",
+                "20": f"rgba({r}, {g}, {b}, 0.2)",
+                "40": f"rgba({r}, {g}, {b}, 0.4)",
+                "60": f"rgba({r}, {g}, {b}, 0.6)",
+                "80": f"rgba({r}, {g}, {b}, 0.8)",
+            }
+        except Exception:
+            return {}
 
     def map_to_template_vars(
         self,
@@ -381,6 +398,9 @@ class PerplexityClient:
         primary_color = str(firm_profile.get("primary_brand_color") or "#2a5766")
         secondary_color = str(firm_profile.get("secondary_brand_color") or "#ffffff")
         accent_color = "#F4A460"
+        
+        p_vars = self._derive_colors(primary_color)
+        s_vars = self._derive_colors(secondary_color)
         
         # 3. Content Extraction from Structured AI JSON
         sections = ai_content.get("sections", [])
@@ -425,6 +445,19 @@ class PerplexityClient:
             "website": website,
             "leadMagnetDescription": summary,
             
+            # Derived Palette
+            "primary10Color": p_vars.get("10") or primary_color,
+            "primary20Color": p_vars.get("20") or primary_color,
+            "primary40Color": p_vars.get("40") or primary_color,
+            "primary80Color": p_vars.get("80") or primary_color,
+            "secondary10Color": s_vars.get("10") or secondary_color,
+            "secondary20Color": s_vars.get("20") or secondary_color,
+            "secondary60Color": s_vars.get("60") or secondary_color,
+            "secondaryDarkColor": s_vars.get("80") or secondary_color,
+            "ruleColor": p_vars.get("20") or primary_color,
+            "textColor": "#333333",
+            "mutedColor": "#666666",
+            
             # Cover Page mapping
             "coverSeriesLabel": "STRATEGIC REPORT",
             "coverEyebrow": "EXCLUSIVE INSIGHTS",
@@ -441,11 +474,11 @@ class PerplexityClient:
             # Section Titles
             "sectionTitle1": "Introduction",
             "sectionTitle2": "Strategic Overview",
-            "sectionTitle3": str(get_sec(0).get("title") or "Foundations"),
-            "sectionTitle4": str(get_sec(1).get("title") or "Key Strategy"),
-            "sectionTitle5": str(get_sec(2).get("title") or "Implementation"),
-            "sectionTitle6": str(get_sec(3).get("title") or "Best Practices"),
-            "sectionTitle7": str(get_sec(4).get("title") or "Next Steps"),
+            "sectionTitle3": str(get_sec(0).get("title") or ""),
+            "sectionTitle4": str(get_sec(1).get("title") or ""),
+            "sectionTitle5": str(get_sec(2).get("title") or ""),
+            "sectionTitle6": str(get_sec(3).get("title") or ""),
+            "sectionTitle7": str(get_sec(4).get("title") or ""),
             
             # Chapter Labels
             "chapterLabel1": "CHAPTER 01",
@@ -468,9 +501,9 @@ class PerplexityClient:
             "ctaHeadlineLine1": "READY TO",
             "ctaHeadlineLine2": "TAKE ACTION?",
             "ctaEyebrow": "NEXT STEPS",
-            "ctaTitle": str(cta_obj.get("headline") or "Partner with Us"),
-            "ctaText": str(cta_obj.get("description") or "We help you turn these insights into measurable growth."),
-            "ctaButtonText": str(cta_obj.get("button_text") or "Get Started"),
+            "ctaTitle": str(cta_obj.get("headline") or ""),
+            "ctaText": str(cta_obj.get("description") or ""),
+            "ctaButtonText": str(cta_obj.get("button_text") or ""),
             "contactLabel1": "EMAIL", "contactValue1": email,
             "contactLabel2": "PHONE", "contactValue2": phone,
             "contactLabel3": "WEB", "contactValue3": website,
@@ -512,11 +545,11 @@ class PerplexityClient:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "llama-3-sonar-large-32k-online",
+                    "model": "sonar",
                     "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 30,
+                    "max_tokens": 50,
                 },
-                timeout=15
+                timeout=5
             )
             response.raise_for_status()
             slogan = response.json()['choices'][0]['message']['content'].strip()

@@ -2,6 +2,8 @@ import os
 import logging
 import json
 import uuid
+import time
+import traceback
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -229,19 +231,23 @@ def generate_pdf(request):
 
         if use_ai_content:
             try:
+                start_ai = time.time()
                 # 5.1 AI Call
                 logger.info("🤖 AI Generation Start (Step 2)")
                 raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                ai_duration = time.time() - start_ai
                 
-                # Mandatory Logging: AI raw type
-                logger.info(f"📊 AI RAW TYPE: {type(raw_ai_content)}")
+                # Mandatory Logging: AI raw type and duration
+                logger.info(f"📊 AI RAW TYPE: {type(raw_ai_content)} | Duration: {ai_duration:.2f}s")
 
                 # 5.2 Mandatory Normalization Layer (Step 3)
+                start_norm = time.time()
                 ai_content = ai_client.normalize_ai_output(raw_ai_content)
+                norm_duration = time.time() - start_norm
                 
                 # Mandatory Logging: Section count after normalization
                 sections = ai_content.get('sections', [])
-                logger.info(f"✅ AI Content Normalized. Section Count: {len(sections)}")
+                logger.info(f"✅ AI Content Normalized. Count: {len(sections)} | Duration: {norm_duration:.2f}s")
                 
                 # Mandatory Logging: First section preview length
                 if sections:
@@ -254,7 +260,6 @@ def generate_pdf(request):
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
                 
             except Exception as e:
-                import traceback
                 # Mandatory Logging: Traceback on failure
                 logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
                 return Response(
@@ -279,12 +284,14 @@ def generate_pdf(request):
         # PDF renderer only receives plain strings (enforced in map_to_template_vars)
         template_service = DocRaptorService()
         try:
+            start_pdf = time.time()
             logger.info("📄 PDF Generation Start (Step 4)")
             result = template_service.generate_pdf(template_id, template_vars)
+            pdf_duration = time.time() - start_pdf
             
             if not result.get('success'):
                 err = result.get('error', 'PDF generation failed')
-                logger.error(f"❌ PDF Failure: {err}")
+                logger.error(f"❌ PDF Failure: {err} | Duration: {pdf_duration:.2f}s")
                 return Response(
                     {"error": err, "details": result.get('details'), "success": False},
                     status=status.HTTP_502_BAD_GATEWAY
@@ -298,7 +305,7 @@ def generate_pdf(request):
             lead_magnet.status = 'completed'
             lead_magnet.save(update_fields=['status'])
             
-            logger.info("✅ PDF Generation Deterministic Success")
+            logger.info(f"✅ PDF Generation Success | Duration: {pdf_duration:.2f}s")
             
             # Return as file response
             response = HttpResponse(pdf_data, content_type='application/pdf')
@@ -306,7 +313,6 @@ def generate_pdf(request):
             return response
 
         except Exception as e:
-            import traceback
             # Mandatory Logging: Traceback on failure
             logger.error(f"❌ PDF Rendering Error: {str(e)}\n{traceback.format_exc()}")
             return Response(
@@ -315,7 +321,6 @@ def generate_pdf(request):
             )
 
     except Exception as e:
-        import traceback
         # Mandatory Logging: Traceback on failure
         logger.critical(f"❌ Critical View Error: {str(e)}\n{traceback.format_exc()}")
         return Response(
@@ -624,16 +629,24 @@ class FormaAIConversationView(APIView):
         template_service = DocRaptorService()
 
         try:
-            ai_content = ai_client.generate_lead_magnet_json(user_answers=user_answers, firm_profile=firm_profile)
+            # Step 1: Signals (Derived from message)
+            signals = ai_client.get_semantic_signals(user_answers)
+            
+            # Step 2: AI Call
+            raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
+            
+            # Step 3: Mandatory Normalization
+            ai_content = ai_client.normalize_ai_output(raw_ai_content)
             ai_client.debug_ai_content(ai_content)
         except Exception as e:
             ai_error = f"AI generation failed: {str(e)}"
+            logger.error(f"FormaAI AI Error: {ai_error}\n{traceback.format_exc()}")
             conversation.messages.append({'role': 'assistant', 'content': ai_error})
             conversation.save()
             return Response({'error': 'AI content generation failed', 'details': ai_error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Map AI JSON to template variables
-        template_vars = ai_client.map_to_template_vars(ai_content, firm_profile)
+        # Map AI JSON to template variables (Structure Safe)
+        template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
 
         # Clean stock subtitle phrasing if the model echoed inputs
         import re
@@ -729,8 +742,11 @@ class GenerateDocumentPreviewView(APIView):
                 return Response({'error': 'user_answers and firm_profile must be provided as objects'}, status=status.HTTP_400_BAD_REQUEST)
 
             ai_client = PerplexityClient()
-            ai_data = ai_client.generate_lead_magnet_json(user_answers=user_answers, firm_profile=firm_profile)
-            template_vars = ai_client.map_to_template_vars(ai_data, firm_profile)
+            # Structure-Safe Pipeline
+            signals = ai_client.get_semantic_signals(user_answers)
+            raw_ai_data = ai_client.generate_lead_magnet_json(signals, firm_profile)
+            ai_data = ai_client.normalize_ai_output(raw_ai_data)
+            template_vars = ai_client.map_to_template_vars(ai_data, firm_profile, signals)
 
             # Load template HTML
             templates_dir = os.path.join(settings.BASE_DIR, 'lead_magnets', 'templates')
