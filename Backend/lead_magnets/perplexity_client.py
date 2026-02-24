@@ -4,6 +4,7 @@ import json
 import requests
 import re
 import logging
+import concurrent.futures
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 try:
@@ -17,16 +18,27 @@ class PerplexityClient:
     """Client for interacting with Perplexity AI API for lead magnet content generation"""
     
     def __init__(self):
-        # Ensure .env is loaded in server context
+        # 1. Load .env from both project root and Backend/
         if load_dotenv:
-            env_path = Path(__file__).resolve().parents[1] / '.env'
-            try:
-                load_dotenv(env_path)
-            except Exception:
-                pass
+            # Try current Backend/ directory
+            backend_env = Path(__file__).resolve().parents[1] / '.env'
+            # Try project root (one level above Backend/)
+            root_env = Path(__file__).resolve().parents[2] / '.env'
+            
+            for env_path in [backend_env, root_env]:
+                if env_path.exists():
+                    try:
+                        load_dotenv(env_path)
+                        logger.info(f"✅ Loaded .env from: {env_path}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Failed to load .env from {env_path}: {e}")
+        
         self.api_key = os.getenv('PERPLEXITY_API_KEY')
         self.base_url = "https://api.perplexity.ai/chat/completions"
-        logger.info(f"PerplexityClient initialized; key present: {bool(self.api_key)}")
+        if not self.api_key:
+            logger.warning("⚠️ PERPLEXITY_API_KEY not found in environment variables or .env")
+        else:
+            logger.info("✅ PerplexityClient initialized with API key")
         
     def interpret_field(self, field_value: Any) -> str:
         """
@@ -67,7 +79,7 @@ class PerplexityClient:
 
         model_to_use = "sonar"
         try:
-            logger.info(f"Generating AI content with signals (12s timeout)...")
+            logger.info(f"Generating AI content with signals (10s timeout)...")
             
             # Log which fields are being inferred vs reinterpreted
             inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
@@ -96,11 +108,11 @@ class PerplexityClient:
                         "max_tokens": 1200,
                         "temperature": 0.7
                     },
-                    timeout=12
+                    timeout=10
                 )
         except requests.exceptions.Timeout:
-            logger.error("❌ Perplexity API timeout (12s)")
-            raise Exception("AI content generation timed out (12s limit).")
+            logger.error("❌ Perplexity API timeout (10s)")
+            raise Exception("AI content generation timed out (10s limit).")
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ Perplexity API request error: {e}")
             raise Exception(f"Perplexity API request error: {e}")
@@ -377,35 +389,54 @@ class PerplexityClient:
     def ensure_section_content(self, sections: List[Dict[str, str]], signals: Dict[str, str], firm_profile: Dict[str, Any]) -> List[Dict[str, str]]:
         """
         Content Guarantee Layer: Ensures no section has empty or too short content.
-        Regenerates sections that fail the quality check using targeted AI calls.
+        Regenerates sections that fail the quality check in PARALLEL to save time.
         """
         if not sections:
             logger.warning("⚠️ ensure_section_content: No sections to check.")
             return []
 
         MIN_THRESHOLD = 40  # Minimum characters for meaningful content
-        regenerated_count = 0
+        indices_to_regenerate = []
         
         for idx, sec in enumerate(sections):
             content = str(sec.get("content", "")).strip()
-            title = str(sec.get("title", "")).strip()
-            
-            # Check for empty or too short content
             if not content or len(content) < MIN_THRESHOLD:
-                logger.info(f"❗ Section {idx} ('{title}') is empty or too short ({len(content)} chars). Regenerating...")
-                
+                indices_to_regenerate.append(idx)
+        
+        if not indices_to_regenerate:
+            logger.info(f"📊 Content Guarantee Complete. All {len(sections)} sections are healthy.")
+            return sections
+
+        logger.info(f"❗ Found {len(indices_to_regenerate)} empty or short sections (indices: {indices_to_regenerate}). Starting parallel regeneration...")
+
+        # Run regenerations in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(indices_to_regenerate)) as executor:
+            # Map futures to their section indices
+            future_to_idx = {
+                executor.submit(
+                    self.regenerate_section_content, 
+                    sections[idx].get("title", "Strategic Section"), 
+                    signals, 
+                    firm_profile
+                ): idx for idx in indices_to_regenerate
+            }
+            
+            regenerated_count = 0
+            for future in concurrent.futures.as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                title = sections[idx].get("title", "Strategic Section")
                 try:
-                    new_content = self.regenerate_section_content(title, signals, firm_profile)
+                    new_content = future.result()
                     if new_content and len(new_content) >= MIN_THRESHOLD:
-                        sec["content"] = new_content
+                        sections[idx]["content"] = new_content
                         regenerated_count += 1
-                        logger.info(f"✅ Section '{title}' regenerated successfully ({len(new_content)} chars).")
+                        logger.info(f"✅ Section '{title}' (idx: {idx}) regenerated successfully ({len(new_content)} chars).")
                     else:
-                        logger.error(f"❌ Regeneration for '{title}' failed to produce meaningful content.")
+                        logger.error(f"❌ Regeneration for '{title}' (idx: {idx}) failed to produce meaningful content.")
                         raise Exception(f"Content synthesis failed for section: {title}")
                 except Exception as e:
-                    logger.error(f"❌ Critical failure in content guarantee for '{title}': {str(e)}")
-                    raise  # Raise to ensure the view returns a 502
+                    logger.error(f"❌ Critical failure in content guarantee for '{title}' (idx: {idx}): {str(e)}")
+                    raise
 
         logger.info(f"📊 Content Guarantee Complete. Regenerated {regenerated_count} sections. Final count: {len(sections)}")
         return sections
@@ -461,7 +492,7 @@ class PerplexityClient:
             
             return content
         except Exception as e:
-            logger.error(f"Error in regenerate_section_content: {str(e)}")
+            logger.error(f"Error in regenerate_section_content for '{section_title}': {str(e)}")
             return ""
 
     def map_to_template_vars(

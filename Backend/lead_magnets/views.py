@@ -249,6 +249,11 @@ def generate_pdf(request):
                 sections = ai_content.get('sections', [])
                 logger.info(f"✅ AI Content Normalized. Count: {len(sections)} | Duration: {norm_duration:.2f}s")
                 
+                # USER REQUESTED DEBUG LOGS
+                logger.info(f"📊 DEBUG AI TYPE: {type(ai_content)}")
+                logger.info(f"📊 DEBUG AI CONTENT: {json.dumps(ai_content, indent=2)[:1000]}...") # Truncate for log readability
+                logger.info(f"📊 DEBUG SECTIONS AFTER NORMALIZE: {json.dumps(sections, indent=2)}")
+
                 # 5.3 CONTENT GUARANTEE LAYER (Step 4)
                 # Ensures every section has meaningful content (120-250 words)
                 start_guarantee = time.time()
