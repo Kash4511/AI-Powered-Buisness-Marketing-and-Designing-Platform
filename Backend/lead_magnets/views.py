@@ -646,10 +646,10 @@ class FormaAIConversationView(APIView):
             ai_content = ai_client.normalize_ai_output(raw_ai_content)
             
             # Step 4: Content Guarantee Layer
-             # Ensure no empty sections before rendering
-             ai_content['sections'] = ai_client.ensure_section_content(ai_content.get('sections', []), signals, firm_profile)
-             
-         except Exception as e:
+            # Ensure no empty sections before rendering
+            ai_content['sections'] = ai_client.ensure_section_content(ai_content.get('sections', []), signals, firm_profile)
+            
+        except Exception as e:
             ai_error = f"AI generation failed: {str(e)}"
             logger.error(f"FormaAI AI Error: {ai_error}\n{traceback.format_exc()}")
             conversation.messages.append({'role': 'assistant', 'content': ai_error})
