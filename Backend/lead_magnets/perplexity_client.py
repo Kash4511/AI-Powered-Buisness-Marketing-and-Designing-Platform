@@ -26,15 +26,39 @@ class PerplexityClient:
         self.base_url = "https://api.perplexity.ai/chat/completions"
         print(f"DEBUG: PerplexityClient initialized; key present: {bool(self.api_key)}")
         
-    def generate_lead_magnet_json(self, cleaned_data: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
+    def interpret_field(self, field_value: Any) -> str:
+        """
+        Helper to determine if a field is meaningful or should be inferred.
+        Returns 'INFER_FROM_CONTEXT' or a reinterpreted professional version.
+        """
+        if not self._is_meaningful(field_value):
+            return "INFER_FROM_CONTEXT"
+        
+        # If meaningful, return a marker that tells AI to reinterpret it.
+        return f"REINTERPRET: {str(field_value).strip()}"
+
+    def get_semantic_signals(self, user_answers: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Converts user fields into interpreted signals for the AI prompt.
+        """
+        signals = {}
+        for key, value in user_answers.items():
+            signals[key] = self.interpret_field(value)
+        return signals
+
+    def generate_lead_magnet_json(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         if not self.api_key:
             print("❌ PERPLEXITY_API_KEY missing")
-            raise Exception("PERPLEXITY_API_KEY is not configured; cannot generate AI content. Please add PERPLEXITY_API_KEY=your_key_here to your Backend/.env file")
+            raise Exception("PERPLEXITY_API_KEY is not configured")
 
-        # Render 30s limit requires fast AI. 
-        model_to_use = "sonar" # Switch to sonar for speed to avoid 502s
+        model_to_use = "sonar"
         try:
-            print(f"Generating AI content with model: {model_to_use} (15s timeout)...")
+            print(f"Generating AI content with signals (15s timeout)...")
+            
+            # Log which fields are being inferred vs reinterpreted
+            inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
+            reinterpreted = [k for k, v in signals.items() if v.startswith("REINTERPRET")]
+            print(f"📊 AI Signal Mapping: Inferred: {inferred} | Reinterpreted: {reinterpreted}")
 
             response = requests.post(
                 self.base_url,
@@ -48,17 +72,17 @@ class PerplexityClient:
                         "messages": [
                             {
                                 "role": "system",
-                                "content": "You are an expert content creator specializing in professional lead magnets. Generate comprehensive, valuable content in strict JSON format. Your response must be valid JSON only, no other text."
+                                "content": "You are an expert professional content generator. You only output valid JSON."
                             },
                             {
                                 "role": "user",
-                                "content": self._create_content_prompt(cleaned_data, firm_profile)
+                                "content": self._create_content_prompt(signals, firm_profile)
                             }
                         ],
-                        "max_tokens": 2500, # Lower token count = faster generation
+                        "max_tokens": 2500,
                         "temperature": 0.7
                     },
-                    timeout=15 # Hard limit for AI
+                    timeout=15
                 )
         except requests.exceptions.Timeout:
             print("❌ Perplexity API timeout (15s)")
@@ -179,89 +203,54 @@ class PerplexityClient:
             
         return True
 
-    def get_semantic_data(self, user_answers: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_content_prompt(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
         """
-        Splits user answers into cleaned_data (meaningful) and ignored_fields.
+        Builds a prompt from interpreted signals. 
+        Never inserts raw user text directly.
         """
-        cleaned_data = {}
-        ignored_fields = []
-        
-        for key, value in user_answers.items():
-            if self._is_meaningful(value):
-                cleaned_data[key] = value
-            else:
-                ignored_fields.append(key)
-                
-        return {
-            "cleaned_data": cleaned_data,
-            "ignored_fields": ignored_fields
-        }
-
-    def _create_content_prompt(self, cleaned_data: Dict[str, Any], firm_profile: Dict[str, Any]) -> str:
-        """
-        Builds a prompt from context. If a field is missing (ignored), 
-        the AI is instructed to synthesize it from other signals.
-        """
-        # Core Context
-        main_topic = cleaned_data.get('main_topic', 'Professional Design & Strategy')
-        lm_type = cleaned_data.get('lead_magnet_type', 'Expert Guide')
-        audience = cleaned_data.get('target_audience', 'Industry Professionals')
-        pains = cleaned_data.get('audience_pain_points', [])
-        
-        # Optional Context
-        desired_outcome = cleaned_data.get('desired_outcome')
-        cta = cleaned_data.get('call_to_action')
-
         prompt = f"""
-        You are a senior expert content strategist. Generate a high-value, professional {lm_type} about "{main_topic}".
+        You are a senior expert content strategist. Your task is to generate a high-value, professional Lead Magnet.
         
-        OBJECTIVE:
-        Generate professional lead-magnet content. Use the provided context to synthesize a complete report.
-        If certain fields are missing, infer them professionally based on the Topic ({main_topic}) and Audience ({audience}).
+        STRICT BEHAVIOR RULES:
+        1. SEMANTIC REINTERPRETATION: You will receive 'signals' for various fields.
+           - If a signal is 'INFER_FROM_CONTEXT', you must synthesize that content based on the Topic and Audience.
+           - If a signal is 'REINTERPRET: [text]', you must take the user's intent, professionalize it, expand it into a full sentence, and elevate the language. Never copy verbatim.
+        2. NO RAW USER TEXT: Never leak raw user inputs into the final output. Every word must be your professional generation.
+        3. NO PLACEHOLDERS: Generate expert-level insights.
+        4. STABLE JSON: Return valid JSON ONLY.
         
-        STRICT RULES:
-        1. REINTERPRET Meaningful Fields: Do not copy user input verbatim. Expand, professionalize, and elevate the language.
-        2. CONTEXTUAL SYNTHESIS: 
-           - If Desired Outcome is missing, derive it from the Topic + Audience pain points.
-           - If CTA is missing, create a contextual, high-converting next step tied to the Topic.
-        3. NO PROSE/MARKDOWN: Return valid JSON ONLY.
-        4. NO PLACEHOLDERS: Generate expert-level insights. Never use "test" or generic text.
+        SIGNALS:
+        - Lead Magnet Type: {signals.get('lead_magnet_type', 'Expert Report')}
+        - Main Topic: {signals.get('main_topic', 'Professional Strategy')}
+        - Target Audience: {signals.get('target_audience', 'Industry Leaders')}
+        - Audience Pain Points: {signals.get('audience_pain_points', 'Efficiency and Growth')}
+        - Desired Outcome: {signals.get('desired_outcome', 'INFER_FROM_CONTEXT')}
+        - Call to Action: {signals.get('call_to_action', 'INFER_FROM_CONTEXT')}
+        - Firm Context: {firm_profile.get('firm_name', 'Expert Firm')} (Industry: Architecture/Design)
         
-        CONTEXT:
-        - Topic: {main_topic}
-        - Audience: {audience}
-        - Pain Points: {', '.join(pains) if isinstance(pains, list) else pains}
-        - Desired Outcome: {desired_outcome if desired_outcome else 'Infer from context'}
-        - Call to Action: {cta if cta else 'Derive contextual CTA'}
-        - Firm: {firm_profile.get('firm_name', 'Expert Firm')}
-        
-        SCHEMA:
+        REQUIRED OUTPUT SCHEMA:
         {{
-            "title": "Professional Document Title",
-            "summary": "High-level executive summary (2-3 sentences)",
+            "title": "A compelling, professional title",
+            "summary": "An executive summary that sets the stage",
             "sections": [
                 {{
                     "title": "Section Title",
-                    "content": "Detailed, professional paragraph (minimum 60 words)",
+                    "content": "A substantial, professional paragraph (min 60 words) providing deep insight.",
                     "subsections": [
-                        {{"title": "Sub-point", "content": "Professional insight"}}
+                        {{"title": "Key Point", "content": "Professional detail"}}
                     ]
                 }}
             ],
-            "key_insights": ["Insight 1", "Insight 2", "Insight 3"],
-            "outcome_statement": "Concrete value proposition",
+            "key_insights": ["Strategic Insight 1", "Strategic Insight 2", "Strategic Insight 3"],
+            "outcome_statement": "A concrete, professional value proposition based on the Desired Outcome signal.",
             "call_to_action": {{
-                "headline": "Action Headline",
-                "description": "Why take this step",
-                "button_text": "Action verb"
-            }},
-            "style": {{
-                "primary_color": "{firm_profile.get('primary_brand_color', '#2a5766')}",
-                "secondary_color": "{firm_profile.get('secondary_brand_color', '#ffffff')}"
+                "headline": "A high-converting headline",
+                "description": "The professional reasoning for the next step",
+                "button_text": "Action-oriented verb"
             }}
         }}
         
-        IMPORTANT: Provide at least 5 sections. Each section's 'content' should be a substantial professional paragraph.
+        IMPORTANT: Provide at least 5 deep-dive sections.
         """
         return prompt.strip()
         

@@ -169,7 +169,7 @@ def generate_pdf(request):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 3. Apply Semantic Ignore Mode
+        # 3. Apply Semantic Reinterpretation Mode
         gen_data = getattr(lead_magnet, 'generation_data', None)
         if not gen_data:
             return Response(
@@ -192,44 +192,17 @@ def generate_pdf(request):
         if isinstance(user_answers, dict):
             all_answers.update(user_answers)
 
-        # Filter weak inputs
-        semantic_result = ai_client.get_semantic_data(all_answers)
-        cleaned_data = semantic_result["cleaned_data"]
-        ignored_fields = semantic_result["ignored_fields"]
+        # Convert fields to interpreted signals
+        signals = ai_client.get_semantic_signals(all_answers)
         
-        logger.info(f"📊 Semantic Ignore Mode: Cleaned keys: {list(cleaned_data.keys())} | Ignored fields: {ignored_fields}")
-
-        # Hard validation on critical semantic fields
-        validation_errors = []
-        
-        # Check title
-        if ai_client._is_meaningful(lead_magnet.title):
-            cleaned_data['title'] = lead_magnet.title
-        else:
-            validation_errors.append("title is missing or invalid (must be a meaningful name)")
-
-        # Check main_topic
-        if 'main_topic' not in cleaned_data:
-            validation_errors.append("main_topic is missing or invalid (must be a real topic, not filler like 'h')")
-            
-        # Check lead_magnet_type
-        if 'lead_magnet_type' not in cleaned_data:
-            validation_errors.append("lead_magnet_type is missing or invalid")
-
-        if validation_errors:
-            logger.warning(f"❌ Validation failed for user {request.user.id}: {validation_errors}")
-            return Response(
-                {
-                    "error": "Input validation failed. Please provide meaningful text for Title and Topic.",
-                    "details": validation_errors,
-                    "success": False
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # 4. Prepare Context for AI/PDF
-        try:
-            fp = FirmProfile.objects.get(user=request.user)
+        # Logging signal status
+         inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
+         reinterpreted = [k for k, v in signals.items() if v.startswith("REINTERPRET")]
+         logger.info(f"📊 Semantic Reinterpretation: Inferred: {inferred} | Reinterpreted: {reinterpreted}")
+ 
+         # 4. Prepare Context for AI/PDF
+         try:
+             fp = FirmProfile.objects.get(user=request.user)
             firm_profile = {
                 'firm_name': fp.firm_name or request.user.email.split('@')[0],
                 'work_email': fp.work_email or request.user.email,
