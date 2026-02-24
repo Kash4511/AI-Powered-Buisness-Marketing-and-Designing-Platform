@@ -30,12 +30,24 @@ class PerplexityClient:
         """
         Helper to determine if a field is meaningful or should be inferred.
         Returns 'INFER_FROM_CONTEXT' or a reinterpreted professional version.
+        Handles lists and multi-line strings cleanly.
         """
         if not self._is_meaningful(field_value):
             return "INFER_FROM_CONTEXT"
         
-        # If meaningful, return a marker that tells AI to reinterpret it.
-        return f"REINTERPRET: {str(field_value).strip()}"
+        # Clean up the value for the prompt
+        if isinstance(field_value, list):
+            # Join lists into a clean string
+            cleaned_value = ", ".join([str(x).strip() for x in field_value if str(x).strip()])
+        else:
+            # Remove excessive whitespace/newlines from strings
+            cleaned_value = " ".join(str(field_value).split())
+            
+        if not cleaned_value or len(cleaned_value) < 2:
+            return "INFER_FROM_CONTEXT"
+
+        # Return a marker that tells AI to reinterpret it.
+        return f"REINTERPRET: {cleaned_value}"
 
     def get_semantic_signals(self, user_answers: Dict[str, Any]) -> Dict[str, str]:
         """
@@ -113,40 +125,19 @@ class PerplexityClient:
 
     def _extract_json_from_markdown(self, content: str) -> str:
         """
-        Extract JSON from markdown code blocks.
-        Handles formats like:
-        ```json
-        { ... }
-        ```
-        or just plain JSON
+        Robustly extract JSON from markdown or plain text.
+        Handles cases where JSON is wrapped in code blocks or has surrounding text.
         """
-        # Remove leading/trailing whitespace
+        if not content:
+            return ""
+            
         content = content.strip()
         
-        # Check if content is wrapped in markdown code blocks
-        if content.startswith('```'):
-            # Find the start and end of the code block
-            lines = content.split('\n')
-            start_idx = 0
-            end_idx = len(lines)
+        # Try regex to find JSON object or array
+        json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', content)
+        if json_match:
+            return json_match.group(1)
             
-            # Find the first line that starts with ```
-            for i, line in enumerate(lines):
-                if line.strip().startswith('```'):
-                    start_idx = i + 1
-                    break
-            
-            # Find the last line that starts with ```
-            for i in range(len(lines) - 1, -1, -1):
-                if lines[i].strip().startswith('```'):
-                    end_idx = i
-                    break
-            
-            # Extract content between code blocks
-            json_lines = lines[start_idx:end_idx]
-            return '\n'.join(json_lines)
-        
-        # If not wrapped in code blocks, return as-is
         return content
 
     def debug_ai_content(self, ai_content: Dict[str, Any]):
@@ -174,31 +165,36 @@ class PerplexityClient:
         Strict check for meaningful user input.
         Returns True if the input has real semantic weight.
         """
-        if not value:
+        if value is None:
             return False
+            
+        # Handle lists: at least one meaningful item
+        if isinstance(value, list):
+            return any(self._is_meaningful(item) for item in value)
+            
         v = str(value).strip()
         if not v:
             return False
         
-        # Rule: string length >= 4
-        if len(v) < 4:
+        # Rule: string length >= 2 (allow short words like 'AI', 'ROI')
+        if len(v) < 2:
             return False
             
         # Common placeholder/filler check
         lowered = v.lower()
         fillers = {
             "test", "testing", "none", "n/a", "na", "null", "empty", "ok", "yes", "no", 
-            "placeholder", "asdf", "qwerty", "lorem", "ipsum", "..."
+            "placeholder", "asdf", "qwerty", "lorem", "ipsum", "...", "h", "ok."
         }
         if lowered in fillers:
             return False
 
-        # Rule: Not repetitive characters (e.g. "aaaa")
-        if len(set(lowered)) <= 2 and len(lowered) > 4:
+        # Rule: Not just punctuation
+        if not re.search(r'[A-Za-z0-9]', v):
             return False
-            
-        # Rule: Contains at least one "real word" (alphanumeric block)
-        if not re.search(r'[A-Za-z0-9]{3,}', v):
+
+        # Rule: Not repetitive characters (e.g. "aaaa")
+        if len(v) > 4 and len(set(lowered)) <= 2:
             return False
             
         return True
@@ -305,6 +301,15 @@ class PerplexityClient:
 
         main_title = ai_content.get("title") or clean_sig(user_answers.get("main_topic")) or "Expert Guide"
         summary = ai_content.get("summary") or clean_sig(user_answers.get("desired_outcome")) or "Professional Insights"
+        
+        # Split title for cover lines
+        title_parts = str(main_title).split(":", 1)
+        headline_1 = title_parts[0].strip()
+        headline_2 = title_parts[1].strip() if len(title_parts) > 1 else ""
+
+        # Extract CTA parts
+        cta_obj = ai_content.get("call_to_action", {})
+        if not isinstance(cta_obj, dict): cta_obj = {}
 
         template_vars = {
             "mainTitle": main_title,
@@ -320,12 +325,32 @@ class PerplexityClient:
             "website": website,
             "leadMagnetDescription": summary,
             
+            # Cover Page mapping
+            "coverSeriesLabel": "STRATEGIC REPORT",
+            "coverEyebrow": "EXCLUSIVE INSIGHTS",
+            "coverHeadlineLine1": headline_1,
+            "coverHeadlineLine2": headline_2 or "Executive Guide",
+            "coverHeadlineLine3": company_name,
+            "coverTagline": ai_content.get("outcome_statement", summary),
+            
+            # Page 1 stats (synthesized or generic)
+            "stat1Value": "100%", "stat1Label": "PROFESSIONAL",
+            "stat2Value": "AI", "stat2Label": "DRIVEN",
+            "stat3Value": "2024", "stat3Label": "EDITION",
+
             # Section Titles
-            "sectionTitle3": get_sec(0).get("title", "Overview"),
+            "sectionTitle1": "Introduction",
+            "sectionTitle2": "Strategic Overview",
+            "sectionTitle3": get_sec(0).get("title", "Foundations"),
             "sectionTitle4": get_sec(1).get("title", "Key Strategy"),
             "sectionTitle5": get_sec(2).get("title", "Implementation"),
             "sectionTitle6": get_sec(3).get("title", "Best Practices"),
             "sectionTitle7": get_sec(4).get("title", "Next Steps"),
+            
+            # Chapter Labels
+            "chapterLabel1": "CHAPTER 01",
+            "chapterLabel2": "CHAPTER 02",
+            "chapterLabel3": "CHAPTER 03",
             
             # Section Content
             "customTitle1": get_sec(0).get("title", ""),
@@ -335,26 +360,36 @@ class PerplexityClient:
             "customTitle3": get_sec(2).get("title", "Implementation"),
             "customContent3": get_sec(2).get("content", ""),
             "customTitle4": get_sec(3).get("title", "Best Practices"),
-            "customContent4": get_sec(3).get("content", ""),
+            "customContent4": get_sec(4).get("content", ""), # Using section 5 for title 4
             "customTitle5": get_sec(4).get("title", "Next Steps"),
             "customContent5": get_sec(4).get("content", ""),
             
             # Sub-content / Boxes
-            "subheading1": get_sub(0, 0).get("title", ""),
+            "subheading1": get_sub(0, 0).get("title", "Core Insight"),
             "subcontent1": get_sub(0, 0).get("content", ""),
-            "accentBoxTitle1": get_sub(0, 0).get("title", "Key Insight"),
-            "accentBoxContent1": get_sub(0, 0).get("content", ""),
+            "calloutLabel1": "KEY TAKEAWAY",
+            "calloutContent1": get_sub(0, 1).get("content", "Focus on strategic alignment for maximum impact."),
             
-            "subheading2": get_sub(1, 0).get("title", ""),
+            "subheading2": get_sub(1, 0).get("title", "Analysis"),
             "subcontent2": get_sub(1, 0).get("content", ""),
+            "pullQuote1": ai_content.get("key_insights", ["Strategy is the bridge between intent and results"])[0],
             
-            "subheading3": get_sub(2, 0).get("title", ""),
+            "subheading3": get_sub(2, 0).get("title", "Framework"),
             "subcontent3": get_sub(2, 0).get("content", ""),
-            
-            # Contact / CTA
-            "contactTitle": ai_content.get("call_to_action", {}).get("headline", "Next Steps"),
-            "contactDescription": ai_content.get("call_to_action", {}).get("description", ""),
-            "ctaText": ai_content.get("call_to_action", {}).get("button_text", "Get Started"),
+            "infoBoxLabel1": "QUICK TIP",
+            "infoBoxContent1": "Measure success through iterative feedback loops.",
+
+            # Contact / CTA Page
+            "ctaHeadlineLine1": "READY TO",
+            "ctaHeadlineLine2": "TAKE ACTION?",
+            "ctaEyebrow": "NEXT STEPS",
+            "ctaTitle": cta_obj.get("headline", "Partner with Us"),
+            "ctaText": cta_obj.get("description", "We help you turn these insights into measurable growth."),
+            "ctaButtonText": cta_obj.get("button_text", "Get Started"),
+            "contactLabel1": "EMAIL", "contactValue1": email,
+            "contactLabel2": "PHONE", "contactValue2": phone,
+            "contactLabel3": "WEB", "contactValue3": website,
+            "footerText": f"© {datetime.now().year} {company_name}",
         }
         
         # Add page numbering and headers (standard for our templates)
