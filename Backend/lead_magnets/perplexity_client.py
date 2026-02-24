@@ -79,7 +79,7 @@ class PerplexityClient:
 
         model_to_use = "sonar"
         try:
-            logger.info(f"Generating AI content with signals (10s timeout)...")
+            logger.info(f"Generating AI content with signals (25s timeout)...")
             
             # Log which fields are being inferred vs reinterpreted
             inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
@@ -108,11 +108,11 @@ class PerplexityClient:
                         "max_tokens": 1200,
                         "temperature": 0.7
                     },
-                    timeout=10
+                    timeout=25
                 )
         except requests.exceptions.Timeout:
-            logger.error("❌ Perplexity API timeout (10s)")
-            raise Exception("AI content generation timed out (10s limit).")
+            logger.error("❌ Perplexity API timeout (25s)")
+            raise Exception("AI content generation timed out (25s limit).")
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ Perplexity API request error: {e}")
             raise Exception(f"Perplexity API request error: {e}")
@@ -133,25 +133,51 @@ class PerplexityClient:
             return content
         except json.JSONDecodeError as e:
             logger.error(f"❌ Failed to parse JSON from Perplexity response: {e}")
-            logger.error(f"RAW CONTENT PREVIEW: {repr(message_content)[:200]}...")
+            logger.error(f"RAW CONTENT PREVIEW: {repr(message_content)}")
             raise Exception("Invalid JSON returned from Perplexity API. Raw content logged to server.")
 
-    def _extract_json_from_markdown(self, content: str) -> str:
-        """
-        Robustly extract JSON from markdown or plain text.
-        Handles cases where JSON is wrapped in code blocks or has surrounding text.
-        """
-        if not content:
-            return ""
-            
-        content = content.strip()
+    def _extract_json_from_markdown(self, text: str) -> str:
+        """Helper to extract JSON from markdown code blocks if present."""
+        if not text: return ""
         
-        # Try regex to find JSON object or array
-        json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', content)
+        # 1. Look for markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', text)
         if json_match:
-            return json_match.group(1)
+            text = json_match.group(1).strip()
+        
+        # 2. Look for the first { and the last }
+        first_brace = text.find('{')
+        last_brace = text.rfind('}')
+        if first_brace == -1 or last_brace == -1 or last_brace <= first_brace:
+            return text.strip()
+
+        json_str = text[first_brace:last_brace+1].strip()
+        
+        # 3. Aggressive Truncation Repair
+        # If the JSON ends abruptly (e.g. inside a string or list), try to close it.
+        # This is a common issue with Perplexity timeouts or token limits.
+        try:
+            # Check if it's already valid
+            json.loads(json_str)
+            return json_str
+        except json.JSONDecodeError:
+            # Try to fix truncated JSON by removing trailing comma and closing braces
+            # Pattern: matches a trailing comma followed by whitespace/newlines at the end
+            json_str = re.sub(r',\s*$', '', json_str)
             
-        return content
+            # Count open/close markers
+            open_braces = json_str.count('{')
+            close_braces = json_str.count('}')
+            open_brackets = json_str.count('[')
+            close_brackets = json_str.count(']')
+            
+            # Close missing structures
+            if open_brackets > close_brackets:
+                json_str += ']' * (open_brackets - close_brackets)
+            if open_braces > close_braces:
+                json_str += '}' * (open_braces - close_braces)
+                
+            return json_str
 
     def debug_ai_content(self, ai_content: Dict[str, Any]):
         """Debug function to see what the AI actually returned"""
