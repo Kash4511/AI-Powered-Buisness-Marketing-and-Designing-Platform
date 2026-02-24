@@ -249,12 +249,14 @@ def generate_pdf(request):
                 sections = ai_content.get('sections', [])
                 logger.info(f"✅ AI Content Normalized. Count: {len(sections)} | Duration: {norm_duration:.2f}s")
                 
-                # Mandatory Logging: First section preview length
-                if sections:
-                    first_sec_len = len(sections[0].get('content', ''))
-                    logger.info(f"📄 First Section Preview Length: {first_sec_len} chars")
+                # 5.3 CONTENT GUARANTEE LAYER (Step 4)
+                # Ensures every section has meaningful content (120-250 words)
+                start_guarantee = time.time()
+                ai_content['sections'] = ai_client.ensure_section_content(sections, signals, firm_profile)
+                guarantee_duration = time.time() - start_guarantee
+                logger.info(f"🛡️ Content Guarantee Layer Complete. Duration: {guarantee_duration:.2f}s")
 
-                # 5.3 Map to Template Variables (Safety Layer)
+                # 5.4 Map to Template Variables (Safety Layer)
                 # PDF layer must NEVER consume raw AI output. 
                 # It only consumes normalized 'ai_content'.
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
@@ -637,6 +639,11 @@ class FormaAIConversationView(APIView):
             
             # Step 3: Mandatory Normalization
             ai_content = ai_client.normalize_ai_output(raw_ai_content)
+            
+            # Step 4: Content Guarantee Layer
+            # Ensure no empty sections before rendering
+            ai_content['sections'] = ai_client.ensure_section_content(ai_content.get('sections', []), signals, firm_profile)
+            
             ai_client.debug_ai_content(ai_content)
         except Exception as e:
             ai_error = f"AI generation failed: {str(e)}"
@@ -746,6 +753,10 @@ class GenerateDocumentPreviewView(APIView):
             signals = ai_client.get_semantic_signals(user_answers)
             raw_ai_data = ai_client.generate_lead_magnet_json(signals, firm_profile)
             ai_data = ai_client.normalize_ai_output(raw_ai_data)
+            
+            # Content Guarantee Layer
+            ai_data['sections'] = ai_client.ensure_section_content(ai_data.get('sections', []), signals, firm_profile)
+            
             template_vars = ai_client.map_to_template_vars(ai_data, firm_profile, signals)
 
             # Load template HTML

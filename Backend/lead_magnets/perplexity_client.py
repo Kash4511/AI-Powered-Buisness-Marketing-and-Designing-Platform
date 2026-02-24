@@ -231,7 +231,7 @@ class PerplexityClient:
             "sections": [
                 {{
                     "title": "Section Title",
-                    "content": "A substantial, professional paragraph (min 40 words) providing deep insight."
+                    "content": "A substantial, professional explanation (120–250 words minimum). Provide deep insight, practical strategy, and industry context. Do not use bullets as the primary format; use full paragraphs."
                 }}
             ],
             "key_insights": ["Strategic Insight 1", "Strategic Insight 2", "Strategic Insight 3"],
@@ -244,6 +244,7 @@ class PerplexityClient:
         }}
         
         IMPORTANT: Provide 3-4 deep-dive sections. Do not include nested subsections; keep sections flat.
+        STRICT RULE: Every section 'content' field must be a long-form professional explanation. Never output placeholders or empty text.
         """
         return prompt.strip()
         
@@ -372,6 +373,96 @@ class PerplexityClient:
             }
         except Exception:
             return {}
+
+    def ensure_section_content(self, sections: List[Dict[str, str]], signals: Dict[str, str], firm_profile: Dict[str, Any]) -> List[Dict[str, str]]:
+        """
+        Content Guarantee Layer: Ensures no section has empty or too short content.
+        Regenerates sections that fail the quality check using targeted AI calls.
+        """
+        if not sections:
+            logger.warning("⚠️ ensure_section_content: No sections to check.")
+            return []
+
+        MIN_THRESHOLD = 40  # Minimum characters for meaningful content
+        regenerated_count = 0
+        
+        for idx, sec in enumerate(sections):
+            content = str(sec.get("content", "")).strip()
+            title = str(sec.get("title", "")).strip()
+            
+            # Check for empty or too short content
+            if not content or len(content) < MIN_THRESHOLD:
+                logger.info(f"❗ Section {idx} ('{title}') is empty or too short ({len(content)} chars). Regenerating...")
+                
+                try:
+                    new_content = self.regenerate_section_content(title, signals, firm_profile)
+                    if new_content and len(new_content) >= MIN_THRESHOLD:
+                        sec["content"] = new_content
+                        regenerated_count += 1
+                        logger.info(f"✅ Section '{title}' regenerated successfully ({len(new_content)} chars).")
+                    else:
+                        logger.error(f"❌ Regeneration for '{title}' failed to produce meaningful content.")
+                        raise Exception(f"Content synthesis failed for section: {title}")
+                except Exception as e:
+                    logger.error(f"❌ Critical failure in content guarantee for '{title}': {str(e)}")
+                    raise  # Raise to ensure the view returns a 502
+
+        logger.info(f"📊 Content Guarantee Complete. Regenerated {regenerated_count} sections. Final count: {len(sections)}")
+        return sections
+
+    def regenerate_section_content(self, section_title: str, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
+        """ Targeted AI call to synthesize content for a single section. """
+        prompt = f"""
+        You are an expert strategist generating content for a professional guide.
+        
+        CONTEXT:
+        - Main Topic: {signals.get('main_topic', 'Professional Strategy')}
+        - Target Audience: {signals.get('target_audience', 'Industry Leaders')}
+        - Audience Pain Points: {signals.get('audience_pain_points', 'Efficiency and Growth')}
+        - Firm Context: {firm_profile.get('firm_name', 'Expert Firm')}
+        
+        TASK:
+        Write a deep-dive professional section for the topic: "{section_title}"
+        
+        REQUIREMENTS:
+        - Write 120–250 words minimum.
+        - Explain the topic in detail, providing practical insights and professional strategy.
+        - Use full paragraphs. Do not use only bullet points.
+        - Tone: Expert, authoritative, and helpful.
+        - No placeholders. No conversational filler.
+        - Output ONLY the text for the section content. No JSON. No titles.
+        """
+        
+        try:
+            response = requests.post(
+                self.base_url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "sonar",
+                    "messages": [
+                        {"role": "system", "content": "You are a professional content strategist. Output only the requested text."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "max_tokens": 1000,
+                    "temperature": 0.7
+                },
+                timeout=12
+            )
+            response.raise_for_status()
+            result = response.json()
+            content = result.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
+            
+            # Basic cleaning: remove any markdown title or bolding that AI might have included despite instructions
+            content = re.sub(r'^#+\s*.*?\n', '', content) # Remove top level header
+            content = re.sub(r'\*+', '', content) # Remove bolding
+            
+            return content
+        except Exception as e:
+            logger.error(f"Error in regenerate_section_content: {str(e)}")
+            return ""
 
     def map_to_template_vars(
         self,
