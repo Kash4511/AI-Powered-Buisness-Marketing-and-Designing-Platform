@@ -133,13 +133,17 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
 def generate_pdf(request):
     """
     Synchronously generates a PDF for a lead magnet.
-    Includes hard validation, AI content generation, and PDF rendering.
+    Execution Pipeline: 
+    1. Semantic Ignore (Weak Inputs)
+    2. AI Call
+    3. Mandatory Normalization (Structure Safety)
+    4. PDF Render (Deterministic)
     """
     try:
         if request.method == "OPTIONS":
             return Response(status=status.HTTP_200_OK)
 
-        logger.info(f"🚀 Starting PDF generation for request: {request.data}")
+        logger.info(f"🚀 Starting STRUCTURE-SAFE PDF generation for request: {request.data}")
 
         # 1. Auth check
         if not getattr(request, "user", None) or not request.user.is_authenticated:
@@ -169,7 +173,7 @@ def generate_pdf(request):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 3. Apply Semantic Reinterpretation Mode
+        # 3. SEMANTIC IGNORE (Step 1 of Pipeline)
         gen_data = getattr(lead_magnet, 'generation_data', None)
         if not gen_data:
             return Response(
@@ -192,15 +196,10 @@ def generate_pdf(request):
         if isinstance(user_answers, dict):
             all_answers.update(user_answers)
 
-        # Convert fields to interpreted signals
+        # Convert fields to interpreted signals (Semantic Ignore happens here)
         signals = ai_client.get_semantic_signals(all_answers)
         
-        # Logging signal status
-        inferred = [k for k, v in signals.items() if v == "INFER_FROM_CONTEXT"]
-        reinterpreted = [k for k, v in signals.items() if v.startswith("REINTERPRET")]
-        logger.info(f"📊 Semantic Reinterpretation: Inferred: {inferred} | Reinterpreted: {reinterpreted}")
-
-        # 4. Prepare Context for AI/PDF
+        # 4. PREPARE FIRM PROFILE
         try:
             fp = FirmProfile.objects.get(user=request.user)
             firm_profile = {
@@ -225,32 +224,45 @@ def generate_pdf(request):
                 'industry': 'Architecture',
             }
 
-        # 5. AI Content Generation
+        # 5. AI CALL & NORMALIZATION (Steps 2 & 3 of Pipeline)
         template_vars = {}
 
         if use_ai_content:
             try:
-                # 5.1 Call AI (Signal-based prompt)
-                logger.info("🤖 AI Generation Start")
+                # 5.1 AI Call
+                logger.info("🤖 AI Generation Start (Step 2)")
                 raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
-                logger.info(f"🤖 AI Response Received. Keys: {list(raw_ai_content.keys()) if isinstance(raw_ai_content, dict) else 'N/A'}")
+                
+                # Mandatory Logging: AI raw type
+                logger.info(f"📊 AI RAW TYPE: {type(raw_ai_content)}")
 
-                # 5.2 Normalize AI Output (Structural Safety)
+                # 5.2 Mandatory Normalization Layer (Step 3)
                 ai_content = ai_client.normalize_ai_output(raw_ai_content)
-                logger.info(f"✅ AI Content Normalized. Sections: {len(ai_content.get('sections', []))}")
+                
+                # Mandatory Logging: Section count after normalization
+                sections = ai_content.get('sections', [])
+                logger.info(f"✅ AI Content Normalized. Section Count: {len(sections)}")
+                
+                # Mandatory Logging: First section preview length
+                if sections:
+                    first_sec_len = len(sections[0].get('content', ''))
+                    logger.info(f"📄 First Section Preview Length: {first_sec_len} chars")
 
                 # 5.3 Map to Template Variables (Safety Layer)
+                # PDF layer must NEVER consume raw AI output. 
+                # It only consumes normalized 'ai_content'.
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
                 
             except Exception as e:
                 import traceback
-                logger.error(f"AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
+                # Mandatory Logging: Traceback on failure
+                logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
                 return Response(
                     {"error": f"AI generation failed: {str(e)}", "success": False},
                     status=status.HTTP_502_BAD_GATEWAY
                 )
         else:
-            # Basic non-AI mapping using signals (stripping REINTERPRET prefix for display)
+            # Basic non-AI mapping using signals
             def clean_sig(s): return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else ""
             template_vars = {
                 'primaryColor': firm_profile.get('primary_brand_color') or '',
@@ -263,15 +275,16 @@ def generate_pdf(request):
                 'website': firm_profile.get('firm_website') or '',
             }
 
-        # 6. PDF Generation
+        # 6. PDF RENDERING (Step 4 of Pipeline)
+        # PDF renderer only receives plain strings (enforced in map_to_template_vars)
         template_service = DocRaptorService()
         try:
-            logger.info("📄 PDF Generation Start")
+            logger.info("📄 PDF Generation Start (Step 4)")
             result = template_service.generate_pdf(template_id, template_vars)
-            logger.info("📄 PDF Generation End")
             
             if not result.get('success'):
                 err = result.get('error', 'PDF generation failed')
+                logger.error(f"❌ PDF Failure: {err}")
                 return Response(
                     {"error": err, "details": result.get('details'), "success": False},
                     status=status.HTTP_502_BAD_GATEWAY
@@ -285,20 +298,26 @@ def generate_pdf(request):
             lead_magnet.status = 'completed'
             lead_magnet.save(update_fields=['status'])
             
+            logger.info("✅ PDF Generation Deterministic Success")
+            
             # Return as file response
             response = HttpResponse(pdf_data, content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
 
         except Exception as e:
-            logger.error(f"PDF Rendering Error: {str(e)}", exc_info=True)
+            import traceback
+            # Mandatory Logging: Traceback on failure
+            logger.error(f"❌ PDF Rendering Error: {str(e)}\n{traceback.format_exc()}")
             return Response(
                 {"error": f"PDF generation failed: {str(e)}", "success": False},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_502_BAD_GATEWAY
             )
 
     except Exception as e:
-        logger.critical(f"Critical View Error: {str(e)}", exc_info=True)
+        import traceback
+        # Mandatory Logging: Traceback on failure
+        logger.critical(f"❌ Critical View Error: {str(e)}\n{traceback.format_exc()}")
         return Response(
             {"error": "A critical server error occurred", "details": str(e), "success": False},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

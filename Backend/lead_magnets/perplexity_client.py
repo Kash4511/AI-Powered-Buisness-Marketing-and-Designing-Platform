@@ -255,14 +255,14 @@ class PerplexityClient:
         Structural safety layer: Guarantees a safe schema for the PDF renderer.
         Flattens structures, joins paragraphs, and ensures string types.
         """
-        if not isinstance(ai_result, dict):
-            print(f"⚠️ AI Result is not a dict: {type(ai_result)}")
-            ai_result = {}
+        if ai_result is None:
+            return {"sections": []}
 
+        # Final structure we guarantee
         normalized = {
-            "title": str(ai_result.get("title", "")).strip(),
-            "summary": str(ai_result.get("summary", "")).strip(),
-            "outcome_statement": str(ai_result.get("outcome_statement", "")).strip(),
+            "title": "",
+            "summary": "",
+            "outcome_statement": "",
             "key_insights": [],
             "sections": [],
             "call_to_action": {
@@ -272,60 +272,86 @@ class PerplexityClient:
             }
         }
 
-        # 1. Normalize Key Insights
-        raw_insights = ai_result.get("key_insights", [])
-        if isinstance(raw_insights, list):
-            normalized["key_insights"] = [str(i).strip() for i in raw_insights if i]
-
-        # 2. Normalize Sections (Structural Safety)
-        raw_sections = ai_result.get("sections", [])
-        if not isinstance(raw_sections, list):
-            raw_sections = []
-
-        for idx, sec in enumerate(raw_sections):
-            if not isinstance(sec, dict):
-                continue
+        def clean_text(text: Any) -> str:
+            """Remove markdown and join lists/dicts into safe strings."""
+            if text is None:
+                return ""
+            if isinstance(text, list):
+                text = " ".join([clean_text(i) for i in text if i])
+            elif isinstance(text, dict):
+                # Stringify objects safely
+                text = " ".join([f"{k}: {clean_text(v)}" for k, v in text.items()])
             
-            # Guard keys and ensure strings
-            sec_title = str(sec.get("title", "")).strip()
-            raw_content = sec.get("content", "")
-            
-            # Join multi-paragraph content or lists into one safe string
-            if isinstance(raw_content, list):
-                sec_content = " ".join([str(p).strip() for p in raw_content if p])
-            else:
-                sec_content = str(raw_content).strip()
+            s = str(text).strip()
+            # Remove markdown patterns: ###, **, [links], and Markdown Tables
+            s = re.sub(r'#+\s*', '', s)
+            s = re.sub(r'\*+', '', s)
+            s = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', s) # Strip links but keep text
+            # Remove markdown tables: look for lines starting with | and containing |
+            s = re.sub(r'\n?\|.*\|(\n\|.*\|)*', '', s)
+            # Remove table separators like |---|---|
+            s = re.sub(r'\|[\s-]*\|[\s\-|]*', '', s)
+            return s
 
-            # Remove markdown patterns that might break PDF renderer (e.g. ###, **, [links])
-            sec_title = re.sub(r'#+\s*', '', sec_title)
-            sec_title = re.sub(r'\*+', '', sec_title)
-            sec_content = re.sub(r'#+\s*', '', sec_content)
-            sec_content = re.sub(r'\*+', '', sec_content)
-            
-            normalized_sec = {
-                "title": sec_title,
-                "content": sec_content,
-                "subsections": []
-            }
+        def extract_sections_recursively(data: Any) -> List[Dict[str, str]]:
+            """Flatten any structure into a list of {title, content}."""
+            sections = []
+            if isinstance(data, list):
+                for item in data:
+                    sections.extend(extract_sections_recursively(item))
+            elif isinstance(data, dict):
+                # If it looks like a section already
+                if "title" in data or "content" in data:
+                    sections.append({
+                        "title": clean_text(data.get("title", "")),
+                        "content": clean_text(data.get("content", ""))
+                    })
+                    # Also check for nested subsections in this dict
+                    if "subsections" in data and isinstance(data["subsections"], list):
+                        for sub in data["subsections"]:
+                            sections.append({
+                                "title": clean_text(sub.get("title", "")),
+                                "content": clean_text(sub.get("content", ""))
+                            })
+                else:
+                    # Otherwise, just extract all values as content
+                    for k, v in data.items():
+                        if k in ["sections", "contents", "items"]:
+                            sections.extend(extract_sections_recursively(v))
+                        elif isinstance(v, (str, list, dict)):
+                            sections.append({
+                                "title": clean_text(k),
+                                "content": clean_text(v)
+                            })
+            return sections
 
-            # Normalize Subsections
-            raw_subs = sec.get("subsections", [])
-            if isinstance(raw_subs, list):
-                for sub in raw_subs:
-                    if isinstance(sub, dict):
-                        normalized_sec["subsections"].append({
-                            "title": str(sub.get("title", "")).strip(),
-                            "content": str(sub.get("content", "")).strip()
-                        })
+        if isinstance(ai_result, dict):
+            normalized["title"] = clean_text(ai_result.get("title", ""))
+            normalized["summary"] = clean_text(ai_result.get("summary", ""))
+            normalized["outcome_statement"] = clean_text(ai_result.get("outcome_statement", ""))
             
-            normalized["sections"].append(normalized_sec)
+            # Key Insights
+            raw_insights = ai_result.get("key_insights", [])
+            if isinstance(raw_insights, list):
+                normalized["key_insights"] = [clean_text(i) for i in raw_insights if i]
+            
+            # Sections
+            raw_sections = ai_result.get("sections") or ai_result.get("contents") or []
+            normalized["sections"] = extract_sections_recursively(raw_sections)
+            
+            # CTA
+            raw_cta = ai_result.get("call_to_action", {})
+            if isinstance(raw_cta, dict):
+                normalized["call_to_action"]["headline"] = clean_text(raw_cta.get("headline", ""))
+                normalized["call_to_action"]["description"] = clean_text(raw_cta.get("description", ""))
+                normalized["call_to_action"]["button_text"] = clean_text(raw_cta.get("button_text", ""))
+        
+        elif isinstance(ai_result, list):
+            normalized["sections"] = extract_sections_recursively(ai_result)
 
-        # 3. Normalize Call to Action
-        raw_cta = ai_result.get("call_to_action", {})
-        if isinstance(raw_cta, dict):
-            normalized["call_to_action"]["headline"] = str(raw_cta.get("headline", "")).strip()
-            normalized["call_to_action"]["description"] = str(raw_cta.get("description", "")).strip()
-            normalized["call_to_action"]["button_text"] = str(raw_cta.get("button_text", "")).strip()
+        # Final check: ensure at least an empty list for sections
+        if not normalized["sections"]:
+            normalized["sections"] = []
 
         print(f"✅ AI Normalization Complete: {len(normalized['sections'])} sections secured.")
         return normalized
@@ -339,8 +365,7 @@ class PerplexityClient:
         """Safely map AI generated JSON content to template variables."""
         # 0. Safety Guard: Ensure ai_content is already normalized or at least a dict
         if not isinstance(ai_content, dict):
-            print("⚠️ map_to_template_vars: ai_content is not a dict, using empty dict")
-            ai_content = {}
+            ai_content = {"sections": []}
 
         firm_profile = firm_profile or {}
         user_answers = user_answers or {}
@@ -360,23 +385,14 @@ class PerplexityClient:
         # 3. Content Extraction from Structured AI JSON
         sections = ai_content.get("sections", [])
         if not isinstance(sections, list): 
-            print("⚠️ map_to_template_vars: sections is not a list")
             sections = []
         
         # Helper for safe section access
         def get_sec(idx):
             if idx < len(sections):
                 s = sections[idx]
-                return s if isinstance(s, dict) else {}
-            return {}
-
-        def get_sub(sec_idx, sub_idx):
-            sec = get_sec(sec_idx)
-            subs = sec.get("subsections", [])
-            if isinstance(subs, list) and sub_idx < len(subs):
-                sub = subs[sub_idx]
-                return sub if isinstance(sub, dict) else {}
-            return {}
+                return s if isinstance(s, dict) else {"title": "", "content": ""}
+            return {"title": "", "content": ""}
 
         # 4. Core Mapping
         def clean_sig(s):
@@ -420,7 +436,7 @@ class PerplexityClient:
             # Page 1 stats (synthesized or generic)
             "stat1Value": "100%", "stat1Label": "PROFESSIONAL",
             "stat2Value": "AI", "stat2Label": "DRIVEN",
-            "stat3Value": "2024", "stat3Label": "EDITION",
+            "stat3Value": "2026", "stat3Label": "EDITION",
 
             # Section Titles
             "sectionTitle1": "Introduction",
@@ -439,30 +455,15 @@ class PerplexityClient:
             # Section Content - Guarding missing keys and ensuring string types
             "customTitle1": str(get_sec(0).get("title") or ""),
             "customContent1": str(get_sec(0).get("content") or ""),
-            "customTitle2": str(get_sec(1).get("title") or "Key Strategy"),
+            "customTitle2": str(get_sec(1).get("title") or ""),
             "customContent2": str(get_sec(1).get("content") or ""),
-            "customTitle3": str(get_sec(2).get("title") or "Implementation"),
+            "customTitle3": str(get_sec(2).get("title") or ""),
             "customContent3": str(get_sec(2).get("content") or ""),
-            "customTitle4": str(get_sec(3).get("title") or "Best Practices"),
-            "customContent4": str(get_sec(4).get("content") or ""), # Using section 5 for content 4
-            "customTitle5": str(get_sec(4).get("title") or "Next Steps"),
+            "customTitle4": str(get_sec(3).get("title") or ""),
+            "customContent4": str(get_sec(3).get("content") or ""),
+            "customTitle5": str(get_sec(4).get("title") or ""),
             "customContent5": str(get_sec(4).get("content") or ""),
             
-            # Sub-content / Boxes
-            "subheading1": str(get_sub(0, 0).get("title") or "Core Insight"),
-            "subcontent1": str(get_sub(0, 0).get("content") or ""),
-            "calloutLabel1": "KEY TAKEAWAY",
-            "calloutContent1": str(get_sub(0, 1).get("content") or "Focus on strategic alignment for maximum impact."),
-            
-            "subheading2": str(get_sub(1, 0).get("title") or "Analysis"),
-            "subcontent2": str(get_sub(1, 0).get("content") or ""),
-            "pullQuote1": str((ai_content.get("key_insights") or ["Strategy is the bridge between intent and results"])[0]),
-            
-            "subheading3": str(get_sub(2, 0).get("title") or "Framework"),
-            "subcontent3": str(get_sub(2, 0).get("content") or ""),
-            "infoBoxLabel1": "QUICK TIP",
-            "infoBoxContent1": "Measure success through iterative feedback loops.",
-
             # Contact / CTA Page
             "ctaHeadlineLine1": "READY TO",
             "ctaHeadlineLine2": "TAKE ACTION?",
