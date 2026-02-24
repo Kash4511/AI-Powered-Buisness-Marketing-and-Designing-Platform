@@ -250,6 +250,86 @@ class PerplexityClient:
         """
         return prompt.strip()
         
+    def normalize_ai_output(self, ai_result: Any) -> Dict[str, Any]:
+        """
+        Structural safety layer: Guarantees a safe schema for the PDF renderer.
+        Flattens structures, joins paragraphs, and ensures string types.
+        """
+        if not isinstance(ai_result, dict):
+            print(f"⚠️ AI Result is not a dict: {type(ai_result)}")
+            ai_result = {}
+
+        normalized = {
+            "title": str(ai_result.get("title", "")).strip(),
+            "summary": str(ai_result.get("summary", "")).strip(),
+            "outcome_statement": str(ai_result.get("outcome_statement", "")).strip(),
+            "key_insights": [],
+            "sections": [],
+            "call_to_action": {
+                "headline": "",
+                "description": "",
+                "button_text": ""
+            }
+        }
+
+        # 1. Normalize Key Insights
+        raw_insights = ai_result.get("key_insights", [])
+        if isinstance(raw_insights, list):
+            normalized["key_insights"] = [str(i).strip() for i in raw_insights if i]
+
+        # 2. Normalize Sections (Structural Safety)
+        raw_sections = ai_result.get("sections", [])
+        if not isinstance(raw_sections, list):
+            raw_sections = []
+
+        for idx, sec in enumerate(raw_sections):
+            if not isinstance(sec, dict):
+                continue
+            
+            # Guard keys and ensure strings
+            sec_title = str(sec.get("title", "")).strip()
+            raw_content = sec.get("content", "")
+            
+            # Join multi-paragraph content or lists into one safe string
+            if isinstance(raw_content, list):
+                sec_content = " ".join([str(p).strip() for p in raw_content if p])
+            else:
+                sec_content = str(raw_content).strip()
+
+            # Remove markdown patterns that might break PDF renderer (e.g. ###, **, [links])
+            sec_title = re.sub(r'#+\s*', '', sec_title)
+            sec_title = re.sub(r'\*+', '', sec_title)
+            sec_content = re.sub(r'#+\s*', '', sec_content)
+            sec_content = re.sub(r'\*+', '', sec_content)
+            
+            normalized_sec = {
+                "title": sec_title,
+                "content": sec_content,
+                "subsections": []
+            }
+
+            # Normalize Subsections
+            raw_subs = sec.get("subsections", [])
+            if isinstance(raw_subs, list):
+                for sub in raw_subs:
+                    if isinstance(sub, dict):
+                        normalized_sec["subsections"].append({
+                            "title": str(sub.get("title", "")).strip(),
+                            "content": str(sub.get("content", "")).strip()
+                        })
+            
+            normalized["sections"].append(normalized_sec)
+
+        # 3. Normalize Call to Action
+        raw_cta = ai_result.get("call_to_action", {})
+        if isinstance(raw_cta, dict):
+            normalized["call_to_action"]["headline"] = str(raw_cta.get("headline", "")).strip()
+            normalized["call_to_action"]["description"] = str(raw_cta.get("description", "")).strip()
+            normalized["call_to_action"]["button_text"] = str(raw_cta.get("button_text", "")).strip()
+
+        print(f"✅ AI Normalization Complete: {len(normalized['sections'])} sections secured.")
+        return normalized
+
     def map_to_template_vars(
         self,
         ai_content: Dict[str, Any],
@@ -257,27 +337,31 @@ class PerplexityClient:
         user_answers: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Safely map AI generated JSON content to template variables."""
+        # 0. Safety Guard: Ensure ai_content is already normalized or at least a dict
         if not isinstance(ai_content, dict):
+            print("⚠️ map_to_template_vars: ai_content is not a dict, using empty dict")
             ai_content = {}
 
         firm_profile = firm_profile or {}
         user_answers = user_answers or {}
         
-        # 1. Basic Metadata
-        company_name = firm_profile.get("firm_name", "Expert Firm")
-        email = firm_profile.get("work_email", "")
-        phone = firm_profile.get("phone_number", "")
-        website = firm_profile.get("firm_website", "")
-        logo_url = firm_profile.get("logo_url", "")
+        # 1. Basic Metadata with defaults
+        company_name = str(firm_profile.get("firm_name") or "Expert Firm").strip()
+        email = str(firm_profile.get("work_email") or "").strip()
+        phone = str(firm_profile.get("phone_number") or "").strip()
+        website = str(firm_profile.get("firm_website") or "").strip()
+        logo_url = str(firm_profile.get("logo_url") or "").strip()
         
         # 2. Colors & Style
-        primary_color = firm_profile.get("primary_brand_color") or "#2a5766"
-        secondary_color = firm_profile.get("secondary_brand_color") or "#ffffff"
+        primary_color = str(firm_profile.get("primary_brand_color") or "#2a5766")
+        secondary_color = str(firm_profile.get("secondary_brand_color") or "#ffffff")
         accent_color = "#F4A460"
         
         # 3. Content Extraction from Structured AI JSON
         sections = ai_content.get("sections", [])
-        if not isinstance(sections, list): sections = []
+        if not isinstance(sections, list): 
+            print("⚠️ map_to_template_vars: sections is not a list")
+            sections = []
         
         # Helper for safe section access
         def get_sec(idx):
@@ -299,13 +383,13 @@ class PerplexityClient:
             if not isinstance(s, str): return ""
             return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else s
 
-        main_title = ai_content.get("title") or clean_sig(user_answers.get("main_topic")) or "Expert Guide"
-        summary = ai_content.get("summary") or clean_sig(user_answers.get("desired_outcome")) or "Professional Insights"
+        main_title = str(ai_content.get("title") or clean_sig(user_answers.get("main_topic")) or "Expert Guide").strip()
+        summary = str(ai_content.get("summary") or clean_sig(user_answers.get("desired_outcome")) or "Professional Insights").strip()
         
-        # Split title for cover lines
-        title_parts = str(main_title).split(":", 1)
+        # Split title for cover lines safely
+        title_parts = main_title.split(":", 1)
         headline_1 = title_parts[0].strip()
-        headline_2 = title_parts[1].strip() if len(title_parts) > 1 else ""
+        headline_2 = title_parts[1].strip() if len(title_parts) > 1 else "Executive Guide"
 
         # Extract CTA parts
         cta_obj = ai_content.get("call_to_action", {})
@@ -313,7 +397,7 @@ class PerplexityClient:
 
         template_vars = {
             "mainTitle": main_title,
-            "documentTitle": str(main_title).upper(),
+            "documentTitle": main_title.upper(),
             "documentSubtitle": summary,
             "companyName": company_name,
             "primaryColor": primary_color,
@@ -329,9 +413,9 @@ class PerplexityClient:
             "coverSeriesLabel": "STRATEGIC REPORT",
             "coverEyebrow": "EXCLUSIVE INSIGHTS",
             "coverHeadlineLine1": headline_1,
-            "coverHeadlineLine2": headline_2 or "Executive Guide",
+            "coverHeadlineLine2": headline_2,
             "coverHeadlineLine3": company_name,
-            "coverTagline": ai_content.get("outcome_statement", summary),
+            "coverTagline": str(ai_content.get("outcome_statement") or summary).strip(),
             
             # Page 1 stats (synthesized or generic)
             "stat1Value": "100%", "stat1Label": "PROFESSIONAL",
@@ -341,41 +425,41 @@ class PerplexityClient:
             # Section Titles
             "sectionTitle1": "Introduction",
             "sectionTitle2": "Strategic Overview",
-            "sectionTitle3": get_sec(0).get("title", "Foundations"),
-            "sectionTitle4": get_sec(1).get("title", "Key Strategy"),
-            "sectionTitle5": get_sec(2).get("title", "Implementation"),
-            "sectionTitle6": get_sec(3).get("title", "Best Practices"),
-            "sectionTitle7": get_sec(4).get("title", "Next Steps"),
+            "sectionTitle3": str(get_sec(0).get("title") or "Foundations"),
+            "sectionTitle4": str(get_sec(1).get("title") or "Key Strategy"),
+            "sectionTitle5": str(get_sec(2).get("title") or "Implementation"),
+            "sectionTitle6": str(get_sec(3).get("title") or "Best Practices"),
+            "sectionTitle7": str(get_sec(4).get("title") or "Next Steps"),
             
             # Chapter Labels
             "chapterLabel1": "CHAPTER 01",
             "chapterLabel2": "CHAPTER 02",
             "chapterLabel3": "CHAPTER 03",
             
-            # Section Content
-            "customTitle1": get_sec(0).get("title", ""),
-            "customContent1": get_sec(0).get("content", ""),
-            "customTitle2": get_sec(1).get("title", "Key Strategy"),
-            "customContent2": get_sec(1).get("content", ""),
-            "customTitle3": get_sec(2).get("title", "Implementation"),
-            "customContent3": get_sec(2).get("content", ""),
-            "customTitle4": get_sec(3).get("title", "Best Practices"),
-            "customContent4": get_sec(4).get("content", ""), # Using section 5 for title 4
-            "customTitle5": get_sec(4).get("title", "Next Steps"),
-            "customContent5": get_sec(4).get("content", ""),
+            # Section Content - Guarding missing keys and ensuring string types
+            "customTitle1": str(get_sec(0).get("title") or ""),
+            "customContent1": str(get_sec(0).get("content") or ""),
+            "customTitle2": str(get_sec(1).get("title") or "Key Strategy"),
+            "customContent2": str(get_sec(1).get("content") or ""),
+            "customTitle3": str(get_sec(2).get("title") or "Implementation"),
+            "customContent3": str(get_sec(2).get("content") or ""),
+            "customTitle4": str(get_sec(3).get("title") or "Best Practices"),
+            "customContent4": str(get_sec(4).get("content") or ""), # Using section 5 for content 4
+            "customTitle5": str(get_sec(4).get("title") or "Next Steps"),
+            "customContent5": str(get_sec(4).get("content") or ""),
             
             # Sub-content / Boxes
-            "subheading1": get_sub(0, 0).get("title", "Core Insight"),
-            "subcontent1": get_sub(0, 0).get("content", ""),
+            "subheading1": str(get_sub(0, 0).get("title") or "Core Insight"),
+            "subcontent1": str(get_sub(0, 0).get("content") or ""),
             "calloutLabel1": "KEY TAKEAWAY",
-            "calloutContent1": get_sub(0, 1).get("content", "Focus on strategic alignment for maximum impact."),
+            "calloutContent1": str(get_sub(0, 1).get("content") or "Focus on strategic alignment for maximum impact."),
             
-            "subheading2": get_sub(1, 0).get("title", "Analysis"),
-            "subcontent2": get_sub(1, 0).get("content", ""),
-            "pullQuote1": ai_content.get("key_insights", ["Strategy is the bridge between intent and results"])[0],
+            "subheading2": str(get_sub(1, 0).get("title") or "Analysis"),
+            "subcontent2": str(get_sub(1, 0).get("content") or ""),
+            "pullQuote1": str((ai_content.get("key_insights") or ["Strategy is the bridge between intent and results"])[0]),
             
-            "subheading3": get_sub(2, 0).get("title", "Framework"),
-            "subcontent3": get_sub(2, 0).get("content", ""),
+            "subheading3": str(get_sub(2, 0).get("title") or "Framework"),
+            "subcontent3": str(get_sub(2, 0).get("content") or ""),
             "infoBoxLabel1": "QUICK TIP",
             "infoBoxContent1": "Measure success through iterative feedback loops.",
 
@@ -383,17 +467,20 @@ class PerplexityClient:
             "ctaHeadlineLine1": "READY TO",
             "ctaHeadlineLine2": "TAKE ACTION?",
             "ctaEyebrow": "NEXT STEPS",
-            "ctaTitle": cta_obj.get("headline", "Partner with Us"),
-            "ctaText": cta_obj.get("description", "We help you turn these insights into measurable growth."),
-            "ctaButtonText": cta_obj.get("button_text", "Get Started"),
+            "ctaTitle": str(cta_obj.get("headline") or "Partner with Us"),
+            "ctaText": str(cta_obj.get("description") or "We help you turn these insights into measurable growth."),
+            "ctaButtonText": str(cta_obj.get("button_text") or "Get Started"),
             "contactLabel1": "EMAIL", "contactValue1": email,
             "contactLabel2": "PHONE", "contactValue2": phone,
             "contactLabel3": "WEB", "contactValue3": website,
             "footerText": f"© {datetime.now().year} {company_name}",
         }
-        
+
+        # Logging for observability
+        print(f"📊 Template Mapping: {len(sections)} sections mapped. Title: '{main_title[:30]}...'")
+
         # Add page numbering and headers (standard for our templates)
-        for i in range(1, 9):
+        for i in range(1, 15):
             template_vars[f"headerText{i}"] = f"STEP 0{i}" if i < 10 else f"STEP {i}"
             template_vars[f"pageNumber{i+1}"] = i + 1
             template_vars[f"pageNumberHeader{i+1}"] = f"PAGE {i+1}"

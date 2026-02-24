@@ -230,20 +230,23 @@ def generate_pdf(request):
 
         if use_ai_content:
             try:
+                # 5.1 Call AI (Signal-based prompt)
                 logger.info("🤖 AI Generation Start")
-                ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
-                logger.info("🤖 AI Generation End")
-                
-                if not ai_content or not isinstance(ai_content, dict):
-                    return Response(
-                        {"error": "AI generated invalid content format", "success": False},
-                        status=status.HTTP_502_BAD_GATEWAY
-                    )
+                raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                logger.info(f"🤖 AI Response Received. Keys: {list(raw_ai_content.keys()) if isinstance(raw_ai_content, dict) else 'N/A'}")
+
+                # 5.2 Normalize AI Output (Structural Safety)
+                ai_content = ai_client.normalize_ai_output(raw_ai_content)
+                logger.info(f"✅ AI Content Normalized. Sections: {len(ai_content.get('sections', []))}")
+
+                # 5.3 Map to Template Variables (Safety Layer)
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
+                
             except Exception as e:
-                logger.error(f"AI Generation Error: {str(e)}", exc_info=True)
+                import traceback
+                logger.error(f"AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
                 return Response(
-                    {"error": f"AI Generation failed: {str(e)}", "success": False},
+                    {"error": f"AI generation failed: {str(e)}", "success": False},
                     status=status.HTTP_502_BAD_GATEWAY
                 )
         else:
