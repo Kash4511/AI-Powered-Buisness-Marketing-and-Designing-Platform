@@ -325,8 +325,14 @@ export const dashboardApi = {
           body: JSON.stringify(data), 
       });
       if (!startRes.ok) {
-        const errData = await startRes.json();
-        throw new Error(errData.error || 'Failed to start PDF generation');
+        let errMsg = `Server error ${startRes.status}`;
+        try { 
+          const errData = await startRes.json();
+          errMsg = errData.error || errMsg; 
+        } catch {
+          // If response is not JSON (like a 405 HTML page), use the status text
+        }
+        throw new Error(errMsg);
       }
       const { job_id } = await startRes.json();
 

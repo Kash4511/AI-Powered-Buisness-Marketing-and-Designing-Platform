@@ -317,12 +317,13 @@ def _run_generation_job(job_id, body, request):
         _set_job(job_id, status="failed", error=str(exc))
 
 @csrf_exempt
-@require_POST
 def generate_pdf_start(request):
+    if request.method != 'POST':
+        return JsonResponse({"error": "Method not allowed"}, status=405)
     try:
         body = json.loads(request.body)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"error": f"Invalid JSON: {e}"}, status=400)
     
     # Check auth
     if not getattr(request, "user", None) or not request.user.is_authenticated:
@@ -333,8 +334,9 @@ def generate_pdf_start(request):
     threading.Thread(target=_run_generation_job, args=(job_id, body, request), daemon=True).start()
     return JsonResponse({"job_id": job_id, "status": "pending"}, status=202)
 
-@require_GET
 def generate_pdf_status(request, job_id):
+    if request.method != 'GET':
+        return JsonResponse({"error": "Method not allowed"}, status=405)
     job = _get_job(job_id)
     if not job:
         return JsonResponse({"error": "Job not found"}, status=404)
