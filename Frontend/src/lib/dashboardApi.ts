@@ -318,38 +318,23 @@ export const dashboardApi = {
     
     try {
       // 1. Start the job
-      const startRes = await fetch(`${API_BASE_URL}/generate-pdf/start/`, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
-          credentials: 'include', 
-          body: JSON.stringify(data), 
-      });
-      if (!startRes.ok) {
-        let errMsg = `Server error ${startRes.status}`;
-        try { 
-          const errData = await startRes.json();
-          errMsg = errData.error || errMsg; 
-        } catch {
-          // If response is not JSON (like a 405 HTML page), use the status text
-        }
-        throw new Error(errMsg);
-      }
-      const { job_id } = await startRes.json();
+      const startRes = await apiClient.post(`${API_BASE_URL}/generate-pdf/start/`, data);
+      const { job_id } = startRes.data;
 
       // 2. Poll for status
       const pdf_url = await (async () => { 
           const deadline = Date.now() + 180000; // 3 minutes
           while (Date.now() < deadline) { 
               await new Promise(r => setTimeout(r, 3000)); 
-              const job = await fetch(`${API_BASE_URL}/generate-pdf/status/${job_id}/`, 
-                  { credentials: 'include' }).then(r => r.json()); 
+              const jobRes = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/${job_id}/`);
+              const job = jobRes.data;
               
               console.log(`PDF ${job.progress}% — ${job.message}`); 
               
               if (job.status === 'complete') return job.pdf_url; 
-              if (job.status === 'failed')   throw new Error(job.error); 
+              if (job.status === 'failed')   throw new Error(job.error || 'Generation failed'); 
           } 
-          throw new Error('Timed out after 3 minutes'); 
+          throw new Error('PDF generation timed out'); 
       })(); 
 
       // 3. Download the result
@@ -376,13 +361,13 @@ export const dashboardApi = {
     pdf_url?: string; 
     error?: string; 
   }> => {
-    const response = await fetch(`${API_BASE_URL}/generate-pdf/status/${job_id}/`, {
-      credentials: 'include'
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch job status');
+    try {
+      const response = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/${job_id}/`);
+      return response.data;
+    } catch (error) {
+      handleApiError(error, 'Fetching PDF status');
+      throw error;
     }
-    return response.json();
   },
 
   generateSlogan: async (request: {

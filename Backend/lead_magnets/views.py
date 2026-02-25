@@ -147,11 +147,14 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
         )
 
 
-def _run_generation_job(job_id, body, request):
+def _run_generation_job(job_id, body, user_id):
     """
     Background job to generate a PDF for a lead magnet.
     """
     try:
+        from accounts.models import User
+        user = User.objects.get(id=user_id)
+        
         # 1. Extract and Validate Inputs
         template_id = body.get('template_id')
         lead_magnet_id = body.get('lead_magnet_id')
@@ -165,7 +168,7 @@ def _run_generation_job(job_id, body, request):
         _set_job(job_id, status="processing", progress=5, message="Parsing...")
 
         try:
-            lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
+            lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=user)
         except LeadMagnet.DoesNotExist:
             _set_job(job_id, status="failed", error="Lead magnet not found")
             return
@@ -196,10 +199,10 @@ def _run_generation_job(job_id, body, request):
         
         # 4. PREPARE FIRM PROFILE
         try:
-            fp = FirmProfile.objects.get(user=request.user)
+            fp = FirmProfile.objects.get(user=user)
             firm_profile = {
-                'firm_name': fp.firm_name or request.user.email.split('@')[0],
-                'work_email': fp.work_email or request.user.email,
+                'firm_name': fp.firm_name or user.email.split('@')[0],
+                'work_email': fp.work_email or user.email,
                 'phone_number': fp.phone_number,
                 'firm_website': fp.firm_website,
                 'primary_brand_color': fp.primary_brand_color,
@@ -209,8 +212,8 @@ def _run_generation_job(job_id, body, request):
             }
         except FirmProfile.DoesNotExist:
             firm_profile = {
-                'firm_name': request.user.email.split('@')[0],
-                'work_email': request.user.email,
+                'firm_name': user.email.split('@')[0],
+                'work_email': user.email,
                 'phone_number': '',
                 'firm_website': '',
                 'primary_brand_color': '',
@@ -303,7 +306,7 @@ def _run_generation_job(job_id, body, request):
             
             logger.info(f"✅ PDF Generation Success | Duration: {pdf_duration:.2f}s")
             
-            pdf_url = request.build_absolute_uri(lead_magnet.pdf_file.url)
+            pdf_url = lead_magnet.pdf_file.url
             _set_job(job_id, status="complete", progress=100, pdf_url=pdf_url, message="Success!")
 
         except Exception as e:
@@ -317,30 +320,26 @@ def _run_generation_job(job_id, body, request):
         _set_job(job_id, status="failed", error=str(exc))
 
 @csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
 def generate_pdf_start(request):
-    if request.method != 'POST':
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-    try:
-        body = json.loads(request.body)
-    except Exception as e:
-        return JsonResponse({"error": f"Invalid JSON: {e}"}, status=400)
-    
-    # Check auth
-    if not getattr(request, "user", None) or not request.user.is_authenticated:
-        return JsonResponse({"error": "Authentication required"}, status=401)
-
+    body = request.data
     job_id = str(uuid.uuid4())
     _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None)
-    threading.Thread(target=_run_generation_job, args=(job_id, body, request), daemon=True).start()
-    return JsonResponse({"job_id": job_id, "status": "pending"}, status=202)
+    
+    # Extract user ID to avoid passing request object to thread
+    user_id = request.user.id
+    
+    threading.Thread(target=_run_generation_job, args=(job_id, body, user_id), daemon=True).start()
+    return Response({"job_id": job_id, "status": "pending"}, status=status.HTTP_202_ACCEPTED)
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
 def generate_pdf_status(request, job_id):
-    if request.method != 'GET':
-        return JsonResponse({"error": "Method not allowed"}, status=405)
     job = _get_job(job_id)
     if not job:
-        return JsonResponse({"error": "Job not found"}, status=404)
-    return JsonResponse({
+        return Response({"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+    return Response({
         "job_id":   job_id,
         "status":   job.get("status"),
         "progress": job.get("progress", 0),
