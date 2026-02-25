@@ -4,6 +4,8 @@ import json
 import uuid
 import time
 import traceback
+import threading
+from datetime import datetime, timedelta
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,8 +13,10 @@ from rest_framework.decorators import api_view, permission_classes
 from django.db.models import Count, Q
 from django.db import transaction
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.files.base import ContentFile
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
 import requests
 from .models import (
     LeadMagnet, Lead, Download, FirmProfile, LeadMagnetGeneration,
@@ -29,6 +33,19 @@ from .services import render_template
 from .models import Template
 
 logger = logging.getLogger(__name__)
+
+_JOBS = {}
+_JOBS_LOCK = threading.Lock()
+
+def _set_job(job_id, **kwargs):
+    with _JOBS_LOCK:
+        if job_id not in _JOBS:
+            _JOBS[job_id] = {"created_at": datetime.utcnow()}
+        _JOBS[job_id].update(kwargs)
+
+def _get_job(job_id):
+    with _JOBS_LOCK:
+        return dict(_JOBS.get(job_id, {}))
 
 
 class DashboardStatsView(APIView):
@@ -130,58 +147,34 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
         )
 
 
-@api_view(["POST", "OPTIONS"])
-@permission_classes([permissions.AllowAny])
-def generate_pdf(request):
+def _run_generation_job(job_id, body, request):
     """
-    Synchronously generates a PDF for a lead magnet.
-    Execution Pipeline: 
-    1. Semantic Ignore (Weak Inputs)
-    2. AI Call
-    3. Mandatory Normalization (Structure Safety)
-    4. PDF Render (Deterministic)
+    Background job to generate a PDF for a lead magnet.
     """
     try:
-        if request.method == "OPTIONS":
-            return Response(status=status.HTTP_200_OK)
-
-        logger.info(f"🚀 Starting STRUCTURE-SAFE PDF generation for request: {request.data}")
-
-        # 1. Auth check
-        if not getattr(request, "user", None) or not request.user.is_authenticated:
-            logger.warning("❌ Auth failed for generate_pdf")
-            return Response(
-                {"error": "Authentication required", "success": False},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        # 2. Extract and Validate Inputs
-        template_id = request.data.get('template_id')
-        lead_magnet_id = request.data.get('lead_magnet_id')
-        use_ai_content = bool(request.data.get('use_ai_content', True))
-        user_answers = request.data.get('user_answers', {}) or {}
+        # 1. Extract and Validate Inputs
+        template_id = body.get('template_id')
+        lead_magnet_id = body.get('lead_magnet_id')
+        use_ai_content = bool(body.get('use_ai_content', True))
+        user_answers = body.get('user_answers', {}) or {}
 
         if not template_id or not lead_magnet_id:
-            return Response(
-                {"error": "template_id and lead_magnet_id are required", "success": False},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            _set_job(job_id, status="failed", error="template_id and lead_magnet_id are required")
+            return
+
+        _set_job(job_id, status="processing", progress=5, message="Parsing...")
 
         try:
             lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
         except LeadMagnet.DoesNotExist:
-            return Response(
-                {"error": "Lead magnet not found", "success": False},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            _set_job(job_id, status="failed", error="Lead magnet not found")
+            return
 
         # 3. SEMANTIC IGNORE (Step 1 of Pipeline)
         gen_data = getattr(lead_magnet, 'generation_data', None)
         if not gen_data:
-            return Response(
-                {"error": "Lead magnet is missing generation data", "success": False},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            _set_job(job_id, status="failed", error="Lead magnet is missing generation data")
+            return
 
         ai_client = PerplexityClient()
         
@@ -231,6 +224,7 @@ def generate_pdf(request):
 
         if use_ai_content:
             try:
+                _set_job(job_id, status="processing", progress=15, message="Generating AI content... (~45s)")
                 start_ai = time.time()
                 # 5.1 AI Call
                 logger.info("🤖 AI Generation Start (Step 2)")
@@ -240,6 +234,7 @@ def generate_pdf(request):
                 # Mandatory Logging: AI raw type and duration
                 logger.info(f"📊 AI RAW TYPE: {type(raw_ai_content)} | Duration: {ai_duration:.2f}s")
 
+                _set_job(job_id, status="processing", progress=55, message="Structuring content...")
                 # 5.2 Mandatory Normalization Layer (Step 3)
                 start_norm = time.time()
                 ai_content = ai_client.normalize_ai_output(raw_ai_content)
@@ -249,11 +244,7 @@ def generate_pdf(request):
                 sections = ai_content.get('sections', [])
                 logger.info(f"✅ AI Content Normalized. Count: {len(sections)} | Duration: {norm_duration:.2f}s")
                 
-                # USER REQUESTED DEBUG LOGS
-                logger.info(f"📊 DEBUG AI TYPE: {type(ai_content)}")
-                logger.info(f"📊 DEBUG AI CONTENT: {json.dumps(ai_content, indent=2)[:1000]}...") # Truncate for log readability
-                logger.info(f"📊 DEBUG SECTIONS AFTER NORMALIZE: {json.dumps(sections, indent=2)}")
-
+                _set_job(job_id, status="processing", progress=65, message="Validating...")
                 # 5.3 CONTENT GUARANTEE LAYER (Step 4)
                 # Ensures every section has meaningful content (120-250 words)
                 start_guarantee = time.time()
@@ -269,10 +260,8 @@ def generate_pdf(request):
             except Exception as e:
                 # Mandatory Logging: Traceback on failure
                 logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
-                return Response(
-                    {"error": f"AI generation failed: {str(e)}", "success": False},
-                    status=status.HTTP_502_BAD_GATEWAY
-                )
+                _set_job(job_id, status="failed", error=f"AI generation failed: {str(e)}")
+                return
         else:
             # Basic non-AI mapping using signals
             def clean_sig(s): return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else ""
@@ -291,6 +280,7 @@ def generate_pdf(request):
         # PDF renderer only receives plain strings (enforced in map_to_template_vars)
         template_service = DocRaptorService()
         try:
+            _set_job(job_id, status="processing", progress=80, message="Rendering PDF...")
             start_pdf = time.time()
             logger.info("📄 PDF Generation Start (Step 4)")
             result = template_service.generate_pdf(template_id, template_vars)
@@ -299,11 +289,10 @@ def generate_pdf(request):
             if not result.get('success'):
                 err = result.get('error', 'PDF generation failed')
                 logger.error(f"❌ PDF Failure: {err} | Duration: {pdf_duration:.2f}s")
-                return Response(
-                    {"error": err, "details": result.get('details'), "success": False},
-                    status=status.HTTP_502_BAD_GATEWAY
-                )
+                _set_job(job_id, status="failed", error=err)
+                return
             
+            _set_job(job_id, status="processing", progress=92, message="Saving...")
             pdf_data = result.get('pdf_data')
             filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
             
@@ -314,48 +303,49 @@ def generate_pdf(request):
             
             logger.info(f"✅ PDF Generation Success | Duration: {pdf_duration:.2f}s")
             
-            # Return as file response
-            response = HttpResponse(pdf_data, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
+            pdf_url = request.build_absolute_uri(lead_magnet.pdf_file.url)
+            _set_job(job_id, status="complete", progress=100, pdf_url=pdf_url, message="Success!")
 
         except Exception as e:
             # Mandatory Logging: Traceback on failure
             logger.error(f"❌ PDF Rendering Error: {str(e)}\n{traceback.format_exc()}")
-            return Response(
-                {"error": f"PDF generation failed: {str(e)}", "success": False},
-                status=status.HTTP_502_BAD_GATEWAY
-            )
+            _set_job(job_id, status="failed", error=f"PDF generation failed: {str(e)}")
+            return
 
-    except Exception as e:
-        # Mandatory Logging: Traceback on failure
-        logger.critical(f"❌ Critical View Error: {str(e)}\n{traceback.format_exc()}")
-        return Response(
-            {"error": "A critical server error occurred", "details": str(e), "success": False},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+    except Exception as exc:
+        logger.critical(f"❌ Critical View Error: {str(exc)}\n{traceback.format_exc()}")
+        _set_job(job_id, status="failed", error=str(exc))
 
-@api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf_status(request):
-    """
-    Deprecated: Synchronous generation no longer requires polling.
-    Maintained for frontend compatibility if needed.
-    """
-    lead_magnet_id = request.query_params.get('lead_magnet_id')
-    if not lead_magnet_id:
-        return Response({'error': 'lead_magnet_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-    
+@csrf_exempt
+@require_POST
+def generate_pdf_start(request):
     try:
-        lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
-        if lead_magnet.status == 'completed' and lead_magnet.pdf_file:
-            return Response({
-                'status': 'ready',
-                'pdf_url': request.build_absolute_uri(lead_magnet.pdf_file.url)
-            })
-        return Response({'status': lead_magnet.status})
-    except LeadMagnet.DoesNotExist:
-        return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        body = json.loads(request.body)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    
+    # Check auth
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return JsonResponse({"error": "Authentication required"}, status=401)
+
+    job_id = str(uuid.uuid4())
+    _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None)
+    threading.Thread(target=_run_generation_job, args=(job_id, body, request), daemon=True).start()
+    return JsonResponse({"job_id": job_id, "status": "pending"}, status=202)
+
+@require_GET
+def generate_pdf_status(request, job_id):
+    job = _get_job(job_id)
+    if not job:
+        return JsonResponse({"error": "Job not found"}, status=404)
+    return JsonResponse({
+        "job_id":   job_id,
+        "status":   job.get("status"),
+        "progress": job.get("progress", 0),
+        "message":  job.get("message", ""),
+        "pdf_url":  job.get("pdf_url"),
+        "error":    job.get("error"),
+    })
 
 class CreateLeadMagnetView(APIView):
     permission_classes = [permissions.IsAuthenticated]

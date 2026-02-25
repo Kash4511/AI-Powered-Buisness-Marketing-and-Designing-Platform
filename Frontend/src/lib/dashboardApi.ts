@@ -305,85 +305,57 @@ export const dashboardApi = {
     }
   },
 
-  // Lead magnets - THIS GENERATES THE PDF
-  generatePDFWithAI: async (request: { 
+  // Lead magnets - ASYNC JOB PATTERN
+  generatePDFWithAI: async (data: { 
     template_id: string; 
     lead_magnet_id: number; 
     use_ai_content: boolean;
     user_answers?: Record<string, unknown>;
     architectural_images?: string[];
   }): Promise<void> => {
-    if (pdfGenerationRunning) {
-      return;
-    }
+    if (pdfGenerationRunning) return;
     pdfGenerationRunning = true;
+    
     try {
-      const response = await apiClient.post(`${API_BASE_URL}/generate-pdf/`, request, {
-        responseType: 'blob'
+      // 1. Start the job
+      const startRes = await fetch(`${API_BASE_URL}/generate-pdf/start/`, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          credentials: 'include', 
+          body: JSON.stringify(data), 
       });
-      
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const arrayBuffer = await blob.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      
-      // Check for PDF magic bytes: %PDF
-      if (uint8Array.length >= 4 && 
-          uint8Array[0] === 0x25 && uint8Array[1] === 0x50 && 
-          uint8Array[2] === 0x44 && uint8Array[3] === 0x46) {
-        
-        const url = window.URL.createObjectURL(blob);
+      if (!startRes.ok) {
+        const errData = await startRes.json();
+        throw new Error(errData.error || 'Failed to start PDF generation');
+      }
+      const { job_id } = await startRes.json();
+
+      // 2. Poll for status
+      const pdf_url = await (async () => { 
+          const deadline = Date.now() + 180000; // 3 minutes
+          while (Date.now() < deadline) { 
+              await new Promise(r => setTimeout(r, 3000)); 
+              const job = await fetch(`${API_BASE_URL}/generate-pdf/status/${job_id}/`, 
+                  { credentials: 'include' }).then(r => r.json()); 
+              
+              console.log(`PDF ${job.progress}% — ${job.message}`); 
+              
+              if (job.status === 'complete') return job.pdf_url; 
+              if (job.status === 'failed')   throw new Error(job.error); 
+          } 
+          throw new Error('Timed out after 3 minutes'); 
+      })(); 
+
+      // 3. Download the result
+      if (pdf_url) {
         const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `lead-magnet-${request.lead_magnet_id}.pdf`);
+        link.href = pdf_url;
+        link.setAttribute('download', `lead-magnet-${data.lead_magnet_id}.pdf`);
         document.body.appendChild(link);
         link.click();
         link.remove();
-        window.URL.revokeObjectURL(url);
-        return;
-      } else {
-        // Likely a JSON error hidden in a blob
-        const text = await blob.text();
-        let errorData: any;
-        try {
-          errorData = JSON.parse(text);
-        } catch {
-          errorData = { error: 'Invalid PDF response', details: text.substring(0, 200) };
-        }
-        throw new Error(errorData.error || errorData.message || 'PDF generation failed');
       }
     } catch (error) {
-      const err = error as AxiosError;
-      if (err.response && err.response.status === 409) {
-        const poll = async (): Promise<string> => {
-          const statusResp = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/`, {
-            params: { lead_magnet_id: request.lead_magnet_id }
-          });
-          const data = statusResp.data as { status?: string; pdf_url?: string };
-          if (data && data.status === 'ready' && data.pdf_url) {
-            return data.pdf_url;
-          }
-          return '';
-        };
-        const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-        let attempts = 0;
-        const maxAttempts = 40;
-        const intervalMs = 2500;
-        while (attempts < maxAttempts) {
-          const pdfUrl = await poll();
-          if (pdfUrl) {
-            const link = document.createElement('a');
-            link.href = pdfUrl;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            return;
-          }
-          attempts += 1;
-          await wait(intervalMs);
-        }
-        throw new Error('PDF generation did not complete in time');
-      }
       handleApiError(error, 'Generating PDF with AI');
       throw error;
     } finally {
@@ -391,137 +363,20 @@ export const dashboardApi = {
     }
   },
 
-  getGeneratePDFStatus: async (lead_magnet_id: number): Promise<{ status: string; pdf_url?: string }> => {
-    const response = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/`, {
-      params: { lead_magnet_id }
+  getGeneratePDFStatus: async (job_id: string): Promise<{ 
+    status: string; 
+    progress: number; 
+    message: string; 
+    pdf_url?: string; 
+    error?: string; 
+  }> => {
+    const response = await fetch(`${API_BASE_URL}/generate-pdf/status/${job_id}/`, {
+      credentials: 'include'
     });
-    return response.data;
-  },
-
-  // Lead magnets - Generate PDF and return a preview URL (no auto-download)
-  generatePDFWithAIUrl: async (request: {
-    template_id: string;
-    lead_magnet_id: number;
-    user_answers?: Record<string, unknown>;
-    architectural_images?: string[];
-  }): Promise<string> => {
-    try {
-      const response = await apiClient.post(`${API_BASE_URL}/generate-pdf/`, request, {
-        responseType: 'blob'
-      });
-      
-      // Success response (status 200), check if response is actually a PDF
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const arrayBuffer = await blob.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      
-      // Check for PDF magic bytes: %PDF (first 4 bytes should be 0x25 0x50 0x44 0x46)
-      if (uint8Array.length >= 4 && 
-          uint8Array[0] === 0x25 && 
-          uint8Array[1] === 0x50 && 
-          uint8Array[2] === 0x44 && 
-          uint8Array[3] === 0x46) {
-        const url = window.URL.createObjectURL(blob);
-        return url; // caller should revoke when done
-      } else {
-        // Response is not a PDF, likely an error message in JSON format
-        const text = await blob.text();
-        let errorData: { error?: string; details?: string };
-        try {
-          errorData = JSON.parse(text);
-        } catch {
-          errorData = { error: 'PDF generation failed', details: 'Response was not a valid PDF' };
-        }
-        throw new Error(
-          `PDF generation failed: ${errorData.error || 'Unknown error'}\n` +
-          `Details: ${errorData.details || 'No details available'}`
-        );
-      }
-    } catch (error) {
-      const err = error as AxiosError;
-      if (err.response && err.response.status === 409) {
-        return '';
-      }
-      if (error instanceof Error && error.message.includes('Generating PDF preview URL failed')) {
-        throw error;
-      }
-      
-      if (err.response && err.response.data instanceof Blob) {
-        const blob = err.response.data as Blob;
-        let text = '';
-        let parseError: Error | null = null;
-        
-        try {
-          text = await blob.text();
-        } catch (textError) {
-          parseError = textError as Error;
-          console.error('Generating PDF preview URL - Error reading blob as text:', textError);
-        }
-        
-        if (text) {
-          // Try to parse as JSON
-          let errorData: { error?: string; details?: string; message?: string } | null = null;
-          let errorMessage = 'Unknown error';
-          let errorDetails = '';
-          
-          try {
-            errorData = JSON.parse(text);
-            // Extract error message from various possible fields
-            if (errorData) {
-              errorMessage = errorData.error || errorData.message || 'PDF generation failed';
-              errorDetails = errorData.details || '';
-            } else {
-              errorMessage = text || 'PDF generation failed';
-              errorDetails = 'Could not parse error response as JSON';
-            }
-          } catch {
-            // If JSON parsing fails, use the raw text
-            errorData = null;
-            errorMessage = text || 'PDF generation failed';
-            errorDetails = 'Could not parse error response as JSON';
-          }
-          
-          // Build the full error message
-          const fullErrorMessage = errorDetails 
-            ? `${errorMessage}\nDetails: ${errorDetails}`
-            : errorMessage;
-          
-          console.error('Generating PDF preview URL - Server Error:', {
-            status: err.response.status,
-            statusText: err.response.statusText,
-            error: errorMessage,
-            details: errorDetails,
-            rawText: text.length > 200 ? text.substring(0, 200) + '...' : text
-          });
-          
-          throw new Error(
-            `Generating PDF preview URL failed: ${err.response.status} ${err.response.statusText}\n` +
-            `${fullErrorMessage}`
-          );
-        } else {
-          // Could not read blob text
-          const status = err.response?.status || 500;
-          const statusText = err.response?.statusText || 'Internal Server Error';
-          console.error('Generating PDF preview URL - Could not read error blob:', parseError);
-          throw new Error(
-            `Generating PDF preview URL failed: ${status} ${statusText}\n` +
-            `Details: Unable to read server error response. Please check server logs.`
-          );
-        }
-      } else {
-        if (err.response) {
-          const status = err.response.status;
-          if (status >= 500) {
-            throw new Error('Server error, try again later');
-          }
-          const data = err.response.data as { error?: string; details?: string };
-          const msg = (data && (data.error || data.details)) || `${status} Error`;
-          throw new Error(msg);
-        }
-        handleApiError(error, 'Generating PDF preview URL');
-        throw error;
-      }
+    if (!response.ok) {
+      throw new Error('Failed to fetch job status');
     }
+    return response.json();
   },
 
   generateSlogan: async (request: {
