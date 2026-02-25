@@ -1,9 +1,7 @@
 // PDF Generation Helper with Authentication
 // This module provides functions to generate PDFs with proper authentication
 
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000/api';
+import { apiClient } from './apiClient';
 
 /**
  * Generate a PDF with AI content and proper authentication
@@ -18,29 +16,13 @@ export const generatePDFWithAuth = async (params) => {
   const { template_id, lead_magnet_id, use_ai_content = true, user_answers = {} } = params;
   
   console.log('🔄 Generating PDF with authentication...');
-  console.log('📝 Request parameters:', { template_id, lead_magnet_id, use_ai_content });
-  console.log('👤 User answers provided:', Object.keys(user_answers).length > 0 ? 'Yes' : 'No');
-  
-  // Get access token from localStorage
-  const accessToken = localStorage.getItem('access_token');
-  if (!accessToken) {
-    console.error('❌ Authentication error: No access token found');
-    throw new Error('Authentication required. Please log in.');
-  }
   
   try {
-    console.log('🔐 Using authentication token for request');
-    
-    const response = await axios.post(
-      `${API_BASE_URL}/generate-pdf/`, 
+    const response = await apiClient.post(
+      '/api/generate-pdf/', 
       { template_id, lead_magnet_id, use_ai_content, user_answers },
       {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
         responseType: 'blob',
-        
       }
     );
     
@@ -48,31 +30,7 @@ export const generatePDFWithAuth = async (params) => {
     return response;
   } catch (error) {
     console.error('❌ PDF generation failed:', error);
-    
-    // Handle different error types
-    if (error.response) {
-      // Server responded with an error status
-      const status = error.response.status;
-      
-      if (status === 401) {
-        console.error('🔒 Authentication error: Unauthorized');
-        throw new Error('Authentication failed. Please log in again.');
-      } else if (status === 404) {
-        console.error('🔍 API endpoint not found');
-        throw new Error('PDF generation service not found. Please check API configuration.');
-      } else {
-        console.error(`🛑 Server error: ${status}`);
-        throw new Error(`Server error (${status}). Please try again later.`);
-      }
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('📡 No response from server');
-      throw new Error('No response from server. Please check your connection.');
-    } else {
-      // Error in setting up the request
-      console.error('⚠️ Request setup error:', error.message);
-      throw error;
-    }
+    throw error;
   }
 };
 

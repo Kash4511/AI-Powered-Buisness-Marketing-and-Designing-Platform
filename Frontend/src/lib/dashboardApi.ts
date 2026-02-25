@@ -1,8 +1,6 @@
 import type { AxiosError } from 'axios';
 import { apiClient } from './apiClient';
 
-// Define the base URL for API requests
-const API_BASE_URL = '/api';
 let pdfGenerationRunning = false;
 
 // Define types with valid choices
@@ -130,7 +128,7 @@ export const dashboardApi = {
   // Dashboard stats
   getStats: async (): Promise<DashboardStats> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/dashboard/stats/`);
+      const response = await apiClient.get('/api/dashboard/stats/');
       return response.data;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -146,7 +144,7 @@ export const dashboardApi = {
   // Get valid choices from server
   getValidChoices: async (): Promise<{lead_magnet_types: string[], main_topics: string[]}> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/valid-choices/`);
+      const response = await apiClient.get('/api/valid-choices/');
       return response.data;
     } catch {
       console.log('Valid choices endpoint not available, using discovered choices');
@@ -160,7 +158,7 @@ export const dashboardApi = {
   // Templates - FIXED VERSION
   getTemplates: async (): Promise<PDFTemplate[]> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/templates/`);
+      const response = await apiClient.get('/api/templates/');
       // Handle different response structures
       if (response.data.templates) {
         return response.data.templates;
@@ -178,7 +176,7 @@ export const dashboardApi = {
   
   selectTemplate: async (request: TemplateSelectionRequest): Promise<void> => {
     try {
-      await apiClient.post(`${API_BASE_URL}/select-template/`, request);
+      await apiClient.post('/api/select-template/', request);
     } catch (error) {
       handleApiError(error, 'Selecting template');
     }
@@ -193,7 +191,7 @@ export const dashboardApi = {
       if (!data.title || !data.generation_data) {
         throw new Error('Title and generation_data are required');
       }
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, data);
+      const response = await apiClient.post('/api/create-lead-magnet/', data);
       
       console.log('✅ Lead magnet created successfully:', response.data);
       return response.data;
@@ -260,43 +258,34 @@ export const dashboardApi = {
   },
 
   // Firm profile
-  getFirmProfile: async (): Promise<FirmProfile> => {
+  getFirmProfile: async (): Promise<FirmProfile | null> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/firm-profile/`);
+      const response = await apiClient.get('/api/firm-profile/');
       return response.data;
     } catch (error) {
-      handleApiError(error, 'Fetching firm profile');
-      throw error;
+      console.error('Error fetching firm profile:', error);
+      return null;
     }
   },
 
-  updateFirmProfile: async (profileData: Partial<FirmProfile>): Promise<FirmProfile> => {
+  updateFirmProfile: async (data: Partial<FirmProfile>): Promise<FirmProfile> => {
     try {
       const formData = new FormData();
-      
-      Object.entries(profileData).forEach(([key, value]) => {
+      Object.entries(data).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          if (key === 'logo' && value instanceof File) {
+          if (key === 'industry_specialties' && Array.isArray(value)) {
+            value.forEach(v => formData.append('industry_specialties', v));
+          } else if (key === 'logo' && value instanceof File) {
             formData.append('logo', value);
-          } else if (Array.isArray(value)) {
-            // Ensure arrays (e.g., industry_specialties) are sent as valid JSON
-            formData.append(key, JSON.stringify(value));
-          } else if (key === 'firm_website' && typeof value === 'string') {
-            // Normalize website to include protocol for URLField validation
-            const trimmed = value.trim();
-            const hasProtocol = /^https?:\/\//i.test(trimmed);
-            const normalized = trimmed && !hasProtocol ? `https://${trimmed}` : trimmed;
-            formData.append(key, normalized);
-          } else if (key === 'work_email' && typeof value === 'string') {
-            const normalizedEmail = value.trim();
-            formData.append(key, normalizedEmail);
           } else {
             formData.append(key, String(value));
           }
         }
       });
-      const response = await apiClient.patch(`${API_BASE_URL}/firm-profile/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await apiClient.patch('/api/firm-profile/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       return response.data;
     } catch (error) {
@@ -318,7 +307,7 @@ export const dashboardApi = {
     
     try {
       // 1. Start the job
-      const startRes = await apiClient.post(`${API_BASE_URL}/generate-pdf/start/`, data);
+      const startRes = await apiClient.post('/api/generate-pdf/start/', data);
       const { job_id } = startRes.data;
 
       // 2. Poll for status
@@ -326,7 +315,7 @@ export const dashboardApi = {
           const deadline = Date.now() + 180000; // 3 minutes
           while (Date.now() < deadline) { 
               await new Promise(r => setTimeout(r, 3000)); 
-              const jobRes = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/${job_id}/`);
+              const jobRes = await apiClient.get(`/api/generate-pdf/status/${job_id}/`);
               const job = jobRes.data;
               
               console.log(`PDF ${job.progress}% — ${job.message}`); 
@@ -362,7 +351,7 @@ export const dashboardApi = {
     error?: string; 
   }> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/${job_id}/`);
+      const response = await apiClient.get(`/api/generate-pdf/status/${job_id}/`);
       return response.data;
     } catch (error) {
       handleApiError(error, 'Fetching PDF status');
@@ -375,7 +364,7 @@ export const dashboardApi = {
     firm_profile: Record<string, unknown>;
   }): Promise<{ slogan: string }> => {
     try {
-      const response = await apiClient.post(`${API_BASE_URL}/generate-slogan/`, request);
+      const response = await apiClient.post('/api/generate-slogan/', request);
       return response.data;
     } catch (error) {
       handleApiError(error, 'Generating slogan');
@@ -386,7 +375,7 @@ export const dashboardApi = {
   // Brand assets PDF preview
   generateBrandAssetsPDFPreview: async (): Promise<string> => {
     try {
-      const response = await apiClient.post(`${API_BASE_URL}/brand-assets/preview-pdf/`, {}, {
+      const response = await apiClient.post('/api/brand-assets/preview-pdf/', {}, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
@@ -399,17 +388,17 @@ export const dashboardApi = {
 
   getLeadMagnets: async (): Promise<LeadMagnet[]> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/lead-magnets/`);
+      const response = await apiClient.get('/api/lead-magnets/');
       return response.data;
     } catch (error) {
-      handleApiError(error, 'Fetching lead magnets');
-      throw error;
+      console.error('Error fetching lead magnets:', error);
+      return [];
     }
   },
 
-  getLeadMagnet: async (id: number): Promise<LeadMagnet> => {
+  getLeadMagnetById: async (id: number): Promise<LeadMagnet> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/lead-magnets/${id}/`);
+      const response = await apiClient.get(`/api/lead-magnets/${id}/`);
       return response.data;
     } catch (error) {
       handleApiError(error, `Fetching lead magnet ${id}`);
@@ -478,9 +467,10 @@ export const dashboardApi = {
   // Delete lead magnet
   deleteLeadMagnet: async (id: number): Promise<void> => {
     try {
-      await apiClient.delete(`${API_BASE_URL}/lead-magnets/${id}/`);
+      await apiClient.delete(`/api/lead-magnets/${id}/`);
     } catch (error) {
       handleApiError(error, `Deleting lead magnet ${id}`);
+      throw error;
     }
   }
 };

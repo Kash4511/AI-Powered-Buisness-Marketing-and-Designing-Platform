@@ -1,11 +1,45 @@
 import axios from 'axios';
 
 // Resolve API base URL from environment for deployment
-// Vite env var: VITE_API_BASE_URL=https://django-msvx.onrender.com
-const API_BASE_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
-  (typeof window !== 'undefined' && (window as any).__API_BASE_URL) ||
-  'http://localhost:8000';
+const getApiBaseUrl = () => {
+  // 1. Check for Vite environment variable
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) {
+    return (import.meta as any).env.VITE_API_BASE_URL;
+  }
+  
+  // 2. Check for global window variable
+  if (typeof window !== 'undefined' && (window as any).__API_BASE_URL) {
+    return (window as any).__API_BASE_URL;
+  }
+  
+  // 3. Robust detection for local/cloud development
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    
+    // Handle Replit environment
+    if (hostname.includes('replit.dev')) {
+      return `${protocol}//${hostname}:8000`;
+    }
+    
+    // Default to port 8000 on current hostname (handles localhost, 127.0.0.1, etc.)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `http://${hostname}:8000`;
+    }
+    
+    // For other cases, if we're not on a known production domain, try port 8000
+    // But if we're on a production-like domain (vercel.app, onrender.com), 
+    // we should probably use relative path or the same origin
+    const isProduction = hostname.includes('vercel.app') || hostname.includes('onrender.com');
+    if (!isProduction) {
+      return `${protocol}//${hostname}:8000`;
+    }
+  }
+  
+  // 4. Final fallback
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Create axios instance with default config
 const apiClient = axios.create({
