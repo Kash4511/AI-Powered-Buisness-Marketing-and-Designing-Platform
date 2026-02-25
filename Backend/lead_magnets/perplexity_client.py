@@ -559,7 +559,11 @@ OUTPUT — return this exact JSON structure, fully populated:
             return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else s
 
         raw_title  = str(ai_content.get("title") or "").strip()
-        main_title = raw_title or f"{clean_sig(user_answers.get('main_topic',''))} Guide".strip()
+        main_topic_clean = clean_sig(user_answers.get('main_topic',''))
+        main_title = raw_title or f"{main_topic_clean} Guide".strip()
+        if not main_title or main_title.lower() == "guide":
+            main_title = "Strategic Expert Guide"
+            
         summary    = str(ai_content.get("summary")           or "A comprehensive strategic guide.").strip()
         outcome    = str(ai_content.get("outcome_statement") or summary).strip()
         hl_parts   = main_title.split(":", 1)
@@ -573,7 +577,8 @@ OUTPUT — return this exact JSON structure, fully populated:
         v: Dict[str, Any] = {
 
             # ── Global ───────────────────────────────────────────────────────
-            "documentTitle":    main_title.upper(),
+        "mainTitle":        main_title,
+        "documentTitle":    main_title.upper(),
             "documentSubtitle": summary,
             "companyName":      company,
             "emailAddress":     email,

@@ -152,7 +152,7 @@ class DocRaptorService:
                 self.base_url,
                 json=doc_data,
                 headers={'Content-Type': 'application/json'},
-                timeout=12  # Render limit is 30s. AI takes ~15s. DocRaptor gets 12s.
+                timeout=30  # Increased from 12s since this is now a background job
             )
             
             if response.status_code == 200:
