@@ -319,8 +319,15 @@ export const dashboardApi = {
     pdfGenerationRunning = true;
     try {
       const response = await apiClient.post(`${API_BASE_URL}/generate-pdf/`, request, {
-        responseType: 'blob'
+        responseType: 'blob',
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 202,
       });
+
+      // Handle 202 Accepted - Start polling
+      if (response.status === 202) {
+        return await dashboardApi.startPolling(request.lead_magnet_id);
+      }
+
       const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -333,89 +340,97 @@ export const dashboardApi = {
       return;
     } catch (error) {
       const err = error as AxiosError;
-      if (err.response && err.response.status === 409) {
-        const poll = async (): Promise<string> => {
-          const statusResp = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/`, {
-            params: { lead_magnet_id: request.lead_magnet_id }
-          });
-          const data = statusResp.data as { status?: string; pdf_url?: string; error?: string };
-          
-          if (data && data.status === 'ready' && data.pdf_url) {
-            return data.pdf_url;
-          }
-          
-          if (data && data.status === 'error') {
-            throw new Error(data.error || 'PDF generation failed on the server');
-          }
-          
-          return '';
-        };
-        const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-        let attempts = 0;
-        const maxAttempts = 40;
-        const intervalMs = 2500;
-        while (attempts < maxAttempts) {
-          const pdfUrl = await poll();
-          if (pdfUrl) {
-            // Ensure the URL is absolute
-            let finalUrl = pdfUrl;
-            if (!pdfUrl.startsWith('http') && apiClient.defaults.baseURL) {
-              const base = apiClient.defaults.baseURL.replace(/\/$/, '');
-              const path = pdfUrl.startsWith('/') ? pdfUrl : `/${pdfUrl}`;
-              finalUrl = `${base}${path}`;
-            }
-
-            console.log('PDF generation complete, downloading from:', finalUrl);
-            
-            try {
-              // Fetch the PDF using apiClient to include the Authorization header
-              const pdfResponse = await apiClient.get(finalUrl, {
-                responseType: 'blob'
-              });
-              
-              if (pdfResponse.status !== 200) {
-                throw new Error(`Unexpected status ${pdfResponse.status} while downloading PDF`);
-              }
-
-              const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-              
-              // Verify the blob is actually a PDF
-              if (blob.size < 100) {
-                const text = await blob.text();
-                console.error('Downloaded blob is too small, content:', text);
-                throw new Error('Downloaded file is not a valid PDF');
-              }
-
-              const blobUrl = window.URL.createObjectURL(blob);
-              
-              // Trigger download
-              const link = document.createElement('a');
-              link.href = blobUrl;
-              link.setAttribute('download', `lead-magnet-${request.lead_magnet_id}.pdf`);
-              document.body.appendChild(link);
-              link.click();
-              
-              // Cleanup
-              document.body.removeChild(link);
-              setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
-              return;
-            } catch (downloadError) {
-              console.error('Error downloading PDF with auth:', downloadError);
-              const err = downloadError as AxiosError;
-              const errorMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-              throw new Error(`Failed to download PDF after generation: ${errorMsg}`);
-            }
-          }
-          attempts += 1;
-          await wait(intervalMs);
-        }
-        throw new Error('PDF generation did not complete in time');
+      // Handle legacy 409 Conflict or unexpected 202 if Axios treated it as an error
+      if (err.response && (err.response.status === 409 || err.response.status === 202)) {
+        return await dashboardApi.startPolling(request.lead_magnet_id);
       }
       handleApiError(error, 'Generating PDF with AI');
       throw error;
     } finally {
       pdfGenerationRunning = false;
     }
+  },
+
+  // Helper for polling PDF generation status
+  startPolling: async (lead_magnet_id: number): Promise<void> => {
+    const poll = async (): Promise<string> => {
+      const statusResp = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/`, {
+        params: { lead_magnet_id }
+      });
+      const data = statusResp.data as { status?: string; pdf_url?: string; error?: string };
+      
+      if (data && data.status === 'ready' && data.pdf_url) {
+        return data.pdf_url;
+      }
+      
+      if (data && data.status === 'error') {
+        throw new Error(data.error || 'PDF generation failed on the server');
+      }
+      
+      return '';
+    };
+
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    let attempts = 0;
+    const maxAttempts = 40;
+    const intervalMs = 2500;
+
+    while (attempts < maxAttempts) {
+      const pdfUrl = await poll();
+      if (pdfUrl) {
+        // Ensure the URL is absolute
+        let finalUrl = pdfUrl;
+        if (!pdfUrl.startsWith('http') && apiClient.defaults.baseURL) {
+          const base = apiClient.defaults.baseURL.replace(/\/$/, '');
+          const path = pdfUrl.startsWith('/') ? pdfUrl : `/${pdfUrl}`;
+          finalUrl = `${base}${path}`;
+        }
+
+        console.log('PDF generation complete, downloading from:', finalUrl);
+        
+        try {
+          // Fetch the PDF using apiClient to include the Authorization header
+          const pdfResponse = await apiClient.get(finalUrl, {
+            responseType: 'blob'
+          });
+          
+          if (pdfResponse.status !== 200) {
+            throw new Error(`Unexpected status ${pdfResponse.status} while downloading PDF`);
+          }
+
+          const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
+          
+          // Verify the blob is actually a PDF
+          if (blob.size < 100) {
+            const text = await blob.text();
+            console.error('Downloaded blob is too small, content:', text);
+            throw new Error('Downloaded file is not a valid PDF');
+          }
+
+          const blobUrl = window.URL.createObjectURL(blob);
+          
+          // Trigger download
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.setAttribute('download', `lead-magnet-${lead_magnet_id}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          
+          // Cleanup
+          document.body.removeChild(link);
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+          return;
+        } catch (downloadError) {
+          console.error('Error downloading PDF with auth:', downloadError);
+          const err = downloadError as AxiosError;
+          const errorMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+          throw new Error(`Failed to download PDF after generation: ${errorMsg}`);
+        }
+      }
+      attempts += 1;
+      await wait(intervalMs);
+    }
+    throw new Error('PDF generation did not complete in time');
   },
 
   getGeneratePDFStatus: async (lead_magnet_id: number): Promise<{ status: string; pdf_url?: string }> => {

@@ -280,7 +280,7 @@ def generate_pdf(request):
                 'lead_magnet_id': lead_magnet_id,
                 'status_url': status_url,
                 'retry_after_seconds': 3
-            }, status=status.HTTP_409_CONFLICT)
+            }, status=status.HTTP_202_ACCEPTED)
 
         # Start background generation
         lead_magnet.status = 'in-progress'
@@ -300,7 +300,7 @@ def generate_pdf(request):
             'lead_magnet_id': lead_magnet_id,
             'status_url': status_url,
             'retry_after_seconds': 5
-        }, status=status.HTTP_409_CONFLICT) # Return 409 to trigger frontend polling
+        }, status=status.HTTP_202_ACCEPTED) # Return 202 to trigger frontend polling
 
     except Exception as e:
         logger.exception('GeneratePDFView: unexpected exception')

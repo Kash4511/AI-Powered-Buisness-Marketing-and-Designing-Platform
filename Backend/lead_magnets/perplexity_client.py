@@ -29,7 +29,7 @@ class PerplexityClient:
     def generate_lead_magnet_json(self, user_answers: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         if not self.api_key:
             print("❌ PERPLEXITY_API_KEY missing")
-            raise Exception("PERPLEXITY_API_KEY is not configured; cannot generate AI content. Please add PERPLEXITY_API_KEY=your_key_here to your Backend/.env file")
+            raise Exception("PERPLEXITY_API_KEY is not configured")
 
         max_retries = 2
         retry_count = 0
@@ -55,50 +55,56 @@ class PerplexityClient:
                         "messages": [
                             {
                                 "role": "system",
-                                "content": "You are an expert content creator specializing in professional lead magnets. Generate comprehensive, valuable content in strict JSON format. Your response must be valid JSON only, no other text."
+                                "content": "You are an expert content creator specializing in professional lead magnets. Generate comprehensive, valuable content in strict JSON format. Your response must be valid JSON only, no other text. IMPORTANT: Ensure all strings are properly escaped for JSON, especially double quotes within content."
                             },
                             {
                                 "role": "user",
                                 "content": self._create_content_prompt(user_answers, firm_profile)
                             }
                         ],
-                        "max_tokens": 4000,
-                        "temperature": 0.7
+                        "max_tokens": 8000,
+                        "temperature": 0.5 if retry_count > 0 else 0.7
                     },
-                    timeout=20
+                    timeout=45
                 )
-                break
-            except requests.exceptions.Timeout:
-                retry_count += 1
-                if retry_count > max_retries:
-                    print("❌ Perplexity API timeout after multiple attempts")
-                    raise Exception("Perplexity API timeout after multiple attempts (20s each)")
-                else:
-                    print(f"⚠️ API timeout on attempt {retry_count}, retrying...")
+                
+                if response.status_code != 200:
+                    print(f"❌ Perplexity API error: {response.status_code} - {response.text}")
+                    retry_count += 1
                     continue
-            except requests.exceptions.RequestException as e:
-                print(f"❌ Perplexity API request error: {e}")
-                raise Exception(f"Perplexity API request error: {e}")
+
+                result = response.json()
+                message_content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+                
+                # Robust extraction and parsing
+                json_content = self._extract_json_from_markdown(message_content)
+                try:
+                    content = json.loads(json_content)
+                    return content
+                except json.JSONDecodeError as e:
+                    print(f"❌ JSON parse failed on attempt {retry_count + 1}: {e}")
+                    # Attempt simple fixes for common AI JSON errors
+                    try:
+                        # Fix common missing comma before closing brace/bracket or unescaped quotes
+                        fixed_json = re.sub(r',(\s*[\]\}])', r'\1', json_content)
+                        content = json.loads(fixed_json)
+                        return content
+                    except:
+                        pass
+                    
+                    retry_count += 1
+                    continue
+                    
+            except requests.exceptions.Timeout:
+                print(f"⚠️ API timeout on attempt {retry_count + 1}, retrying...")
+                retry_count += 1
+                continue
             except Exception as e:
-                print(f"❌ Error calling Perplexity API: {str(e)}")
-                raise
-
-        print(f"Perplexity response status: {response.status_code}")
-        if response.status_code != 200:
-            print(f"❌ Perplexity API error: {response.status_code} - {response.text}")
-            raise Exception(f"Perplexity API error: {response.status_code} - {response.text}")
-
-        result = response.json()
-        message_content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-        json_content = self._extract_json_from_markdown(message_content)
-        try:
-            content = json.loads(json_content)
-            return content
-        except json.JSONDecodeError as e:
-            print(f"❌ Failed to parse JSON from Perplexity response: {e}")
-            print(f"Raw content: {repr(message_content)}")
-            print(f"Extracted JSON: {repr(json_content)}")
-            raise Exception("Invalid JSON returned from Perplexity API")
+                print(f"❌ Error on attempt {retry_count + 1}: {str(e)}")
+                retry_count += 1
+                continue
+                
+        raise Exception("Failed to generate valid AI content after multiple attempts.")
 
     def _extract_json_from_markdown(self, content: str) -> str:
         """
@@ -1061,7 +1067,20 @@ class PerplexityClient:
             "qualityHasWarnings": False,
         }
 
-        template_vars["primaryMidColor"] = primary_color
+        # Derived colors for sophisticated design
+        def adjust_color(hex_color, amount):
+            """Simple helper to lighten/darken hex colors for dynamic variations"""
+            hex_color = hex_color.lstrip('#')
+            if len(hex_color) != 6: return hex_color
+            try:
+                rgb = [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
+                new_rgb = [max(0, min(255, c + amount)) for c in rgb]
+                return "#%02x%02x%02x" % tuple(new_rgb)
+            except:
+                return f"#{hex_color}"
+
+        primary_mid = adjust_color(primary_color, 40)
+        template_vars["primaryMidColor"] = primary_mid
         template_vars["creamColor"] = cream_color
         template_vars["creamDarkColor"] = cream_dark_color
         template_vars["inkColor"] = ink_color
