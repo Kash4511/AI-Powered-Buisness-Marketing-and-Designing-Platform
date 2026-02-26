@@ -367,9 +367,32 @@ export const dashboardApi = {
 
             console.log('PDF generation complete, downloading from:', finalUrl);
             
-            // Open in new tab for reliable download/preview
-            window.open(finalUrl, '_blank');
-            return;
+            try {
+              // Fetch the PDF using apiClient to include the Authorization header
+              const pdfResponse = await apiClient.get(finalUrl, {
+                responseType: 'blob'
+              });
+              
+              const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
+              const blobUrl = window.URL.createObjectURL(blob);
+              
+              // Trigger download
+              const link = document.createElement('a');
+              link.href = blobUrl;
+              link.setAttribute('download', `lead-magnet-${request.lead_magnet_id}.pdf`);
+              document.body.appendChild(link);
+              link.click();
+              
+              // Cleanup
+              document.body.removeChild(link);
+              setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+              return;
+            } catch (downloadError) {
+              console.error('Error downloading PDF with auth:', downloadError);
+              // Fallback to window.open if blob download fails, though it might still 401
+              window.open(finalUrl, '_blank');
+              return;
+            }
           }
           attempts += 1;
           await wait(intervalMs);
