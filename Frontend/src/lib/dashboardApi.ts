@@ -357,12 +357,18 @@ export const dashboardApi = {
         while (attempts < maxAttempts) {
           const pdfUrl = await poll();
           if (pdfUrl) {
-            const link = document.createElement('a');
-            link.href = pdfUrl;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Ensure the URL is absolute
+            let finalUrl = pdfUrl;
+            if (!pdfUrl.startsWith('http') && apiClient.defaults.baseURL) {
+              const base = apiClient.defaults.baseURL.replace(/\/$/, '');
+              const path = pdfUrl.startsWith('/') ? pdfUrl : `/${pdfUrl}`;
+              finalUrl = `${base}${path}`;
+            }
+
+            console.log('PDF generation complete, downloading from:', finalUrl);
+            
+            // Open in new tab for reliable download/preview
+            window.open(finalUrl, '_blank');
             return;
           }
           attempts += 1;

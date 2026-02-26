@@ -218,9 +218,18 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
         if result.get('success'):
             pdf_data = result.get('pdf_data', b'')
             filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
+            
+            logger.info(f"Background Task: Saving PDF for lead magnet {lead_magnet_id}...")
+            # Save the file to the FileField
             lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
+            
+            # Re-fetch the lead magnet to ensure we have the latest data
+            lead_magnet.refresh_from_db()
             lead_magnet.status = 'completed'
             lead_magnet.save(update_fields=['status'])
+            
+            logger.info(f"Background Task: PDF generation completed successfully for {lead_magnet_id}. URL: {lead_magnet.pdf_file.url if lead_magnet.pdf_file else 'None'}")
+            
             if template_selection:
                 template_selection.status = 'pdf-generated'
                 template_selection.save(update_fields=['status'])
@@ -321,8 +330,17 @@ class GeneratePDFStatusView(APIView):
             return Response({'status': 'error', 'error': 'Generation failed'}, status=status.HTTP_200_OK)
 
         if str(lead_magnet.status) == 'completed' and lead_magnet.pdf_file:
-            url = request.build_absolute_uri(lead_magnet.pdf_file.url)
-            return Response({'status': 'ready', 'pdf_url': url}, status=status.HTTP_200_OK)
+            try:
+                # Ensure we get a full absolute URL
+                pdf_url = lead_magnet.pdf_file.url
+                if not pdf_url.startswith('http'):
+                    pdf_url = request.build_absolute_uri(pdf_url)
+                
+                logger.info(f"GeneratePDFStatusView: PDF ready for lead magnet {lead_magnet_id}, url: {pdf_url}")
+                return Response({'status': 'ready', 'pdf_url': pdf_url}, status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.error(f"GeneratePDFStatusView: Error getting PDF URL: {str(e)}")
+                return Response({'status': 'error', 'error': 'Could not retrieve PDF URL'}, status=status.HTTP_200_OK)
 
         return Response({'status': 'pending'}, status=status.HTTP_200_OK)
 
