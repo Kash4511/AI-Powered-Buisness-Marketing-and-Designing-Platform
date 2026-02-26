@@ -306,6 +306,48 @@ def generate_pdf(request):
         logger.exception('GeneratePDFView: unexpected exception')
         return Response({'error': 'PDF generation failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect
+
+class DownloadPDFView(APIView):
+    """View to serve the generated PDF file directly, handling local vs cloud storage."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, lead_magnet_id):
+        try:
+            lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
+            
+            if not lead_magnet.pdf_file:
+                logger.warning(f"DownloadPDFView: PDF not found for lead magnet {lead_magnet_id}")
+                return Response({'error': 'PDF file not generated yet'}, status=status.HTTP_404_NOT_FOUND)
+            
+            # If it's a Cloudinary URL, redirect directly
+            try:
+                url = lead_magnet.pdf_file.url
+                if url.startswith('http') and 'res.cloudinary.com' in url:
+                    logger.info(f"DownloadPDFView: Redirecting to Cloudinary URL for lead magnet {lead_magnet_id}")
+                    return HttpResponseRedirect(url)
+            except Exception:
+                pass
+            
+            # Serve local file from disk
+            try:
+                file_handle = lead_magnet.pdf_file.open('rb')
+                response = FileResponse(file_handle, content_type='application/pdf')
+                filename = os.path.basename(lead_magnet.pdf_file.name)
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                logger.info(f"DownloadPDFView: Serving local PDF file for lead magnet {lead_magnet_id}")
+                return response
+            except FileNotFoundError:
+                logger.error(f"DownloadPDFView: Local file not found on disk for {lead_magnet_id}")
+                return Response({'error': 'PDF file not found on server disk'}, status=status.HTTP_404_NOT_FOUND)
+                
+        except LeadMagnet.DoesNotExist:
+            return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.exception(f"DownloadPDFView: Unexpected error serving PDF for {lead_magnet_id}")
+            return Response({'error': 'Failed to serve PDF', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class GeneratePDFStatusView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -331,16 +373,15 @@ class GeneratePDFStatusView(APIView):
 
         if str(lead_magnet.status) == 'completed' and lead_magnet.pdf_file:
             try:
-                # Ensure we get a full absolute URL
-                pdf_url = lead_magnet.pdf_file.url
-                if not pdf_url.startswith('http'):
-                    pdf_url = request.build_absolute_uri(pdf_url)
+                # Instead of returning the raw URL (which might be a local path that fails on Render),
+                # we return the URL to our DownloadPDFView which handles serving the file correctly.
+                download_url = request.build_absolute_uri(f"/api/lead-magnets/{lead_magnet_id}/download/")
                 
-                logger.info(f"GeneratePDFStatusView: PDF ready for lead magnet {lead_magnet_id}, url: {pdf_url}")
-                return Response({'status': 'ready', 'pdf_url': pdf_url}, status=status.HTTP_200_OK)
+                logger.info(f"GeneratePDFStatusView: PDF ready for lead magnet {lead_magnet_id}, download_url: {download_url}")
+                return Response({'status': 'ready', 'pdf_url': download_url}, status=status.HTTP_200_OK)
             except Exception as e:
-                logger.error(f"GeneratePDFStatusView: Error getting PDF URL: {str(e)}")
-                return Response({'status': 'error', 'error': 'Could not retrieve PDF URL'}, status=status.HTTP_200_OK)
+                logger.error(f"GeneratePDFStatusView: Error generating download URL: {str(e)}")
+                return Response({'status': 'error', 'error': 'Could not generate download URL'}, status=status.HTTP_200_OK)
 
         return Response({'status': 'pending'}, status=status.HTTP_200_OK)
 

@@ -16,6 +16,7 @@ urlpatterns = [
     path('generate-pdf/', views.generate_pdf, name='generate-pdf'),
     path('generate-pdf/start/', views.generate_pdf, name='generate-pdf-start'),
     path('ping/', ping, name='ping'),
+    path('lead-magnets/<int:lead_magnet_id>/download/', views.DownloadPDFView.as_view(), name='download-pdf'),
     path('generate-pdf/status/', views.GeneratePDFStatusView.as_view(), name='generate-pdf-status'),
     path('health/', views.HealthView.as_view(), name='health'),
     path('brand-assets/preview-pdf/', views.BrandAssetsPDFPreviewView.as_view(), name='brand-assets-preview-pdf'),
