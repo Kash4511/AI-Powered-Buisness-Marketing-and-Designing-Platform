@@ -14,6 +14,7 @@ urlpatterns = [
     path('select-template/', views.SelectTemplateView.as_view(), name='select-template'),
     path('generate-slogan/', views.GenerateSloganView.as_view(), name='generate-slogan'),
     path('generate-pdf/', views.generate_pdf, name='generate-pdf'),
+    path('generate-pdf/start/', views.generate_pdf, name='generate-pdf-start'),
     path('ping/', ping, name='ping'),
     path('generate-pdf/status/', views.GeneratePDFStatusView.as_view(), name='generate-pdf-status'),
     path('health/', views.HealthView.as_view(), name='health'),
