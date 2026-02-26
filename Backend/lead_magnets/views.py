@@ -11,6 +11,8 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
 import requests
+import threading
+from django.db import connection
 from .models import (
     LeadMagnet, Lead, Download, FirmProfile, LeadMagnetGeneration,
     FormaAIConversation, TemplateSelection
@@ -124,56 +126,19 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-@api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf(request):
+def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content, user_answers, architectural_images):
+    """Background task for PDF generation to avoid HTTP timeouts"""
     try:
-        logger.info('GeneratePDFView: request received', extra={
-            'user': str(getattr(request.user, 'id', 'anonymous')),
-            'path': str(getattr(request, 'path', ''))
-        })
-        try:
-            payload_repr = str(request.data)
-        except Exception:
-            payload_repr = 'unserializable'
-        logger.info('GeneratePDFView: request payload snapshot', extra={
-            'payload': payload_repr[:2000]
-        })
-        template_id = request.data.get('template_id')
-        lead_magnet_id = request.data.get('lead_magnet_id')
-        use_ai_content = bool(request.data.get('use_ai_content', True))
-        user_answers = request.data.get('user_answers', {}) or {}
-        architectural_images = request.data.get('architectural_images', []) or []
-
-        if not template_id:
-            return Response({'error': 'template_id is required', 'details': 'Missing template_id'}, status=status.HTTP_400_BAD_REQUEST)
-        if not lead_magnet_id:
-            return Response({'error': 'lead_magnet_id is required', 'details': 'Missing lead_magnet_id'}, status=status.HTTP_400_BAD_REQUEST)
-
-        lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
-        if str(lead_magnet.status) == 'in-progress':
-            status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={lead_magnet_id}")
-            logger.info('GeneratePDFView: 409 conflict - already in progress', extra={
-                'lead_magnet_id': lead_magnet_id,
-                'user': str(getattr(request.user, 'id', 'anonymous'))
-            })
-            return Response({
-                'status': 'in_progress',
-                'error': 'Generation already in progress',
-                'details': 'Please wait or retry after completion',
-                'lead_magnet_id': lead_magnet_id,
-                'status_url': status_url,
-                'retry_after_seconds': 3
-            }, status=status.HTTP_409_CONFLICT)
-        lead_magnet.status = 'in-progress'
-        lead_magnet.save(update_fields=['status'])
+        from accounts.models import User
+        user = User.objects.get(id=user_id)
+        lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id)
         template_selection = TemplateSelection.objects.filter(lead_magnet=lead_magnet).first()
-
+        
         try:
-            fp = FirmProfile.objects.get(user=request.user)
+            fp = FirmProfile.objects.get(user=user)
             firm_profile = {
-                'firm_name': fp.firm_name or request.user.email.split('@')[0],
-                'work_email': fp.work_email or request.user.email,
+                'firm_name': fp.firm_name or user.email.split('@')[0],
+                'work_email': fp.work_email or user.email,
                 'phone_number': fp.phone_number,
                 'firm_website': fp.firm_website,
                 'primary_brand_color': fp.primary_brand_color,
@@ -183,8 +148,8 @@ def generate_pdf(request):
             }
         except FirmProfile.DoesNotExist:
             firm_profile = {
-                'firm_name': request.user.email.split('@')[0],
-                'work_email': request.user.email,
+                'firm_name': user.email.split('@')[0],
+                'work_email': user.email,
                 'phone_number': '',
                 'firm_website': '',
                 'primary_brand_color': '',
@@ -193,84 +158,41 @@ def generate_pdf(request):
                 'industry': 'Architecture',
             }
 
-        required_firm_fields = ['firm_name']
-        missing_firm = [k for k in required_firm_fields if not str(firm_profile.get(k, '')).strip()]
-        if missing_firm:
-            if 'firm_name' in missing_firm:
-                firm_profile['firm_name'] = request.user.email.split('@')[0]
-                missing_firm.remove('firm_name')
-            
-            if missing_firm:
-                return Response({'error': f'Missing required fields: {", ".join(missing_firm)}', 'fields': missing_firm}, status=status.HTTP_400_BAD_REQUEST)
-
         ai_client = PerplexityClient()
         template_service = DocRaptorService()
-
-        ai_content = None
         template_vars = {}
 
         if use_ai_content:
-            try:
-                answers_for_ai = user_answers or (template_selection.captured_answers if template_selection else {})
-                
-                if not answers_for_ai:
-                    try:
-                        gen_data = lead_magnet.generation_data
-                        answers_for_ai = {
-                            'lead_magnet_type': gen_data.lead_magnet_type,
-                            'main_topic': gen_data.main_topic,
-                            'target_audience': gen_data.target_audience,
-                            'audience_pain_points': gen_data.audience_pain_points,
-                            'desired_outcome': gen_data.desired_outcome,
-                            'call_to_action': gen_data.call_to_action,
-                            'special_requests': gen_data.special_requests,
-                        }
-                    except Exception:
-                        pass
+            answers_for_ai = user_answers or (template_selection.captured_answers if template_selection else {})
+            if not answers_for_ai:
+                try:
+                    gen_data = lead_magnet.generation_data
+                    answers_for_ai = {
+                        'lead_magnet_type': gen_data.lead_magnet_type,
+                        'main_topic': gen_data.main_topic,
+                        'target_audience': gen_data.target_audience,
+                        'audience_pain_points': gen_data.audience_pain_points,
+                        'desired_outcome': gen_data.desired_outcome,
+                        'call_to_action': gen_data.call_to_action,
+                        'special_requests': gen_data.special_requests,
+                    }
+                except Exception:
+                    pass
 
-                if not answers_for_ai:
-                    return Response({'error': 'AI content not available', 'details': 'Could not find generation data. Please recreate the lead magnet.'}, status=status.HTTP_400_BAD_REQUEST)
-                logger.info('GeneratePDFView: before AI generate', extra={
-                    'lead_magnet_id': str(lead_magnet_id)
-                })
-                if isinstance(answers_for_ai, dict):
-                    raw_desc = getattr(lead_magnet, "description", "") or ""
-                    answers_for_ai.setdefault("lead_magnet_description", raw_desc)
+            if isinstance(answers_for_ai, dict):
+                raw_desc = getattr(lead_magnet, "description", "") or ""
+                answers_for_ai.setdefault("lead_magnet_description", raw_desc)
 
-                ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
-                ai_client.debug_ai_content(ai_content)
-                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
-                if not str(template_vars.get('companyName', '')).strip():
-                    template_vars['companyName'] = firm_profile.get('firm_name') or ''
-                logger.info('GeneratePDFView: after AI generate', extra={
-                    'template_keys': list(template_vars.keys())
-                })
-                if template_selection:
-                    template_selection.ai_generated_content = ai_content
-                    template_selection.captured_answers = answers_for_ai
-                    template_selection.save(update_fields=['ai_generated_content', 'captured_answers'])
-            except requests.exceptions.Timeout as e:
-                return Response({'error': 'AI content generation timed out', 'details': str(e)}, status=status.HTTP_504_GATEWAY_TIMEOUT)
-            except requests.exceptions.RequestException as e:
-                return Response({'error': 'AI content generation failed', 'details': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
-            except Exception as e:
-                import traceback
-                trace = traceback.format_exc() if settings.DEBUG else None
-                if 'JSON' in str(e) or 'parse' in str(e).lower():
-                    return Response({'error': 'AI content generation failed', 'details': 'AI response was not valid JSON. Please try again.'}, status=status.HTTP_502_BAD_GATEWAY)
-                
-                if 'API_KEY' in str(e):
-                    return Response({'error': 'Service Configuration Error', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-                payload = {'error': 'AI content generation failed', 'details': str(e), 'type': type(e).__name__}
-                if trace:
-                    payload['trace'] = trace
-                return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
+            template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
+            if template_selection:
+                template_selection.ai_generated_content = ai_content
+                template_selection.captured_answers = answers_for_ai
+                template_selection.save(update_fields=['ai_generated_content', 'captured_answers'])
         else:
             template_vars = {
                 'primaryColor': firm_profile.get('primary_brand_color') or '',
                 'secondaryColor': firm_profile.get('secondary_brand_color') or '',
-                'accentColor': '',
                 'companyName': firm_profile.get('firm_name') or '',
                 'mainTitle': user_answers.get('main_topic') or '',
                 'documentSubtitle': user_answers.get('desired_outcome') or '',
@@ -280,111 +202,100 @@ def generate_pdf(request):
             }
 
         if isinstance(architectural_images, list) and architectural_images:
-            try:
-                img_list = []
-                for i, img in enumerate(architectural_images[:3]):
-                    if isinstance(img, str) and ';base64,' in img:
-                        img_list.append({'src': img, 'alt': f'Architectural Image {i+1}'})
-                if img_list:
-                    template_vars['architecturalImages'] = img_list
-            except Exception:
-                pass
+            img_list = []
+            for i, img in enumerate(architectural_images[:3]):
+                if isinstance(img, str) and ';base64,' in img:
+                    img_list.append({'src': img, 'alt': f'Architectural Image {i+1}'})
+            if img_list:
+                template_vars['architecturalImages'] = img_list
 
         for k, v in list(template_vars.items()):
             if isinstance(v, str) and len(v) > 8000:
-                logger.info('GeneratePDFView: truncating template variable', extra={
-                    'key': k,
-                    'original_length': len(v)
-                })
                 template_vars[k] = v[:8000]
 
-        required_keys = ['mainTitle', 'companyName']
-        missing = [k for k in required_keys if not str(template_vars.get(k, '')).strip()]
-        if missing:
-            return Response({
-                'error': 'Missing critical content for PDF generation',
-                'details': f"Required content missing: {', '.join(missing)}",
-                'missing_keys': missing
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            logger.info('GeneratePDFView: before PDF generation', extra={
-                'lead_magnet_id': str(lead_magnet_id)
-            })
-            result = template_service.generate_pdf_with_ai_content(template_id, template_vars)
-            logger.info('GeneratePDFView: after PDF generation', extra={
-                'lead_magnet_id': str(lead_magnet_id),
-                'success': bool(result.get('success'))
-            })
-        except MemoryError:
-            return Response({'error': 'PDF generation failed', 'details': 'Memory limit exceeded', 'type': 'MemoryError'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except requests.exceptions.Timeout as e:
-            return Response({'error': 'PDF generation timed out', 'details': str(e)}, status=status.HTTP_504_GATEWAY_TIMEOUT)
-        except requests.exceptions.RequestException as e:
-            return Response({'error': 'PDF generation failed', 'details': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
-        except Exception as e:
-            import traceback
-            trace = traceback.format_exc() if settings.DEBUG else None
-            payload = {'error': 'Exception during PDF generation', 'details': str(e), 'type': type(e).__name__}
-            if trace:
-                payload['trace'] = trace
-            return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        result = template_service.generate_pdf_with_ai_content(template_id, template_vars)
 
         if result.get('success'):
+            pdf_data = result.get('pdf_data', b'')
+            filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
+            lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
             lead_magnet.status = 'completed'
             lead_magnet.save(update_fields=['status'])
             if template_selection:
                 template_selection.status = 'pdf-generated'
                 template_selection.save(update_fields=['status'])
-            pdf_data = result.get('pdf_data', b'')
-            try:
-                filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
-                lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
-            except Exception:
-                pass
-            response = HttpResponse(pdf_data, content_type=result.get('content_type', 'application/pdf'))
-            filename = result.get('filename', 'lead-magnet.pdf')
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            logger.info('GeneratePDFView: generation completed', extra={
-                'lead_magnet_id': lead_magnet_id,
-                'user': str(getattr(request.user, 'id', 'anonymous'))
-            })
-            return response
         else:
-            error_message = result.get('error', 'Unknown error during PDF generation')
-            details = result.get('details', '')
-            full_error = f"{error_message}: {details}" if details else error_message
-            payload = {'error': 'PDF generation failed', 'details': full_error}
-            
-            missing_keys = result.get('missing_keys')
-            if missing_keys:
-                payload['missing_keys'] = missing_keys
-            
-            lead_magnet.status = 'in-progress'
+            lead_magnet.status = 'error'
             lead_magnet.save(update_fields=['status'])
-            if template_selection:
-                template_selection.status = 'template-selected'
-                template_selection.save(update_fields=['status'])
             
-            return Response(payload, status=(status.HTTP_400_BAD_REQUEST if missing_keys or 'Empty template variables' in error_message else status.HTTP_500_INTERNAL_SERVER_ERROR))
-    except LeadMagnet.DoesNotExist:
-        return Response({'error': 'Lead magnet not found', 'details': f"Lead magnet with ID {request.data.get('lead_magnet_id')} not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        import traceback
-        trace = traceback.format_exc() if settings.DEBUG else None
+        logger.error(f"Error in background PDF generation for lead magnet {lead_magnet_id}: {str(e)}", exc_info=True)
         try:
-            payload_repr = str(request.data)
+            lm = LeadMagnet.objects.get(id=lead_magnet_id)
+            lm.status = 'error'
+            lm.save(update_fields=['status'])
         except Exception:
-            payload_repr = 'unserializable'
-        logger.exception('GeneratePDFView: unexpected exception', extra={
+            pass
+    finally:
+        connection.close()
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf(request):
+    try:
+        logger.info('GeneratePDFView: request received', extra={
             'user': str(getattr(request.user, 'id', 'anonymous')),
-            'path': str(getattr(request, 'path', '')),
-            'payload': payload_repr[:2000]
+            'path': str(getattr(request, 'path', ''))
         })
-        payload = {'error': 'PDF generation failed', 'details': str(e), 'type': type(e).__name__}
-        if trace:
-            payload['trace'] = trace
-        return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        template_id = request.data.get('template_id')
+        lead_magnet_id = request.data.get('lead_magnet_id')
+        use_ai_content = bool(request.data.get('use_ai_content', True))
+        user_answers = request.data.get('user_answers', {}) or {}
+        architectural_images = request.data.get('architectural_images', []) or []
+
+        if not template_id:
+            return Response({'error': 'template_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not lead_magnet_id:
+            return Response({'error': 'lead_magnet_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
+        except LeadMagnet.DoesNotExist:
+            return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if str(lead_magnet.status) == 'in-progress':
+            status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={lead_magnet_id}")
+            return Response({
+                'status': 'in_progress',
+                'lead_magnet_id': lead_magnet_id,
+                'status_url': status_url,
+                'retry_after_seconds': 3
+            }, status=status.HTTP_409_CONFLICT)
+
+        # Start background generation
+        lead_magnet.status = 'in-progress'
+        lead_magnet.save(update_fields=['status'])
+        
+        # Start thread
+        thread = threading.Thread(
+            target=run_pdf_generation_task,
+            args=(lead_magnet_id, request.user.id, template_id, use_ai_content, user_answers, architectural_images)
+        )
+        thread.start()
+        
+        status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={lead_magnet_id}")
+        return Response({
+            'status': 'in_progress',
+            'message': 'PDF generation started in background',
+            'lead_magnet_id': lead_magnet_id,
+            'status_url': status_url,
+            'retry_after_seconds': 5
+        }, status=status.HTTP_409_CONFLICT) # Return 409 to trigger frontend polling
+
+    except Exception as e:
+        logger.exception('GeneratePDFView: unexpected exception')
+        return Response({'error': 'PDF generation failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GeneratePDFStatusView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -405,6 +316,9 @@ class GeneratePDFStatusView(APIView):
 
         if str(lead_magnet.status) == 'in-progress':
             return Response({'status': 'in_progress'}, status=status.HTTP_200_OK)
+
+        if str(lead_magnet.status) == 'error':
+            return Response({'status': 'error', 'error': 'Generation failed'}, status=status.HTTP_200_OK)
 
         if str(lead_magnet.status) == 'completed' and lead_magnet.pdf_file:
             url = request.build_absolute_uri(lead_magnet.pdf_file.url)

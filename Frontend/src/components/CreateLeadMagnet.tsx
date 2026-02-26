@@ -55,7 +55,8 @@ const CreateLeadMagnet: React.FC = () => {
       'passive-house': 'Passive House & Net-Zero',
       'climate-resilient': 'Climate-Resilient Design',
       'project-roi': 'Project ROI',
-      'branding-differentiation': 'Branding & Differentiation'
+      'branding-differentiation': 'Branding & Differentiation',
+      'custom': 'Custom Topic'
     }
     
     const typeMap: Record<string, string> = {

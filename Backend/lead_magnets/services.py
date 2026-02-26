@@ -104,12 +104,12 @@ class DocRaptorService:
 
         rendered_html = self.render_template_with_vars(template_id, variables)
 
-        if not self.api_key:
-            print("❌ DEBUG: No DocRaptor API key configured")
+        if not self.api_key or self.api_key == 'YOUR_DOCRAPTOR_KEY':
+            print("❌ DEBUG: No valid DocRaptor API key configured")
             return {
                 'success': False,
-                'error': 'DocRaptor API key missing',
-                'details': 'Set DOCRAPTOR_API_KEY in environment to enable PDF generation'
+                'error': 'DocRaptor API key missing or invalid',
+                'details': 'Set a valid DOCRAPTOR_API_KEY in environment to enable PDF generation'
             }
 
         try:

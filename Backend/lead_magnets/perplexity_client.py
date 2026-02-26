@@ -102,40 +102,26 @@ class PerplexityClient:
 
     def _extract_json_from_markdown(self, content: str) -> str:
         """
-        Extract JSON from markdown code blocks.
-        Handles formats like:
-        ```json
-        { ... }
-        ```
-        or just plain JSON
+        Extract JSON from markdown code blocks or raw text.
+        Handles:
+        - ```json { ... } ```
+        - { ... }
+        - Text before/after { ... }
         """
-        # Remove leading/trailing whitespace
         content = content.strip()
         
-        # Check if content is wrapped in markdown code blocks
-        if content.startswith('```'):
-            # Find the start and end of the code block
-            lines = content.split('\n')
-            start_idx = 0
-            end_idx = len(lines)
+        # 1. Try to find JSON code blocks
+        json_block_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+        if json_block_match:
+            return json_block_match.group(1).strip()
             
-            # Find the first line that starts with ```
-            for i, line in enumerate(lines):
-                if line.strip().startswith('```'):
-                    start_idx = i + 1
-                    break
-            
-            # Find the last line that starts with ```
-            for i in range(len(lines) - 1, -1, -1):
-                if lines[i].strip().startswith('```'):
-                    end_idx = i
-                    break
-            
-            # Extract content between code blocks
-            json_lines = lines[start_idx:end_idx]
-            return '\n'.join(json_lines)
+        # 2. Try to find the first { and the last }
+        first_brace = content.find('{')
+        last_brace = content.rfind('}')
         
-        # If not wrapped in code blocks, return as-is
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            return content[first_brace:last_brace + 1].strip()
+            
         return content
 
     def debug_ai_content(self, ai_content: Dict[str, Any]):
@@ -475,13 +461,13 @@ class PerplexityClient:
             return truncate_text(text, 80)
 
         def truncate_content(text: str) -> str:
-            return truncate_text(text, 520)
+            return truncate_text(text, 1500)
 
         def truncate_subcontent(text: str) -> str:
-            return truncate_text(text, 200)
+            return truncate_text(text, 500)
 
         def truncate_description(text: str) -> str:
-            return truncate_text(text, 140)
+            return truncate_text(text, 400)
 
         def finalize_line(text: str) -> str:
             t = (text or '').strip()
@@ -636,16 +622,53 @@ class PerplexityClient:
             t = (topic or "").lower()
             ind = (industry or "").lower()
             base = t + " " + ind
+            
+            # 1. Smart Homes
             if re.search(r"smart home|smart-home|home automation|connected home", base):
                 return "Smart Home Cost Audit"
+            
+            # 2. Sustainable Architecture
             if re.search(r"sustainable|sustainability|green building|net zero|net-zero|low carbon", base):
                 if re.search(r"material", base):
                     return "Material Selection Framework"
                 return "Design ROI Estimator"
-            if re.search(r"passive house|passivhaus", base):
+            
+            # 3. Adaptive Reuse
+            if re.search(r"adaptive reuse|historic preservation|conversion", base):
+                return "Adaptive Reuse Feasibility Study"
+            
+            # 4. Wellness/Biophilic
+            if re.search(r"wellness|biophilic|healthy building|air quality", base):
+                return "Wellness Design Audit"
+            
+            # 5. Modular/Prefab
+            if re.search(r"modular|prefab|off-site construction|industrialized", base):
+                return "Modular Construction Roadmap"
+            
+            # 6. Urban Placemaking
+            if re.search(r"placemaking|urban design|public space|community engagement", base):
+                return "Urban Impact Assessment"
+            
+            # 7. Passive House
+            if re.search(r"passive house|passivhaus|energy efficient", base):
                 return "Energy Savings Assessment"
+            
+            # 8. Climate-Resilient
+            if re.search(r"climate-resilient|flood proof|resilience|disaster recovery", base):
+                return "Climate Resilience Checklist"
+            
+            # 9. Project ROI
+            if re.search(r"project roi|return on investment|financial performance", base):
+                return "Project ROI Calculator"
+            
+            # 10. Branding & Differentiation
+            if re.search(r"branding|differentiation|marketing strategy|identity", base):
+                return "Brand Identity Workshop"
+            
+            # 11. Retrofit / Custom / Others
             if re.search(r"retrofit|renovation|remodel", base):
                 return "Project Retrofit Assessment"
+            
             if topic:
                 return f"{topic.strip().title()} Strategy Session"
             return "Project Strategy Session"
@@ -674,10 +697,20 @@ class PerplexityClient:
                     base += "."
                 return base
             parts: List[str] = []
+            
+            # Map lead magnet type to a readable word
+            type_label = (user_answers.get('lead_magnet_type') or 'guide').lower()
+            if type_label == 'case-study': type_label = 'case study'
+            elif type_label == 'roi-calculator': type_label = 'ROI calculator'
+            elif type_label == 'trends-report': type_label = 'trends report'
+            elif type_label == 'onboarding-flow': type_label = 'onboarding flow'
+            elif type_label == 'design-portfolio': type_label = 'design portfolio'
+            elif not type_label or type_label == 'custom': type_label = 'document'
+            
             if aud_phrase:
                 parts.append(f"If you are {aud_phrase},")
             else:
-                parts.append("If this guide resonates with you,")
+                parts.append(f"If this {type_label} resonates with you,")
             parts.append(f"schedule your {offer_name} now")
             contact_bits: List[str] = []
             if email_value:
@@ -756,8 +789,18 @@ class PerplexityClient:
             aud = audience_phrase(ua_target_audience)
             pains = pain_points_list(ua_pain_points)
             desired = ua_desired_outcome or "move from ideas to a confident plan"
+            
+            # Map lead magnet type to a readable word
+            type_label = (user_answers.get('lead_magnet_type') or 'guide').lower()
+            if type_label == 'case-study': type_label = 'case study'
+            elif type_label == 'roi-calculator': type_label = 'ROI calculator'
+            elif type_label == 'trends-report': type_label = 'trends report'
+            elif type_label == 'onboarding-flow': type_label = 'onboarding flow'
+            elif type_label == 'design-portfolio': type_label = 'design portfolio'
+            elif not type_label or type_label == 'custom': type_label = 'document'
+            
             parts: List[str] = []
-            intro = "This guide is designed"
+            intro = f"This {type_label} is designed"
             if aud:
                 intro += f" for {aud}"
             intro += f" to help you navigate {topic} with clarity"
@@ -807,7 +850,7 @@ class PerplexityClient:
         def count_words(t: str) -> int:
             return len(re.findall(r"\b\w+\b", (t or '')))
 
-        def ensure_min_sentences(text: str, min_sentences: int = 3, max_sentences: int = 5, topic_hint: Optional[str] = None) -> str:
+        def ensure_min_sentences(text: str, min_sentences: int = 5, max_sentences: int = 12, topic_hint: Optional[str] = None) -> str:
             sentences = [finalize_line(s) for s in split_sentences(text)]
             # Fallback pool of professional, neutral sentences
             th = (topic_hint or 'this topic').strip()
@@ -816,16 +859,18 @@ class PerplexityClient:
                 "It outlines benefits, trade-offs, and common pitfalls to avoid.",
                 "Recommendations and steps help readers take confident action.",
                 "Examples illustrate how to apply ideas in real-world scenarios.",
+                "Strategic implementation ensures that outcomes align with broader project goals.",
+                "Regular review and adjustment are key to maintaining long-term success.",
             ]
             i = 0
             while len(sentences) < min_sentences and i < len(fallback_pool):
                 sentences.append(finalize_line(fallback_pool[i]))
                 i += 1
-            # Keep it concise
+            # Keep it concise but substantial
             sentences = sentences[:max_sentences]
             return " ".join(sentences)
 
-        def ensure_min_words(text: str, min_words: int = 60, max_words: int = 220, topic_hint: Optional[str] = None) -> str:
+        def ensure_min_words(text: str, min_words: int = 120, max_words: int = 400, topic_hint: Optional[str] = None) -> str:
             t = (text or '').strip()
             if count_words(t) >= min_words:
                 return t
@@ -834,6 +879,8 @@ class PerplexityClient:
                 f"The discussion focuses on key considerations for {th}.",
                 "It balances practicality with strategic outcomes and long-term value.",
                 "Readers gain clarity on next steps and measurable results.",
+                "This approach ensures that every decision is backed by solid research and proven methodologies.",
+                "By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.",
             ]
             for line in additions:
                 if count_words(t) >= min_words:
@@ -846,8 +893,8 @@ class PerplexityClient:
 
         def normalize_main_content(text: str, title_hint: str) -> str:
             t = re.sub(r"\s+", " ", (text or '').strip())
-            t = ensure_min_sentences(t, min_sentences=3, max_sentences=5, topic_hint=title_hint)
-            t = ensure_min_words(t, min_words=60, max_words=220, topic_hint=title_hint)
+            t = ensure_min_sentences(t, min_sentences=5, max_sentences=12, topic_hint=title_hint)
+            t = ensure_min_words(t, min_words=120, max_words=400, topic_hint=title_hint)
             return t
 
         def split_headline_lines(title: str) -> List[str]:
@@ -864,8 +911,11 @@ class PerplexityClient:
 
         def clean_title(title: str) -> str:
             t = (title or "").strip()
-            # Remove common prefixes like "Custom Guide:" or "Guide:"
-            t = re.sub(r"^(custom\s+guide\s*:|guide\s*:)", "", t, flags=re.IGNORECASE).strip()
+            # Remove common prefixes like "Custom Guide:", "Checklist:", etc.
+            prefixes = r"^(custom\s+)?(guide|checklist|case study|roi calculator|trends report|onboarding flow|portfolio|document)\s*[:\-]\s*"
+            t = re.sub(prefixes, "", t, flags=re.IGNORECASE).strip()
+            # Also handle just "Guide:", "Checklist:" etc without a space before colon
+            t = re.sub(r"^(guide|checklist|case\s+study|roi\s+calculator|trends\s+report|onboarding\s+flow|portfolio|document)\s*:", "", t, flags=re.IGNORECASE).strip()
 
             # Remove explicit trailing "for/by <company_name>" if present
             if company_name:
@@ -1030,11 +1080,21 @@ class PerplexityClient:
         template_vars["coverHeadlineLine3"] = headline_lines[2]
         template_vars["coverTagline"] = company_subtitle or f"{now_year} Edition"
 
+        # Map lead magnet type to a readable word for various uses
+        type_label_raw = (user_answers.get('lead_magnet_type') or 'guide').lower()
+        if type_label_raw == 'case-study': type_label_readable = 'case study'
+        elif type_label_raw == 'roi-calculator': type_label_readable = 'ROI calculator'
+        elif type_label_raw == 'trends-report': type_label_readable = 'trends report'
+        elif type_label_raw == 'onboarding-flow': type_label_readable = 'onboarding flow'
+        elif type_label_raw == 'design-portfolio': type_label_readable = 'design portfolio'
+        elif not type_label_raw or type_label_raw == 'custom': type_label_readable = 'document'
+        else: type_label_readable = type_label_raw
+
         template_vars["termsHeadlineLine1"] = truncate_title(terms_title)
         if terms_summary:
             template_vars["termsHeadlineLine2"] = truncate_title(terms_summary)
         else:
-            template_vars["termsHeadlineLine2"] = "How to use this guide"
+            template_vars["termsHeadlineLine2"] = f"How to use this {type_label_readable}"
         pull_source = terms_summary or get_or(terms_paragraphs, 0, "")
         pull_sentences = split_sentences(pull_source)
         template_vars["termsPullQuote"] = truncate_subcontent(pull_sentences[0] if pull_sentences else "")
@@ -1110,6 +1170,22 @@ class PerplexityClient:
         template_vars["colCard1Content"] = template_vars.get("columnBoxContent1", "")
         template_vars["colCard2Title"] = template_vars.get("columnTitle2", "") or "Scenario 2"
         template_vars["colCard2Content"] = template_vars.get("columnContent2", "")
+
+        # Map architectural images to specific template variables
+        arch_imgs = user_answers.get('architectural_images', []) or []
+        if not arch_imgs and 'architecturalImages' in template_vars:
+            arch_imgs = template_vars['architecturalImages']
+            
+        for i in range(1, 6):
+            img_key = f"image{i}Url"
+            if i-1 < len(arch_imgs):
+                img_data = arch_imgs[i-1]
+                if isinstance(img_data, dict) and 'src' in img_data:
+                    template_vars[img_key] = img_data['src']
+                elif isinstance(img_data, str):
+                    template_vars[img_key] = img_data
+            else:
+                template_vars[img_key] = ""
 
         template_vars["imageLabel1"] = truncate_title(get_section(0).get("title", "") or template_vars.get("contentItem1", "Overview"))
         template_vars["imageLabel2"] = truncate_title(get_section(1).get("title", "") or template_vars.get("contentItem2", "Details"))

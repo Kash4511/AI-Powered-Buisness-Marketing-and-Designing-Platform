@@ -338,10 +338,16 @@ export const dashboardApi = {
           const statusResp = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/`, {
             params: { lead_magnet_id: request.lead_magnet_id }
           });
-          const data = statusResp.data as { status?: string; pdf_url?: string };
+          const data = statusResp.data as { status?: string; pdf_url?: string; error?: string };
+          
           if (data && data.status === 'ready' && data.pdf_url) {
             return data.pdf_url;
           }
+          
+          if (data && data.status === 'error') {
+            throw new Error(data.error || 'PDF generation failed on the server');
+          }
+          
           return '';
         };
         const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

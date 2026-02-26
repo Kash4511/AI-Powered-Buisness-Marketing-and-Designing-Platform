@@ -23,6 +23,7 @@ class LeadMagnet(models.Model):
         ('draft', 'Draft'),
         ('in-progress', 'In Progress'),
         ('completed', 'Completed'),
+        ('error', 'Error'),
         ('archived', 'Archived'),
     ]
     
