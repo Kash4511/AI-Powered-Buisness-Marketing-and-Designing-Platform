@@ -373,9 +373,8 @@ class GeneratePDFStatusView(APIView):
 
         if str(lead_magnet.status) == 'completed' and lead_magnet.pdf_file:
             try:
-                # Instead of returning the raw URL (which might be a local path that fails on Render),
-                # we return the URL to our DownloadPDFView which handles serving the file correctly.
-                download_url = request.build_absolute_uri(f"/api/lead-magnets/{lead_magnet_id}/download/")
+                # Use a relative URL so the frontend can handle it with its baseURL
+                download_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
                 
                 logger.info(f"GeneratePDFStatusView: PDF ready for lead magnet {lead_magnet_id}, download_url: {download_url}")
                 return Response({'status': 'ready', 'pdf_url': download_url}, status=status.HTTP_200_OK)

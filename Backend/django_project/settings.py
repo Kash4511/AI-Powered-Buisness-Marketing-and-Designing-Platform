@@ -221,7 +221,7 @@ SIMPLE_JWT = {
 # -----------------------------
 # CORS + CSRF
 # -----------------------------
-CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "https://django-six-gamma.vercel.app",
@@ -229,6 +229,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+]
+
+# Allow all vercel subdomains for convenience in development/previews
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/django-.*\.vercel\.app$",
 ]
 
 CORS_URLS_REGEX = r'^/api/.*$'

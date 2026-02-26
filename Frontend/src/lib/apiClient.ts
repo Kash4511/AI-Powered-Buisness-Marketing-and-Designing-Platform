@@ -19,7 +19,9 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
-    if (token) {
+    // Only add token if it's a request to our own API
+    const isInternalRequest = !config.url?.startsWith('http') || config.url.startsWith(API_BASE_URL);
+    if (token && isInternalRequest) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

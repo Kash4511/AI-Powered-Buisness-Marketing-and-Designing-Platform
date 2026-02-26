@@ -373,7 +373,19 @@ export const dashboardApi = {
                 responseType: 'blob'
               });
               
+              if (pdfResponse.status !== 200) {
+                throw new Error(`Unexpected status ${pdfResponse.status} while downloading PDF`);
+              }
+
               const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
+              
+              // Verify the blob is actually a PDF
+              if (blob.size < 100) {
+                const text = await blob.text();
+                console.error('Downloaded blob is too small, content:', text);
+                throw new Error('Downloaded file is not a valid PDF');
+              }
+
               const blobUrl = window.URL.createObjectURL(blob);
               
               // Trigger download
@@ -389,9 +401,9 @@ export const dashboardApi = {
               return;
             } catch (downloadError) {
               console.error('Error downloading PDF with auth:', downloadError);
-              // Fallback to window.open if blob download fails, though it might still 401
-              window.open(finalUrl, '_blank');
-              return;
+              const err = downloadError as AxiosError;
+              const errorMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+              throw new Error(`Failed to download PDF after generation: ${errorMsg}`);
             }
           }
           attempts += 1;
