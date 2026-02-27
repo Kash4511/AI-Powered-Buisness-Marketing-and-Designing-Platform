@@ -150,12 +150,17 @@
             height: 200px;
             border-radius: 8px;
             background: var(--cream-dk);
-            background-size: cover;
-            background-position: center;
             display: flex; align-items: center; justify-content: center;
             position: relative; overflow: hidden;
             box-shadow: 0 6px 18px rgba(0,0,0,0.1);
             border: 1px solid rgba(0,0,0,0.05);
+        }
+        .img-ph-single img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
         }
         .img-ph-inner {
             position: absolute; inset: 0;
@@ -401,8 +406,12 @@
         <!-- Page 4 Image -->
         <div class="img-container left">
             <div class="img-wrapper">
-                <div class="img-ph-single" {% if imagePage4Url %}style="background-image:url('{{imagePage4Url}}')"{% endif %}>
-                    {% if not imagePage4Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 1</span></div>{% endif %}
+                <div class="img-ph-single">
+                    {% if imagePage4Url %}
+                        <img src="{{imagePage4Url}}" alt="Visual Context 1">
+                    {% else %}
+                        <div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 1</span></div>
+                    {% endif %}
                 </div>
                 <p class="img-cap">{{imageCaption1}}</p>
             </div>
@@ -430,8 +439,12 @@
         <!-- Page 5 Image -->
         <div class="img-container right">
             <div class="img-wrapper">
-                <div class="img-ph-single" {% if imagePage5Url %}style="background-image:url('{{imagePage5Url}}')"{% endif %}>
-                    {% if not imagePage5Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 2</span></div>{% endif %}
+                <div class="img-ph-single">
+                    {% if imagePage5Url %}
+                        <img src="{{imagePage5Url}}" alt="Visual Context 2">
+                    {% else %}
+                        <div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 2</span></div>
+                    {% endif %}
                 </div>
                 <p class="img-cap">{{imageCaption2}}</p>
             </div>
@@ -461,8 +474,12 @@
         <!-- Page 6 Image -->
         <div class="img-container full-width-center">
             <div class="img-wrapper">
-                <div class="img-ph-single" {% if imagePage6Url %}style="background-image:url('{{imagePage6Url}}')"{% endif %}>
-                    {% if not imagePage6Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 3</span></div>{% endif %}
+                <div class="img-ph-single">
+                    {% if imagePage6Url %}
+                        <img src="{{imagePage6Url}}" alt="Visual Context 3">
+                    {% else %}
+                        <div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 3</span></div>
+                    {% endif %}
                 </div>
                 <p class="img-cap">{{imageCaption3}}</p>
             </div>
@@ -476,82 +493,52 @@
 
 
 <!-- PAGE 7 -->
-<div class="page">
-    <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">{{sectionLabel6}}</span><span class="pg-num">{{pageNumber7}}</span></div>
-    <div class="body-wrap">
-        <div class="eyebrow">{{chapterLabel4}}</div>
-        <h2 class="pg-h1">{{customTitle4}}</h2>
-        
-        <!-- Page 7 Image -->
-        <div class="img-container left">
-            <div class="img-wrapper">
-                <div class="img-ph-single" {% if imagePage7Url %}style="background-image:url('{{imagePage7Url}}')"{% endif %}>
-                    {% if not imagePage7Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 4</span></div>{% endif %}
-                </div>
-                <p class="img-cap">{{imageCaption4}}</p>
-            </div>
+    <div class="page">
+        <div class="pg-strip"></div>
+        <div class="pg-head"><span class="pg-sec">{{sectionLabel6}}</span><span class="pg-num">{{pageNumber7}}</span></div>
+        <div class="body-wrap">
+            <div class="eyebrow">{{chapterLabel4}}</div>
+            <h2 class="pg-h1">{{customTitle4}}</h2>
+            
+            <p class="body drop">{{customContent4}}</p>
+            
+            <div class="sec-h">{{subheading4}}</div>
+            <p class="body">{{subcontent4}}</p>
         </div>
-
-        <p class="body drop">{{customContent4}}</p>
-        
-        <div class="sec-h">{{subheading4}}</div>
-        <p class="body">{{subcontent4}}</p>
+        <div class="pg-foot"><span class="pf-l">{{footerText}}</span><span class="pf-r">{{documentTitle}}</span></div>
     </div>
-    <div class="pg-foot"><span class="pf-l">{{footerText}}</span><span class="pf-r">{{documentTitle}}</span></div>
-</div>
 
 
-<!-- PAGE 8 -->
-<div class="page">
-    <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">{{sectionLabel7}}</span><span class="pg-num">{{pageNumber8}}</span></div>
-    <div class="body-wrap">
-        <div class="eyebrow">{{chapterLabel5}}</div>
-        <h2 class="pg-h1">{{customTitle5}}</h2>
-        
-        <!-- Page 8 Image -->
-        <div class="img-container right">
-            <div class="img-wrapper">
-                <div class="img-ph-single" {% if imagePage8Url %}style="background-image:url('{{imagePage8Url}}')"{% endif %}>
-                    {% if not imagePage8Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 5</span></div>{% endif %}
-                </div>
-                <p class="img-cap">{{imageCaption5}}</p>
-            </div>
+    <!-- PAGE 8 -->
+    <div class="page">
+        <div class="pg-strip"></div>
+        <div class="pg-head"><span class="pg-sec">{{sectionLabel7}}</span><span class="pg-num">{{pageNumber8}}</span></div>
+        <div class="body-wrap">
+            <div class="eyebrow">{{chapterLabel5}}</div>
+            <h2 class="pg-h1">{{customTitle5}}</h2>
+            
+            <p class="body drop">{{customContent5}}</p>
+            
+            <div class="sec-h">{{subheading5}}</div>
+            <p class="body">{{subcontent5}}</p>
         </div>
-
-        <p class="body drop">{{customContent5}}</p>
-        
-        <div class="sec-h">{{subheading5}}</div>
-        <p class="body">{{subcontent5}}</p>
+        <div class="pg-foot"><span class="pf-l">{{footerText}}</span><span class="pf-r">{{documentTitle}}</span></div>
     </div>
-    <div class="pg-foot"><span class="pf-l">{{footerText}}</span><span class="pf-r">{{documentTitle}}</span></div>
-</div>
 
 
-<!-- ══════════════════════════════════════
-     PAGE 9 — CTA / CLOSING
-══════════════════════════════════════ -->
-<div class="page">
-    <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">{{sectionLabel8}}</span><span class="pg-num">{{pageNumber9}}</span></div>
-    <div class="body-wrap">
-        <div class="eyebrow">{{chapterLabel6}}</div>
-        <h2 class="pg-h1">{{ctaHeadlineLine1}}<br>{{ctaHeadlineLine2}}</h2>
-        
-        <p class="body">{{differentiator}}</p>
-        
-        <!-- Page 9 Image -->
-        <div class="img-container center">
-            <div class="img-wrapper">
-                <div class="img-ph-single" {% if imagePage9Url %}style="background-image:url('{{imagePage9Url}}')"{% endif %}>
-                    {% if not imagePage9Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="22" height="22" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Visual Context 6</span></div>{% endif %}
-                </div>
-                <p class="img-cap">{{imageCaption6}}</p>
-            </div>
-        </div>
-
-        <div class="cta-wrap">
+    <!-- ══════════════════════════════════════
+         PAGE 9 — CTA / CLOSING
+    ══════════════════════════════════════ -->
+    <div class="page">
+        <div class="pg-strip"></div>
+        <div class="pg-head"><span class="pg-sec">{{sectionLabel8}}</span><span class="pg-num">{{pageNumber9}}</span></div>
+        <div class="body-wrap">
+            <div class="eyebrow">{{chapterLabel6}}</div>
+            <h2 class="pg-h1">{{ctaHeadlineLine1}}<br>{{ctaHeadlineLine2}}</h2>
+            
+            <p class="body">{{differentiator}}</p>
+            
+            <div class="cta-wrap">
             <div class="cta-kicker">{{ctaEyebrow}}</div>
             <h3 class="cta-title">{{ctaTitle}}</h3>
             <p class="cta-body">{{ctaText}}</p>
