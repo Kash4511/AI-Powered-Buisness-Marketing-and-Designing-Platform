@@ -6,21 +6,30 @@
     <title>SUSTAINABLE ARCHITECTURE GUIDE - Kyro</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        /* ─── DYNAMIC COLOR TOKENS ───────────────────────────────────
+           Backend must compute and inject all vars below from just
+           primaryColor + secondaryColor using build_color_vars().
+           See backend reference comment at bottom of file.
+        ─────────────────────────────────────────────────────────── */
         :root {
-            --brown: #3278a4;
-            --brown-mid: #5aa0cc;
+            --brown:       #3278a4;
+            --brown-mid:   #5aa0cc;
             --brown-light: #695312;
-            --sand: #F4A460;
-            --cream: #F6F1EB;
-            --cream-dark: #E0D4C3;
-            --ink: #111111;
-            --ink-mid: #222222;
-            --ink-light: #666666;
-            --white: #FFFFFF;
-            --rule: #E0D4C3;
+            --sand:        #F4A460;
+            --cream:       #F6F1EB;
+            --cream-dark:  #E0D4C3;
+            --ink:         #111111;
+            --ink-mid:     #222222;
+            --ink-light:   #666666;
+            --white:       #FFFFFF;
+            --rule:        #E0D4C3;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
 
         body {
             font-family: 'DM Sans', sans-serif;
@@ -28,14 +37,11 @@
             padding: 30px 20px;
         }
 
-        .book {
-            width: 210mm;
-            margin: 0 auto;
-        }
+        .book { width: 210mm; margin: 0 auto; }
 
         .page {
             width: 210mm;
-            height: 297mm;
+            min-height: 297mm;
             background: white;
             position: relative;
             overflow: hidden;
@@ -44,7 +50,7 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.4);
         }
 
-        /* COVER PAGE */
+        /* ─── COVER ─────────────────────────────────────────────── */
         .cover {
             background: var(--ink);
             min-height: 297mm;
@@ -53,679 +59,386 @@
             position: relative;
             overflow: hidden;
         }
-
         .cover-texture {
-            position: absolute;
-            inset: 0;
-            background-image: 
+            position: absolute; inset: 0;
+            background-image:
                 radial-gradient(ellipse 80% 60% at 70% 30%, rgba(139,69,19,0.35) 0%, transparent 60%),
                 radial-gradient(ellipse 50% 70% at 20% 80%, rgba(212,107,30,0.2) 0%, transparent 50%);
         }
-
         .cover-grid {
-            position: absolute;
-            inset: 0;
-            background-image: 
+            position: absolute; inset: 0;
+            background-image:
                 linear-gradient(rgba(139,69,19,0.06) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(139,69,19,0.06) 1px, transparent 1px);
             background-size: 30px 30px;
         }
-
         .cover-bar {
-            position: absolute;
-            top: 0; right: 80px;
+            position: absolute; top: 0; right: 80px;
             width: 3px; height: 100%;
             background: linear-gradient(180deg, transparent, var(--brown-light) 30%, var(--sand) 70%, transparent);
             opacity: 0.4;
         }
         .cover-bar-2 {
-            position: absolute;
-            top: 0; right: 88px;
+            position: absolute; top: 0; right: 88px;
             width: 1px; height: 100%;
             background: linear-gradient(180deg, transparent, var(--brown) 40%, transparent);
             opacity: 0.3;
         }
-
         .cover-top-rule {
-            position: relative;
-            z-index: 10;
+            position: relative; z-index: 10;
             padding: 18px 25mm 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid rgba(244,164,96,0.3);
         }
-
         .cover-issue {
             font-family: 'DM Mono', monospace;
-            font-size: 9px;
-            letter-spacing: 0.25em;
-            color: rgba(244,164,96,0.7);
-            text-transform: uppercase;
+            font-size: 9px; letter-spacing: 0.25em;
+            color: rgba(244,164,96,0.7); text-transform: uppercase;
         }
-
         .cover-brand {
             font-family: 'DM Mono', monospace;
-            font-size: 9px;
-            letter-spacing: 0.3em;
-            color: rgba(255,255,255,0.5);
-            text-transform: uppercase;
+            font-size: 9px; letter-spacing: 0.3em;
+            color: rgba(255,255,255,0.5); text-transform: uppercase;
         }
-
         .cover-main {
-            position: relative;
-            z-index: 10;
+            position: relative; z-index: 10;
             padding: 0 25mm 20mm;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
+            flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
         }
-
         .cover-eyebrow {
             font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 0.3em;
-            color: var(--sand);
-            text-transform: uppercase;
+            font-size: 10px; letter-spacing: 0.3em;
+            color: var(--sand); text-transform: uppercase;
             margin-bottom: 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            display: flex; align-items: center; gap: 12px;
         }
         .cover-eyebrow::before {
-            content: '';
-            display: block;
-            width: 30px; height: 1px;
-            background: var(--sand);
+            content: ''; display: block;
+            width: 30px; height: 1px; background: var(--sand);
         }
-
         .cover-headline {
             font-family: 'Playfair Display', serif;
-            font-size: 72px;
-            font-weight: 900;
-            line-height: 0.92;
-            color: var(--white);
-            letter-spacing: -2px;
-            margin-bottom: 8px;
+            font-size: 72px; font-weight: 900;
+            line-height: 0.92; color: var(--white);
+            letter-spacing: -2px; margin-bottom: 8px;
         }
-        .cover-headline em {
-            font-style: italic;
-            color: var(--sand);
-            display: block;
-        }
-
+        .cover-headline em { font-style: italic; color: var(--sand); display: block; }
         .cover-sub {
-            font-size: 13px;
-            font-weight: 300;
-            color: rgba(255,255,255,0.55);
-            line-height: 1.7;
-            max-width: 340px;
-            margin-top: 22px;
-            margin-bottom: 36px;
-            letter-spacing: 0.01em;
+            font-size: 13px; font-weight: 300;
+            color: rgba(255,255,255,0.55); line-height: 1.7;
+            max-width: 340px; margin-top: 22px; margin-bottom: 36px; letter-spacing: 0.01em;
         }
-
-        .cover-divider {
-            width: 50px; height: 2px;
-            background: var(--sand);
-            margin-bottom: 22px;
-        }
-
+        .cover-divider { width: 50px; height: 2px; background: var(--sand); margin-bottom: 22px; }
         .cover-stats {
-            display: flex;
-            gap: 0;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 22px;
+            display: flex; gap: 0;
+            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 22px;
         }
-
-        .cover-stat {
-            flex: 1;
-            padding-right: 24px;
-            border-right: 1px solid rgba(255,255,255,0.08);
-        }
+        .cover-stat { flex: 1; padding-right: 24px; border-right: 1px solid rgba(255,255,255,0.08); }
         .cover-stat:last-child { border-right: none; padding-right: 0; padding-left: 24px; }
         .cover-stat:first-child { padding-left: 0; }
-
         .cover-stat-num {
             font-family: 'Playfair Display', serif;
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--sand);
-            line-height: 1;
+            font-size: 32px; font-weight: 700; color: var(--sand); line-height: 1;
         }
-
         .cover-stat-label {
-            font-size: 10px;
-            color: rgba(255,255,255,0.35);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-top: 4px;
+            font-size: 10px; color: rgba(255,255,255,0.35);
+            letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px;
         }
-
         .cover-bottom {
-            position: relative;
-            z-index: 10;
+            position: relative; z-index: 10;
             padding: 14px 25mm;
             border-top: 1px solid rgba(139,69,19,0.25);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
         }
-
-        .cover-company {
-            font-size: 11px;
-            color: rgba(255,255,255,0.4);
-            letter-spacing: 0.05em;
-        }
-
+        .cover-company { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; }
         .cover-tagline {
             font-family: 'DM Mono', monospace;
-            font-size: 9px;
-            color: rgba(244,164,96,0.5);
-            letter-spacing: 0.2em;
+            font-size: 9px; color: rgba(244,164,96,0.5); letter-spacing: 0.2em;
         }
 
-        /* CONTENT PAGES */
-        .page-strip {
-            background: var(--brown-light);
-            height: 8px;
-        }
-
+        /* ─── PAGE CHROME ────────────────────────────────────────── */
+        .page-strip { background: var(--brown-light); height: 8px; }
         .page-header {
             padding: 14px 25mm 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
+            display: flex; justify-content: space-between; align-items: baseline;
             border-bottom: 1.5px solid var(--brown-light);
         }
-
         .page-section-label {
             font-family: 'DM Sans', sans-serif;
-            font-size: 10px;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--ink-light);
+            font-size: 10px; letter-spacing: 0.18em;
+            text-transform: uppercase; color: var(--ink-light);
         }
-
         .page-num {
             font-family: 'Playfair Display', serif;
-            font-size: 11px;
-            color: var(--brown);
-            letter-spacing: 0.05em;
+            font-size: 11px; color: var(--brown); letter-spacing: 0.05em;
         }
-
-        /* TERMS PAGE */
-        .terms-page .page-body {
-            padding: 20mm 25mm 25mm;
-            display: flex;
-            flex-direction: column;
+        .page-footer {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 40px; background: var(--brown-light);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25mm;
         }
+        .footer-left { font-size: 9px; color: rgba(255,255,255,0.7); letter-spacing: 0.05em; }
+        .footer-right { font-family: 'DM Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.8); letter-spacing: 0.1em; }
 
+        /* ─── EDITORIAL ──────────────────────────────────────────── */
         .editorial-chapter {
             font-family: 'DM Sans', sans-serif;
-            font-size: 10px;
-            letter-spacing: 0.22em;
-            color: var(--brown-light);
-            text-transform: uppercase;
+            font-size: 10px; letter-spacing: 0.22em;
+            color: var(--brown-light); text-transform: uppercase;
             margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            display: flex; align-items: center; gap: 12px;
         }
-        .editorial-chapter::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--rule);
-        }
+        .editorial-chapter::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
 
+        /* ─── TERMS ──────────────────────────────────────────────── */
         .terms-headline {
             font-family: 'Playfair Display', serif;
-            font-size: 38px;
-            font-weight: 700;
-            color: var(--ink);
-            line-height: 1.1;
-            margin-bottom: 30px;
-            letter-spacing: -0.5px;
+            font-size: 38px; font-weight: 700; color: var(--ink);
+            line-height: 1.1; margin-bottom: 30px; letter-spacing: -0.5px;
         }
-
-        .terms-body {
-            columns: 2;
-            column-gap: 30px;
-            column-rule: 1px solid var(--rule);
-        }
-
+        .terms-body { columns: 2; column-gap: 30px; column-rule: 1px solid var(--rule); }
         .terms-body p {
-            font-size: 11px;
-            line-height: 1.85;
-            color: var(--ink-mid);
-            margin-bottom: 14px;
-            break-inside: avoid;
+            font-size: 11px; line-height: 1.85; color: var(--ink-mid);
+            margin-bottom: 14px; break-inside: avoid;
         }
-
         .terms-pull {
-            background: var(--cream);
-            border-left: 3px solid var(--brown-light);
-            padding: 16px 18px;
-            margin: 20px 0;
-            break-inside: avoid;
-            column-span: all;
+            background: var(--cream); border-left: 3px solid var(--brown-light);
+            padding: 16px 18px; margin: 20px 0; break-inside: avoid; column-span: all;
         }
-
         .terms-pull p {
             font-family: 'Playfair Display', serif;
-            font-size: 14px;
-            font-style: italic;
-            color: var(--brown);
-            line-height: 1.6;
-            margin: 0;
+            font-size: 14px; font-style: italic; color: var(--brown); line-height: 1.6; margin: 0;
         }
 
-        /* TOC PAGE */
-        .toc-page .page-body {
-            padding: 20mm 25mm 25mm;
-        }
-
+        /* ─── TOC ────────────────────────────────────────────────── */
         .toc-headline {
             font-family: 'Playfair Display', serif;
-            font-size: 52px;
-            font-weight: 900;
-            color: var(--ink);
-            line-height: 1;
-            letter-spacing: -2px;
-            margin-bottom: 6px;
+            font-size: 52px; font-weight: 900; color: var(--ink);
+            line-height: 1; letter-spacing: -2px; margin-bottom: 6px;
         }
-
-        .toc-sub {
-            font-size: 12px;
-            color: var(--ink-light);
-            margin-bottom: 36px;
-            letter-spacing: 0.02em;
-        }
-
+        .toc-sub { font-size: 12px; color: var(--ink-light); margin-bottom: 36px; letter-spacing: 0.02em; }
         .toc-item {
-            display: grid;
-            grid-template-columns: 36px 1fr 36px;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--rule);
+            display: grid; grid-template-columns: 36px 1fr 36px;
+            align-items: center; gap: 16px;
+            padding: 16px 0; border-bottom: 1px solid var(--rule);
         }
         .toc-item:first-child { border-top: 1px solid var(--rule); }
-
         .toc-num {
             font-family: 'Playfair Display', serif;
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--brown-light);
-            opacity: 0.4;
-            line-height: 1;
+            font-size: 22px; font-weight: 700; color: var(--brown-light); opacity: 0.4; line-height: 1;
         }
+        .toc-title { font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: 0.01em; }
+        .toc-title small { display: block; font-size: 10px; font-weight: 400; color: var(--ink-light); margin-top: 2px; }
+        .toc-page-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--brown); text-align: right; }
 
-        .toc-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--ink);
-            letter-spacing: 0.01em;
-        }
-        .toc-title small {
-            display: block;
-            font-size: 10px;
-            font-weight: 400;
-            color: var(--ink-light);
-            margin-top: 2px;
-        }
+        /* ─── CONTENT ────────────────────────────────────────────── */
+        .content-body { padding: 16mm 25mm 55px; }
 
-        .toc-page-num {
-            font-family: 'DM Mono', monospace;
-            font-size: 11px;
-            color: var(--brown);
-            text-align: right;
-        }
-
-        /* CONTENT BODY */
-        .content-body {
-            padding: 16mm 25mm 25mm;
-        }
-
-        .ch-opener {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            margin-bottom: 24px;
-        }
+        .ch-opener { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 24px; }
         .ch-opener-text { padding-right: 24px; }
-
-        .ch-num {
-            font-family: 'Playfair Display', serif;
-            font-size: 120px;
-            font-weight: 900;
-            color: var(--cream-dark);
-            line-height: 0.85;
-            margin-bottom: -10px;
-            letter-spacing: -4px;
-        }
 
         .ch-title {
             font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--ink);
-            line-height: 1.15;
-            letter-spacing: -0.5px;
-            margin-bottom: 14px;
+            font-size: 28px; font-weight: 700; color: var(--ink);
+            line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 14px;
         }
 
-        .img-full {
-            width: 100%;
-            height: 180px;
-            background: var(--cream-dark);
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            margin: 22px 0;
-            background-size: cover;
-            background-position: center;
-        }
+        .body-text { font-size: 12.5px; line-height: 1.85; color: var(--ink-mid); margin-bottom: 16px; }
 
-        .img-label {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.16em;
-            color: var(--ink-mid);
-            text-transform: uppercase;
-            position: relative;
-            z-index: 2;
-        }
-
-        .image-strip {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .image-strip .img-full {
-            height: 110px;
-            margin: 0;
-        }
-
-        .img-half { height: 120px; }
-
-        .body-text {
-            font-size: 12.5px;
-            line-height: 1.85;
-            color: var(--ink-mid);
-            margin-bottom: 16px;
+        .drop-cap::first-letter {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px; font-weight: 900; color: var(--brown-light);
+            float: left; line-height: 0.75; margin-right: 6px; margin-top: 6px;
         }
 
         .sec-head {
             font-family: 'Playfair Display', serif;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--ink);
-            margin: 22px 0 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--rule);
-            letter-spacing: -0.2px;
+            font-size: 18px; font-weight: 700; color: var(--ink);
+            margin: 22px 0 10px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--rule); letter-spacing: -0.2px;
         }
 
+        /* ─── IMAGE PLACEHOLDERS ─────────────────────────────────── */
+        /* Base image box — used everywhere */
+        .img-box {
+            background: var(--cream-dark);
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+            background-size: cover; background-position: center;
+        }
+        /* Crosshatch texture overlay when no image */
+        .img-box-inner {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 8px; width: 100%; height: 100%;
+            background-image: repeating-linear-gradient(
+                -45deg, transparent, transparent 12px,
+                rgba(0,0,0,0.025) 12px, rgba(0,0,0,0.025) 13px
+            );
+        }
+        /* Camera icon circle */
+        .img-icon-wrap {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .img-icon-wrap svg { opacity: 0.4; }
+        .img-caption {
+            font-family: 'DM Mono', monospace;
+            font-size: 7.5px; letter-spacing: 0.2em;
+            text-transform: uppercase; color: var(--ink-light);
+            opacity: 0.6; text-align: center; padding: 0 8px;
+        }
+
+        /* Size variants */
+        .img-hero  { width: 100%; height: 100%; min-height: 180px; }
+        .img-half  { width: 100%; height: 120px; }
+        .img-short { width: 100%; height: 90px; }
+        .img-wide  { width: 100%; height: 180px; margin: 22px 0; }
+        .img-band  { width: 100%; height: 90px; margin: 16px 0; }
+
+        /* Three-up strip */
+        .img-strip {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin: 20px 0;
+        }
+        .img-strip-col { display: flex; flex-direction: column; gap: 6px; }
+        .img-strip-cap {
+            font-size: 8.5px; color: var(--ink-light);
+            text-align: center; font-style: italic; line-height: 1.4;
+        }
+
+        /* ─── PULL QUOTE ─────────────────────────────────────────── */
         .pull-quote {
             border-top: 2px solid var(--brown);
             border-bottom: 1px solid var(--rule);
-            padding: 18px 0 16px;
-            margin: 22px 0;
+            padding: 18px 0 16px; margin: 22px 0;
         }
         .pull-quote p {
             font-family: 'Playfair Display', serif;
-            font-size: 17px;
-            font-style: italic;
-            color: var(--brown);
-            line-height: 1.55;
+            font-size: 17px; font-style: italic;
+            color: var(--brown); line-height: 1.55;
         }
 
+        /* ─── CALLOUT ────────────────────────────────────────────── */
         .callout {
-            background: var(--cream);
-            color: var(--ink);
-            padding: 20px 22px;
-            border-radius: 4px;
-            margin: 20px 0;
-            border: 1px solid var(--rule);
+            background: var(--cream); color: var(--ink);
+            padding: 20px 22px; border-radius: 4px;
+            margin: 20px 0; border: 1px solid var(--rule);
         }
         .callout-label {
             font-family: 'DM Mono', monospace;
-            font-size: 8px;
-            letter-spacing: 0.4em;
-            color: var(--brown-light);
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            font-size: 8px; letter-spacing: 0.4em;
+            color: var(--brown-light); text-transform: uppercase; margin-bottom: 10px;
         }
-        .callout p {
-            font-size: 12px;
-            line-height: 1.7;
-            color: var(--ink-mid);
-        }
+        .callout p { font-size: 12px; line-height: 1.7; color: var(--ink-mid); }
 
+        /* ─── STAT ROW — table layout for PrinceXML reliability ─── */
         .stat-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
+            display: table; width: 100%;
+            border-collapse: separate; border-spacing: 1px;
             background: var(--rule);
-            border: 1px solid var(--rule);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 20px 0;
+            border: 1px solid var(--rule); border-radius: 4px;
+            overflow: hidden; margin: 20px 0;
         }
         .stat-cell {
+            display: table-cell; width: 33.33%;
             background: var(--cream);
-            padding: 16px 14px;
-            text-align: center;
+            padding: 16px 14px; text-align: center; vertical-align: middle;
         }
+        .stat-cell + .stat-cell { border-left: 1px solid var(--rule); }
         .stat-big {
             font-family: 'Playfair Display', serif;
-            font-size: 30px;
-            font-weight: 700;
-            color: var(--brown);
-            line-height: 1;
+            font-size: 30px; font-weight: 700; color: var(--brown); line-height: 1;
         }
-        .stat-unit {
-            font-size: 12px;
-            color: var(--brown-light);
-        }
-        .stat-desc {
-            font-size: 10px;
-            color: var(--ink-light);
-            margin-top: 5px;
-            letter-spacing: 0.02em;
-            line-height: 1.4;
-        }
+        .stat-unit { font-size: 12px; color: var(--brown-light); }
+        .stat-desc { font-size: 10px; color: var(--ink-light); margin-top: 5px; letter-spacing: 0.02em; line-height: 1.4; }
 
+        /* ─── CHECKLIST ──────────────────────────────────────────── */
         .mag-checklist { list-style: none; margin: 16px 0; }
         .mag-checklist li {
-            display: flex;
-            gap: 14px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--rule);
-            font-size: 12.5px;
-            line-height: 1.6;
-            color: var(--ink-mid);
+            display: flex; gap: 14px;
+            padding: 12px 0; border-bottom: 1px solid var(--rule);
+            font-size: 12.5px; line-height: 1.6; color: var(--ink-mid);
             align-items: flex-start;
         }
+        .mag-checklist li:first-child { border-top: 1px solid var(--rule); }
         .mag-checklist li::before {
-            content: '✓';
-            flex-shrink: 0;
+            content: '✓'; flex-shrink: 0;
             width: 22px; height: 22px;
-            background: var(--brown-light);
-            color: white;
+            background: var(--brown-light); color: white;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            margin-top: 1px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; margin-top: 1px;
         }
 
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 18px 0;
-        }
+        /* ─── TWO COL ────────────────────────────────────────────── */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0; }
 
-        .col-card {
-            background: var(--cream);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .col-card-head {
-            background: var(--brown-light);
-            padding: 10px 14px;
-        }
+        /* ─── COL CARD (fixed — no duplicate inner label) ────────── */
+        .col-card { background: var(--cream); border-radius: 4px; overflow: hidden; }
+        .col-card-head { background: var(--brown-light); padding: 10px 14px; }
         .col-card-head h4 {
             font-family: 'DM Mono', monospace;
-            font-size: 9px;
-            letter-spacing: 0.25em;
-            color: white;
-            text-transform: uppercase;
+            font-size: 9px; letter-spacing: 0.25em; color: white; text-transform: uppercase;
         }
         .col-card-body { padding: 14px; }
-        .col-card-body p {
-            font-size: 11.5px;
-            line-height: 1.7;
-            color: var(--ink-mid);
-        }
+        .col-card-body p { font-size: 11.5px; line-height: 1.7; color: var(--ink-mid); }
 
+        /* ─── INFO BOX ───────────────────────────────────────────── */
         .info-box {
-            background: var(--cream);
-            border-left: 4px solid var(--sand);
-            padding: 16px 18px;
-            margin: 18px 0;
-            border-radius: 0 4px 4px 0;
+            background: var(--cream); border-left: 4px solid var(--sand);
+            padding: 16px 18px; margin: 18px 0; border-radius: 0 4px 4px 0;
         }
         .info-box-label {
             font-family: 'DM Mono', monospace;
-            font-size: 8px;
-            letter-spacing: 0.35em;
-            color: var(--brown-light);
-            text-transform: uppercase;
-            margin-bottom: 8px;
+            font-size: 8px; letter-spacing: 0.35em;
+            color: var(--brown-light); text-transform: uppercase; margin-bottom: 8px;
         }
-        .info-box p {
-            font-size: 12px;
-            line-height: 1.7;
-            color: var(--ink-mid);
-        }
+        .info-box p { font-size: 12px; line-height: 1.7; color: var(--ink-mid); }
 
+        /* ─── CTA BLOCK ──────────────────────────────────────────── */
         .cta-block {
-            background: var(--cream);
-            padding: 30px 28px;
-            border-radius: 4px;
-            margin: 22px 0;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--rule);
+            background: var(--cream); padding: 30px 28px;
+            border-radius: 4px; margin: 22px 0;
+            position: relative; overflow: hidden; border: 1px solid var(--rule);
         }
         .cta-block::before {
-            content: '';
-            position: absolute;
-            top: -40px; right: -40px;
-            width: 180px; height: 180px;
-            border-radius: 50%;
-            border: 1px solid var(--rule);
-            opacity: 0.5;
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 180px; height: 180px; border-radius: 50%;
+            border: 1px solid var(--rule); opacity: 0.5;
         }
         .cta-block::after {
-            content: '';
-            position: absolute;
-            bottom: -60px; left: -30px;
-            width: 200px; height: 200px;
-            border-radius: 50%;
-            border: 1px solid var(--rule);
-            opacity: 0.5;
+            content: ''; position: absolute; bottom: -60px; left: -30px;
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 1px solid var(--rule); opacity: 0.5;
         }
-
         .cta-eyebrow {
             font-family: 'DM Mono', monospace;
-            font-size: 8px;
-            letter-spacing: 0.4em;
-            color: var(--brown-light);
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            font-size: 8px; letter-spacing: 0.4em;
+            color: var(--brown-light); text-transform: uppercase; margin-bottom: 10px;
         }
         .cta-title {
             font-family: 'Playfair Display', serif;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--ink);
-            margin-bottom: 12px;
-            letter-spacing: -0.3px;
-            position: relative;
-            z-index: 2;
+            font-size: 24px; font-weight: 700; color: var(--ink);
+            margin-bottom: 12px; letter-spacing: -0.3px; position: relative; z-index: 2;
         }
         .cta-text {
-            font-size: 12px;
-            line-height: 1.75;
-            color: var(--ink-mid);
-            position: relative;
-            z-index: 2;
-            margin-bottom: 20px;
+            font-size: 12px; line-height: 1.75; color: var(--ink-mid);
+            position: relative; z-index: 2; margin-bottom: 20px;
         }
         .cta-contact {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            gap: 20px;
-            border-top: 1px solid var(--rule);
-            padding-top: 18px;
+            position: relative; z-index: 2;
+            display: flex; gap: 20px;
+            border-top: 1px solid var(--rule); padding-top: 18px;
         }
-        .cta-contact-item {
-            font-size: 11px;
-            color: var(--ink-light);
-        }
+        .cta-contact-item { font-size: 11px; color: var(--ink-light); }
         .cta-contact-item strong {
-            display: block;
-            font-size: 12px;
-            color: var(--brown);
-            margin-bottom: 2px;
-            font-weight: 500;
-        }
-
-        .page-footer {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 40px;
-            background: var(--brown-light);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25mm;
-        }
-        .footer-left {
-            font-size: 9px;
-            color: rgba(255,255,255,0.7);
-            letter-spacing: 0.05em;
-        }
-        .footer-right {
-            font-family: 'DM Mono', monospace;
-            font-size: 9px;
-            color: rgba(255,255,255,0.8);
-            letter-spacing: 0.1em;
-        }
-
-        .drop-cap::first-letter {
-            font-family: 'Playfair Display', serif;
-            font-size: 48px;
-            font-weight: 900;
-            color: var(--brown-light);
-            float: left;
-            line-height: 0.75;
-            margin-right: 6px;
-            margin-top: 6px;
+            display: block; font-size: 12px; color: var(--brown);
+            margin-bottom: 2px; font-weight: 500;
         }
 
         @media print {
@@ -735,437 +448,638 @@
         }
     </style>
 </head>
+
+<!-- SVG camera icon — reused everywhere via JS/inline -->
 <body>
 <div class="book">
 
-    <!-- PAGE 1: COVER -->
-    <div class="page cover">
-        <div class="cover-texture"></div>
-        <div class="cover-grid"></div>
-        <div class="cover-bar"></div>
-        <div class="cover-bar-2"></div>
+<!-- ════════════════════════════════════════════
+     PAGE 1 — COVER
+════════════════════════════════════════════ -->
+<div class="page cover">
+    <div class="cover-texture"></div>
+    <div class="cover-grid"></div>
+    <div class="cover-bar"></div>
+    <div class="cover-bar-2"></div>
 
-        <div class="cover-top-rule">
-            <span class="cover-issue">SUSTAINABLE-ARCHITECTURE</span>
-            
-                <span class="cover-brand">Kyro</span>
-            
-        </div>
-
-        <div class="cover-main">
-            <div class="cover-eyebrow">HOMEOWNERS, ARCHITECTS/PEERS, COMMERCIAL CLIENTS</div>
-
-            <div class="cover-headline">
-                Sustainable Architecture Guide<br>
-                <em>Sustainable Architecture Guide</em><br>
-                
-            </div>
-
-            <div class="cover-divider"></div>
-
-            <p class="cover-sub">Overcome approvals, costs, and risks for eco-friendly builds.</p>
-
-            <div class="cover-stats">
-                <div class="cover-stat" style="padding-left:0;">
-                    <div class="cover-stat-num">7</div>
-                    <div class="cover-stat-label">Sections in this issue</div>
-                </div>
-                <div class="cover-stat">
-                    <div class="cover-stat-num">4</div>
-                    <div class="cover-stat-label">Pain points addressed</div>
-                </div>
-                <div class="cover-stat" style="padding-left:24px;">
-                    <div class="cover-stat-num">1</div>
-                    <div class="cover-stat-label">Action plan at the end</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="cover-bottom">
-            <span class="cover-company">Kyro · Kyro@gmail.com</span>
-            <span class="cover-tagline">2026 Edition</span>
-        </div>
+    <div class="cover-top-rule">
+        <span class="cover-issue">SUSTAINABLE-ARCHITECTURE</span>
+        
+            <span class="cover-brand">Kyro</span>
+        
     </div>
 
-    <!-- PAGE 2: TERMS OF USE -->
-    <div class="page terms-page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Terms of Use</span>
-            <span class="page-num">2</span>
-        </div>
-
-        <div class="page-body" style="padding: 18mm 25mm 50px;">
-            <div class="editorial-chapter">Terms of Use</div>
-
-            <h1 class="terms-headline">Terms of Use<br><em style="font-style:italic; color: var(--brown-light);">This guide is provided for informational purposes to assist homeowners, architects, and commercial clients in sustainable architecture projects.</em></h1>
-
-            <div class="terms-body">
-                <p>By downloading this guide, you agree to use the information solely for personal or professional reference. Kyro disclaims liability for any decisions made based on this content. Sharing or reproducing without permission is prohibited.</p>
-                <p>Content addresses common pain points like approvals and high costs but does not constitute professional advice. Consult qualified experts for your specific project. Kyro reserves the right to update this guide without notice.</p>
-
-                <div class="terms-pull">
-                    <p>"This guide is provided for informational purposes to assist homeowners, architects, and commercial clients in sustainable architecture projects."</p>
-                </div>
-
-                <p>All examples are illustrative; actual results vary by project. Users accept responsibility for verifying local regulations and codes. Contact Kyro for tailored consultations.</p>
-                
-            </div>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            
-                <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    <div class="cover-main">
+        <div class="cover-eyebrow">REAL ESTATE AGENTS, ARCHITECTS/PEERS, HOMEOWNERS</div>
+        <div class="cover-headline">
+            Sustainable Architecture Guide<br>
+            <em>Sustainable Architecture Guide</em><br>
             
         </div>
-    </div>
-
-    <!-- PAGE 3: TABLE OF CONTENTS -->
-    <div class="page toc-page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Contents</span>
-            <span class="page-num">3</span>
-        </div>
-
-        <div class="page-body" style="padding: 18mm 25mm 50px;">
-            <h1 class="toc-headline">Sustainable Architecture Guide<br>Sustainable-Architecture</h1>
-            <p class="toc-sub">This guide is designed for Homeowners, Architects/Peers, Commercial Clients to help you navigate sustainable-architecture. It focuses on real-world challenges such as Approvals, Poor communication, Risk management, breaking them down into practical decisions you can make. By the end, you will have tangible next steps and insights you can apply immediately to h.</p>
-
-            <div class="toc-item">
-                <div class="toc-num">01</div>
-                <div class="toc-title">Introduction to Sustainable Architecture Essentials
-                    <small>Benefits for Target Audiences</small>
-                </div>
-                <div class="toc-page-num">4</div>
+        <div class="cover-divider"></div>
+        <p class="cover-sub">Overcome approvals, communication gaps, risks, and high costs to deliver eco-friendly homes that boost value.</p>
+        <div class="cover-stats">
+            <div class="cover-stat" style="padding-left:0">
+                <div class="cover-stat-num">5</div>
+                <div class="cover-stat-label">Sections in this issue</div>
             </div>
-
-            <div class="toc-item">
-                <div class="toc-num">02</div>
-                <div class="toc-title">Navigating Regulatory Approvals and Permits
-                    <small>Common Approval Pitfalls</small>
-                </div>
-                <div class="toc-page-num">5</div>
+            <div class="cover-stat">
+                <div class="cover-stat-num">4</div>
+                <div class="cover-stat-label">Pain points addressed</div>
             </div>
-
-            <div class="toc-item">
-                <div class="toc-num">03</div>
-                <div class="toc-title">Effective Communication Strategies with Stakeholders
-                    <small>Tools for Collaboration</small>
-                </div>
-                <div class="toc-page-num">6</div>
+            <div class="cover-stat" style="padding-left:24px">
+                <div class="cover-stat-num">1</div>
+                <div class="cover-stat-label">Action plan at the end</div>
             </div>
-
-            <div class="toc-item">
-                <div class="toc-num">04</div>
-                <div class="toc-title">Risk Management in Eco-Friendly Designs
-                    <small>Mitigation Frameworks</small>
-                </div>
-                <div class="toc-page-num">7</div>
-            </div>
-
-            <div class="toc-item">
-                <div class="toc-num">05</div>
-                <div class="toc-title">Cost Optimization Techniques
-                    <small>Value Engineering Examples</small>
-                </div>
-                <div class="toc-page-num">8</div>
-            </div>
-
-            <div class="toc-item">
-                <div class="toc-num">06</div>
-                <div class="toc-title">Implementing Sustainable Practices Successfully
-                    <small>Next steps and action plan</small>
-                </div>
-                <div class="toc-page-num">9</div>
-            </div>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            
-                <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
-            
         </div>
     </div>
 
-    <!-- PAGE 4: CHAPTER 1 -->
-    <div class="page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Introduction to Sustainable Architecture Essentials</span>
-            <span class="page-num">4</span>
-        </div>
-
-        <div class="content-body" style="padding-bottom: 50px;">
-            <div class="ch-opener">
-                <div class="ch-opener-text">
-                    <div class="editorial-chapter">CHAPTER 01</div>
-                    <h2 class="ch-title">Introduction to Sustainable Architecture Essentials</h2>
-                    <p class="body-text drop-cap">Sustainable architecture integrates sustainable materials and energy-efficient designs to create resilient structures for homeowners, architects, and commercial clients. This guide addresses key pain points like approvals, poor communication, risk management, and high costs by providing actionable strategies tailored to your needs. For instance, using passive solar design can reduce energy bills by up to 30% while simplifying approval processes through proven compliance examples. This section provides clear guidance on Introduction to Sustainable Architecture Essentials. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Introduction to Sustainable Architecture Essentials. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies.</p>
-                </div>
-                <div>
-                    <div class="img-full img-half" style="height:100%; ">
-                    <span class="img-label">Introduction to Sustainable Architecture Essentials</span>
-                </div>
-                </div>
-            </div>
-
-            <div class="image-strip">
-                <div class="img-full img-half" style="">
-                    <span class="img-label">Navigating Regulatory Approvals and Permits</span>
-                </div>
-                <div class="img-full img-half" style="">
-                    <span class="img-label">Effective Communication Strategies with Stakeholders</span>
-                </div>
-                <div class="img-full img-half" style="">
-                    <span class="img-label">Mitigation Frameworks</span>
-                </div>
-            </div>
-
-            <div class="sec-head">Benefits for Target Audiences</div>
-            <p class="body-text">Homeowners gain long-term savings and healthier living spaces. Architects/peers access innovative techniques for peer recognition. Commercial clients achieve LEED certification to attract tenants and cut operational costs.</p>
-
-            <div class="callout">
-                <div class="callout-label">Benefits for Target Audiences</div>
-                <p>Homeowners gain long-term savings and healthier living spaces. Architects/peers access innovative techniques for peer recognition. Commercial clients achieve LEED certification to attract tenants and cut operational costs.</p>
-            </div>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            
-                <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
-            
-        </div>
+    <div class="cover-bottom">
+        <span class="cover-company">Kyro &middot; Kyro@gmail.com</span>
+        <span class="cover-tagline">2026 Edition</span>
     </div>
-
-    <!-- PAGE 5: CHAPTER 2 -->
-    <div class="page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Navigating Regulatory Approvals and Permits</span>
-            <span class="page-num">5</span>
-        </div>
-
-        <div class="content-body" style="padding-bottom: 50px;">
-            <div class="editorial-chapter">CHAPTER 02</div>
-            <h2 class="ch-title">Navigating Regulatory Approvals and Permits</h2>
-
-            <p class="body-text">Securing approvals is a major hurdle in sustainable projects, often delayed by miscommunication with authorities. Kyro&#39;s approach uses pre-vetted documentation templates that streamline submissions for faster green lights. A commercial client recently cut approval time from 6 months to 8 weeks by incorporating modular green roofs compliant with urban codes. This section provides clear guidance on Navigating Regulatory Approvals and Permits. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Navigating Regulatory Approvals and Permits. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
-
-            <div class="pull-quote">
-                <p>"Securing approvals is a major hurdle in sustainable projects, often delayed by miscommunication with authorities."</p>
-            </div>
-
-            <div class="sec-head">Common Approval Pitfalls</div>
-
-            <ul class="mag-checklist">
-                <li>Securing approvals is a major hurdle in sustainable projects, often delayed by miscommunication with authorities.</li>
-                <li>Kyro&#39;s approach uses pre-vetted documentation templates that streamline submissions for faster green lights.</li>
-                <li>A commercial client recently cut approval time from 6 months to 8 weeks by incorporating modular green roofs compliant with urban codes.</li>
-            </ul>
-
-            <div class="img-full" style="">
-                <span class="img-label">Navigating Regulatory Approvals and Permits</span>
-            </div>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
-        </div>
-    </div>
-
-    <!-- PAGE 6: CHAPTER 3 -->
-    <div class="page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Effective Communication Strategies with Stakeholders</span>
-            <span class="page-num">6</span>
-        </div>
-
-        <div class="content-body" style="padding-bottom: 50px;">
-            <div class="editorial-chapter">CHAPTER 03</div>
-            <h2 class="ch-title">Effective Communication Strategies with Stakeholders</h2>
-
-            <div class="two-col">
-                <div>
-                    <p class="body-text">Poor communication exacerbates project risks and costs in sustainable architecture. This section equips homeowners, architects, and clients with clear protocols, such as weekly visual progress reports, to align expectations. One architect peer reduced change orders by 40% through shared digital dashboards. This section provides clear guidance on Effective Communication Strategies with Stakeholders. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Effective Communication Strategies with Stakeholders. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
-                </div>
-                <div class="img-full img-half" style="height: 120px; margin: 0; ">
-                    <span class="img-label">Effective Communication Strategies with Stakeholders</span>
-                </div>
-            </div>
-
-            <div class="stat-row">
-                <div class="stat-cell">
-                    <div class="stat-big">100</div>
-                    <div class="stat-desc">Focused on practical decisions</div>
-                </div>
-                <div class="stat-cell">
-                    <div class="stat-big">2026</div>
-                    <div class="stat-desc">Edition year</div>
-                </div>
-                <div class="stat-cell">
-                    <div class="stat-big">3<span class="stat-unit">+</span></div>
-                    <div class="stat-desc">Ways to move forward</div>
-                </div>
-            </div>
-
-            <div class="sec-head">Tools for Collaboration</div>
-            <p class="body-text">Use platforms like BIM software for real-time sharing. Schedule bi-weekly calls to address issues promptly.</p>
-
-            <div class="info-box">
-                <div class="info-box-label">Stakeholder Mapping</div>
-                <p>Identify key players like contractors and regulators. Tailor messages to their concerns, e.g., cost breakdowns for clients. Regular updates build trust.</p>
-            </div>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
-        </div>
-    </div>
-
-    <!-- PAGE 7: CHAPTER 4 -->
-    <div class="page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Risk Management in Eco-Friendly Designs</span>
-            <span class="page-num">7</span>
-        </div>
-
-        <div class="content-body" style="padding-bottom: 50px;">
-            <div class="editorial-chapter">CHAPTER 04</div>
-            <h2 class="ch-title">Risk Management in Eco-Friendly Designs</h2>
-
-            <p class="body-text">Sustainable projects face unique risks like material supply disruptions or performance uncertainties. Proactive strategies, including contingency planning and third-party audits, mitigate these for all audiences. A homeowner avoided $50K in rework by stress-testing rainwater systems pre-build. This section provides clear guidance on Risk Management in sustainable Designs. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Risk Management in sustainable Designs. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
-
-            <div class="two-col">
-                <div class="col-card">
-                    <div class="col-card-head"><h4>Identifying Project Risks</h4></div>
-                    <div class="col-card-body">
-                        <div class="img-full img-half" style="height: 90px; margin: 0 0 12px; ">
-                            <span class="img-label">Mitigation Frameworks</span>
-                        </div>
-                        <p>Assess weather impacts on green materials. Evaluate supply chain for recycled steel delays. Prioritize high-impact risks.</p>
-                    </div>
-                </div>
-                <div class="col-card">
-                    <div class="col-card-head"><h4>Mitigation Frameworks</h4></div>
-                    <div class="col-card-body">
-                        <div class="img-full img-half" style="height: 90px; margin: 0 0 12px; ">
-                            <span class="img-label">Mitigation Frameworks</span>
-                        </div>
-                        <p>Implement insurance for eco-upgrades. Conduct phased prototyping. Monitor with KPIs like energy yield.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="sec-head">Mitigation Frameworks</div>
-            <p class="body-text">Implement insurance for eco-upgrades. Conduct phased prototyping. Monitor with KPIs like energy yield.</p>
-
-            <div class="callout">
-                <div class="callout-label">Stakeholder Mapping</div>
-                <p>Identify key players like contractors and regulators. Tailor messages to their concerns, e.g., cost breakdowns for clients. Regular updates build trust.</p>
-            </div>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
-        </div>
-    </div>
-
-    <!-- PAGE 8: CHAPTER 5 -->
-    <div class="page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Cost Optimization Techniques</span>
-            <span class="page-num">8</span>
-        </div>
-
-        <div class="content-body" style="padding-bottom: 50px;">
-            <div class="editorial-chapter">CHAPTER 05</div>
-            <h2 class="ch-title">Cost Optimization Techniques</h2>
-
-            <p class="body-text">High costs deter sustainable adoption, but smart selections like cross-laminated timber can save 20% over traditional methods. This guide details budgeting tools for homeowners, value engineering for architects, and ROI calculators for commercial clients to justify investments. This section provides clear guidance on Cost Optimization Techniques for Green Builds. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Cost Optimization Techniques for Green Builds. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
-
-            <div class="sec-head">Value Engineering Examples</div>
-
-            <ul class="mag-checklist">
-                <li>High costs deter sustainable adoption, but smart selections like cross-laminated timber can save 20% over traditional methods.</li>
-                <li>This guide details budgeting tools for homeowners, value engineering for architects, and ROI calculators for commercial clients to justify investments.</li>
-                
-            </ul>
-
-            <div class="two-col" style="margin-top: 20px;">
-                <div class="info-box" style="margin: 0;">
-                    <div class="info-box-label">Budgeting Best Practices</div>
-                    <p>Allocate 10-15% for sustainable premiums with long-term payback models. Source local materials to cut transport costs. Track variances monthly.</p>
-                </div>
-                <div class="info-box" style="margin: 0; border-left-color: var(--brown);">
-                    <div class="info-box-label">Risk Management in Eco-Friendly Designs</div>
-                    <p>Assess weather impacts on green materials. Evaluate supply chain for recycled steel delays. Prioritize high-impact risks.</p>
-                </div>
-            </div>
-
-            <div class="img-full" style="margin-top: 18px; ">
-                <span class="img-label">Cost Optimization Techniques for Green Builds</span>
-            </div>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
-        </div>
-    </div>
-
-    <!-- PAGE 9: CTA / CONTACT -->
-    <div class="page">
-        <div class="page-strip"></div>
-        <div class="page-header">
-            <span class="page-section-label">Next Step</span>
-            <span class="page-num">9</span>
-        </div>
-
-        <div class="content-body" style="padding-bottom: 50px;">
-            <div class="editorial-chapter">NEXT STEP</div>
-            <h2 class="ch-title">Next Step<br>Sustainable Architecture Risk Assessment</h2>
-
-            <div class="cta-block">
-                <div class="cta-eyebrow">Action Plan</div>
-                <h3 class="cta-title">Sustainable Architecture Risk Assessment</h3>
-                <p class="cta-text">If you are Homeowners, Architects/Peers, Commercial Clients, schedule your Sustainable Architecture Risk Assessment now – email Kyro@gmail.com or visit https://www.Kyro.com to h.</p>
-
-                <div class="cta-contact">
-                    <div class="cta-contact-item">
-                        <strong>Email</strong>
-                        Kyro@gmail.com
-                    </div>
-                    <div class="cta-contact-item">
-                        <strong>Website</strong>
-                        https://www.Kyro.com
-                    </div>
-                    <div class="cta-contact-item">
-                        <strong>Phone</strong>
-                        23131231
-                    </div>
-                </div>
-            </div>
-
-            <div class="sec-head">Sustainable Architecture Risk Assessment</div>
-            <p class="body-text">Kyro specializes in sustainable architecture, streamlining approvals for 95% of projects under 90 days. Our communication frameworks eliminate misunderstandings, reducing change orders by 35%.</p>
-        </div>
-
-        <div class="page-footer">
-            <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
-            <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
-        </div>
-    </div>
-
 </div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 2 — TERMS OF USE
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Terms of Use</span>
+        <span class="page-num">2</span>
+    </div>
+
+    <div style="padding:18mm 25mm 55px">
+        <div class="editorial-chapter">Terms of Use</div>
+        <h1 class="terms-headline">
+            Terms of Use<br>
+            <em style="font-style:italic;color:var(--brown-light)">This guide provides educational content on sustainable architecture for real estate agents, architects, and homeowners; use is permitted for personal reference only.</em>
+        </h1>
+        <div class="terms-body">
+            <p>This guide is owned by Kyro and intended for non-commercial use by target audiences facing approvals, poor communication, risk management, and high costs in sustainable projects. Redistribution requires written permission. All content reflects current best practices as of publication.</p>
+            <p>Users agree not to reproduce, modify, or share content without consent, ensuring protection of Kyro&#39;s expertise in sustainable architecture. Liability for application of advice rests with the user, particularly in regulatory approvals and cost management.</p>
+            <div class="terms-pull"><p>&ldquo;This guide provides educational content on sustainable architecture for real estate agents, architects, and homeowners; use is permitted for personal reference only.&rdquo;</p></div>
+            <p>Contact Kyro for clarifications or permissions via provided details. This guide does not constitute professional advice; consult qualified experts for project-specific risk management and communication strategies.</p>
+            
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 3 — TABLE OF CONTENTS
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Contents</span>
+        <span class="page-num">3</span>
+    </div>
+
+    <div style="padding:18mm 25mm 55px">
+        <h1 class="toc-headline">Sustainable Architecture Guide<br>Sustainable-Architecture</h1>
+        <p class="toc-sub">This guide is designed for Real Estate Agents, Architects/Peers, Homeowners to help you navigate sustainable-architecture. It focuses on real-world challenges such as Approvals, Poor communication, Risk management, breaking them down into practical decisions you can make. By the end, you will have tangible next steps and insights you can apply immediately to h.</p>
+
+        <div class="toc-item">
+            <div class="toc-num">01</div>
+            <div class="toc-title">Introduction to Sustainable Architecture<small>Key Characteristics</small></div>
+            <div class="toc-page-num">4</div>
+        </div>
+        <div class="toc-item">
+            <div class="toc-num">02</div>
+            <div class="toc-title">Navigating Approvals and Regulations<small>LEED and Certification Basics</small></div>
+            <div class="toc-page-num">5</div>
+        </div>
+        <div class="toc-item">
+            <div class="toc-num">03</div>
+            <div class="toc-title">Improving Communication in Sustainable Projects<small>Client Updates</small></div>
+            <div class="toc-page-num">6</div>
+        </div>
+        <div class="toc-item">
+            <div class="toc-num">04</div>
+            <div class="toc-title">Effective Risk Management Strategies<small>Mitigation Techniques</small></div>
+            <div class="toc-page-num">7</div>
+        </div>
+        <div class="toc-item">
+            <div class="toc-num">05</div>
+            <div class="toc-title">Controlling High Costs with Green Materials<small>Long-Term Savings</small></div>
+            <div class="toc-page-num">8</div>
+        </div>
+        <div class="toc-item">
+            <div class="toc-num">06</div>
+            <div class="toc-title">Implementing Sustainable Designs<small>Next steps and action plan</small></div>
+            <div class="toc-page-num">9</div>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 4 — CHAPTER 1
+     Layout: opener (text left, tall image right) +
+             three image placeholders (left/center/right) +
+             section + callout
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Introduction to Sustainable Architecture</span>
+        <span class="page-num">4</span>
+    </div>
+
+    <div class="content-body">
+
+        <!-- Opener: body text LEFT, tall image RIGHT -->
+        <div class="ch-opener">
+            <div class="ch-opener-text">
+                <div class="editorial-chapter">CHAPTER 01</div>
+                <h2 class="ch-title">Introduction to Sustainable Architecture</h2>
+                <p class="body-text drop-cap">Sustainable architecture designs sustainable homes using passive strategies like sun orientation and cross-ventilation, reducing energy needs for real estate agents, architects, and homeowners. This approach addresses pain points like high costs and approvals by integrating natural materials such as bamboo and recycled wood, blending buildings into environments while minimizing environmental impact.[1][5]. This section provides clear guidance on Introduction to Sustainable Architecture. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Introduction to Sustainable Architecture. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies.</p>
+            </div>
+            <!-- RIGHT: tall image placeholder -->
+            <div class="img-box img-hero"
+                 >
+                
+                <div class="img-box-inner">
+                    <div class="img-icon-wrap">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                             stroke="var(--brown-light)" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                    <span class="img-caption">Introduction to Sustainable Architecture</span>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Three image placeholders: LEFT · CENTER · RIGHT -->
+        <div class="img-strip">
+            <!-- LEFT -->
+            <div class="img-strip-col">
+                <div class="img-box img-half"
+                     >
+                    
+                    <div class="img-box-inner">
+                        <div class="img-icon-wrap">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                 stroke="var(--brown-light)" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                        </div>
+                        <span class="img-caption">Navigating Approvals and Regulations</span>
+                    </div>
+                    
+                </div>
+                <p class="img-strip-cap"></p>
+            </div>
+            <!-- CENTER -->
+            <div class="img-strip-col">
+                <div class="img-box img-half"
+                     >
+                    
+                    <div class="img-box-inner">
+                        <div class="img-icon-wrap">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                 stroke="var(--brown-light)" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                        </div>
+                        <span class="img-caption">Improving Communication in Projects</span>
+                    </div>
+                    
+                </div>
+                <p class="img-strip-cap"></p>
+            </div>
+            <!-- RIGHT -->
+            <div class="img-strip-col">
+                <div class="img-box img-half"
+                     >
+                    
+                    <div class="img-box-inner">
+                        <div class="img-icon-wrap">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                 stroke="var(--brown-light)" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                        </div>
+                        <span class="img-caption">Mitigation Techniques</span>
+                    </div>
+                    
+                </div>
+                <p class="img-strip-cap"></p>
+            </div>
+        </div>
+
+        <div class="sec-head">Key Characteristics</div>
+        <p class="body-text">Passive design uses roof overhangs for insulation and rainwater systems to cut utility bills. Green materials like cork and adobe lower long-term costs for homeowners and agents marketing efficient properties.[1]</p>
+
+        <div class="callout">
+            <div class="callout-label">Key Characteristics</div>
+            <p>Passive design uses roof overhangs for insulation and rainwater systems to cut utility bills. Green materials like cork and adobe lower long-term costs for homeowners and agents marketing efficient properties.[1]</p>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 5 — CHAPTER 2
+     Layout: title + body + pull + checklist + image (full width)
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Navigating Approvals and Regulations</span>
+        <span class="page-num">5</span>
+    </div>
+
+    <div class="content-body">
+        <div class="editorial-chapter">CHAPTER 02</div>
+        <h2 class="ch-title">Navigating Approvals and Regulations</h2>
+        <p class="body-text">Sustainable projects often face regulatory hurdles, but understanding LEED certification and local codes streamlines approvals for architects and agents. Homeowners benefit from documented compliance that speeds permitting while ensuring designs meet energy efficiency standards like net-zero goals.[1][4]. This section provides clear guidance on Navigating Approvals and Regulations. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Navigating Approvals and Regulations. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+
+        <div class="pull-quote"><p>&ldquo;Sustainable projects often face regulatory hurdles, but understanding LEED certification and local codes streamlines approvals for architects and agents.&rdquo;</p></div>
+
+        <div class="sec-head">LEED and Certification Basics</div>
+        <ul class="mag-checklist">
+            <li>Sustainable projects often face regulatory hurdles, but understanding LEED certification and local codes streamlines approvals for architects and agents.</li>
+            <li>Homeowners benefit from documented compliance that speeds permitting while ensuring designs meet energy efficiency standards like net-zero goals.</li>
+            
+        </ul>
+
+        <!-- Full-width image placeholder -->
+        <div class="img-box img-wide"
+             >
+            
+            <div class="img-box-inner">
+                <div class="img-icon-wrap">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                         stroke="var(--brown-light)" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                </div>
+                <span class="img-caption">Navigating Approvals and Regulations</span>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 6 — CHAPTER 3
+     Layout: two-col (body + image) + stat row + sec + info box
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Improving Communication in Projects</span>
+        <span class="page-num">6</span>
+    </div>
+
+    <div class="content-body">
+        <div class="editorial-chapter">CHAPTER 03</div>
+        <h2 class="ch-title">Improving Communication in Projects</h2>
+
+        <!-- Two col: text LEFT, image RIGHT -->
+        <div class="two-col">
+            <div>
+                <p class="body-text">Poor communication leads to delays in sustainable builds; structured processes like integrated team approaches ensure real estate agents, architects, and homeowners align on goals. Clear documentation of green features facilitates stakeholder buy-in and smoother execution.[2][4]. This section provides clear guidance on Improving Communication in Projects. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Improving Communication in Projects. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+            </div>
+            <div class="img-box img-half" style="margin:0;">
+                
+                <div class="img-box-inner">
+                    <div class="img-icon-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="var(--brown-light)" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                    <span class="img-caption">Improving Communication in Projects</span>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Stat row — table layout for PrinceXML -->
+        <div class="stat-row">
+            <div class="stat-cell">
+                <div class="stat-big">100</div>
+                <div class="stat-desc">Focused on practical decisions</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-big">2026</div>
+                <div class="stat-desc">Edition year</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-big">3<span class="stat-unit">+</span></div>
+                <div class="stat-desc">Ways to move forward</div>
+            </div>
+        </div>
+
+        <div class="sec-head">Client Updates</div>
+        <p class="body-text">Regular reports on progress toward sustainability metrics build trust with homeowners and agents. Transparent dialogue addresses concerns early.[4]</p>
+
+        <div class="info-box">
+            <div class="info-box-label">Team Collaboration Tools</div>
+            <p>Use shared platforms for updates on material choices like reclaimed wood, keeping everyone informed. This prevents misalignments in risk and cost discussions.[2]</p>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 7 — CHAPTER 4
+     Layout: body + two cards (image inside each, NO text label on image)
+             + sec + callout
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Risk Management in Sustainable Builds</span>
+        <span class="page-num">7</span>
+    </div>
+
+    <div class="content-body">
+        <div class="editorial-chapter">CHAPTER 04</div>
+        <h2 class="ch-title">Risk Management in Sustainable Builds</h2>
+        <p class="body-text">Risks in sustainable architecture include material durability and performance failures; proactive strategies like whole-building design mitigate these for safer projects. Architects and agents reduce liabilities by prioritizing flexible, adaptable designs that extend building life.[4]. This section provides clear guidance on Risk Management in Sustainable Builds. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Risk Management in Sustainable Builds. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+
+        <div class="two-col">
+            <!-- Card 1 -->
+            <div class="col-card">
+                <div class="col-card-head"><h4>Identifying Common Risks</h4></div>
+                <div class="col-card-body">
+                    <!-- Clean image placeholder — no text label, just camera icon -->
+                    <div class="img-box img-short" style="margin:0 0 12px;">
+                        
+                        <div class="img-box-inner">
+                            <div class="img-icon-wrap">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                     stroke="var(--brown-light)" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <p>Assess site factors like wind patterns and soil for stable foundations. This safeguards against unexpected costs and failures.[1]</p>
+                </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="col-card">
+                <div class="col-card-head"><h4>Mitigation Techniques</h4></div>
+                <div class="col-card-body">
+                    <!-- Clean image placeholder — no text label, just camera icon -->
+                    <div class="img-box img-short" style="margin:0 0 12px;">
+                        
+                        <div class="img-box-inner">
+                            <div class="img-icon-wrap">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                     stroke="var(--brown-light)" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <p>Incorporate disassembly-ready materials for end-of-life recycling, minimizing future risks. Agents assure clients of resilient, low-maintenance homes.[4]</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="sec-head">Mitigation Techniques</div>
+        <p class="body-text">Incorporate disassembly-ready materials for end-of-life recycling, minimizing future risks. Agents assure clients of resilient, low-maintenance homes.[4]</p>
+
+        <div class="callout">
+            <div class="callout-label">Team Collaboration Tools</div>
+            <p>Use shared platforms for updates on material choices like reclaimed wood, keeping everyone informed. This prevents misalignments in risk and cost discussions.[2]</p>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 8 — CHAPTER 5
+     Layout: body + sec + checklist + two info boxes + band image
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Controlling High Costs</span>
+        <span class="page-num">8</span>
+    </div>
+
+    <div class="content-body">
+        <div class="editorial-chapter">CHAPTER 05</div>
+        <h2 class="ch-title">Controlling High Costs</h2>
+        <p class="body-text">High costs plague sustainable projects, but using affordable sustainable  materials like bamboo and energy-efficient windows delivers savings over time. Real estate agents market these as value-adds, while architects optimize for cost-effective passive designs.[1][5]. This section provides clear guidance on Controlling High Costs. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Controlling High Costs. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+
+        <div class="sec-head">Long-Term Savings</div>
+        <ul class="mag-checklist">
+            <li>High costs plague sustainable projects, but using affordable green materials like bamboo and energy-efficient windows delivers savings over time.</li>
+            <li>Real estate agents market these as value-adds, while architects optimize for cost-effective passive designs.</li>
+            
+        </ul>
+
+        <div class="two-col" style="margin-top:20px">
+            <div class="info-box" style="margin:0">
+                <div class="info-box-label">Budget-Friendly Materials</div>
+                <p>Opt for straw bale or recycled plastics to cut expenses without sacrificing quality. Homeowners see ROI through lower energy bills.[1]</p>
+            </div>
+            <div class="info-box" style="margin:0;border-left-color:var(--brown)">
+                <div class="info-box-label">Risk Management in Sustainable Builds</div>
+                <p>Assess site factors like wind patterns and soil for stable foundations. This safeguards against unexpected costs and failures.[1]</p>
+            </div>
+        </div>
+
+        <!-- Band image placeholder -->
+        <div class="img-box img-band"
+             >
+            
+            <div class="img-box-inner" style="flex-direction:row;gap:14px">
+                <div class="img-icon-wrap">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                         stroke="var(--brown-light)" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                </div>
+                <span class="img-caption">Controlling High Costs</span>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 9 — CTA / CLOSING
+════════════════════════════════════════════ -->
+<div class="page">
+    <div class="page-strip"></div>
+    <div class="page-header">
+        <span class="page-section-label">Next Step</span>
+        <span class="page-num">9</span>
+    </div>
+
+    <div class="content-body">
+        <div class="editorial-chapter">NEXT STEP</div>
+        <h2 class="ch-title">Next Step<br>Sustainable Architecture Risk Assessment</h2>
+
+        <div class="cta-block">
+            <div class="cta-eyebrow">Action Plan</div>
+            <h3 class="cta-title">Sustainable Architecture Risk Assessment</h3>
+            <p class="cta-text">If you are Real Estate Agents, Architects/Peers, Homeowners, schedule your Sustainable Architecture Risk Assessment now – email Kyro@gmail.com or visit https://www.Kyro.com to h.</p>
+            <div class="cta-contact">
+                <div class="cta-contact-item">
+                    <strong>Email</strong>Kyro@gmail.com
+                </div>
+                <div class="cta-contact-item">
+                    <strong>Website</strong>https://www.Kyro.com
+                </div>
+                <div class="cta-contact-item">
+                    <strong>Phone</strong>23131231
+                </div>
+            </div>
+        </div>
+
+        <div class="sec-head">Sustainable Architecture Risk Assessment</div>
+        <p class="body-text">Kyro specializes in sustainable architecture tailored for real estate agents, architects, and homeowners, streamlining approvals with proven LEED strategies.</p>
+    </div>
+
+    <div class="page-footer">
+        <span class="footer-left">© 2026 Kyro. All rights reserved.</span>
+        <span class="footer-right">SUSTAINABLE ARCHITECTURE GUIDE</span>
+    </div>
+</div>
+
+</div><!-- .book -->
 </body>
 </html>
+
+<!--
+════════════════════════════════════════════════════════════════
+  BACKEND COLOR COMPUTATION — paste into perplexity_client.py
+  Call build_color_vars(primary, secondary) and merge into
+  template_vars. Only primaryColor + secondaryColor are needed
+  from the AI/firm profile. Everything else is auto-derived.
+════════════════════════════════════════════════════════════════
+
+import colorsys
+
+def _hex_to_hls(h):
+    h = h.lstrip('#')
+    if len(h) == 3: h = ''.join(c*2 for c in h)
+    r,g,b = [int(h[i:i+2],16)/255 for i in (0,2,4)]
+    hh,l,s = colorsys.rgb_to_hls(r,g,b)
+    return hh*360, s*100, l*100
+
+def _hls_to_hex(h,s,l):
+    r,g,b = colorsys.hls_to_rgb(h/360,l/100,s/100)
+    return '#{:02x}{:02x}{:02x}'.format(
+        max(0,min(255,int(r*255))),
+        max(0,min(255,int(g*255))),
+        max(0,min(255,int(b*255))))
+
+def _mix(h, pct):
+    h = h.lstrip('#')
+    if len(h)==3: h=''.join(c*2 for c in h)
+    r,g,b=[int(h[i:i+2],16) for i in (0,2,4)]
+    return '#{:02x}{:02x}{:02x}'.format(
+        int(r+(255-r)*pct),int(g+(255-g)*pct),int(b+(255-b)*pct))
+
+def _darken(h, amt):
+    hh,s,l = _hex_to_hls(h)
+    return _hls_to_hex(hh, s, max(0, l-amt))
+
+def _is_light(h):
+    h=h.lstrip('#')
+    if len(h)==3: h=''.join(c*2 for c in h)
+    r,g,b=[int(h[i:i+2],16) for i in (0,2,4)]
+    return (0.299*r+0.587*g+0.114*b)/255>0.55
+
+def build_color_vars(primary, secondary):
+    if not primary or not primary.startswith('#'): primary='#5c3d1e'
+    if not secondary or not secondary.startswith('#'): secondary='#c8814a'
+    ink = '#1a1008' if _is_light(primary) else _darken(primary, 30)
+    return {
+        'primaryColor':    primary,
+        'primaryMidColor': _mix(primary, 0.35),
+        'secondaryColor':  secondary,
+        'accentColor':     _mix(secondary, 0.25),
+        'creamColor':      _mix(primary, 0.92),
+        'creamDarkColor':  _mix(primary, 0.82),
+        'inkColor':        ink,
+        'inkMidColor':     _mix(ink, 0.45),
+        'inkLightColor':   _mix(ink, 0.65),
+        'ruleColor':       _mix(primary, 0.80),
+    }
+
+# In map_to_template_vars():
+# color_vars = build_color_vars(
+#     firm_profile.get('primary_brand_color', '#5c3d1e'),
+#     firm_profile.get('secondary_brand_color', '#c8814a')
+# )
+# template_vars.update(color_vars)
+
+# New placeholder vars also needed in map_to_template_vars():
+# 'imageCaption2': ai_content.get('imageCaption2', ''),
+# 'imageCaption3': ai_content.get('imageCaption3', ''),
+# 'imageCaption4': ai_content.get('imageCaption4', ''),
+════════════════════════════════════════════════════════════════
+-->
