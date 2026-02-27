@@ -87,16 +87,22 @@
         .body-sm{ font-size: 11px; line-height: 1.8;  color: var(--ink-mid); margin-bottom: 10px; }
         .drop::first-letter { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 900; color: var(--secondary); float: left; line-height: 0.75; margin-right: 6px; margin-top: 6px; }
 
-        /* ── THREE IMAGE PLACEHOLDERS (the only 3) ──────────── */
-        .three-img {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 14px;
-            margin: 20px 0;
+        /* ── SINGLE IMAGE PLACEHOLDER STYLES ─────────────────── */
+        .single-img {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
         }
-        .img-col { display: flex; flex-direction: column; gap: 5px; }
-        .img-ph {
-            height: 130px;
+        .single-img.left { justify-content: flex-start; }
+        .single-img.center { justify-content: center; }
+        .single-img.right { justify-content: flex-end; }
+        
+        .img-single {
+            width: 240px;
+            max-width: 100%;
+        }
+        .img-ph-single {
+            height: 180px;
             border-radius: 3px;
             background: var(--cream-dk);
             background-size: cover;
@@ -124,6 +130,7 @@
         .img-cap {
             font-size: 8.5px; font-style: italic;
             color: var(--ink-lt); text-align: center; line-height: 1.4;
+            margin-top: 5px;
         }
 
         /* ── CHECKLIST ──────────────────────────────────────── */
@@ -194,13 +201,13 @@
         <span class="cover-brand">Kyro</span>
     </div>
     <div class="cover-main">
-        <div class="cover-eyebrow">REAL ESTATE AGENTS, ARCHITECTS/PEERS, HOMEOWNERS</div>
+        <div class="cover-eyebrow">GOVERNMENT, ARCHITECTS/PEERS, CONTRACTORS</div>
         <div class="cover-headline">Sustainable Architecture Guide<br><em>Sustainable Architecture Guide</em><br></div>
         <div class="cover-divider"></div>
-        <p class="cover-sub">Overcome approvals, communication gaps, risks, and costs for eco-friendly projects.</p>
+        <p class="cover-sub">Streamline approvals, meet sustainability demands, and shorten timelines for government, architects.</p>
         <div class="cover-stats">
             <div class="c-stat"><div class="c-stat-n">5</div><div class="c-stat-l">Sections in this issue</div></div>
-            <div class="c-stat"><div class="c-stat-n">4</div><div class="c-stat-l">Pain points addressed</div></div>
+            <div class="c-stat"><div class="c-stat-n">5</div><div class="c-stat-l">Pain points addressed</div></div>
             <div class="c-stat"><div class="c-stat-n">1</div><div class="c-stat-l">Action plan at the end</div></div>
         </div>
     </div>
@@ -219,12 +226,12 @@
     <div class="pg-head"><span class="pg-sec">Terms of Use</span><span class="pg-num">2</span></div>
     <div class="body-wrap">
         <div class="eyebrow">Terms of Use</div>
-        <h1 class="terms-h">Terms of Use<br><em>This guide is provided for informational purposes to assist real estate agents, architects, and homeowners in sustainable architecture; use is subject to these terms.</em></h1>
+        <h1 class="terms-h">Terms of Use<br><em>This guide is provided for informational purposes only and does not constitute professional advice; users agree to use it at their own risk.</em></h1>
         <div class="terms-cols">
-            <p>This Sustainable Architecture Guide is owned by Kyro and intended exclusively for real estate agents, architects/peers, and homeowners addressing pain points like approvals and high costs. You may download and share for personal or professional reference but not for commercial resale. Any reproduction requires prior written consent from Kyro.</p>
-            <p>By accessing this guide, you agree to use it responsibly, providing accurate representation of sustainable practices in your projects. Kyro disclaims liability for decisions based on this content, especially regarding regulatory approvals or risk management. Consult professionals for site-specific advice tailored to your audience needs.</p>
-            <div class="terms-hl"><p>&ldquo;This guide is provided for informational purposes to assist real estate agents, architects, and homeowners in sustainable architecture; use is subject to these terms.&rdquo;</p></div>
-            <p>Violations of these terms, such as unauthorized distribution or misrepresentation, may result in legal action. This guide supports better communication and cost reduction in sustainable projects but does not guarantee outcomes. Contact Kyro for customized support.</p>
+            <p>By downloading this guide, you agree to Kyro&#39;s terms and privacy policy. Content is copyrighted and may not be reproduced without permission. Kyro disclaims liability for any decisions based on this material.</p>
+            <p>This resource targets government officials, architects, and contractors facing approvals, sustainability, communication, timeline, and health challenges in sustainable architecture projects. Use it to inform strategies but consult professionals for site-specific applications.</p>
+            <div class="terms-hl"><p>&ldquo;This guide is provided for informational purposes only and does not constitute professional advice; users agree to use it at their own risk.&rdquo;</p></div>
+            <p>Violations of these terms may result in legal action. Kyro reserves the right to update terms without notice. Contact Kyro for permissions or questions regarding usage.</p>
             
         </div>
     </div>
@@ -240,13 +247,13 @@
     <div class="pg-head"><span class="pg-sec">Contents</span><span class="pg-num">3</span></div>
     <div class="body-wrap">
         <h1 class="toc-h">Sustainable Architecture Guide<br>Sustainable-Architecture</h1>
-        <p class="toc-sub">This guide is designed for Real Estate Agents, Architects/Peers, Homeowners to help you navigate sustainable-architecture. It focuses on real-world challenges such as Approvals, Poor communication, Risk management, breaking them down into practical decisions you can make. By the end, you will have tangible next steps and insights you can apply immediately to h.</p>
-        <div class="toc-row"><div class="toc-n">01</div><div class="toc-t">Introduction to Sustainable Architecture<small>Core Principles</small></div><div class="toc-p">4</div></div>
-        <div class="toc-row"><div class="toc-n">02</div><div class="toc-t">Navigating Approvals and Regulations<small>LEED Certification Process</small></div><div class="toc-p">5</div></div>
-        <div class="toc-row"><div class="toc-n">03</div><div class="toc-t">Improving Communication in Green Projects<small>Documentation Best Practices</small></div><div class="toc-p">6</div></div>
-        <div class="toc-row"><div class="toc-n">04</div><div class="toc-t">Effective Risk Management Strategies<small>Project Phasing</small></div><div class="toc-p">7</div></div>
-        <div class="toc-row"><div class="toc-n">05</div><div class="toc-t">Controlling Costs with Green Materials and Design<small>Energy Savings Tactics</small></div><div class="toc-p">8</div></div>
-        <div class="toc-row"><div class="toc-n">06</div><div class="toc-t">Implementing Sustainable Features<small>Next steps and action plan</small></div><div class="toc-p">9</div></div>
+        <p class="toc-sub">This guide is designed for Government, Architects/Peers, Contractors to help you navigate sustainable-architecture. It focuses on real-world challenges such as Approvals, Sustainability demands, Poor communication, breaking them down into practical decisions you can make. By the end, you will have tangible next steps and insights you can apply immediately to h.</p>
+        <div class="toc-row"><div class="toc-n">01</div><div class="toc-t">Introduction to Sustainable Architecture Challenges<small>Pre-Application Meetings</small></div><div class="toc-p">4</div></div>
+        <div class="toc-row"><div class="toc-n">02</div><div class="toc-t">Navigating Regulatory Approvals<small>Material Selection Guides</small></div><div class="toc-p">5</div></div>
+        <div class="toc-row"><div class="toc-n">03</div><div class="toc-t">Meeting Rising Sustainability Demands<small>Regular Stakeholder Check-Ins</small></div><div class="toc-p">6</div></div>
+        <div class="toc-row"><div class="toc-n">04</div><div class="toc-t">Improving Communication Across Project Teams<small>Fast-Track Scheduling</small></div><div class="toc-p">7</div></div>
+        <div class="toc-row"><div class="toc-n">05</div><div class="toc-t">Strategies to Shorten Project Timelines<small>Wellness Certification Pathways</small></div><div class="toc-p">8</div></div>
+        <div class="toc-row"><div class="toc-n">06</div><div class="toc-t">Enhancing Health and Wellness in Designs<small>Next steps and action plan</small></div><div class="toc-p">9</div></div>
     </div>
     <div class="pg-foot"><span class="pf-l">© 2026 Kyro. All rights reserved.</span><span class="pf-r">SUSTAINABLE ARCHITECTURE GUIDE</span></div>
 </div>
@@ -254,86 +261,64 @@
 
 <!-- ══════════════════════════════════════
      PAGES 4–8 — CONTENT CHAPTERS
-     Each page: eyebrow + title + body text
-     + THE SAME 3 IMAGE PLACEHOLDERS (left/center/right)
-     + section heading + more body/checklist
+     Only 3 pages have single image placeholders:
+     - Page 4: Image on the LEFT
+     - Page 5: Image on the RIGHT
+     - Page 6: Image on the CENTER
+     Pages 7-8 have no images
 ══════════════════════════════════════ -->
 
-<!-- PAGE 4 -->
+<!-- PAGE 4 - Image on LEFT -->
 <div class="page">
     <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">Introduction to Sustainable Architecture</span><span class="pg-num">4</span></div>
+    <div class="pg-head"><span class="pg-sec">Overcoming Approvals in Sustainable Architecture</span><span class="pg-num">4</span></div>
     <div class="body-wrap">
         <div class="eyebrow">CHAPTER 01</div>
-        <h2 class="pg-h1">Introduction to Sustainable Architecture</h2>
-        <p class="body drop">Sustainable architecture designs sustainable residential and commercial buildings by integrating passive strategies, sustainable materials, and energy efficiency, directly addressing high costs and approvals for real estate agents, architects, and homeowners. For instance, using bamboo and recycled plastics reduces expenses while meeting regulatory standards for net-zero goals.[1][5]. This section provides clear guidance on Introduction to Sustainable Architecture. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Introduction to Architecture. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies.</p>
+        <h2 class="pg-h1">Overcoming Approvals in Sustainable Architecture</h2>
+        <p class="body drop">Government officials, architects, and contractors often face prolonged approval processes due to stringent environmental regulations. This section outlines proven strategies to expedite reviews while ensuring compliance, drawing from real-world examples like LEED-certified public buildings that gained fast-track status through pre-submission consultations. This section provides clear guidance on Overcoming Approvals in Sustainable Architecture. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Overcoming Approvals in Sustainable Architecture. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
 
-        <!-- 3 IMAGE PLACEHOLDERS — LEFT · CENTER · RIGHT -->
-        <div class="three-img">
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Left</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Center</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Right</span></div>
+        <!-- SINGLE IMAGE PLACEHOLDER — LEFT ALIGNED -->
+        <div class="single-img left">
+            <div class="img-single">
+                <div class="img-ph-single" >
+                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Image Left</span></div>
                 </div>
                 <p class="img-cap"></p>
             </div>
         </div>
 
-        <div class="sec-h">Core Principles</div>
-        <p class="body">Passive design leverages sun orientation and cross-ventilation to cut energy use, helping homeowners avoid high cooling costs. Real estate agents can highlight LEED certifications to speed approvals for peers and clients.[1][5]</p>
+        <div class="sec-h">Pre-Application Meetings</div>
+        <p class="body">Schedule early meetings with regulators to align on sustainability criteria, reducing revisions by up to 40%. For architects and contractors, prepare data on material recyclability and energy modeling to demonstrate compliance upfront.</p>
         <p class="body-sm"></p>
     </div>
     <div class="pg-foot"><span class="pf-l">© 2026 Kyro. All rights reserved.</span><span class="pf-r">SUSTAINABLE ARCHITECTURE GUIDE</span></div>
 </div>
 
 
-<!-- PAGE 5 -->
+<!-- PAGE 5 - Image on RIGHT -->
 <div class="page">
     <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">Navigating Approvals and Regulations</span><span class="pg-num">5</span></div>
+    <div class="pg-head"><span class="pg-sec">Addressing Sustainability Demands</span><span class="pg-num">5</span></div>
     <div class="body-wrap">
         <div class="eyebrow">CHAPTER 02</div>
-        <h2 class="pg-h1">Navigating Approvals and Regulations</h2>
-        <p class="body drop">Secure faster approvals by aligning projects with LEED or local green codes, using documentation of passive design and rainwater systems to demonstrate compliance for real estate agents pitching sustainable homes. Homeowners benefit from pre-approved material lists like cork and adobe, minimizing delays.[1][6]. This section provides clear guidance on Navigating Approvals and Regulations. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Navigating Approvals and Regulations. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+        <h2 class="pg-h1">Addressing Sustainability Demands</h2>
+        <p class="body drop">Rising demands for net-zero designs challenge all stakeholders; this section provides frameworks for integrating passive solar strategies and low-carbon materials without inflating costs. Case studies show contractors achieving 30% emissions reductions on municipal projects. This section provides clear guidance on Addressing Sustainability Demands. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Addressing Sustainability Demands. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
         <p class="body"></p>
 
-        <!-- 3 IMAGE PLACEHOLDERS — LEFT · CENTER · RIGHT -->
-        <div class="three-img">
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Left</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Center</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Right</span></div>
+        <!-- SINGLE IMAGE PLACEHOLDER — RIGHT ALIGNED -->
+        <div class="single-img right">
+            <div class="img-single">
+                <div class="img-ph-single" >
+                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Image Right</span></div>
                 </div>
                 <p class="img-cap"></p>
             </div>
         </div>
 
-        <div class="sec-h">LEED Certification Process</div>
+        <div class="sec-h">Material Selection Guides</div>
         <ul class="ck-list">
-            <li>Secure faster approvals by aligning projects with LEED or local green codes, using documentation of passive design and rainwater systems to demonstrate compliance for real estate agents pitching sustainable homes.</li>
-            <li>Homeowners benefit from pre-approved material lists like cork and adobe, minimizing delays.</li>
+            <li>Rising demands for net-zero designs challenge all stakeholders; this section provides frameworks for integrating passive solar strategies and low-carbon materials without inflating costs.</li>
+            <li>Case studies show contractors achieving 30% emissions reductions on municipal projects.</li>
             
         </ul>
     </div>
@@ -341,39 +326,27 @@
 </div>
 
 
-<!-- PAGE 6 -->
+<!-- PAGE 6 - Image on CENTER -->
 <div class="page">
     <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">Improving Communication in Green Projects</span><span class="pg-num">6</span></div>
+    <div class="pg-head"><span class="pg-sec">Enhancing Project Communication</span><span class="pg-num">6</span></div>
     <div class="body-wrap">
         <div class="eyebrow">CHAPTER 03</div>
-        <h2 class="pg-h1">Improving Communication in Green Projects</h2>
-        <p class="body drop">Enhance team coordination with shared checklists for sustainable features, bridging gaps between architects, agents, and homeowners on approvals and timelines. Visual aids like cross-ventilation diagrams clarify passive strategies, preventing misunderstandings.[2][5]. This section provides clear guidance on Improving Communication in Green Projects. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Improving Communication in Green Projects. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+        <h2 class="pg-h1">Enhancing Project Communication</h2>
+        <p class="body drop">Poor communication leads to misaligned expectations among governments, architects, and contractors. Implement collaborative platforms and standardized reporting to foster transparency, as seen in projects where BIM integration resolved 80% of issues pre-construction. This section provides clear guidance on Enhancing Project Communication. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Enhancing Project Communication. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
 
-        <!-- 3 IMAGE PLACEHOLDERS — LEFT · CENTER · RIGHT -->
-        <div class="three-img">
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Left</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Center</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Right</span></div>
+        <!-- SINGLE IMAGE PLACEHOLDER — CENTER ALIGNED -->
+        <div class="single-img center">
+            <div class="img-single">
+                <div class="img-ph-single" >
+                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Image Center</span></div>
                 </div>
                 <p class="img-cap"></p>
             </div>
         </div>
 
-        <div class="sec-h">Documentation Best Practices</div>
-        <p class="body">Standardize reports on VOC-free materials to foster trust and smooth peer collaborations. This cuts communication errors in risk-prone phases.[5]</p>
+        <div class="sec-h">Regular Stakeholder Check-Ins</div>
+        <p class="body">Hold bi-weekly alignment sessions focused on sustainability goals, preventing scope creep and delays.</p>
         <ul class="ck-list">
             
             
@@ -384,82 +357,42 @@
 </div>
 
 
-<!-- PAGE 7 -->
+<!-- PAGE 7 - No image -->
 <div class="page">
     <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">Effective Risk Management Strategies</span><span class="pg-num">7</span></div>
+    <div class="pg-head"><span class="pg-sec">Shortening Long Timelines</span><span class="pg-num">7</span></div>
     <div class="body-wrap">
         <div class="eyebrow">CHAPTER 04</div>
-        <h2 class="pg-h1">Effective Risk Management Strategies</h2>
-        <p class="body drop">Mitigate risks by evaluating materials for durability and end-of-life recycling, protecting architects and agents from costly rework. Homeowners avoid pitfalls with flexible designs allowing future adaptations, like graywater systems.[4]. This section provides clear guidance on Effective Risk Management Strategies. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Effective Risk Management Strategies. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+        <h2 class="pg-h1">Shortening Long Timelines</h2>
+        <p class="body drop">Sustainable projects often exceed timelines due to iterative designs; modular construction and phased approvals can compress schedules by 25%. Examples include prefabricated green school buildings delivered in under a year. This section provides clear guidance on Shortening Long Timelines. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Shortening Long Timelines. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
         <p class="body"></p>
 
-        <!-- 3 IMAGE PLACEHOLDERS — LEFT · CENTER · RIGHT -->
-        <div class="three-img">
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Left</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Center</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Right</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-        </div>
+        <!-- NO IMAGE ON THIS PAGE -->
 
-        <div class="sec-h">Project Phasing</div>
-        <p class="body">Apply whole building approach across land planning to construction, identifying risks early for peers.[4]</p>
+        <div class="sec-h">Fast-Track Scheduling</div>
+        <p class="body">Use critical path method software tailored for green builds to identify and mitigate delays early.</p>
         <p class="body-sm"></p>
     </div>
     <div class="pg-foot"><span class="pf-l">© 2026 Kyro. All rights reserved.</span><span class="pf-r">SUSTAINABLE ARCHITECTURE GUIDE</span></div>
 </div>
 
 
-<!-- PAGE 8 -->
+<!-- PAGE 8 - No image -->
 <div class="page">
     <div class="pg-strip"></div>
-    <div class="pg-head"><span class="pg-sec">Controlling Costs with Green Materials and Design</span><span class="pg-num">8</span></div>
+    <div class="pg-head"><span class="pg-sec">Prioritizing Health and Wellness</span><span class="pg-num">8</span></div>
     <div class="body-wrap">
         <div class="eyebrow">CHAPTER 05</div>
-        <h2 class="pg-h1">Controlling Costs with Green Materials and Design</h2>
-        <p class="body drop">Lower high costs using affordable renewables like bamboo and straw bale, with long-term savings from efficient windows and insulation for budget-conscious homeowners. Agents market these as value-adds for faster sales.[1][3]. This section provides clear guidance on Controlling Costs with sustainable  Materials and Design. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Controlling Costs with sustainable  Materials and Design. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+        <h2 class="pg-h1">Prioritizing Health and Wellness</h2>
+        <p class="body drop">Health-focused sustainable designs improve occupant outcomes but complicate approvals. Incorporate biophilic elements and IAQ standards to meet wellness certifications like WELL, with examples from contractor-led hospital retrofits. This section provides clear guidance on Prioritizing Health and Wellness. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Prioritizing Health and Wellness. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
 
-        <!-- 3 IMAGE PLACEHOLDERS — LEFT · CENTER · RIGHT -->
-        <div class="three-img">
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Left</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Center</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Right</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-        </div>
+        <!-- NO IMAGE ON THIS PAGE -->
 
-        <div class="sec-h">Energy Savings Tactics</div>
+        <div class="sec-h">Wellness Certification Pathways</div>
         <p class="body"></p>
         <ul class="ck-list">
-            <li>Lower high costs using affordable renewables like bamboo and straw bale, with long-term savings from efficient windows and insulation for budget-conscious homeowners.</li>
-            <li>Agents market these as value-adds for faster sales.[1][3].</li>
+            <li>Health-focused sustainable designs improve occupant outcomes but complicate approvals.</li>
+            <li>Incorporate biophilic elements and IAQ standards to meet wellness certifications like WELL, with examples from contractor-led hospital retrofits.</li>
             
         </ul>
     </div>
@@ -468,42 +401,22 @@
 
 
 <!-- ══════════════════════════════════════
-     PAGE 9 — CTA / CLOSING
+     PAGE 9 — CTA / CLOSING (No image)
 ══════════════════════════════════════ -->
 <div class="page">
     <div class="pg-strip"></div>
     <div class="pg-head"><span class="pg-sec">Next Step</span><span class="pg-num">9</span></div>
     <div class="body-wrap">
         <div class="eyebrow">NEXT STEP</div>
-        <h2 class="pg-h1">Next Step<br>Sustainable Project Risk Assessment</h2>
-        <p class="body">Kyro specializes in sustainable architecture for real estate agents, architects, and homeowners, streamlining approvals with proven LEED strategies that cut processing time by up to 40%.</p>
+        <h2 class="pg-h1">Next Step<br>Sustainable Architecture Approvals Assessment</h2>
+        <p class="body">Kyro specializes in sustainable architecture for government and contractor projects, delivering 25% faster approvals through expert pre-submissions.</p>
 
-        <!-- 3 IMAGE PLACEHOLDERS — LEFT · CENTER · RIGHT -->
-        <div class="three-img">
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Left</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Center</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-            <div class="img-col">
-                <div class="img-ph" >
-                    <div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Right</span></div>
-                </div>
-                <p class="img-cap"></p>
-            </div>
-        </div>
+        <!-- NO IMAGE ON THIS PAGE -->
 
         <div class="cta-wrap">
             <div class="cta-kicker">Action Plan</div>
-            <h3 class="cta-title">Sustainable Project Risk Assessment</h3>
-            <p class="cta-body">If you are Real Estate Agents, Architects/Peers, Homeowners, schedule your Sustainable Project Risk Assessment now – email Kyro@gmail.com or visit https://www.Kyro.com to h.</p>
+            <h3 class="cta-title">Sustainable Architecture Approvals Assessment</h3>
+            <p class="cta-body">If you are Government, Architects/Peers, Contractors, schedule your Sustainable Architecture Approvals Assessment now – email Kyro@gmail.com or visit https://www.Kyro.com to h.</p>
             <div class="cta-contacts">
                 <div class="cta-c"><strong>Email</strong><span>Kyro@gmail.com</span></div>
                 <div class="cta-c"><strong>Website</strong><span>https://www.Kyro.com</span></div>

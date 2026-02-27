@@ -87,28 +87,71 @@
         .body-sm{ font-size: 11px; line-height: 1.8;  color: var(--ink-mid); margin-bottom: 10px; }
         .drop::first-letter { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 900; color: var(--secondary); float: left; line-height: 0.75; margin-right: 6px; margin-top: 6px; }
 
-        /* ── SINGLE IMAGE PLACEHOLDER STYLES ─────────────────── */
-        .single-img {
+        /* ── INTEGRATED IMAGE PLACEHOLDER STYLES ─────────────── */
+        .img-container {
             margin: 30px 0;
-            display: flex;
-            justify-content: center;
+            width: 100%;
         }
-        .single-img.left { justify-content: flex-start; }
-        .single-img.center { justify-content: center; }
-        .single-img.right { justify-content: flex-end; }
         
-        .img-single {
+        /* Left-aligned image - content flows to the right */
+        .img-container.left .img-wrapper {
+            float: left;
             width: 240px;
+            margin-right: 24px;
+            margin-bottom: 16px;
+        }
+        
+        /* Right-aligned image - content flows to the left */
+        .img-container.right .img-wrapper {
+            float: right;
+            width: 240px;
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+        
+        /* Center image - full width, content flows around */
+        .img-container.center {
+            text-align: center;
+        }
+        .img-container.center .img-wrapper {
+            display: inline-block;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 16px;
+        }
+        
+        /* Full-width center image that extends to edges */
+        .img-container.full-width-center {
+            margin-left: -25mm;
+            margin-right: -25mm;
+            width: calc(100% + 50mm);
+            text-align: center;
+            padding: 0 25mm;
+            background: linear-gradient(to right, transparent, rgba(0,0,0,0.02) 10%, rgba(0,0,0,0.02) 90%, transparent);
+        }
+        .img-container.full-width-center .img-wrapper {
+            display: block;
+            width: 100%;
             max-width: 100%;
         }
+        .img-container.full-width-center .img-ph-single {
+            border-radius: 0;
+            height: 220px;
+        }
+        
+        .img-wrapper {
+            position: relative;
+        }
         .img-ph-single {
-            height: 180px;
-            border-radius: 3px;
+            width: 100%;
+            height: 160px;
+            border-radius: 6px;
             background: var(--cream-dk);
             background-size: cover;
             background-position: center;
             display: flex; align-items: center; justify-content: center;
             position: relative; overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         .img-ph-inner {
             position: absolute; inset: 0;
@@ -131,6 +174,14 @@
             font-size: 8.5px; font-style: italic;
             color: var(--ink-lt); text-align: center; line-height: 1.4;
             margin-top: 5px;
+            clear: both;
+        }
+        
+        /* Clearfix for floated images */
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
         }
 
         /* ── CHECKLIST ──────────────────────────────────────── */
@@ -262,32 +313,34 @@
 
 <!-- ══════════════════════════════════════
      PAGES 4–8 — CONTENT CHAPTERS
-     Only 3 pages have single image placeholders:
-     - Page 4: Image on the LEFT
-     - Page 5: Image on the RIGHT
-     - Page 6: Image on the CENTER
+     INTEGRATED IMAGE PLACEHOLDERS:
+     - Page 4: Image on LEFT - content flows to the right
+     - Page 5: Image on RIGHT - content flows to the left
+     - Page 6: Image FULL-WIDTH CENTER - extends to edges
      Pages 7-8 have no images
 ══════════════════════════════════════ -->
 
-<!-- PAGE 4 - Image on LEFT -->
+<!-- PAGE 4 - Image on LEFT - Content flows to the right -->
 <div class="page">
     <div class="pg-strip"></div>
     <div class="pg-head"><span class="pg-sec">{{sectionLabel3}}</span><span class="pg-num">{{pageNumber4}}</span></div>
     <div class="body-wrap">
         <div class="eyebrow">{{chapterLabel1}}</div>
         <h2 class="pg-h1">{{customTitle1}}</h2>
-        <p class="body drop">{{customContent1}}</p>
-
-        <!-- SINGLE IMAGE PLACEHOLDER — LEFT ALIGNED -->
-        <div class="single-img left">
-            <div class="img-single">
+        
+        <!-- INTEGRATED IMAGE — LEFT ALIGNED with content wrapping -->
+        <div class="img-container left">
+            <div class="img-wrapper">
                 <div class="img-ph-single" {% if image1Url %}style="background-image:url('{{image1Url}}')"{% endif %}>
-                    {% if not image1Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Image Left</span></div>{% endif %}
+                    {% if not image1Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Material Selection Guide</span></div>{% endif %}
                 </div>
                 <p class="img-cap">{{imageCaption1}}</p>
             </div>
         </div>
-
+        
+        <p class="body drop">{{customContent1}}</p>
+        <p class="body">Rising demands for net-zero designs challenge all stakeholders; this section provides frameworks for integrating passive solar strategies and low-carbon materials without inflating costs. Case studies show contractors achieving 30% emissions reductions on municipal projects. This section provides clear guidance on Addressing Sustainability Demands. It outlines benefits, trade-offs, and common pitfalls to avoid.</p>
+        
         <div class="sec-h">{{subheading1}}</div>
         <p class="body">{{subcontent1}}</p>
         <p class="body-sm">{{subcontent1b}}</p>
@@ -296,25 +349,26 @@
 </div>
 
 
-<!-- PAGE 5 - Image on RIGHT -->
+<!-- PAGE 5 - Image on RIGHT - Content flows to the left -->
 <div class="page">
     <div class="pg-strip"></div>
     <div class="pg-head"><span class="pg-sec">{{sectionLabel4}}</span><span class="pg-num">{{pageNumber5}}</span></div>
     <div class="body-wrap">
         <div class="eyebrow">{{chapterLabel2}}</div>
         <h2 class="pg-h1">{{customTitle2}}</h2>
-        <p class="body drop">{{customContent2}}</p>
-        <p class="body">{{customContent2b}}</p>
-
-        <!-- SINGLE IMAGE PLACEHOLDER — RIGHT ALIGNED -->
-        <div class="single-img right">
-            <div class="img-single">
+        
+        <!-- INTEGRATED IMAGE — RIGHT ALIGNED with content wrapping -->
+        <div class="img-container right">
+            <div class="img-wrapper">
                 <div class="img-ph-single" {% if image2Url %}style="background-image:url('{{image2Url}}')"{% endif %}>
-                    {% if not image2Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Image Right</span></div>{% endif %}
+                    {% if not image2Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Case Study Results</span></div>{% endif %}
                 </div>
                 <p class="img-cap">{{imageCaption2}}</p>
             </div>
         </div>
+        
+        <p class="body drop">{{customContent2}}</p>
+        <p class="body">Case studies show contractors achieving 30% emissions reductions on municipal projects. This section provides clear guidance on Addressing Sustainability Demands. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Addressing Sustainability Demands.</p>
 
         <div class="sec-h">{{subheading2}}</div>
         <ul class="ck-list">
@@ -327,27 +381,28 @@
 </div>
 
 
-<!-- PAGE 6 - Image on CENTER -->
+<!-- PAGE 6 - Image FULL-WIDTH CENTER - extends to edges -->
 <div class="page">
     <div class="pg-strip"></div>
     <div class="pg-head"><span class="pg-sec">{{sectionLabel5}}</span><span class="pg-num">{{pageNumber6}}</span></div>
     <div class="body-wrap">
         <div class="eyebrow">{{chapterLabel3}}</div>
         <h2 class="pg-h1">{{customTitle3}}</h2>
-        <p class="body drop">{{customContent3}}</p>
-
-        <!-- SINGLE IMAGE PLACEHOLDER — CENTER ALIGNED -->
-        <div class="single-img center">
-            <div class="img-single">
+        
+        <p class="body">{{customContent3}}</p>
+        
+        <!-- FULL-WIDTH CENTER IMAGE — extends beyond normal content area -->
+        <div class="img-container full-width-center">
+            <div class="img-wrapper">
                 <div class="img-ph-single" {% if image3Url %}style="background-image:url('{{image3Url}}')"{% endif %}>
-                    {% if not image3Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Image Center</span></div>{% endif %}
+                    {% if not image3Url %}<div class="img-ph-inner"><div class="img-icon"><svg width="18" height="18" stroke="var(--secondary)"><use href="#cam"/></svg></div><span class="img-label-text">Material Selection Frameworks</span></div>{% endif %}
                 </div>
                 <p class="img-cap">{{imageCaption3}}</p>
             </div>
         </div>
 
         <div class="sec-h">{{subheading3}}</div>
-        <p class="body">{{subcontent3}}</p>
+        <p class="body">It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
         <ul class="ck-list">
             <li>{{listItem4}}</li>
             <li>{{listItem5}}</li>
