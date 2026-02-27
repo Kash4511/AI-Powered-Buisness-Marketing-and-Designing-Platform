@@ -136,7 +136,7 @@ const CreateLeadMagnet: React.FC = () => {
 
       try {
         const architecturalImageDataUrls = architecturalImages && architecturalImages.length > 0 
-          ? await Promise.all(architecturalImages.slice(0,3).map(fileToDataUrl))
+          ? await Promise.all(architecturalImages.slice(0,6).map(fileToDataUrl))
           : [];
         setIsGenerating(true)
         await dashboardApi.generatePDFWithAI({

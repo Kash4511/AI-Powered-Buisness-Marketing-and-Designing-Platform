@@ -204,10 +204,20 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
         if isinstance(architectural_images, list) and architectural_images:
             img_list = []
             for i, img in enumerate(architectural_images):
+                src = ""
                 if isinstance(img, str):
-                    img_list.append({'src': img, 'alt': f'Architectural Image {i+1}'})
+                    src = img
                 elif isinstance(img, dict) and 'src' in img:
-                    img_list.append(img)
+                    src = img['src']
+                
+                if src:
+                    # Basic validation: check if it's a data URL or a web URL
+                    if src.startswith('data:image/') or src.startswith('http'):
+                        img_list.append({'src': src, 'alt': f'Architectural Image {i+1}'})
+                        logger.info(f"Image {i+1} added to PDF task (type: {'base64' if src.startswith('data:') else 'URL'})")
+                    else:
+                        logger.warning(f"Image {i+1} rejected: invalid format")
+
             if img_list:
                 # Add to template_vars so map_to_template_vars can use it
                 template_vars['architecturalImages'] = img_list
@@ -216,7 +226,9 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
 
         for k, v in list(template_vars.items()):
             if isinstance(v, str) and len(v) > 8000:
-                template_vars[k] = v[:8000]
+                # Do not truncate image URLs or base64 data as it breaks them
+                if not any(x in k.lower() for x in ['image', 'logo']):
+                    template_vars[k] = v[:8000]
 
         result = template_service.generate_pdf_with_ai_content(template_id, template_vars)
 
