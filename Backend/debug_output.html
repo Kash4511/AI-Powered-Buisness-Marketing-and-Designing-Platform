@@ -8,7 +8,7 @@
     <style>
         :root {
             --brown: #3278a4;
-            --brown-mid: #3278a4;
+            --brown-mid: #5aa0cc;
             --brown-light: #695312;
             --sand: #F4A460;
             --cream: #F6F1EB;
@@ -35,7 +35,7 @@
 
         .page {
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
             background: white;
             position: relative;
             overflow: hidden;
@@ -228,7 +228,7 @@
 
         /* CONTENT PAGES */
         .page-strip {
-            background: var(--ink);
+            background: var(--brown-light);
             height: 8px;
         }
 
@@ -237,7 +237,7 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            border-bottom: 1.5px solid var(--ink);
+            border-bottom: 1.5px solid var(--brown-light);
         }
 
         .page-section-label {
@@ -420,7 +420,7 @@
         .img-full {
             width: 100%;
             height: 180px;
-            background: var(--ink);
+            background: var(--cream-dark);
             border-radius: 4px;
             display: flex;
             align-items: center;
@@ -430,12 +430,6 @@
             margin: 22px 0;
             background-size: cover;
             background-position: center;
-        }
-        .img-full::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(139,69,19,0.04) 8px, rgba(139,69,19,0.04) 16px);
         }
 
         .img-label {
@@ -495,24 +489,25 @@
         }
 
         .callout {
-            background: var(--ink);
-            color: white;
+            background: var(--cream);
+            color: var(--ink);
             padding: 20px 22px;
             border-radius: 4px;
             margin: 20px 0;
+            border: 1px solid var(--rule);
         }
         .callout-label {
             font-family: 'DM Mono', monospace;
             font-size: 8px;
             letter-spacing: 0.4em;
-            color: var(--sand);
+            color: var(--brown-light);
             text-transform: uppercase;
             margin-bottom: 10px;
         }
         .callout p {
             font-size: 12px;
             line-height: 1.7;
-            color: rgba(255,255,255,0.8);
+            color: var(--ink-mid);
         }
 
         .stat-row {
@@ -627,12 +622,13 @@
         }
 
         .cta-block {
-            background: var(--ink);
+            background: var(--cream);
             padding: 30px 28px;
             border-radius: 4px;
             margin: 22px 0;
             position: relative;
             overflow: hidden;
+            border: 1px solid var(--rule);
         }
         .cta-block::before {
             content: '';
@@ -640,7 +636,8 @@
             top: -40px; right: -40px;
             width: 180px; height: 180px;
             border-radius: 50%;
-            border: 1px solid rgba(244,164,96,0.15);
+            border: 1px solid var(--rule);
+            opacity: 0.5;
         }
         .cta-block::after {
             content: '';
@@ -648,14 +645,15 @@
             bottom: -60px; left: -30px;
             width: 200px; height: 200px;
             border-radius: 50%;
-            border: 1px solid rgba(139,69,19,0.2);
+            border: 1px solid var(--rule);
+            opacity: 0.5;
         }
 
         .cta-eyebrow {
             font-family: 'DM Mono', monospace;
             font-size: 8px;
             letter-spacing: 0.4em;
-            color: var(--sand);
+            color: var(--brown-light);
             text-transform: uppercase;
             margin-bottom: 10px;
         }
@@ -663,7 +661,7 @@
             font-family: 'Playfair Display', serif;
             font-size: 24px;
             font-weight: 700;
-            color: white;
+            color: var(--ink);
             margin-bottom: 12px;
             letter-spacing: -0.3px;
             position: relative;
@@ -672,7 +670,7 @@
         .cta-text {
             font-size: 12px;
             line-height: 1.75;
-            color: rgba(255,255,255,0.65);
+            color: var(--ink-mid);
             position: relative;
             z-index: 2;
             margin-bottom: 20px;
@@ -682,17 +680,17 @@
             z-index: 2;
             display: flex;
             gap: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid var(--rule);
             padding-top: 18px;
         }
         .cta-contact-item {
             font-size: 11px;
-            color: rgba(255,255,255,0.5);
+            color: var(--ink-light);
         }
         .cta-contact-item strong {
             display: block;
             font-size: 12px;
-            color: var(--sand);
+            color: var(--brown);
             margin-bottom: 2px;
             font-weight: 500;
         }
@@ -701,7 +699,7 @@
             position: absolute;
             bottom: 0; left: 0; right: 0;
             height: 40px;
-            background: var(--ink);
+            background: var(--brown-light);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -709,13 +707,13 @@
         }
         .footer-left {
             font-size: 9px;
-            color: rgba(255,255,255,0.35);
+            color: rgba(255,255,255,0.7);
             letter-spacing: 0.05em;
         }
         .footer-right {
             font-family: 'DM Mono', monospace;
             font-size: 9px;
-            color: rgba(244,164,96,0.5);
+            color: rgba(255,255,255,0.8);
             letter-spacing: 0.1em;
         }
 
@@ -755,7 +753,7 @@
         </div>
 
         <div class="cover-main">
-            <div class="cover-eyebrow">ARCHITECTS/PEERS, COMMERCIAL CLIENTS, REAL ESTATE AGENTS</div>
+            <div class="cover-eyebrow">HOMEOWNERS, ARCHITECTS/PEERS, COMMERCIAL CLIENTS</div>
 
             <div class="cover-headline">
                 Sustainable Architecture Guide<br>
@@ -765,11 +763,11 @@
 
             <div class="cover-divider"></div>
 
-            <p class="cover-sub">Master tech complexity, compliance, and risk management for competitive edge.</p>
+            <p class="cover-sub">Overcome approvals, costs, and risks for eco-friendly builds.</p>
 
             <div class="cover-stats">
                 <div class="cover-stat" style="padding-left:0;">
-                    <div class="cover-stat-num">5</div>
+                    <div class="cover-stat-num">7</div>
                     <div class="cover-stat-label">Sections in this issue</div>
                 </div>
                 <div class="cover-stat">
@@ -800,17 +798,17 @@
         <div class="page-body" style="padding: 18mm 25mm 50px;">
             <div class="editorial-chapter">Terms of Use</div>
 
-            <h1 class="terms-headline">Terms of Use<br><em style="font-style:italic; color: var(--brown-light);">This guide provides educational content on sustainable architecture; usage grants no rights to Kyro&#39;s proprietary methods or intellectual property.</em></h1>
+            <h1 class="terms-headline">Terms of Use<br><em style="font-style:italic; color: var(--brown-light);">This guide is provided for informational purposes to assist homeowners, architects, and commercial clients in sustainable architecture projects.</em></h1>
 
             <div class="terms-body">
-                <p>By downloading this guide, you agree to use it solely for personal or internal business purposes as an architect, commercial client, or real estate agent. Sharing or distributing without permission violates these terms. Kyro reserves all rights to the content.</p>
-                <p>Content addresses pain points like tech complexity and compliance issues but does not constitute professional advice. Users must consult qualified professionals for project-specific guidance. Kyro disclaims liability for decisions based on this guide.</p>
+                <p>By downloading this guide, you agree to use the information solely for personal or professional reference. Kyro disclaims liability for any decisions made based on this content. Sharing or reproducing without permission is prohibited.</p>
+                <p>Content addresses common pain points like approvals and high costs but does not constitute professional advice. Consult qualified experts for your specific project. Kyro reserves the right to update this guide without notice.</p>
 
                 <div class="terms-pull">
-                    <p>"This guide provides educational content on sustainable architecture; usage grants no rights to Kyro&#39;s proprietary methods or intellectual property."</p>
+                    <p>"This guide is provided for informational purposes to assist homeowners, architects, and commercial clients in sustainable architecture projects."</p>
                 </div>
 
-                <p>This material is protected by copyright. Reproduction, adaptation, or commercial use requires written consent from Kyro. Violations may result in legal action to protect our expertise in sustainable architecture.</p>
+                <p>All examples are illustrative; actual results vary by project. Users accept responsibility for verifying local regulations and codes. Contact Kyro for tailored consultations.</p>
                 
             </div>
         </div>
@@ -833,51 +831,51 @@
 
         <div class="page-body" style="padding: 18mm 25mm 50px;">
             <h1 class="toc-headline">Sustainable Architecture Guide<br>Sustainable-Architecture</h1>
-            <p class="toc-sub">This guide is designed for Architects/Peers, Commercial Clients, Real Estate Agents to help you navigate sustainable-architecture. It focuses on real-world challenges such as Tech complexity, Competition, Risk management, breaking them down into practical decisions you can make. By the end, you will have tangible next steps and insights you can apply immediately to h.</p>
+            <p class="toc-sub">This guide is designed for Homeowners, Architects/Peers, Commercial Clients to help you navigate sustainable-architecture. It focuses on real-world challenges such as Approvals, Poor communication, Risk management, breaking them down into practical decisions you can make. By the end, you will have tangible next steps and insights you can apply immediately to h.</p>
 
             <div class="toc-item">
                 <div class="toc-num">01</div>
-                <div class="toc-title">Introduction to Sustainable Architecture Challenges
-                    <small>Identifying Core Pain Points</small>
+                <div class="toc-title">Introduction to Sustainable Architecture Essentials
+                    <small>Benefits for Target Audiences</small>
                 </div>
                 <div class="toc-page-num">4</div>
             </div>
 
             <div class="toc-item">
                 <div class="toc-num">02</div>
-                <div class="toc-title">Navigating Tech Complexity in Green Design
-                    <small>Key Tools and Software</small>
+                <div class="toc-title">Navigating Regulatory Approvals and Permits
+                    <small>Common Approval Pitfalls</small>
                 </div>
                 <div class="toc-page-num">5</div>
             </div>
 
             <div class="toc-item">
                 <div class="toc-num">03</div>
-                <div class="toc-title">Overcoming Competition Through Innovation
-                    <small>Marketing Sustainable Value</small>
+                <div class="toc-title">Effective Communication Strategies with Stakeholders
+                    <small>Tools for Collaboration</small>
                 </div>
                 <div class="toc-page-num">6</div>
             </div>
 
             <div class="toc-item">
                 <div class="toc-num">04</div>
-                <div class="toc-title">Effective Risk Management Strategies
-                    <small>Mitigation Case Studies</small>
+                <div class="toc-title">Risk Management in Eco-Friendly Designs
+                    <small>Mitigation Frameworks</small>
                 </div>
                 <div class="toc-page-num">7</div>
             </div>
 
             <div class="toc-item">
                 <div class="toc-num">05</div>
-                <div class="toc-title">Compliance and Certification Essentials
-                    <small>Common Pitfalls and Fixes</small>
+                <div class="toc-title">Cost Optimization Techniques
+                    <small>Value Engineering Examples</small>
                 </div>
                 <div class="toc-page-num">8</div>
             </div>
 
             <div class="toc-item">
                 <div class="toc-num">06</div>
-                <div class="toc-title">Future-Proofing Projects
+                <div class="toc-title">Implementing Sustainable Practices Successfully
                     <small>Next steps and action plan</small>
                 </div>
                 <div class="toc-page-num">9</div>
@@ -896,7 +894,7 @@
     <div class="page">
         <div class="page-strip"></div>
         <div class="page-header">
-            <span class="page-section-label">Sustainable Architecture Challenges</span>
+            <span class="page-section-label">Introduction to Sustainable Architecture Essentials</span>
             <span class="page-num">4</span>
         </div>
 
@@ -904,34 +902,34 @@
             <div class="ch-opener">
                 <div class="ch-opener-text">
                     <div class="editorial-chapter">CHAPTER 01</div>
-                    <h2 class="ch-title">Sustainable Architecture Challenges</h2>
-                    <p class="body-text drop-cap">Architects, commercial clients, and real estate agents face intense competition and tech complexity in sustainable architecture, where integrating advanced materials like cross-laminated timber (CLT) demands specialized knowledge. Compliance with standards such as LEED v5 adds layers of risk, often leading to costly redesigns, as seen in projects delayed by overlooked energy modeling requirements. This section provides clear guidance on Sustainable Architecture Challenges for Architects and Clients. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Sustainable Architecture Challenges for Architects and Clients. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies.</p>
+                    <h2 class="ch-title">Introduction to Sustainable Architecture Essentials</h2>
+                    <p class="body-text drop-cap">Sustainable architecture integrates sustainable materials and energy-efficient designs to create resilient structures for homeowners, architects, and commercial clients. This guide addresses key pain points like approvals, poor communication, risk management, and high costs by providing actionable strategies tailored to your needs. For instance, using passive solar design can reduce energy bills by up to 30% while simplifying approval processes through proven compliance examples. This section provides clear guidance on Introduction to Sustainable Architecture Essentials. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Introduction to Sustainable Architecture Essentials. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies.</p>
                 </div>
                 <div>
                     <div class="img-full img-half" style="height:100%; ">
-                    <span class="img-label">Sustainable Architecture Challenges for Architects and Clients</span>
+                    <span class="img-label">Introduction to Sustainable Architecture Essentials</span>
                 </div>
                 </div>
             </div>
 
             <div class="image-strip">
                 <div class="img-full img-half" style="">
-                    <span class="img-label">Simplifying Tech Complexity</span>
+                    <span class="img-label">Navigating Regulatory Approvals and Permits</span>
                 </div>
                 <div class="img-full img-half" style="">
-                    <span class="img-label">Strategies to Outpace Competition</span>
+                    <span class="img-label">Effective Communication Strategies with Stakeholders</span>
                 </div>
                 <div class="img-full img-half" style="">
-                    <span class="img-label">Mitigation Case Studies</span>
+                    <span class="img-label">Mitigation Frameworks</span>
                 </div>
             </div>
 
-            <div class="sec-head">Identifying Core Pain Points</div>
-            <p class="body-text">Tech complexity arises from tools like BIM software for net-zero simulations, overwhelming peers without training. Competition intensifies as clients demand proven ROI on green features, per industry benchmarks showing 20% higher bids for uncertified sustainable projects.</p>
+            <div class="sec-head">Benefits for Target Audiences</div>
+            <p class="body-text">Homeowners gain long-term savings and healthier living spaces. Architects/peers access innovative techniques for peer recognition. Commercial clients achieve LEED certification to attract tenants and cut operational costs.</p>
 
             <div class="callout">
-                <div class="callout-label">Identifying Core Pain Points</div>
-                <p>Tech complexity arises from tools like BIM software for net-zero simulations, overwhelming peers without training. Competition intensifies as clients demand proven ROI on green features, per industry benchmarks showing 20% higher bids for uncertified sustainable projects.</p>
+                <div class="callout-label">Benefits for Target Audiences</div>
+                <p>Homeowners gain long-term savings and healthier living spaces. Architects/peers access innovative techniques for peer recognition. Commercial clients achieve LEED certification to attract tenants and cut operational costs.</p>
             </div>
         </div>
 
@@ -947,30 +945,30 @@
     <div class="page">
         <div class="page-strip"></div>
         <div class="page-header">
-            <span class="page-section-label">Simplifying Tech Complexity</span>
+            <span class="page-section-label">Navigating Regulatory Approvals and Permits</span>
             <span class="page-num">5</span>
         </div>
 
         <div class="content-body" style="padding-bottom: 50px;">
             <div class="editorial-chapter">CHAPTER 02</div>
-            <h2 class="ch-title">Simplifying Tech Complexity</h2>
+            <h2 class="ch-title">Navigating Regulatory Approvals and Permits</h2>
 
-            <p class="body-text">Advanced technologies like parametric modeling and AI-driven energy analysis intimidate architects and clients, but modular systems reduce integration time by 30%, enabling faster prototyping of passive solar designs. Real estate agents benefit from simplified tech demos that highlight market premiums for certified buildings. This section provides clear guidance on Simplifying Tech Complexity. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Simplifying Tech Complexity. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+            <p class="body-text">Securing approvals is a major hurdle in sustainable projects, often delayed by miscommunication with authorities. Kyro&#39;s approach uses pre-vetted documentation templates that streamline submissions for faster green lights. A commercial client recently cut approval time from 6 months to 8 weeks by incorporating modular green roofs compliant with urban codes. This section provides clear guidance on Navigating Regulatory Approvals and Permits. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Navigating Regulatory Approvals and Permits. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
 
             <div class="pull-quote">
-                <p>"Advanced technologies like parametric modeling and AI-driven energy analysis intimidate architects and clients, but modular systems reduce integration time by 30%, enabling faster prototyping of passive solar designs."</p>
+                <p>"Securing approvals is a major hurdle in sustainable projects, often delayed by miscommunication with authorities."</p>
             </div>
 
-            <div class="sec-head">Key Tools and Software</div>
+            <div class="sec-head">Common Approval Pitfalls</div>
 
             <ul class="mag-checklist">
-                <li>Advanced technologies like parametric modeling and AI-driven energy analysis intimidate architects and clients, but modular systems reduce integration time by 30%, enabling faster prototyping of passive solar designs.</li>
-                <li>Real estate agents benefit from simplified tech demos that highlight market premiums for certified buildings.</li>
-                
+                <li>Securing approvals is a major hurdle in sustainable projects, often delayed by miscommunication with authorities.</li>
+                <li>Kyro&#39;s approach uses pre-vetted documentation templates that streamline submissions for faster green lights.</li>
+                <li>A commercial client recently cut approval time from 6 months to 8 weeks by incorporating modular green roofs compliant with urban codes.</li>
             </ul>
 
             <div class="img-full" style="">
-                <span class="img-label">Simplifying Tech Complexity</span>
+                <span class="img-label">Navigating Regulatory Approvals and Permits</span>
             </div>
         </div>
 
@@ -984,20 +982,20 @@
     <div class="page">
         <div class="page-strip"></div>
         <div class="page-header">
-            <span class="page-section-label">Strategies to Outpace Competition</span>
+            <span class="page-section-label">Effective Communication Strategies with Stakeholders</span>
             <span class="page-num">6</span>
         </div>
 
         <div class="content-body" style="padding-bottom: 50px;">
             <div class="editorial-chapter">CHAPTER 03</div>
-            <h2 class="ch-title">Strategies to Outpace Competition</h2>
+            <h2 class="ch-title">Effective Communication Strategies with Stakeholders</h2>
 
             <div class="two-col">
                 <div>
-                    <p class="body-text">In a crowded market, architects differentiate via niche sustainable strategies like biophilic design, boosting client retention by 15% through proven wellness metrics. Commercial clients and agents leverage these to secure premium listings, countering rivals with generic proposals. This section provides clear guidance on Strategies to Outpace Competition. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Strategies to Outpace Competition. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+                    <p class="body-text">Poor communication exacerbates project risks and costs in sustainable architecture. This section equips homeowners, architects, and clients with clear protocols, such as weekly visual progress reports, to align expectations. One architect peer reduced change orders by 40% through shared digital dashboards. This section provides clear guidance on Effective Communication Strategies with Stakeholders. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Effective Communication Strategies with Stakeholders. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
                 </div>
                 <div class="img-full img-half" style="height: 120px; margin: 0; ">
-                    <span class="img-label">Strategies to Outpace Competition</span>
+                    <span class="img-label">Effective Communication Strategies with Stakeholders</span>
                 </div>
             </div>
 
@@ -1016,12 +1014,12 @@
                 </div>
             </div>
 
-            <div class="sec-head">Marketing Sustainable Value</div>
-            <p class="body-text">Real estate agents use data visualizations of 12% property value uplifts from BREEAM ratings. Clients prioritize firms with portfolios proving competitive bids via value engineering.</p>
+            <div class="sec-head">Tools for Collaboration</div>
+            <p class="body-text">Use platforms like BIM software for real-time sharing. Schedule bi-weekly calls to address issues promptly.</p>
 
             <div class="info-box">
-                <div class="info-box-label">Innovation Tactics</div>
-                <p>Adopt circular economy principles, reusing 70% of materials in adaptive reuse projects to undercut costs. Peers gain edge by showcasing case studies of 10-year ROI on green roofs.</p>
+                <div class="info-box-label">Stakeholder Mapping</div>
+                <p>Identify key players like contractors and regulators. Tailor messages to their concerns, e.g., cost breakdowns for clients. Regular updates build trust.</p>
             </div>
         </div>
 
@@ -1035,43 +1033,43 @@
     <div class="page">
         <div class="page-strip"></div>
         <div class="page-header">
-            <span class="page-section-label">Mastering Risk Management</span>
+            <span class="page-section-label">Risk Management in Eco-Friendly Designs</span>
             <span class="page-num">7</span>
         </div>
 
         <div class="content-body" style="padding-bottom: 50px;">
             <div class="editorial-chapter">CHAPTER 04</div>
-            <h2 class="ch-title">Mastering Risk Management</h2>
+            <h2 class="ch-title">Risk Management in Eco-Friendly Designs</h2>
 
-            <p class="body-text">Sustainable projects carry risks like material supply chain disruptions or performance gaps, but probabilistic modeling mitigates these, as in a high-rise where wind load simulations prevented 15% redesign costs. Targeted strategies protect architects, clients, and agents from liabilities. This section provides clear guidance on Mastering Risk Management. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Mastering Risk Management. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+            <p class="body-text">Sustainable projects face unique risks like material supply disruptions or performance uncertainties. Proactive strategies, including contingency planning and third-party audits, mitigate these for all audiences. A homeowner avoided $50K in rework by stress-testing rainwater systems pre-build. This section provides clear guidance on Risk Management in sustainable Designs. It outlines benefits, trade-offs, and common pitfalls to avoid. The discussion focuses on key considerations for Risk Management in sustainable Designs. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
 
             <div class="two-col">
                 <div class="col-card">
-                    <div class="col-card-head"><h4>Risk Assessment Frameworks</h4></div>
+                    <div class="col-card-head"><h4>Identifying Project Risks</h4></div>
                     <div class="col-card-body">
                         <div class="img-full img-half" style="height: 90px; margin: 0 0 12px; ">
-                            <span class="img-label">Mitigation Case Studies</span>
+                            <span class="img-label">Mitigation Frameworks</span>
                         </div>
-                        <p>Conduct SWOT analyses tailored to green materials, identifying volatility in bamboo sourcing. Implement contingency plans covering 20% budget buffers for tech failures.</p>
+                        <p>Assess weather impacts on green materials. Evaluate supply chain for recycled steel delays. Prioritize high-impact risks.</p>
                     </div>
                 </div>
                 <div class="col-card">
-                    <div class="col-card-head"><h4>Mitigation Case Studies</h4></div>
+                    <div class="col-card-head"><h4>Mitigation Frameworks</h4></div>
                     <div class="col-card-body">
                         <div class="img-full img-half" style="height: 90px; margin: 0 0 12px; ">
-                            <span class="img-label">Mitigation Case Studies</span>
+                            <span class="img-label">Mitigation Frameworks</span>
                         </div>
-                        <p>A commercial development avoided flood risks via elevated foundations and permeable paving, saving millions. Architects reduced litigation by 50% through early risk disclosures.</p>
+                        <p>Implement insurance for eco-upgrades. Conduct phased prototyping. Monitor with KPIs like energy yield.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="sec-head">Mitigation Case Studies</div>
-            <p class="body-text">A commercial development avoided flood risks via elevated foundations and permeable paving, saving millions. Architects reduced litigation by 50% through early risk disclosures.</p>
+            <div class="sec-head">Mitigation Frameworks</div>
+            <p class="body-text">Implement insurance for eco-upgrades. Conduct phased prototyping. Monitor with KPIs like energy yield.</p>
 
             <div class="callout">
-                <div class="callout-label">Innovation Tactics</div>
-                <p>Adopt circular economy principles, reusing 70% of materials in adaptive reuse projects to undercut costs. Peers gain edge by showcasing case studies of 10-year ROI on green roofs.</p>
+                <div class="callout-label">Stakeholder Mapping</div>
+                <p>Identify key players like contractors and regulators. Tailor messages to their concerns, e.g., cost breakdowns for clients. Regular updates build trust.</p>
             </div>
         </div>
 
@@ -1085,37 +1083,37 @@
     <div class="page">
         <div class="page-strip"></div>
         <div class="page-header">
-            <span class="page-section-label">Ensuring Compliance and Certifications</span>
+            <span class="page-section-label">Cost Optimization Techniques</span>
             <span class="page-num">8</span>
         </div>
 
         <div class="content-body" style="padding-bottom: 50px;">
             <div class="editorial-chapter">CHAPTER 05</div>
-            <h2 class="ch-title">Ensuring Compliance and Certifications</h2>
+            <h2 class="ch-title">Cost Optimization Techniques</h2>
 
-            <p class="body-text">Navigating evolving codes like net-zero mandates challenges all audiences, but checklists aligned with WELL and Passive House standards streamline audits, reducing rejection rates by 35%. This equips real estate agents to confidently pitch compliant properties to buyers. This section provides clear guidance on Ensuring Compliance and Certifications. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Ensuring Compliance and Certifications. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
+            <p class="body-text">High costs deter sustainable adoption, but smart selections like cross-laminated timber can save 20% over traditional methods. This guide details budgeting tools for homeowners, value engineering for architects, and ROI calculators for commercial clients to justify investments. This section provides clear guidance on Cost Optimization Techniques for Green Builds. It outlines benefits, trade-offs, and common pitfalls to avoid. Recommendations and steps help readers take confident action. The discussion focuses on key considerations for Cost Optimization Techniques for Green Builds. It balances practicality with strategic outcomes and long-term value. Readers gain clarity on next steps and measurable results. This approach ensures that every decision is backed by solid research and proven methodologies. By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.</p>
 
-            <div class="sec-head">Common Pitfalls and Fixes</div>
+            <div class="sec-head">Value Engineering Examples</div>
 
             <ul class="mag-checklist">
-                <li>Navigating evolving codes like net-zero mandates challenges all audiences, but checklists aligned with WELL and Passive House standards streamline audits, reducing rejection rates by 35%.</li>
-                <li>This equips real estate agents to confidently pitch compliant properties to buyers.</li>
+                <li>High costs deter sustainable adoption, but smart selections like cross-laminated timber can save 20% over traditional methods.</li>
+                <li>This guide details budgeting tools for homeowners, value engineering for architects, and ROI calculators for commercial clients to justify investments.</li>
                 
             </ul>
 
             <div class="two-col" style="margin-top: 20px;">
                 <div class="info-box" style="margin: 0;">
-                    <div class="info-box-label">Certification Pathways</div>
-                    <p>Pursue EDGE for rapid pre-certification in commercial retrofits, achieving 25% water savings. Architects fast-track LEED by integrating compliance from schematic design.</p>
+                    <div class="info-box-label">Budgeting Best Practices</div>
+                    <p>Allocate 10-15% for sustainable premiums with long-term payback models. Source local materials to cut transport costs. Track variances monthly.</p>
                 </div>
                 <div class="info-box" style="margin: 0; border-left-color: var(--brown);">
-                    <div class="info-box-label">Mastering Risk Management</div>
-                    <p>Conduct SWOT analyses tailored to green materials, identifying volatility in bamboo sourcing. Implement contingency plans covering 20% budget buffers for tech failures.</p>
+                    <div class="info-box-label">Risk Management in Eco-Friendly Designs</div>
+                    <p>Assess weather impacts on green materials. Evaluate supply chain for recycled steel delays. Prioritize high-impact risks.</p>
                 </div>
             </div>
 
             <div class="img-full" style="margin-top: 18px; ">
-                <span class="img-label">Ensuring Compliance and Certifications</span>
+                <span class="img-label">Cost Optimization Techniques for Green Builds</span>
             </div>
         </div>
 
@@ -1135,12 +1133,12 @@
 
         <div class="content-body" style="padding-bottom: 50px;">
             <div class="editorial-chapter">NEXT STEP</div>
-            <h2 class="ch-title">Next Step<br>Sustainable Risk Audit</h2>
+            <h2 class="ch-title">Next Step<br>Sustainable Architecture Risk Assessment</h2>
 
             <div class="cta-block">
                 <div class="cta-eyebrow">Action Plan</div>
-                <h3 class="cta-title">Sustainable Risk Audit</h3>
-                <p class="cta-text">If you are Architects/Peers, Commercial Clients, Real Estate Agents, schedule your Sustainable Risk Audit now – email Kyro@gmail.com or visit https://www.Kyro.com to h.</p>
+                <h3 class="cta-title">Sustainable Architecture Risk Assessment</h3>
+                <p class="cta-text">If you are Homeowners, Architects/Peers, Commercial Clients, schedule your Sustainable Architecture Risk Assessment now – email Kyro@gmail.com or visit https://www.Kyro.com to h.</p>
 
                 <div class="cta-contact">
                     <div class="cta-contact-item">
@@ -1158,8 +1156,8 @@
                 </div>
             </div>
 
-            <div class="sec-head">Sustainable Risk Audit</div>
-            <p class="body-text">Kyro excels in sustainable architecture by delivering tech-integrated designs that cut compliance risks by 40%, as proven in our portfolio of net-zero commercial spaces.</p>
+            <div class="sec-head">Sustainable Architecture Risk Assessment</div>
+            <p class="body-text">Kyro specializes in sustainable architecture, streamlining approvals for 95% of projects under 90 days. Our communication frameworks eliminate misunderstandings, reducing change orders by 35%.</p>
         </div>
 
         <div class="page-footer">
