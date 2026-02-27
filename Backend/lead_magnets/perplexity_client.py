@@ -330,6 +330,33 @@ class PerplexityClient:
 
         return prompt
         
+    def map_images_to_vars(self, template_vars: Dict[str, Any], arch_imgs: List[Any]) -> None:
+        """Utility to map images to specific page placeholders"""
+        if not arch_imgs:
+            return
+
+        # Ensure we have at least 6 image URL variables mapped from the list
+        for i in range(1, 7):
+            img_key = f"image{i}Url"
+            if i-1 < len(arch_imgs):
+                img_data = arch_imgs[i-1]
+                if isinstance(img_data, dict) and 'src' in img_data:
+                    template_vars[img_key] = img_data['src']
+                elif isinstance(img_data, str):
+                    template_vars[img_key] = img_data
+            else:
+                # Keep existing if already present, otherwise empty
+                if img_key not in template_vars:
+                    template_vars[img_key] = ""
+
+        # Page-specific mappings for Template.html
+        template_vars["imagePage4Url"] = template_vars.get("image1Url", "")
+        template_vars["imagePage5Url"] = template_vars.get("image2Url", "")
+        template_vars["imagePage6Url"] = template_vars.get("image3Url", "")
+        template_vars["imagePage7Url"] = template_vars.get("image4Url", "")
+        template_vars["imagePage8Url"] = template_vars.get("image5Url", "")
+        template_vars["imagePage9Url"] = template_vars.get("image6Url", "")
+
     def map_to_template_vars(
         self,
         ai_content: Dict[str, Any],
@@ -1195,23 +1222,25 @@ class PerplexityClient:
         if not arch_imgs and 'architecturalImages' in template_vars:
             arch_imgs = template_vars['architecturalImages']
             
-        for i in range(1, 6):
-            img_key = f"image{i}Url"
-            if i-1 < len(arch_imgs):
-                img_data = arch_imgs[i-1]
-                if isinstance(img_data, dict) and 'src' in img_data:
-                    template_vars[img_key] = img_data['src']
-                elif isinstance(img_data, str):
-                    template_vars[img_key] = img_data
-            else:
-                template_vars[img_key] = ""
+        self.map_images_to_vars(template_vars, arch_imgs)
 
-        template_vars["imageLabel1"] = truncate_title(get_section(0).get("title", "") or template_vars.get("contentItem1", "Overview"))
-        template_vars["imageLabel2"] = truncate_title(get_section(1).get("title", "") or template_vars.get("contentItem2", "Details"))
-        template_vars["imageLabel3"] = truncate_title(get_section(2).get("title", "") or template_vars.get("contentItem3", "Strategy"))
-        template_vars["imageLabel4a"] = truncate_title(template_vars.get("subheading4", "") or template_vars.get("contentItem4", "Design Focus"))
-        template_vars["imageLabel4b"] = truncate_title(template_vars.get("columnTitle2", "") or template_vars.get("contentItem4", "Implementation"))
-        template_vars["imageLabel5"] = truncate_title(get_section(4).get("title", "") or template_vars.get("contentItem5", "Checklist"))
+        # Truncation and cleaning helper for labels
+        def clean_label(t):
+            return truncate_title(clean_title(t))
+
+        template_vars["imageLabel1"] = clean_label(get_section(0).get("title", "") or "Overview")
+        template_vars["imageLabel2"] = clean_label(get_section(1).get("title", "") or "Details")
+        template_vars["imageLabel3"] = clean_label(get_section(2).get("title", "") or "Strategy")
+        template_vars["imageLabel4"] = clean_label(get_section(3).get("title", "") or "Analysis")
+        template_vars["imageLabel5"] = clean_label(get_section(4).get("title", "") or "Implementation")
+        
+        # Mapping captions
+        template_vars["imageCaption1"] = finalize_line(truncate_text(get_section(0).get("content", ""), 80))
+        template_vars["imageCaption2"] = finalize_line(truncate_text(get_section(1).get("content", ""), 80))
+        template_vars["imageCaption3"] = finalize_line(truncate_text(get_section(2).get("content", ""), 80))
+        template_vars["imageCaption4"] = finalize_line(truncate_text(get_section(3).get("content", ""), 80))
+        template_vars["imageCaption5"] = finalize_line(truncate_text(get_section(4).get("content", ""), 80))
+        template_vars["imageCaption6"] = "Next steps roadmap"
 
         final_cta = render_final_cta()
         template_vars["sectionTitle8"] = final_cta.get("section_title", template_vars.get("sectionTitle8", "Next Step"))

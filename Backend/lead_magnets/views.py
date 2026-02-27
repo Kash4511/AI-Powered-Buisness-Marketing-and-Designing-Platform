@@ -203,11 +203,16 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
 
         if isinstance(architectural_images, list) and architectural_images:
             img_list = []
-            for i, img in enumerate(architectural_images[:3]):
-                if isinstance(img, str) and ';base64,' in img:
+            for i, img in enumerate(architectural_images):
+                if isinstance(img, str):
                     img_list.append({'src': img, 'alt': f'Architectural Image {i+1}'})
+                elif isinstance(img, dict) and 'src' in img:
+                    img_list.append(img)
             if img_list:
+                # Add to template_vars so map_to_template_vars can use it
                 template_vars['architecturalImages'] = img_list
+                # Re-map images in case they were missed
+                ai_client.map_images_to_vars(template_vars, img_list)
 
         for k, v in list(template_vars.items()):
             if isinstance(v, str) and len(v) > 8000:
