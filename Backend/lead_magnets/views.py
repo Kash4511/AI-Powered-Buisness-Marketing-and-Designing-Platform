@@ -430,11 +430,6 @@ class ListTemplatesView(APIView):
 
     def get(self, request):
         try:
-            db_templates = Template.objects.all()
-            if db_templates.exists():
-                data = TemplateSerializer(db_templates, many=True, context={'request': request}).data
-                return Response({'success': True, 'templates': data, 'count': len(data)})
-
             template_service = DocRaptorService()
             templates = template_service.list_templates()
 
