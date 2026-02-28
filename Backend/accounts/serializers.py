@@ -32,9 +32,15 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if email and password:
-            user = authenticate(username=email, password=password)
+            email_norm = (email or "").strip().lower()
+            user = authenticate(username=email_norm, password=password)
             if not user:
-                raise serializers.ValidationError('Invalid credentials')
+                from .models import User as _User
+                candidate = _User.objects.filter(email__iexact=email).first()
+                if candidate and candidate.check_password(password):
+                    user = candidate
+                else:
+                    raise serializers.ValidationError('Invalid credentials')
             if not user.is_active:
                 raise serializers.ValidationError('User account is disabled')
             attrs['user'] = user
