@@ -34,12 +34,13 @@
         }
 
         /* ── COVER ─────────────────────────────────────────── */
-        .cover { background: var(--ink); min-height: 297mm; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .cover { background: var(--primary); min-height: 297mm; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         .cover-texture {
             position: absolute; inset: 0;
             background-image:
-                radial-gradient(ellipse 80% 60% at 70% 30%, rgba(139,69,19,0.35) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 70% at 20% 80%, rgba(212,107,30,0.20) 0%, transparent 50%);
+                radial-gradient(ellipse 80% 60% at 70% 30%, var(--secondary) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 70% at 20% 80%, var(--accent) 0%, transparent 50%);
+            opacity: 0.25;
         }
         .cover-grid {
             position: absolute; inset: 0;
@@ -339,11 +340,6 @@
         <div class="cover-headline">{{coverHeadlineLine1}}<br><em>{{coverHeadlineLine2}}</em><br>{{coverHeadlineLine3}}</div>
         <div class="cover-divider"></div>
         <p class="cover-sub">{{documentSubtitle}}</p>
-        <div class="cover-stats">
-            <div class="c-stat"><div class="c-stat-n">{{stat1Value}}</div><div class="c-stat-l">{{stat1Label}}</div></div>
-            <div class="c-stat"><div class="c-stat-n">{{stat2Value}}</div><div class="c-stat-l">{{stat2Label}}</div></div>
-            <div class="c-stat"><div class="c-stat-n">{{stat3Value}}</div><div class="c-stat-l">{{stat3Label}}</div></div>
-        </div>
     </div>
     <div class="cover-foot">
         <span class="cover-co">{{companyName}} &middot; {{emailAddress}}</span>
