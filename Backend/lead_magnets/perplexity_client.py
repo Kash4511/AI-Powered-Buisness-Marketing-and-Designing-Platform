@@ -403,6 +403,10 @@ class PerplexityClient:
                 # Keep existing if already present, otherwise empty
                 if img_key not in template_vars:
                     template_vars[img_key] = ""
+        # Map to page-specific placeholders
+        template_vars["imagePage4Url"] = template_vars.get("image1Url", "")
+        template_vars["imagePage5Url"] = template_vars.get("image2Url", "")
+        template_vars["imagePage6Url"] = template_vars.get("image3Url", "")
 
         # Page-specific mappings for Template.html
         template_vars["imagePage4Url"] = template_vars.get("image1Url", "")
@@ -938,7 +942,7 @@ class PerplexityClient:
         def count_words(t: str) -> int:
             return len(re.findall(r"\b\w+\b", (t or '')))
 
-        def ensure_min_sentences(text: str, min_sentences: int = 5, max_sentences: int = 12, topic_hint: Optional[str] = None) -> str:
+        def ensure_min_sentences(text: str, min_sentences: int = 8, max_sentences: int = 14, topic_hint: Optional[str] = None) -> str:
             sentences = [finalize_line(s) for s in split_sentences(text)]
             # Fallback pool of professional, neutral sentences
             th = (topic_hint or 'this topic').strip()
@@ -949,6 +953,8 @@ class PerplexityClient:
                 "Examples illustrate how to apply ideas in real-world scenarios.",
                 "Strategic implementation ensures that outcomes align with broader project goals.",
                 "Regular review and adjustment are key to maintaining long-term success.",
+                "The approach balances practicality with sustainability, ensuring measurable improvements.",
+                "Stakeholder needs are considered throughout, enabling effective collaboration.",
             ]
             i = 0
             while len(sentences) < min_sentences and i < len(fallback_pool):
@@ -958,7 +964,7 @@ class PerplexityClient:
             sentences = sentences[:max_sentences]
             return " ".join(sentences)
 
-        def ensure_min_words(text: str, min_words: int = 120, max_words: int = 400, topic_hint: Optional[str] = None) -> str:
+        def ensure_min_words(text: str, min_words: int = 280, max_words: int = 700, topic_hint: Optional[str] = None) -> str:
             t = (text or '').strip()
             if count_words(t) >= min_words:
                 return t
@@ -969,6 +975,8 @@ class PerplexityClient:
                 "Readers gain clarity on next steps and measurable results.",
                 "This approach ensures that every decision is backed by solid research and proven methodologies.",
                 "By addressing these core elements, you can minimize risk and maximize the potential for a successful outcome.",
+                "Detailed frameworks and examples support decision-making under real constraints.",
+                "Cross-disciplinary insights highlight opportunities to refine processes and execution.",
             ]
             for line in additions:
                 if count_words(t) >= min_words:
