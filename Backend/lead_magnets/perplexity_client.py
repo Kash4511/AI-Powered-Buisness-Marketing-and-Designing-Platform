@@ -26,6 +26,42 @@ class PerplexityClient:
         self.base_url = "https://api.perplexity.ai/chat/completions"
         print(f"DEBUG: PerplexityClient initialized; key present: {bool(self.api_key)}")
         
+    def get_contrast_color(self, hex_color: str) -> str:
+        """
+        Determines whether black or white text has better contrast with the given hex color.
+        Uses WCAG 2.1 relative luminance formula.
+        Returns '#000000' for light backgrounds and '#FFFFFF' for dark backgrounds.
+        """
+        if not hex_color or not isinstance(hex_color, str) or not hex_color.startswith('#'):
+            return '#FFFFFF'  # Default to white for safety
+            
+        try:
+            hex_color = hex_color.lstrip('#')
+            if len(hex_color) == 3:
+                hex_color = ''.join([c*2 for c in hex_color])
+            
+            r = int(hex_color[0:2], 16) / 255.0
+            g = int(hex_color[2:4], 16) / 255.0
+            b = int(hex_color[4:6], 16) / 255.0
+            
+            # WCAG 2.1 relative luminance formula
+            def adjust(c):
+                if c <= 0.03928:
+                    return c / 12.92
+                return ((c + 0.055) / 1.055) ** 2.4
+                
+            l = 0.2126 * adjust(r) + 0.7152 * adjust(g) + 0.0722 * adjust(b)
+            
+            # Contrast ratio with white (L=1.0) and black (L=0.0)
+            # Ratio = (L1 + 0.05) / (L2 + 0.05)
+            contrast_with_white = (1.0 + 0.05) / (l + 0.05)
+            contrast_with_black = (l + 0.05) / (0.0 + 0.05)
+            
+            return '#000000' if contrast_with_black > contrast_with_white else '#FFFFFF'
+        except Exception as e:
+            print(f"Error calculating contrast for {hex_color}: {e}")
+            return '#FFFFFF'
+
     def generate_lead_magnet_json(self, user_answers: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         if not self.api_key:
             print("❌ PERPLEXITY_API_KEY missing")
@@ -1100,6 +1136,9 @@ class PerplexityClient:
         }
 
         # Derived colors for sophisticated design
+        cover_text_color = self.get_contrast_color(primary_color)
+        cover_logo_filter = "brightness(0) invert(1)" if cover_text_color == "#FFFFFF" else "brightness(0)"
+
         def adjust_color(hex_color, amount):
             """Simple helper to lighten/darken hex colors for dynamic variations"""
             hex_color = hex_color.lstrip('#')
@@ -1113,6 +1152,8 @@ class PerplexityClient:
 
         primary_mid = adjust_color(primary_color, 40)
         template_vars["primaryMidColor"] = primary_mid
+        template_vars["coverTextColor"] = cover_text_color
+        template_vars["coverLogoFilter"] = cover_logo_filter
         template_vars["creamColor"] = cream_color
         template_vars["creamDarkColor"] = cream_dark_color
         template_vars["inkColor"] = ink_color
