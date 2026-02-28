@@ -1,8 +1,9 @@
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.db import IntegrityError
 from .models import User
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer
 import logging
@@ -27,8 +28,15 @@ class UserRegistrationView(generics.CreateAPIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
+        except serializers.ValidationError as e:
+            logger.warning("UserRegistrationView: validation error", extra={"errors": e.detail})
+            return Response({'error': 'Registration failed', 'details': e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            logger.warning("UserRegistrationView: duplicate email")
+            return Response({'error': 'Registration failed', 'details': {'email': ['Email already exists']}}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': 'Registration failed', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("UserRegistrationView: unexpected error")
+            return Response({'error': 'Registration failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def options(self, request, *args, **kwargs):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
@@ -49,8 +57,12 @@ class UserLoginView(APIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             })
+        except serializers.ValidationError as e:
+            logger.warning("UserLoginView: invalid login", extra={"details": e.detail})
+            return Response({'error': 'Login failed', 'details': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            return Response({'error': 'Login failed', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("UserLoginView: unexpected error")
+            return Response({'error': 'Login failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def options(self, request, *args, **kwargs):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
