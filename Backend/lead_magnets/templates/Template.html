@@ -41,7 +41,7 @@
             position: absolute; inset: 0;
             background-image:
                 radial-gradient(ellipse 80% 60% at 70% 30%, var(--secondary) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 70% at 20% 80%, var(--accent) 0%, transparent 50%);
+                radial-gradient(ellipse 50% 70% at 20% 80%, var(--secondary) 0%, transparent 50%);
             opacity: 0.25;
         }
         .cover-grid {
@@ -49,23 +49,23 @@
             background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
             background-size: 30px 30px;
         }
-        .cover-bar  { position: absolute; top: 0; right: 80px; width: 3px; height: 100%; background: linear-gradient(180deg, transparent, var(--secondary) 30%, var(--accent) 70%, transparent); opacity: 0.45; }
+        .cover-bar  { position: absolute; top: 0; right: 80px; width: 3px; height: 100%; background: linear-gradient(180deg, transparent, var(--secondary) 30%, var(--secondary) 70%, transparent); opacity: 0.45; }
         .cover-bar2 { position: absolute; top: 0; right: 88px; width: 1px; height: 100%; background: linear-gradient(180deg, transparent, var(--primary) 40%, transparent); opacity: 0.3; }
         .cover-top { position: relative; z-index: 10; padding: 18px 25mm 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .cover-issue { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.25em; color: var(--cover-text); opacity: 0.4; text-transform: uppercase; }
         .cover-brand { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.3em; color: var(--cover-text); opacity: 0.5; text-transform: uppercase; }
         .cover-main { position: relative; z-index: 10; padding: 0 25mm 20mm; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
-        .cover-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
-        .cover-eyebrow::before { content: ''; display: block; width: 30px; height: 1px; background: var(--accent); }
+        .cover-eyebrow { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.3em; color: var(--secondary); text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+        .cover-eyebrow::before { content: ''; display: block; width: 30px; height: 1px; background: var(--secondary); }
         .cover-headline { font-family: 'Playfair Display', serif; font-size: 72px; font-weight: 900; line-height: 0.92; color: var(--cover-text); letter-spacing: -2px; margin-bottom: 8px; }
-        .cover-headline em { font-style: italic; color: var(--accent); display: block; }
-        .cover-divider { width: 50px; height: 2px; background: var(--accent); margin-bottom: 22px; }
+        .cover-headline em { font-style: italic; color: var(--secondary); display: block; }
+        .cover-divider { width: 50px; height: 2px; background: var(--secondary); margin-bottom: 22px; }
         .cover-sub { font-size: 13px; font-weight: 300; color: var(--cover-text); opacity: 0.5; line-height: 1.7; max-width: 340px; margin-top: 22px; margin-bottom: 36px; }
         .cover-stats { display: flex; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 22px; }
         .c-stat { flex: 1; padding: 0 24px; border-right: 1px solid rgba(255,255,255,0.08); }
         .c-stat:first-child { padding-left: 0; }
         .c-stat:last-child  { border-right: none; }
-        .c-stat-n { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1; }
+        .c-stat-n { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--secondary); line-height: 1; }
         .c-stat-l { font-size: 10px; color: var(--cover-text); opacity: 0.32; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
         .cover-foot { position: relative; z-index: 10; padding: 14px 25mm; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
         .cover-co  { font-size: 11px; color: var(--cover-text); opacity: 0.38; }
