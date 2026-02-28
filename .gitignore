@@ -2,8 +2,7 @@
 .env
 Backend/.env
 
-# Optional: local DB and generated media (kept minimal)
-Backend/db.sqlite3
+# Optional: generated media (kept minimal)
 Backend/media/
 
 # Python cache (robust)

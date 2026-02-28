@@ -126,6 +126,37 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+class DBStatusView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def get(self, request):
+        try:
+            connection.ensure_connection()
+            info = {
+                'vendor': connection.vendor,
+                'name': connection.settings_dict.get('NAME'),
+                'host': connection.settings_dict.get('HOST'),
+                'port': connection.settings_dict.get('PORT'),
+            }
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT version()")
+                version = cursor.fetchone()[0]
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+            try:
+                from accounts.models import User
+                user_count = User.objects.count()
+            except Exception:
+                user_count = None
+            return Response({
+                'ok': True,
+                'db': info,
+                'server_version': version,
+                'user_count': user_count,
+            })
+        except Exception as e:
+            logger.exception("DB status check failed")
+            return Response({'ok': False, 'error': str(e)}, status=500)
+
 def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content, user_answers, architectural_images):
     """Background task for PDF generation to avoid HTTP timeouts"""
     try:

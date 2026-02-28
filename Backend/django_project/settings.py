@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 
 # Load environment variables
 try:
@@ -103,6 +104,7 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "require")
 _db_url_keys = [
+    "SUPABASE_POOLED_URL",
     "DATABASE_URL",
     "SUPABASE_DB_URL",
     "SUPABASE_DATABASE_URL",
@@ -128,8 +130,6 @@ if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
         }
     }
 elif DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
-    # Minimal parser for DATABASE_URL if provided
-    # Example: postgresql://user:pass@host:5432/dbname?sslmode=require
     try:
         from urllib.parse import urlparse, parse_qs
         parsed = urlparse(DATABASE_URL)
@@ -149,19 +149,9 @@ elif DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
             }
         }
     except Exception:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
-        }
+        raise ImproperlyConfigured("Invalid DATABASE_URL")
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+    raise ImproperlyConfigured("PostgreSQL configuration is required")
 
 default_db = DATABASES.get('default', {})
 print(f"🔌 DB backend: {default_db.get('ENGINE', '')}")

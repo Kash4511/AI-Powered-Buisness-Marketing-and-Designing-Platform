@@ -25,4 +25,5 @@ urlpatterns = [
     
     # AI Conversation
     path('ai-conversation/', views.FormaAIConversationView.as_view(), name='ai-conversation'),
+    path('db-status/', views.DBStatusView.as_view(), name='db-status'),
 ]
