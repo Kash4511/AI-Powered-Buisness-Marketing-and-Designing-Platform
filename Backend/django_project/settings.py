@@ -102,7 +102,15 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "require")
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("SUPERBASE_STRING")
+_db_url_keys = [
+    "DATABASE_URL",
+    "SUPABASE_DB_URL",
+    "SUPABASE_DATABASE_URL",
+    "SUPABASE_CONNECTION_STRING",
+    "SUPABASE_POSTGRES_URL",
+    "SUPERBASE_STRING",
+]
+DATABASE_URL = next((os.getenv(k) for k in _db_url_keys if os.getenv(k)), None)
 
 if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
     DATABASES = {
