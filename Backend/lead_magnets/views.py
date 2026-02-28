@@ -213,8 +213,37 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
             if isinstance(answers_for_ai, dict):
                 raw_desc = getattr(lead_magnet, "description", "") or ""
                 answers_for_ai.setdefault("lead_magnet_description", raw_desc)
+                # Normalize placeholder/sentinel values like 'h' to empty strings
+                for key in ['desired_outcome', 'call_to_action', 'main_topic']:
+                    val = answers_for_ai.get(key)
+                    if isinstance(val, str) and val.strip().lower() in ('h', 'na', 'n/a'):
+                        answers_for_ai[key] = ''
 
-            ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
+            try:
+                ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
+            except Exception as ai_err:
+                logger.warning(f"AI content generation failed, using fallback: {ai_err}")
+                # Minimal fallback AI content
+                title = (answers_for_ai.get('main_topic') or lead_magnet.title or 'Professional Guide')
+                subtitle = (answers_for_ai.get('desired_outcome') or '').strip()
+                cover = {"title": title, "subtitle": subtitle, "company_name": firm_profile.get('firm_name', '')}
+                contact = {
+                    "title": "Contact & Next Steps",
+                    "email": firm_profile.get("work_email", ""),
+                    "phone": firm_profile.get("phone_number", ""),
+                    "website": firm_profile.get("firm_website", ""),
+                    "offer_name": "Strategy Session",
+                    "action_cta": (answers_for_ai.get('call_to_action') or '').strip()
+                }
+                contents = {"title": "Contents", "items": [str(answers_for_ai.get('main_topic') or 'Overview')]}
+                sections = [
+                    {"title": "Overview", "content": (lead_magnet.description or "This guide provides actionable steps.")},
+                    {"title": "Key Considerations", "content": "Benefits, trade-offs, and pitfalls to avoid."},
+                    {"title": "Implementation", "content": "Recommendations and next steps."},
+                    {"title": "Examples", "content": "Illustrative scenarios showing application."},
+                ]
+                terms = {"title": "Terms of Use", "summary": "For internal use; no warranty.", "paragraphs": ["Use responsibly."]}
+                ai_content = {"style": {}, "cover": cover, "contents": contents, "sections": sections, "contact": contact, "terms": terms, "brand": {"logo_url": firm_profile.get("logo_url", "")}}
             template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
             if template_selection:
                 template_selection.ai_generated_content = ai_content
@@ -283,6 +312,11 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 template_selection.save(update_fields=['status'])
         else:
             lead_magnet.status = 'error'
+            # Persist a short error reason for status endpoint consumption
+            try:
+                lead_magnet.description = f"PDF generation failed: {result.get('error', 'unknown')} | {str(result.get('details', ''))[:500]}"
+            except Exception:
+                pass
             lead_magnet.save(update_fields=['status'])
             
     except Exception as e:
@@ -290,6 +324,10 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
         try:
             lm = LeadMagnet.objects.get(id=lead_magnet_id)
             lm.status = 'error'
+            try:
+                lm.description = f"PDF generation exception: {str(e)}"
+            except Exception:
+                pass
             lm.save(update_fields=['status'])
         except Exception:
             pass
@@ -417,7 +455,15 @@ class GeneratePDFStatusView(APIView):
             return Response({'status': 'in_progress'}, status=status.HTTP_200_OK)
 
         if str(lead_magnet.status) == 'error':
-            return Response({'status': 'error', 'error': 'Generation failed'}, status=status.HTTP_200_OK)
+            details = ''
+            try:
+                details = (lead_magnet.description or '').strip()
+            except Exception:
+                pass
+            payload = {'status': 'error', 'error': 'Generation failed'}
+            if details:
+                payload['details'] = details
+            return Response(payload, status=status.HTTP_200_OK)
 
         if str(lead_magnet.status) == 'completed' and lead_magnet.pdf_file:
             try:

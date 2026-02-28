@@ -107,6 +107,11 @@ class PerplexityClient:
                 if response.status_code != 200:
                     print(f"❌ Perplexity API error: {response.status_code} - {response.text}")
                     retry_count += 1
+                    if retry_count <= max_retries:
+                        import time
+                        sleep_for = 2 ** retry_count
+                        print(f"⏳ Backoff before retry: {sleep_for}s")
+                        time.sleep(sleep_for)
                     continue
 
                 result = response.json()
@@ -129,15 +134,29 @@ class PerplexityClient:
                         pass
                     
                     retry_count += 1
+                    if retry_count <= max_retries:
+                        import time
+                        sleep_for = 2 ** retry_count
+                        print(f"⏳ Backoff before retry: {sleep_for}s")
+                        time.sleep(sleep_for)
                     continue
                     
             except requests.exceptions.Timeout:
                 print(f"⚠️ API timeout on attempt {retry_count + 1}, retrying...")
                 retry_count += 1
+                import time
+                sleep_for = 2 ** retry_count
+                print(f"⏳ Backoff before retry: {sleep_for}s")
+                time.sleep(sleep_for)
                 continue
             except Exception as e:
                 print(f"❌ Error on attempt {retry_count + 1}: {str(e)}")
                 retry_count += 1
+                if retry_count <= max_retries:
+                    import time
+                    sleep_for = 2 ** retry_count
+                    print(f"⏳ Backoff before retry: {sleep_for}s")
+                    time.sleep(sleep_for)
                 continue
                 
         raise Exception("Failed to generate valid AI content after multiple attempts.")

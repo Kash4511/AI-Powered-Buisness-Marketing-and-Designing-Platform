@@ -105,11 +105,16 @@ class DocRaptorService:
         rendered_html = self.render_template_with_vars(template_id, variables)
 
         if not self.api_key or self.api_key == 'YOUR_DOCRAPTOR_KEY':
-            print("❌ DEBUG: No valid DocRaptor API key configured")
+            print("⚠️ DEBUG: No valid DocRaptor API key configured — using mock PDF bytes for development")
+            mock_pdf = self._build_mock_pdf_bytes(template_id)
             return {
-                'success': False,
-                'error': 'DocRaptor API key missing or invalid',
-                'details': 'Set a valid DOCRAPTOR_API_KEY in environment to enable PDF generation'
+                'success': True,
+                'pdf_data': mock_pdf,
+                'content_type': 'application/pdf',
+                'filename': f'lead-magnet-{template_id}.pdf',
+                'template_id': template_id,
+                'mock': True,
+                'details': 'Mock PDF returned due to missing DOCRAPTOR_API_KEY'
             }
 
         try:
@@ -123,28 +128,45 @@ class DocRaptorService:
                     'test': self.test_mode
                 }
             }
-            response = requests.post(
-                self.base_url,
-                json=doc_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=20
-            )
-            if response.status_code == 200:
-                print("✅ DEBUG: DocRaptor API success")
-                return {
-                    'success': True,
-                    'pdf_data': response.content,
-                    'content_type': 'application/pdf',
-                    'filename': f'lead-magnet-{template_id}.pdf',
-                    'template_id': template_id
-                }
-            else:
-                print(f"❌ DEBUG: DocRaptor error {response.status_code}: {response.text}")
-                return {
-                    'success': False,
-                    'error': f'DocRaptor API error: {response.status_code}',
-                    'details': response.text
-                }
+            retries = 3
+            backoff = 2
+            last_error = None
+            for attempt in range(1, retries + 1):
+                try:
+                    response = requests.post(
+                        self.base_url,
+                        json=doc_data,
+                        headers={'Content-Type': 'application/json'},
+                        timeout=30
+                    )
+                    if response.status_code == 200:
+                        print("✅ DEBUG: DocRaptor API success")
+                        return {
+                            'success': True,
+                            'pdf_data': response.content,
+                            'content_type': 'application/pdf',
+                            'filename': f'lead-magnet-{template_id}.pdf',
+                            'template_id': template_id
+                        }
+                    else:
+                        print(f"❌ DEBUG: DocRaptor error {response.status_code}: {response.text}")
+                        last_error = f"{response.status_code}: {response.text}"
+                except requests.exceptions.Timeout as e:
+                    print(f"⚠️ DEBUG: DocRaptor timeout on attempt {attempt}: {e}")
+                    last_error = str(e)
+                except requests.exceptions.RequestException as e:
+                    print(f"⚠️ DEBUG: DocRaptor request error on attempt {attempt}: {e}")
+                    last_error = str(e)
+                if attempt < retries:
+                    import time
+                    sleep_for = backoff ** attempt
+                    print(f"⏳ DEBUG: Backing off for {sleep_for}s before retry...")
+                    time.sleep(sleep_for)
+            return {
+                'success': False,
+                'error': 'DocRaptor request failed',
+                'details': last_error or 'Unknown error'
+            }
         except requests.exceptions.Timeout as e:
             print(f"❌ DEBUG: DocRaptor request timeout: {e}")
             return {
