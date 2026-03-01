@@ -33,6 +33,9 @@ const getApiBaseUrl = () => {
     if (!isProduction) {
       return `${protocol}//${hostname}:8000`;
     }
+
+    // Same-origin fallback
+    return `${protocol}//${hostname}`;
   }
   
   // 4. Final fallback
@@ -48,6 +51,16 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Runtime diagnostics for missing configuration
+if (!apiClient.defaults.baseURL || typeof apiClient.defaults.baseURL !== 'string') {
+  // Hard fallback to localhost if baseURL is falsy
+  apiClient.defaults.baseURL = 'http://localhost:8000';
+  // Non-fatal warning to help debugging on environments with missing env vars
+  try {
+    console.warn('API base URL was missing; defaulted to', apiClient.defaults.baseURL);
+  } catch {}
+}
 
 // Add request interceptor to add auth token to requests
 apiClient.interceptors.request.use(

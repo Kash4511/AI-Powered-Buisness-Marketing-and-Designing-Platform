@@ -34,12 +34,12 @@ const Settings: React.FC = () => {
         // Populate form with company information from Brand Assets/Firm Profile
         setFormData({
           fullName: user?.name || '',
-          firmName: profile.firm_name || '',
-          firmSize: profile.firm_size || '1-2',
-          workEmail: profile.work_email || '',
-          phoneNumber: profile.phone_number || '',
-          website: profile.firm_website || '',
-          guidelines: profile.branding_guidelines || '',
+          firmName: profile?.firm_name || '',
+          firmSize: profile?.firm_size || '1-2',
+          workEmail: profile?.work_email || '',
+          phoneNumber: profile?.phone_number || '',
+          website: profile?.firm_website || '',
+          guidelines: profile?.branding_guidelines || '',
           usingFormaFor: 'Personal Use', // This field doesn't exist in the model yet
           email: user?.email || ''
         })

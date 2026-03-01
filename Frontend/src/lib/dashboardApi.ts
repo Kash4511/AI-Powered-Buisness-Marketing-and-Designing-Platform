@@ -227,7 +227,7 @@ export const dashboardApi = {
 
       console.log('📤 Sending validated data:', JSON.stringify(validatedData, null, 2));
 
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, validatedData);
+      const response = await apiClient.post('/api/create-lead-magnet/', validatedData);
       
       console.log('✅ Lead magnet created successfully:', response.data);
       return response.data;
@@ -247,7 +247,7 @@ export const dashboardApi = {
     try {
       console.log('🚀 Creating lead magnet with data:', JSON.stringify(data, null, 2));
       
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, data);
+      const response = await apiClient.post('/api/create-lead-magnet/', data);
       
       console.log('✅ Lead magnet created successfully:', response.data);
       return response.data;
@@ -424,7 +424,7 @@ export const dashboardApi = {
 
     try {
       console.log('🧪 Testing lead magnet creation with valid choices:', testData);
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, testData);
+      const response = await apiClient.post('/api/create-lead-magnet/', testData);
       console.log('✅ Test successful:', response.data);
       return response.data;
     } catch (error) {
