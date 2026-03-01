@@ -307,7 +307,9 @@ def _run_generation_job(job_id, body, user_id):
             
             logger.info(f"✅ PDF Generation Success | Duration: {pdf_duration:.2f}s")
             
-            pdf_url = lead_magnet.pdf_file.url
+            # Use the protected download route instead of the storage URL to ensure 
+            # consistent serving across environments and proper authentication handling.
+            pdf_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
             _set_job(job_id, status="complete", progress=100, pdf_url=pdf_url, message="Success!")
 
         except Exception as e:
