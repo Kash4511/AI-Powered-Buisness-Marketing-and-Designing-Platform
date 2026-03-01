@@ -16,11 +16,21 @@ class UserRegistrationView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
+            email = request.data.get('email')
+            logger.info("UserRegistrationView: registration attempt", extra={"email": email})
+            
             serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+            if not serializer.is_valid():
+                logger.warning("UserRegistrationView: validation failed", extra={"errors": serializer.errors, "email": email})
+                return Response({
+                    'error': 'Registration failed',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
             user = serializer.save()
             total_users = User.objects.count()
             logger.info("UserRegistrationView: user created", extra={"email": user.email, "total_users": total_users})
+            
             refresh = RefreshToken.for_user(user)
             return Response({
                 'user': UserSerializer(user).data,
@@ -28,6 +38,7 @@ class UserRegistrationView(generics.CreateAPIView):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
+            logger.exception("UserRegistrationView: unexpected error", extra={"email": request.data.get('email')})
             return Response({'error': 'Registration failed', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def options(self, request, *args, **kwargs):
@@ -38,18 +49,28 @@ class UserLoginView(APIView):
 
     def post(self, request):
         try:
-            total_users = User.objects.count()
-            logger.info("UserLoginView: login attempt", extra={"total_users": total_users})
+            email = request.data.get('email')
+            logger.info("UserLoginView: login attempt", extra={"email": email})
+            
             serializer = UserLoginSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+            if not serializer.is_valid():
+                logger.warning("UserLoginView: validation failed", extra={"errors": serializer.errors, "email": email})
+                return Response({
+                    'error': 'Login failed',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
+            logger.info("UserLoginView: login successful", extra={"email": user.email})
+            
             return Response({
                 'user': UserSerializer(user).data,
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             })
         except Exception as e:
+            logger.exception("UserLoginView: unexpected error", extra={"email": request.data.get('email')})
             return Response({'error': 'Login failed', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def options(self, request, *args, **kwargs):

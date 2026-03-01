@@ -95,15 +95,15 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # -----------------------------
 # Database
 # -----------------------------
-# Defaults to SQLite for local development. If Postgres env vars are present,
-# configures Postgres (compatible with Supabase).
+# Configures Postgres (compatible with Supabase).
 POSTGRES_DB = os.getenv("POSTGRES_DB")
 POSTGRES_USER = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "require")
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("SUPERBASE_STRING")
+# Prioritize Supabase configuration over generic DATABASE_URL (which Render might set to its internal DB).
+DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL") or os.getenv("SUPABASE_STRING") or os.getenv("DATABASE_URL")
 
 if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
     DATABASES = {
@@ -122,7 +122,6 @@ if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
     }
 elif DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
     # Minimal parser for DATABASE_URL if provided
-    # Example: postgresql://user:pass@host:5432/dbname?sslmode=require
     try:
         from urllib.parse import urlparse, parse_qs
         parsed = urlparse(DATABASE_URL)
@@ -141,24 +140,28 @@ elif DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
                 },
             }
         }
-    except Exception:
+    except Exception as e:
+        print(f"❌ Error parsing DATABASE_URL: {e}")
+        raise e
+else:
+    print("❌ No PostgreSQL configuration found. Supabase connection required.")
+    if DEBUG:
+        print("⚠️ Falling back to SQLite for local development DEBUG mode only.")
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': BASE_DIR / 'db.sqlite3',
             }
         }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+    else:
+        raise Exception("PostgreSQL environment variables are missing. Database connection is required for production.")
 
 default_db = DATABASES.get('default', {})
 print(f"🔌 DB backend: {default_db.get('ENGINE', '')}")
-print(f"🔌 DB name: {default_db.get('NAME', '')}")
+if default_db.get('ENGINE') == 'django.db.backends.postgresql':
+    print(f"🔌 DB host: {default_db.get('HOST', '')}")
+else:
+    print(f"🔌 DB name: {default_db.get('NAME', '')}")
 
 # -----------------------------
 # Password Validation
