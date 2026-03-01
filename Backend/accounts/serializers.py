@@ -32,14 +32,24 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if email and password:
+            # Normalize email for case-insensitive lookup
+            email = email.lower().strip()
             user = authenticate(username=email, password=password)
+            
             if not user:
-                raise serializers.ValidationError('Invalid credentials')
+                # Log detailed failure for debugging (don't return sensitive info to client)
+                from .models import User
+                user_exists = User.objects.filter(email=email).exists()
+                if not user_exists:
+                    raise serializers.ValidationError({'email': ['Account with this email does not exist.']})
+                else:
+                    raise serializers.ValidationError({'password': ['Incorrect password.']})
+                
             if not user.is_active:
-                raise serializers.ValidationError('User account is disabled')
+                raise serializers.ValidationError({'non_field_errors': ['User account is disabled.']})
             attrs['user'] = user
         else:
-            raise serializers.ValidationError('Must include email and password')
+            raise serializers.ValidationError({'non_field_errors': ['Must include email and password.']})
         return attrs
 
 class UserSerializer(serializers.ModelSerializer):

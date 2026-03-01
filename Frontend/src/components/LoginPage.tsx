@@ -50,19 +50,28 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       console.error('Login error:', err)
       const asObj = err as Record<string, unknown>
-      const response = asObj.response as { data?: unknown } | undefined
+      const response = asObj.response as { data?: any } | undefined
       const data = response?.data
+      
       if (data && typeof data === 'object') {
-        const errorData = data as Record<string, unknown>
-        if (
-          Array.isArray(errorData.non_field_errors) &&
-          typeof errorData.non_field_errors[0] === 'string'
-        ) {
-          setError(errorData.non_field_errors[0] as string)
-        } else if (typeof errorData.detail === 'string') {
-          setError(errorData.detail as string)
+        // Handle the custom_exception_handler format: { error: string, details: any }
+        const details = data.details || data;
+        
+        if (typeof details === 'string') {
+          setError(details);
+        } else if (typeof details === 'object' && details !== null) {
+          const detailObj = details as Record<string, any>;
+          // Look for common DRF error keys inside details
+          const firstError = 
+            (Array.isArray(detailObj.non_field_errors) && detailObj.non_field_errors[0]) ||
+            (Array.isArray(detailObj.email) && `Email: ${detailObj.email[0]}`) ||
+            (Array.isArray(detailObj.password) && `Password: ${detailObj.password[0]}`) ||
+            detailObj.detail ||
+            data.error ||
+            'Login failed. Please check your credentials.';
+          setError(typeof firstError === 'string' ? firstError : 'Login failed. Please check your credentials.');
         } else {
-          setError('Login failed. Please check your credentials.')
+          setError(data.error || 'Login failed. Please check your credentials.');
         }
       } else if (
         (asObj.code === 'ECONNABORTED') ||

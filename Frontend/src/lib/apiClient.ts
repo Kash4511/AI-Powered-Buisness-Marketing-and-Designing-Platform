@@ -62,9 +62,14 @@ if (!apiClient.defaults.baseURL || typeof apiClient.defaults.baseURL !== 'string
   } catch {}
 }
 
-// Add request interceptor to add auth token to requests
+// Add request interceptor to add auth token and debug requests
 apiClient.interceptors.request.use(
   (config) => {
+    // Log request for debugging 400 errors
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
+    }
+    
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -72,14 +77,23 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('[API Request Error]', error);
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor to handle token refresh
+// Add response interceptor to handle token refresh and debug responses
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[API Response] ${response.status} ${response.config.url}`, response.data);
+    }
+    return response;
+  },
   async (error) => {
+    // Log response error for debugging 400 errors
+    console.error(`[API Response Error] ${error.response?.status} ${error.config?.url}`, error.response?.data || error.message);
+    
     const originalRequest = error.config;
     
     // If error is 401 and we haven't tried to refresh token yet

@@ -46,7 +46,7 @@
 
         .page {
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm; /* Set fixed height to prevent leaking */
             background: var(--white);
             overflow: hidden;
             break-inside: avoid;
@@ -58,6 +58,18 @@
             position: relative;
         }
         .page + .page { break-before: page; page-break-before: always; }
+        
+        /* Ensure specific blocks don't split */
+        .cta-navy-box, .contact-grid, .ch-insight-box, .ch-list-grid, .trade-grid, .phase-row, .case-grid, .method-grid {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Prevent overflow in body content */
+        .body, .ch-p-intro {
+            max-height: 100%;
+            overflow: hidden;
+        }
 
         /* ── PAGE CHROME ─────────────────────── */
         .pg-head {
