@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE – kaashifameen32</title>
+    <title>TEST TITLE – Test Firm</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --navy:   #2a5766;
-            --navy2:  #B8860B;
-            --navy3:  ;
-            --navylt: ;
+            --navy2:  #FFFFFF;
+            --navy3:  #1E3A5F;
+            --navylt: #4F7A8B;
             --white:  #ffffff;
-            --off:    ;
-            --off2:   ;
-            --ink:    ;
-            --mid:    ;
-            --grey:   ;
-            --ltgrey: ;
-            --rule:   ;
-            --cover-text: ;
-            --cover-filter: ;
+            --off:    #F7F4EF;
+            --off2:   #EAE5DC;
+            --ink:    #1A1A1A;
+            --mid:    #4A4A4A;
+            --grey:   #808080;
+            --ltgrey: #DDDDDD;
+            --rule:   #EEEEEE;
+            --cover-text: #FFFFFF;
+            --cover-filter: brightness(0) invert(1);
 
             --fd: 'Playfair Display', serif;
             --fs: 'Lato', sans-serif;
@@ -46,7 +46,7 @@
 
         .page {
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm; /* Set fixed height to prevent leaking */
             background: var(--white);
             overflow: hidden;
             break-inside: avoid;
@@ -58,6 +58,18 @@
             position: relative;
         }
         .page + .page { break-before: page; page-break-before: always; }
+        
+        /* Ensure specific blocks don't split */
+        .cta-navy-box, .contact-grid, .ch-insight-box, .ch-list-grid, .trade-grid, .phase-row, .case-grid, .method-grid {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Prevent overflow in body content */
+        .body, .ch-p-intro {
+            max-height: 100%;
+            overflow: hidden;
+        }
 
         /* ── PAGE CHROME ─────────────────────── */
         .pg-head {
@@ -268,7 +280,9 @@
         .cv-body {
             position: relative; z-index: 10;
             flex: 1; padding: 0 18mm;
-            display: flex; flex-direction: column; justify-content: flex-end;
+            display: flex; flex-direction: column; 
+            justify-content: center; /* Center vertically */
+            align-items: flex-start; /* Align horizontally to the left */
         }
         .cv-audience { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
         .cv-aud-dash { width: 28px; height: 1px; background: rgba(255,255,255,0.35); }
@@ -279,11 +293,13 @@
         .cv-title-bold {
             font-family: var(--fd); font-size: 74px; font-weight: 900;
             line-height: 0.88; letter-spacing: -1.5px; color: var(--white);
+            text-align: left; /* Ensure left alignment */
         }
         .cv-title-italic {
             font-family: var(--fd); font-size: 60px; font-weight: 400; font-style: italic;
             line-height: 0.92; letter-spacing: -0.5px; color: rgba(255,255,255,0.42);
             margin-top: 2px;
+            text-align: left; /* Ensure left alignment */
         }
         .cv-rule-line { width: 32px; height: 2px; background: rgba(255,255,255,0.38); margin: 22px 0 0; }
 
@@ -360,22 +376,22 @@
     <div class="arc arc-3"></div><div class="arc arc-4"></div><div class="arc arc-5"></div>
 
     <div class="cv-top">
-        <div class="cv-name"></div>
+        <div class="cv-name">Test Firm</div>
     </div>
 
     <div class="cv-body">
         <div class="cv-audience">
             <div class="cv-aud-dash"></div>
-            <div class="cv-aud-text"></div>
+            <div class="cv-aud-text">REINTERPRET: Homeowners</div>
         </div>
-        <div class="cv-title-bold"></div>
-        <div class="cv-title-italic"></div>
+        <div class="cv-title-bold">Test Title</div>
+        <div class="cv-title-italic">Professional Report</div>
         <div class="cv-rule-line"></div>
     </div>
 
     <div class="cv-foot">
-        <span></span>
-        <span></span>
+        <span>Test Firm · test@example.com</span>
+        <span>Test Summary</span>
     </div>
 </div>
 
@@ -383,20 +399,20 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">2</span></div>
+        <div class="pg-head-row"><span class="pg-label">Introduction</span><span class="pg-num">2</span></div>
     </div>
     <div class="bw">
-        <h1 class="terms-h"></h1>
-        <p class="terms-body">A concise overview of sustainable-architecture for Commercial Clients, Contractors, Nonprofits, Facility Managers, highlighting key drivers, constraints, and recommended practices.</p>
+        <h1 class="terms-h">Test Title: Professional Report</h1>
+        <p class="terms-body">Test Summary</p>
         <p class="terms-body">This guide provides expert insights to facilitate professional growth and strategic alignment.</p>
-        <div class="terms-quote"><p>Clarity beats complexity when strategy aligns with execution.</p></div>
+        <div class="terms-quote"><p>Strategy is not about being different, but about making a difference.</p></div>
         <p class="terms-body">Our approach combines data-driven analysis with practical implementation frameworks.</p>
         <p class="terms-body">We empower organisations to navigate complexity with clarity and purpose.</p>
-        <p class="terms-body"></p>
+        <p class="terms-body">© 2026 Test Firm. All rights reserved.</p>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -404,23 +420,23 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">3</span></div>
+        <div class="pg-head-row"><span class="pg-label">Contents</span><span class="pg-num">3</span></div>
     </div>
     <div class="bw">
-        <div class="toc-big-bold"></div>
-        <div class="toc-big-italic"></div>
-        <p class="toc-intro"></p>
+        <div class="toc-big-bold">Strategic</div>
+        <div class="toc-big-italic">Roadmap</div>
+        <p class="toc-intro">An overview of the key insights and frameworks in this guide.</p>
 
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">01</span><span class="toc-t"></span><span class="toc-dots"></span><span class="toc-pg">4</span></div><div class="toc-sub"></div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">02</span><span class="toc-t"></span><span class="toc-dots"></span><span class="toc-pg">5</span></div><div class="toc-sub"></div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">03</span><span class="toc-t"></span><span class="toc-dots"></span><span class="toc-pg">6</span></div><div class="toc-sub"></div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">04</span><span class="toc-t"></span><span class="toc-dots"></span><span class="toc-pg">7</span></div><div class="toc-sub"></div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">05</span><span class="toc-t"></span><span class="toc-dots"></span><span class="toc-pg">8</span></div><div class="toc-sub"></div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">06</span><span class="toc-t"></span><span class="toc-dots"></span><span class="toc-pg">9</span></div><div class="toc-sub"></div></div>
+        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">01</span><span class="toc-t">Section 0</span><span class="toc-dots"></span><span class="toc-pg">4</span></div><div class="toc-sub">Setting the stage</div></div>
+        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">02</span><span class="toc-t">Section 1</span><span class="toc-dots"></span><span class="toc-pg">5</span></div><div class="toc-sub">The landscape of opportunity</div></div>
+        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">03</span><span class="toc-t">Section 2</span><span class="toc-dots"></span><span class="toc-pg">6</span></div><div class="toc-sub">Principles for excellence</div></div>
+        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">04</span><span class="toc-t">Section 3</span><span class="toc-dots"></span><span class="toc-pg">7</span></div><div class="toc-sub">Driving measurable impact</div></div>
+        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">05</span><span class="toc-t">Section 4</span><span class="toc-dots"></span><span class="toc-pg">8</span></div><div class="toc-sub">Turning vision into reality</div></div>
+        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">06</span><span class="toc-t">Section 5</span><span class="toc-dots"></span><span class="toc-pg">9</span></div><div class="toc-sub">Measuring what matters</div></div>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -428,21 +444,18 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">4</span></div>
+        <div class="pg-head-row"><span class="pg-label">CHAPTER 01</span><span class="pg-num">4</span></div>
     </div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label"></span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1"></h1>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">STRATEGIC ANALYSIS</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Section 0</h1>
 
         <div class="cf">
             <div class="img-left">
                 <div class="img-wrapper">
                     <div class="img-ph-single" style="height:195px;">
                         
-                            <div class="img-ph-inner">
-                                <div class="img-icon"><svg width="22" height="22" stroke="var(--navy)"><use href="#cam"/></svg></div>
-                                <span class="img-label-text"></span>
-                            </div>
+                            <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;640&#39; height=&#39;480&#39;&gt;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;%23eeeeee&#39;/&gt;&lt;text x=&#39;50%&#39; y=&#39;50%&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; fill=&#39;%23999&#39; font-size=&#39;20&#39;&gt;Image Placeholder&lt;/text&gt;&lt;/svg&gt;" alt="Mapping the path to strategic alignment.">
                         
                     </div>
                     <span class="img-cap">Mapping the path to strategic alignment.</span>
@@ -450,26 +463,26 @@
             </div>
 
             <div class="drop-cap-wrap">
-                <span class="drop-letter"></span>
-                <p class="body" style="margin:0;"></p>
+                <span class="drop-letter">C</span>
+                <p class="body" style="margin:0;">Content 0</p>
             </div>
         </div>
 
-        <p class="body"></p>
+        <p class="body">Content 0</p>
         <div class="h-rule"></div>
 
         <div class="callout">
-            <div class="callout-title"></div>
-            <div class="callout-body"></div>
+            <div class="callout-title">KEY TAKEAWAY</div>
+            <div class="callout-body">Success is measured by clarity of intent and consistency of execution.</div>
         </div>
         <div class="callout">
-            <div class="callout-title"></div>
-            <div class="callout-body"></div>
+            <div class="callout-title">PRO TIP</div>
+            <div class="callout-body">Automate routine tasks to free up bandwidth for high-value strategic work.</div>
         </div>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -477,21 +490,18 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">5</span></div>
+        <div class="pg-head-row"><span class="pg-label">CHAPTER 02</span><span class="pg-num">5</span></div>
     </div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label"></span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1"></h1>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">OPERATIONAL VIEW</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Section 1</h1>
 
         <div class="cf">
             <div class="img-right">
                 <div class="img-wrapper">
                     <div class="img-ph-single" style="height:200px;">
                         
-                            <div class="img-ph-inner">
-                                <div class="img-icon"><svg width="22" height="22" stroke="var(--navy)"><use href="#cam"/></svg></div>
-                                <span class="img-label-text"></span>
-                            </div>
+                            <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;640&#39; height=&#39;480&#39;&gt;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;%23eeeeee&#39;/&gt;&lt;text x=&#39;50%&#39; y=&#39;50%&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; fill=&#39;%23999&#39; font-size=&#39;20&#39;&gt;Image Placeholder&lt;/text&gt;&lt;/svg&gt;" alt="Visualising the components of successful execution.">
                         
                     </div>
                     <span class="img-cap">Visualising the components of successful execution.</span>
@@ -499,31 +509,31 @@
             </div>
 
             <div class="drop-cap-wrap">
-                <span class="drop-letter"></span>
-                <p class="body" style="margin:0;"></p>
+                <span class="drop-letter">C</span>
+                <p class="body" style="margin:0;">Content 1</p>
             </div>
         </div>
 
-        <p class="body"></p>
+        <p class="body">Content 1</p>
         <div class="h-rule"></div>
-        <div class="sec-h2"></div>
+        <div class="sec-h2">Strategic Considerations</div>
 
         <ul class="b-list">
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
+            <li><strong style="font-weight:600;color:var(--navy);">Efficiency</strong> — Optimising resource allocation for maximum output.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Quality</strong> — Ensuring high standards across all deliverables.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Agility</strong> — Maintaining the ability to pivot as markets change.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Resilience</strong> — Building systems that withstand external shocks.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Innovation</strong> — Investing in future-ready capabilities today.</li>
         </ul>
 
         <div class="callout">
-            <div class="callout-title"></div>
-            <div class="callout-body"></div>
+            <div class="callout-title">STRATEGY NOTE</div>
+            <div class="callout-body">Consistency is the bridge between goals and accomplishment.</div>
         </div>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -531,22 +541,19 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">6</span></div>
+        <div class="pg-head-row"><span class="pg-label">CHAPTER 03</span><span class="pg-num">6</span></div>
     </div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label"></span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1"></h1>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">IMPLEMENTATION</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Section 2</h1>
 
-        <p class="body"></p>
+        <p class="body">Content 2</p>
 
         <div class="img-container full-width-center">
             <div class="img-wrapper">
                 <div class="img-ph-single" style="height:175px;">
                     
-                        <div class="img-ph-inner">
-                            <div class="img-icon"><svg width="22" height="22" stroke="var(--navy)"><use href="#cam"/></svg></div>
-                            <span class="img-label-text"></span>
-                        </div>
+                        <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;640&#39; height=&#39;480&#39;&gt;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;%23eeeeee&#39;/&gt;&lt;text x=&#39;50%&#39; y=&#39;50%&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; fill=&#39;%23999&#39; font-size=&#39;20&#39;&gt;Image Placeholder&lt;/text&gt;&lt;/svg&gt;" alt="Tracking progress against strategic objectives.">
                     
                 </div>
                 <span class="img-cap">Tracking progress against strategic objectives.</span>
@@ -557,23 +564,23 @@
 
         <div class="col2">
             <div>
-                <div class="sec-h2"></div>
-                <p class="body-sm"></p>
+                <div class="sec-h2">Phase 1: Definition</div>
+                <p class="body-sm">Clarify objectives, constraints, and success metrics.</p>
             </div>
             <div>
-                <div class="sec-h2"></div>
-                <p class="body-sm"></p>
+                <div class="sec-h2">Phase 2: Execution</div>
+                <p class="body-sm">Operationalise the framework with iterative delivery.</p>
             </div>
         </div>
 
         <div class="callout">
-            <div class="callout-title"></div>
-            <div class="callout-body"></div>
+            <div class="callout-title">EXPERT ADVICE</div>
+            <div class="callout-body">Always validate your assumptions against real-world performance metrics.</div>
         </div>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -581,38 +588,38 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">7</span></div>
+        <div class="pg-head-row"><span class="pg-label">CHAPTER 04</span><span class="pg-num">7</span></div>
     </div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label"></span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1"></h1>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">CASE STUDIES</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Section 3</h1>
 
         <div class="drop-cap-wrap">
-            <span class="drop-letter"></span>
-            <p class="body" style="margin:0;"></p>
+            <span class="drop-letter">C</span>
+            <p class="body" style="margin:0;">Content 3</p>
         </div>
 
         <div class="h-rule"></div>
 
         <div class="col2">
             <div>
-                <div class="sec-h"></div>
-                <p class="body-sm"></p>
+                <div class="sec-h">Strategic Transformation</div>
+                <p class="body-sm">A concise account demonstrating improved performance through structured delivery.</p>
             </div>
             <div>
-                <div class="sec-h"></div>
-                <p class="body-sm"></p>
+                <div class="sec-h">Operational Excellence</div>
+                <p class="body-sm">A scenario that surfaces lessons learned and risk trade-offs in execution.</p>
             </div>
         </div>
 
         <div class="callout navy-fill">
-            <div class="callout-title"></div>
-            <div class="callout-body"></div>
+            <div class="callout-title">KEY INSIGHT</div>
+            <div class="callout-body">Execution is the ultimate differentiator in competitive markets.</div>
         </div>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -620,47 +627,44 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">8</span></div>
+        <div class="pg-head-row"><span class="pg-label">CHAPTER 05</span><span class="pg-num">8</span></div>
     </div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label"></span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1"></h1>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">ENGAGEMENT</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Section 4</h1>
 
         <div class="drop-cap-wrap">
-            <span class="drop-letter"></span>
-            <p class="body" style="margin:0;"></p>
+            <span class="drop-letter">C</span>
+            <p class="body" style="margin:0;">Content 4</p>
         </div>
 
-        <p class="body"></p>
+        <p class="body">Content 4</p>
 
         <div class="img-container full-width-center">
             <div class="img-wrapper">
                 <div class="img-ph-single" style="height:155px;">
                     
-                        <div class="img-ph-inner">
-                            <div class="img-icon"><svg width="22" height="22" stroke="var(--navy)"><use href="#cam"/></svg></div>
-                            <span class="img-label-text"></span>
-                        </div>
+                        <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;800&#39; height=&#39;160&#39;&gt;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;%23eeeeee&#39;/&gt;&lt;text x=&#39;50%&#39; y=&#39;50%&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; fill=&#39;%23999&#39; font-size=&#39;20&#39;&gt;Banner Placeholder&lt;/text&gt;&lt;/svg&gt;" alt="Visualising stakeholder engagement frameworks.">
                     
                 </div>
-                <span class="img-cap"></span>
+                <span class="img-cap">Visualising stakeholder engagement frameworks.</span>
             </div>
         </div>
 
         <div class="h-rule"></div>
-        <div class="sec-h2"></div>
+        <div class="sec-h2">Engagement Framework</div>
 
         <ul class="b-list">
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
-            <li><strong style="font-weight:600;color:var(--navy);"></strong> — </li>
+            <li><strong style="font-weight:600;color:var(--navy);">Discovery</strong> — Clarify context and desired outcomes.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Design</strong> — Co-create frameworks aligned to priorities.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Pilot</strong> — Validate assumptions and iterate rapidly.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Scale</strong> — Operationalise with governance and metrics.</li>
+            <li><strong style="font-weight:600;color:var(--navy);">Review</strong> — Close feedback loops and sustain improvements.</li>
         </ul>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -668,30 +672,30 @@
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label"></span><span class="pg-num">9</span></div>
+        <div class="pg-head-row"><span class="pg-label">CHAPTER 06</span><span class="pg-num">9</span></div>
     </div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label"></span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1"></h1>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">NEXT STEPS</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Taking Action</h1>
 
-        <p class="body"></p>
-        <p class="body"></p>
+        <p class="body">Test Summary</p>
+        <p class="body">We help translate insight into measurable results through disciplined delivery.</p>
 
         <div class="cta-navy-box">
             <span class="cta-box-eyebrow">NEXT STEPS</span>
-            <div class="cta-box-title">Schedule a Consultation</div>
-            <p class="cta-box-body"></p>
+            <div class="cta-box-title">Start Your Journey</div>
+            <p class="cta-box-body">We are ready to help you turn these insights into measurable growth.</p>
         </div>
 
         <div class="contact-grid">
-            <div><span class="contact-lbl">EMAIL</span><div class="contact-val">kaashifameen32@gmail.com</div></div>
-            <div><span class="contact-lbl">PHONE</span><div class="contact-val"></div></div>
-            <div><span class="contact-lbl">WEB</span><div class="contact-val"></div></div>
+            <div><span class="contact-lbl">EMAIL</span><div class="contact-val">test@example.com</div></div>
+            <div><span class="contact-lbl">PHONE</span><div class="contact-val">123456789</div></div>
+            <div><span class="contact-lbl">WEB</span><div class="contact-val">www.test.com</div></div>
         </div>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 kaashifameen32</span>
-        <span class="pg-foot-r">SUSTAINABLE-ARCHITECTURE — EXECUTIVE GUIDE</span>
+        <span class="pg-foot-l">© 2026 Test Firm</span>
+        <span class="pg-foot-r">TEST TITLE</span>
     </div>
 </div>
 
@@ -701,9 +705,9 @@
     <div class="arc arc-3"></div><div class="arc arc-4"></div><div class="arc arc-5"></div>
 
     <div style="position:relative;z-index:10;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;">
-        <div class="bc-brand"></div>
-        <div class="bc-title"></div>
-        <div class="bc-sub"> <strong></strong></div>
+        <div class="bc-brand">Test Firm</div>
+        <div class="bc-title">Test Title</div>
+        <div class="bc-sub">Test Summary <strong>2026</strong></div>
     </div>
 </div>
 

@@ -280,7 +280,9 @@
         .cv-body {
             position: relative; z-index: 10;
             flex: 1; padding: 0 18mm;
-            display: flex; flex-direction: column; justify-content: flex-end;
+            display: flex; flex-direction: column; 
+            justify-content: center; /* Center vertically */
+            align-items: flex-start; /* Align horizontally to the left */
         }
         .cv-audience { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
         .cv-aud-dash { width: 28px; height: 1px; background: rgba(255,255,255,0.35); }
@@ -291,11 +293,13 @@
         .cv-title-bold {
             font-family: var(--fd); font-size: 74px; font-weight: 900;
             line-height: 0.88; letter-spacing: -1.5px; color: var(--white);
+            text-align: left; /* Ensure left alignment */
         }
         .cv-title-italic {
             font-family: var(--fd); font-size: 60px; font-weight: 400; font-style: italic;
             line-height: 0.92; letter-spacing: -0.5px; color: rgba(255,255,255,0.42);
             margin-top: 2px;
+            text-align: left; /* Ensure left alignment */
         }
         .cv-rule-line { width: 32px; height: 2px; background: rgba(255,255,255,0.38); margin: 22px 0 0; }
 
