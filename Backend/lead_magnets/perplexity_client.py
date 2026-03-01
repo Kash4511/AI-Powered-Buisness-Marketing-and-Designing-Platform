@@ -679,6 +679,17 @@ OUTPUT — return this exact JSON structure, fully populated:
             # ── Colors (v5 uses color-mix() — only 2 base vars required) ─────
             "primaryColor":   primary,
             "secondaryColor": secondary,
+            "tertiaryColor":  "#1E3A5F",
+            "accentColor":    "#4F7A8B",
+            "creamColor":     "#F7F4EF",
+            "creamDarkColor": "#EAE5DC",
+            "inkColor":       "#1A1A1A",
+            "inkMidColor":    "#4A4A4A",
+            "inkLightColor":  "#808080",
+            "ruleColor":      "#DDDDDD",
+            "ruleLightColor": "#EEEEEE",
+            "coverTextColor": "#FFFFFF",
+            "coverLogoFilter":"brightness(0) invert(1)",
 
             # ── PAGE 1 — COVER ───────────────────────────────────────────────
             "coverSeriesLabel":   "EXECUTIVE SERIES",
@@ -690,6 +701,12 @@ OUTPUT — return this exact JSON structure, fully populated:
             "stat1Value":   "100%",  "stat1Label": "PROFESSIONAL",
             "stat2Value":   "AI",    "stat2Label": "OPTIMISED",
             "stat3Value":   year,    "stat3Label": "EDITION",
+            "coverBrand":         company,
+            "coverAudience":      str(user_answers.get('target_audience') or '').strip() or "Professionals",
+            "coverTitleBold":     hl1,
+            "coverTitleItalic":   hl2,
+            "coverFooterLeft":    f\"{company} · {email}\" if company or email else company,
+            "coverFooterRight":   (outcome[:80] + "…") if len(outcome) > 80 else outcome,
 
             # ── PAGE 2 — TERMS / INTRO ───────────────────────────────────────
             "sectionTitle1":      "Introduction",
@@ -701,6 +718,9 @@ OUTPUT — return this exact JSON structure, fully populated:
             "termsPullQuote":     quo(0, "Strategy is not about being different, but about making a difference."),
             "termsParagraph3":    "Our approach combines data-driven analysis with practical implementation frameworks.",
             "termsParagraph4":    "We empower organisations to navigate complexity with clarity and purpose.",
+            "termsSectionLabel":   "Introduction",
+            "termsHeadline":       f"{hl1}: {hl2}" if hl2 else hl1,
+            "termsCopyright":      f"© {year} {company}. All rights reserved.",
 
             # ── PAGE 3 — TABLE OF CONTENTS ───────────────────────────────────
             "sectionTitle2":  "Contents",
@@ -718,6 +738,10 @@ OUTPUT — return this exact JSON structure, fully populated:
             "contentItem8":   st(7, "Operational Excellence"),"contentItem8Sub":"Sustaining the advantage",
             "contentItem9":   st(8, "Future Roadmap"),      "contentItem9Sub":  "Planning what's next",
             "contentItem10":  st(9, "Action Plan"),         "contentItem10Sub": "Your path forward",
+            "tocSectionLabel":     "Contents",
+            "tocHeadlineBold":     "Strategic",
+            "tocHeadlineItalic":   "Roadmap",
+            "tocIntro":            "An overview of the key insights and frameworks in this guide.",
             "pageNumber4":  "4",  "pageNumber5":  "5",  "pageNumber6":  "6",
             "pageNumber7":  "7",  "pageNumber8":  "8",  "pageNumber9":  "9",
             "pageNumber10": "10", "pageNumber11": "11", "pageNumber12": "12",
@@ -735,6 +759,8 @@ OUTPUT — return this exact JSON structure, fully populated:
             "subcontent1":     ins(1, "Sustainable growth demands a balance of innovation and operational discipline."),
             "calloutLabel1":   ol(0, "KEY TAKEAWAY"),
             "calloutContent1": oc(0, "Success is measured by clarity of intent and consistency of execution."),
+            "imagePage4Url":   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Image Placeholder</text></svg>",
+            "imagePlaceholderLabel1": "STRATEGY HERO",
 
             # ── PAGE 5 — CHAPTER 2 ───────────────────────────────────────────
             "sectionLabel4":   "CHAPTER 02",
@@ -749,6 +775,14 @@ OUTPUT — return this exact JSON structure, fully populated:
             "listItem3":       cli(0, 2, "Enhance stakeholder engagement through structured frameworks"),
             "listItem4":       cli(0, 3, "Measure, iterate, and refine continuously"),
             "listFollowup2":   "By following these steps, organisations achieve a more resilient operational model.",
+            "imagePage5Url":   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Image Placeholder</text></svg>",
+            "imagePlaceholderLabel2": "OPERATIONAL VIEW",
+            "tradeoffsTitle":  "Trade-offs",
+            "tradeoff1Term":   "Speed", "tradeoff1Desc": "Balancing quick wins with long-term resilience.",
+            "tradeoff2Term":   "Cost",  "tradeoff2Desc": "Optimising spend without compromising quality.",
+            "tradeoff3Term":   "Scope", "tradeoff3Desc": "Maintaining focus to prevent scope creep.",
+            "tradeoff4Term":   "Risk",  "tradeoff4Desc": "Mitigating uncertainties with proactive governance.",
+            "tradeoff5Term":   "Quality","tradeoff5Desc":"Setting thresholds aligned to stakeholder expectations.",
 
             # ── PAGE 6 — CHAPTER 3  (★ MEDIUM IMAGE) ────────────────────────
             "sectionLabel5":    "CHAPTER 03",
@@ -765,6 +799,12 @@ OUTPUT — return this exact JSON structure, fully populated:
             "subcontent3":      "Our proven framework simplifies complex challenges into actionable strategic pillars.",
             "infoBoxLabel1":    cl(0, "QUICK TIP"),
             "infoBoxContent1":  cc(0, "Always validate your assumptions against real-world performance metrics."),
+            "imagePage6Url":   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Image Placeholder</text></svg>",
+            "imagePlaceholderLabel3": "PERFORMANCE VIEW",
+            "phase1Title":     "Phase 1: Definition",
+            "phase1Desc":      "Clarify objectives, constraints, and success metrics.",
+            "phase2Title":     "Phase 2: Execution",
+            "phase2Desc":      "Operationalise the framework with iterative delivery.",
 
             # ── PAGE 7 — CHAPTER 4 ───────────────────────────────────────────
             "sectionLabel6":    "CHAPTER 04",
@@ -779,6 +819,12 @@ OUTPUT — return this exact JSON structure, fully populated:
             "subcontent4":      "Consistency is the bridge between goals and accomplishment.",
             "calloutLabel2":    ol(1, "PRO TIP"),
             "calloutContent2":  oc(1, "Automate routine tasks to free up bandwidth for high-value strategic work."),
+            "dropCap4":        (sc(3)[:1] or "S").upper(),
+            "chapter4Intro":   sc(3)[:220],
+            "caseStudy1Title": "Case Study A",
+            "caseStudy1Desc":  "A concise account demonstrating improved performance through structured delivery.",
+            "caseStudy2Title": "Case Study B",
+            "caseStudy2Desc":  "A contrasting scenario that surfaces lessons learned and risk trade-offs.",
 
             # ── PAGE 8 — CHAPTER 5  (★ BANNER IMAGE) ────────────────────────
             "sectionLabel7":    "CHAPTER 05",
@@ -796,6 +842,18 @@ OUTPUT — return this exact JSON structure, fully populated:
             "infoBoxContent2":  cc(3, "Organisations with clear KPI frameworks consistently outperform peers."),
             "infoBoxLabel3":    cl(4, "STRATEGY TIP"),
             "infoBoxContent3":  cc(4, "Align performance metrics with long-term strategic objectives for maximum impact."),
+            "dropCap5":        (sc(4)[:1] or "S").upper(),
+            "chapter5Intro":   sc(4)[:220],
+            "chapter5Body1":   sc(4),
+            "engagementMethodsTitle": "Engagement Methods",
+            "method1Phase": "Discovery", "method1Desc": "Clarify context and desired outcomes.",
+            "method2Phase": "Design",    "method2Desc": "Co-create frameworks aligned to priorities.",
+            "method3Phase": "Pilot",     "method3Desc": "Validate assumptions and iterate rapidly.",
+            "method4Phase": "Scale",     "method4Desc": "Operationalise with governance and metrics.",
+            "method5Phase": "Review",    "method5Desc": "Close feedback loops and sustain improvements.",
+            "imagePage8Url":   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='160'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Banner Placeholder</text></svg>",
+            "imagePlaceholderLabel5": "ENGAGEMENT VIEW",
+            "imageCaption5":   "A high-level view of engagement steps.",
 
             # ── PAGE 9 — CHAPTER 6 ───────────────────────────────────────────
             "sectionLabel8":    "CHAPTER 06",
@@ -848,6 +906,17 @@ OUTPUT — return this exact JSON structure, fully populated:
             "infoBoxContent5":   cc(5, "Map every critical process before optimising it — visibility precedes improvement."),
             "infoBoxLabel6":     cl(6, "SYSTEMS NOTE"),
             "infoBoxContent6":   cc(6, "Integrated systems reduce friction and create compounding efficiency gains over time."),
+            "chapter6Section": "CHAPTER 06",
+            "chapter6Eyebrow": "NEXT STEPS",
+            "chapter6Title":   "Taking Action",
+            "ctaIntro1":       outcome,
+            "ctaIntro2":       "We help translate insight into measurable results through disciplined delivery.",
+            "ctaEyebrow":      "NEXT STEPS",
+            "ctaTitle":        str(cta.get("headline")    or "Start Your Journey"),
+            "ctaBody":         str(cta.get("description") or "We are ready to help you turn these insights into measurable growth."),
+            "contactLabel1":   "EMAIL",    "contactValue1": email,
+            "contactLabel2":   "PHONE",    "contactValue2": phone,
+            "contactLabel3":   "WEB",      "contactValue3": website,
 
             # ── PAGE 12 — CHAPTER 9 ──────────────────────────────────────────
             "sectionLabel11":    "CHAPTER 09",
@@ -884,6 +953,10 @@ OUTPUT — return this exact JSON structure, fully populated:
             "calloutContent5":   oc(4, "The greatest risk is not acting on knowledge — execution is the ultimate differentiator."),
             "infoBoxLabel7":     cl(6, "ACTION GUIDE"),
             "infoBoxContent7":   cc(6, "Schedule your strategic planning session within 30 days to capitalise on these insights."),
+            "backCoverBrand": company,
+            "backCoverTitle": main_title,
+            "backCoverSub":   summary,
+            "backCoverYear":  year,
 
             # ── PAGE 14 — CLOSING / CTA ──────────────────────────────────────
             "sectionLabelCTA":    "NEXT STEPS",
