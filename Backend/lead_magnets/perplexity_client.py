@@ -705,7 +705,7 @@ OUTPUT — return this exact JSON structure, fully populated:
             "coverAudience":      str(user_answers.get('target_audience') or '').strip() or "Professionals",
             "coverTitleBold":     hl1,
             "coverTitleItalic":   hl2,
-            "coverFooterLeft":    f\"{company} · {email}\" if company or email else company,
+            "coverFooterLeft":    f"{company} · {email}" if (company or email) else company,
             "coverFooterRight":   (outcome[:80] + "…") if len(outcome) > 80 else outcome,
 
             # ── PAGE 2 — TERMS / INTRO ───────────────────────────────────────
