@@ -13,6 +13,10 @@ urlpatterns = [
     path('templates/', views.ListTemplatesView.as_view(), name='list-templates'),
     path('select-template/', views.SelectTemplateView.as_view(), name='select-template'),
     path('generate-slogan/', views.GenerateSloganView.as_view(), name='generate-slogan'),
+    # New: compatibility routes for existing frontend calls
+    path('generate-pdf/', views.generate_pdf_compat, name='generate-pdf'),
+    path('generate-pdf/status/', views.generate_pdf_status_compat, name='generate-pdf-status-compat'),
+    # Job-based routes (internal/advanced clients)
     path('generate-pdf/start/', views.generate_pdf_start, name='generate_pdf_start'),
     path('generate-pdf/status/<str:job_id>/', views.generate_pdf_status, name='generate_pdf_status'),
     path('ping/', ping, name='ping'),
@@ -23,4 +27,6 @@ urlpatterns = [
     
     # AI Conversation
     path('ai-conversation/', views.FormaAIConversationView.as_view(), name='ai-conversation'),
+    # Relative download route expected by frontend polling
+    path('lead-magnets/<int:lead_magnet_id>/download/', views.download_lead_magnet_pdf, name='lead-magnet-download'),
 ]

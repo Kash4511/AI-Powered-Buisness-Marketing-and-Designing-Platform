@@ -14,6 +14,7 @@ from django.db.models import Count, Q
 from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
@@ -165,7 +166,7 @@ def _run_generation_job(job_id, body, user_id):
             _set_job(job_id, status="failed", error="template_id and lead_magnet_id are required")
             return
 
-        _set_job(job_id, status="processing", progress=5, message="Parsing...")
+        _set_job(job_id, status="processing", progress=5, message="Parsing...", lead_magnet_id=lead_magnet_id)
 
         try:
             lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=user)
@@ -348,6 +349,88 @@ def generate_pdf_status(request, job_id):
         "error":    job.get("error"),
     })
 
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_compat(request):
+    """
+    Compatibility endpoint for frontend expecting POST /generate-pdf/ returning 202 and polling by lead_magnet_id.
+    """
+    # Delegate to job-based start while returning 202
+    body = request.data
+    job_id = str(uuid.uuid4())
+    _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None, lead_magnet_id=body.get('lead_magnet_id'))
+    threading.Thread(target=_run_generation_job, args=(job_id, body, request.user.id), daemon=True).start()
+    # Provide a status_url hint while staying compatible with caller behavior
+    status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={body.get('lead_magnet_id')}&job_id={job_id}")
+    return Response({
+        'status': 'in_progress',
+        'message': 'PDF generation started',
+        'lead_magnet_id': body.get('lead_magnet_id'),
+        'status_url': status_url,
+        'retry_after_seconds': 3
+    }, status=status.HTTP_202_ACCEPTED)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_status_compat(request):
+    """
+    Compatibility endpoint for frontend polling GET /generate-pdf/status/?lead_magnet_id=...
+    Translates job-based state to legacy shape: {status: 'ready'|'pending'|'error', pdf_url?}
+    """
+    lead_magnet_id = request.query_params.get('lead_magnet_id')
+    job_id = request.query_params.get('job_id')
+    if not lead_magnet_id:
+        return Response({'error': 'lead_magnet_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    # If job_id provided, prefer job state
+    job = None
+    if job_id:
+        job = _get_job(job_id)
+    else:
+        # Find latest job matching lead_magnet_id
+        with _JOBS_LOCK:
+            for k, v in reversed(list(_JOBS.items())):
+                if str(v.get('lead_magnet_id')) == str(lead_magnet_id):
+                    job = dict(v)
+                    break
+    # Fallback to model state if job not found
+    try:
+        lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
+    except LeadMagnet.DoesNotExist:
+        return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
+    # If model has completed PDF, return ready with download route
+    if str(lm.status) == 'completed' and lm.pdf_file:
+        download_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
+        return Response({'status': 'ready', 'pdf_url': download_url}, status=status.HTTP_200_OK)
+    # Otherwise use job state
+    if job:
+        if job.get('status') == 'complete' and lm.pdf_file:
+            download_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
+            return Response({'status': 'ready', 'pdf_url': download_url}, status=status.HTTP_200_OK)
+        if job.get('status') in ('failed', 'error'):
+            return Response({'status': 'error', 'error': job.get('error', 'Generation failed')}, status=status.HTTP_200_OK)
+        return Response({'status': 'pending'}, status=status.HTTP_200_OK)
+    # No job and not completed yet
+    return Response({'status': 'pending'}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def download_lead_magnet_pdf(request, lead_magnet_id: int):
+    """
+    Serve the generated PDF file for a given lead magnet, supporting relative download route.
+    """
+    try:
+        lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
+    except LeadMagnet.DoesNotExist:
+        return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
+    if not lm.pdf_file:
+        return Response({'error': 'PDF file not generated yet'}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        fh = lm.pdf_file.open('rb')
+        resp = FileResponse(fh, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{os.path.basename(lm.pdf_file.name)}"'
+        return resp
+    except FileNotFoundError:
+        return Response({'error': 'PDF file not found on server disk'}, status=status.HTTP_404_NOT_FOUND)
 class CreateLeadMagnetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
