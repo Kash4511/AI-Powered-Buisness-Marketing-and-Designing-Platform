@@ -496,16 +496,20 @@ OUTPUT — return this exact JSON structure, fully populated:
             "Future Outlook",
             "Action Plan",
         ]
-        base = (
-            f"This section presents expert guidance on {topic} tailored for {audience}. "
-            f"It addresses pain points including {pains} and outlines a pragmatic approach. "
-            f"The aim is to provide {outcome}. "
-            f"Recommendations are prioritised, practical, and designed to be implemented in phases."
-        )
+        
+        # Substantial, topic-specific content generation logic for fallback
+        # Each section now has a much longer, more detailed body text.
         for t in titles:
             content = (
-                f"{base} It details context-specific considerations, expected benefits, and trade-offs. "
-                f"Examples and heuristics are provided to support decision-making, with clear ownership and next steps."
+                f"The topic of {topic} represents a critical junction for {audience} seeking long-term success. "
+                f"To address the challenges of {pains}, it is essential to establish a robust {t.lower()}. "
+                f"This involves aligning core objectives with operational capabilities to ensure that every effort contributes to the goal of {outcome}. "
+                f"We must consider the historical context of {topic} while remaining agile enough to adapt to emerging trends and shifting stakeholder expectations. "
+                f"The following frameworks provide a structured approach to managing complexity and reducing risk throughout the lifecycle. "
+                f"Furthermore, effective communication and transparent governance are the cornerstones of building trust and maintaining momentum. "
+                f"By focusing on measurable outcomes and repeatable processes, organisations can achieve a level of consistency that transforms strategy into reality. "
+                f"Ultimately, the success of any initiative in {topic} depends on the ability to translate high-level vision into actionable steps that resonate at every level of the organisation. "
+                f"Our methodology emphasises phased delivery, continuous feedback, and data-driven decision-making to sustain high performance over time."
             )
             sections.append({"title": t, "content": content})
         return {
@@ -577,6 +581,7 @@ OUTPUT — return this exact JSON structure, fully populated:
         ai_content: Dict[str, Any],
         firm_profile: Optional[Dict[str, Any]] = None,
         user_answers: Optional[Dict[str, Any]] = None,
+        architectural_images: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Maps normalised AI output to EVERY {{variable}} in magazine-template-v5.html.
@@ -586,6 +591,7 @@ OUTPUT — return this exact JSON structure, fully populated:
             ai_content = {}
         firm_profile  = firm_profile  or {}
         user_answers  = user_answers  or {}
+        architectural_images = architectural_images or []
 
         # ── Firm metadata ─────────────────────────────────────────────────────
         company   = str(firm_profile.get("firm_name")             or "Expert Firm").strip()
@@ -594,6 +600,16 @@ OUTPUT — return this exact JSON structure, fully populated:
         website   = str(firm_profile.get("firm_website")          or "").strip()
         primary   = str(firm_profile.get("primary_brand_color")   or "#2a5766")
         secondary = str(firm_profile.get("secondary_brand_color") or "#B8860B")
+
+        # ── Image Handling ───────────────────────────────────────────────────
+        # Default placeholders
+        img1 = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Image Placeholder</text></svg>"
+        img2 = img1
+        img3 = img1
+        
+        if len(architectural_images) >= 1: img1 = architectural_images[0]
+        if len(architectural_images) >= 2: img2 = architectural_images[1]
+        if len(architectural_images) >= 3: img3 = architectural_images[2]
 
         # ── Content arrays ────────────────────────────────────────────────────
         sections = ai_content.get("sections", [])
@@ -760,7 +776,7 @@ OUTPUT — return this exact JSON structure, fully populated:
             "callout1Body":    oc(0, "Success is measured by clarity of intent and consistency of execution."),
             "callout2Title":   ol(1, "PRO TIP"),
             "callout2Body":    oc(1, "Automate routine tasks to free up bandwidth for high-value strategic work."),
-            "imagePage4Url":   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Image Placeholder</text></svg>",
+            "imagePage4Url":   img1,
 
             # ── PAGE 5 — CHAPTER 2 ───────────────────────────────────────────
             "chapter2Section":   "CHAPTER 02",
@@ -779,7 +795,7 @@ OUTPUT — return this exact JSON structure, fully populated:
             "tradeoff5Term":   "Innovation", "tradeoff5Desc": "Investing in future-ready capabilities today.",
             "callout3Title":   ol(2, "STRATEGY NOTE"),
             "callout3Body":    oc(2, "Consistency is the bridge between goals and accomplishment."),
-            "imagePage5Url":   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Image Placeholder</text></svg>",
+            "imagePage5Url":   img2,
 
             # ── PAGE 6 — CHAPTER 3 ───────────────────────────────────────────
             "chapter3Section":   "CHAPTER 03",
@@ -794,7 +810,7 @@ OUTPUT — return this exact JSON structure, fully populated:
             "phase2Desc":      "Operationalise the framework with iterative delivery.",
             "callout4Title":   ol(3, "EXPERT ADVICE"),
             "callout4Body":    oc(3, "Always validate your assumptions against real-world performance metrics."),
-            "imagePage6Url":   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>Image Placeholder</text></svg>",
+            "imagePage6Url":   img3,
 
             # ── PAGE 7 — CHAPTER 4 ───────────────────────────────────────────
             "chapter4Section":   "CHAPTER 04",

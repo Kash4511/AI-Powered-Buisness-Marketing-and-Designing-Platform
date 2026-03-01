@@ -259,7 +259,8 @@ def _run_generation_job(job_id, body, user_id):
                 # 5.4 Map to Template Variables (Safety Layer)
                 # PDF layer must NEVER consume raw AI output. 
                 # It only consumes normalized 'ai_content'.
-                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
+                architectural_images = body.get('architectural_images', [])
+                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals, architectural_images)
                 
             except Exception as e:
                 # Mandatory Logging: Traceback on failure

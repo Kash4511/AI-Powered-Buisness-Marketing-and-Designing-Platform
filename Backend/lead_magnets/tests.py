@@ -75,7 +75,8 @@ class PDFGenerationTests(TestCase):
             'cta': {'headline': 'CTA', 'description': 'CTA Desc'}
         }
         signals = self.ai_client.get_semantic_signals(self.user_answers)
-        template_vars = self.ai_client.map_to_template_vars(ai_content, self.firm_profile, signals)
+        architectural_images = ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="]
+        template_vars = self.ai_client.map_to_template_vars(ai_content, self.firm_profile, signals, architectural_images)
         
         rendered_html = self.doc_service.render_template_with_vars('modern-guide', template_vars)
         
@@ -84,6 +85,12 @@ class PDFGenerationTests(TestCase):
         self.assertIn('Test Firm', rendered_html)
         self.assertIn('Section 1', rendered_html)
         self.assertIn('Content 1', rendered_html)
+        
+        # Check for image presence
+        self.assertIn('data:image/png;base64', rendered_html)
+        
+        # Check for font size increase
+        self.assertIn('font-size: 1.15rem;', rendered_html)
         
         # Ensure no unrendered tags
         self.assertNotIn('{{', rendered_html)
