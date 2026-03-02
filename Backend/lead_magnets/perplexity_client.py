@@ -86,49 +86,54 @@ class PerplexityClient:
             return self._build_fallback_content(signals, firm_profile)
 
     def _create_content_prompt(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
-        main_topic = signals.get('main_topic', 'Adaptive Reuse Guide')
+        main_topic = signals.get('main_topic', 'Adaptive Reuse Executive Guide')
         return f"""
-You are a senior adaptive-reuse consultant with 20+ years of experience.
-Generate a high-density, technical Executive Guide titled: "{main_topic}".
+You are a senior adaptive-reuse consultant with 20+ years of experience delivering complex retrofit, heritage, mixed-use, and commercial conversion projects.
+You are NOT writing a brochure. You are creating a pain-point-driven executive guide titled: "{main_topic}".
 
-CRITICAL REQUIREMENTS:
-1. NO FLUFF: Avoid "holistic approach", "actionable insights", "future-proofing". Use technical examples like "façade retention", "zoning overlay", "BIM integration", "MEP retrofit", "embodied carbon analysis".
-2. METRICS: Include at least 15 measurable metrics (e.g., "% CapEx reduction", "NOI uplift", "kWh/m2/year", "GWP reduction").
-3. AUDIENCE SEGMENTS (Technical Deep-Dives):
-   - Commercial Clients: Demolition vs Retrofit ROI, tax incentives, vacancy mitigation.
-   - Government Authorities: Urban regeneration, historic preservation compliance, PPP models.
-   - Architects: Structural constraints, thermal bridging in heritage envelopes, BIM-to-Field.
-   - Contractors: Site logistics in dense urban cores, hazardous material abatement, sequencing in live buildings.
-4. 6 CHAPTERS: 
-   - Chapter 1: Strategic Foundation (Economics & Vision)
-   - Chapter 2: Market & Regulatory Framework (Zoning & Policy)
-   - Chapter 3: Technical Framework (Structure & Systems)
-   - Chapter 4: Implementation Roadmap (Phase 1-5 Execution)
-   - Chapter 5: Risk & Governance (Legal & Operational Safeguards)
-   - Chapter 6: Measurable Outcomes (KPIs & Final Delivery)
+CORE RULE: STRUCTURE THE ENTIRE GUIDE AROUND THE FOLLOWING FOUR PAIN POINTS:
+1. Tech Complexity
+2. Poor Communication
+3. Approvals
+4. Long Timelines
+
+FOR EACH PAIN POINT SECTION (MANDATORY FORMAT):
+1) Define how this pain point appears specifically in adaptive-reuse projects.
+2) Explain the technical root causes.
+3) Provide 3 real-world adaptive-reuse examples.
+4) Quantify impact (timeline delays, cost overruns, RFI increase, change orders, etc.).
+5) Provide a step-by-step mitigation strategy.
+6) Provide measurable KPI improvements.
+7) Explain how this differs specifically for: Commercial Clients (ROI/NOI), Government (ESG/Carbon), Architects (Constraints/BIM), and Contractors (Risk/Sequencing).
+
+TECHNICAL REQUIREMENTS:
+- Minimum 20 measurable metrics (e.g., % CapEx reduction, NOI uplift, kWh/m2/year, RFI reduction %).
+- Minimum 15 adaptive-reuse-specific technical references (e.g., façade retention, BIM-to-Field, LiDAR, hazardous material abatement, thermal bridging).
+- NO FORBIDDEN PHRASES: Do not use "holistic approach", "strategic alignment", "actionable insights", "robust framework", "industry-leading", "transformative", "best-in-class" unless supported by measurable technical explanation.
+- Tone: Executive, data-backed, technically grounded, direct. No filler.
 
 OUTPUT — Return ONLY valid JSON:
 {{
   "title": "{main_topic}", 
-  "summary": "80-120 words of high-level strategic overview.", 
+  "summary": "80-120 words of high-level strategic overview focused on solving these 4 pain points.", 
   "outcome_statement": "Concrete value proposition (max 80 chars).",
   "key_insights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4", "Insight 5"],
   "pull_quotes": ["Expert Quote 1", "Expert Quote 2", "Expert Quote 3"],
   "stats": {{ "s1v": "Val", "s1l": "Label", "s2v": "V", "s2l": "L", "s3v": "V", "s3l": "L", "s4v": "V", "s4l": "L", "s5v": "V", "s5l": "L", "s6v": "V", "s6l": "L", "s7v": "V", "s7l": "L", "s8v": "V", "s8l": "L", "s9v": "V", "s9l": "L" }},
-  "commercial_analysis": "Technical deep-dive (150-200 words) for Commercial Clients...",
-  "government_analysis": "Technical deep-dive (150-200 words) for Government Authorities...",
-  "architect_analysis": "Technical deep-dive (150-200 words) for Architects...",
-  "contractor_analysis": "Technical deep-dive (150-200 words) for Contractors...",
-  "checklists": [ {{ "items": ["Item 1", "Item 2", "Item 3", "Item 4"] }}, {{ "items": ["I1", "I2", "I3", "I4"] }}, {{ "items": ["I1", "I2", "I3"] }} ],
-  "info_cards": [ {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }} ],
-  "callouts": [ {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }} ],
+  "commercial_analysis": "Technical deep-dive (150-200 words) on ROI/NOI impact across all 4 pain points.",
+  "government_analysis": "Technical deep-dive (150-200 words) on ESG/Carbon/Regeneration impact across all 4 pain points.",
+  "architect_analysis": "Technical deep-dive (150-200 words) on Design/Constraints/BIM impact across all 4 pain points.",
+  "contractor_analysis": "Technical deep-dive (150-200 words) on Risk/Sequencing/Liability impact across all 4 pain points.",
+  "checklists": [ {{ "items": ["Step 1", "Step 2", "Step 3", "Step 4"] }}, {{ "items": ["Metric 1", "Metric 2", "Metric 3", "Metric 4"] }}, {{ "items": ["KPI 1", "KPI 2", "KPI 3"] }} ],
+  "info_cards": [ {{ "label": "Tech Case", "content": "Desc" }}, {{ "label": "Comm Case", "content": "Desc" }}, {{ "label": "Appr Case", "content": "Desc" }}, {{ "label": "Time Case", "content": "Desc" }}, {{ "label": "ROI Metric", "content": "Desc" }}, {{ "label": "Carbon Metric", "content": "Desc" }}, {{ "label": "Risk Metric", "content": "Desc" }} ],
+  "callouts": [ {{ "label": "TECH TIP", "content": "Desc" }}, {{ "label": "COMM TIP", "content": "Desc" }}, {{ "label": "APPR TIP", "content": "Desc" }}, {{ "label": "TIME TIP", "content": "Desc" }}, {{ "label": "PRO TIP", "content": "Desc" }} ],
   "sections": [
-    {{ "title": "Strategic Foundation", "content": "700-1000 words of technical analysis..." }},
-    {{ "title": "Market & Regulatory Framework", "content": "700-1000 words of technical analysis..." }},
-    {{ "title": "Technical Framework", "content": "700-1000 words of technical analysis..." }},
-    {{ "title": "Implementation Roadmap", "content": "700-1000 words of technical analysis..." }},
-    {{ "title": "Risk & Governance", "content": "700-1000 words of technical analysis..." }},
-    {{ "title": "Measurable Outcomes", "content": "700-1000 words of technical analysis..." }}
+    {{ "title": "Executive Summary: Solving the Retrofit Crisis", "content": "700-1000 words. Strategic overview of the four pain points and the technical mandate for successful conversion." }},
+    {{ "title": "Pain Point 1: Solving Tech Complexity (BIM, LiDAR, Structural)", "content": "700-1000 words. MUST follow the mandatory section format (Define, Root Cause, 3 Examples, Impact, Mitigation, KPIs, Audience Diff)." }},
+    {{ "title": "Pain Point 2: Resolving Communication Breakdowns (OAC, RFI, Change Orders)", "content": "700-1000 words. MUST follow the mandatory section format." }},
+    {{ "title": "Pain Point 3: Accelerating Approvals (Zoning, Heritage, Compliance)", "content": "700-1000 words. MUST follow the mandatory section format." }},
+    {{ "title": "Pain Point 4: Compressing Timelines (Surprises, Logistics, Abatement)", "content": "700-1000 words. MUST follow the mandatory section format." }},
+    {{ "title": "Measurable Outcomes: The Strategic Roadmap", "content": "700-1000 words. Final technical synthesis, risk buffer recommendations, and the phased implementation roadmap." }}
   ],
   "call_to_action": {{ "headline": "Headline", "description": "Expert reasoning", "button_text": "Action" }}
 }}
@@ -244,11 +249,11 @@ OUTPUT — Return ONLY valid JSON:
                 "tocItem4": st(3), "tocSub4": sc(3)[:120] + "...",
                 "tocItem5": st(4), "tocSub5": sc(4)[:120] + "...",
                 "tocItem6": st(5), "tocSub6": sc(5)[:120] + "...",
-                "chapter1Section": "CHAPTER 01", "chapter1Eyebrow": "STRATEGIC", "chapter1Title": st(0), "chapter1Intro": sc(0)[:220], "chapter1Body1": sc(0), "dropCap1": (sc(0)[:1] or "S").upper(),
-                "chapter2Section": "CHAPTER 02", "chapter2Eyebrow": "REGULATORY", "chapter2Title": st(1), "chapter2Intro": sc(1)[:220], "chapter2Body1": sc(1), "dropCap2": (sc(1)[:1] or "O").upper(),
-                "chapter3Section": "CHAPTER 03", "chapter3Eyebrow": "TECHNICAL", "chapter3Title": st(2), "chapter3Intro": sc(2)[:220], "chapter3Body1": sc(2), "dropCap3": (sc(2)[:1] or "I").upper(),
-                "chapter4Section": "CHAPTER 04", "chapter4Eyebrow": "ROADMAP", "chapter4Title": st(3), "chapter4Intro": sc(3)[:220], "chapter4Body1": sc(3), "dropCap4": (sc(3)[:1] or "C").upper(),
-                "chapter5Section": "CHAPTER 05", "chapter5Eyebrow": "RISK", "chapter5Title": st(4), "chapter5Intro": sc(4)[:220], "chapter5Body1": sc(4), "dropCap5": (sc(4)[:1] or "A").upper(),
+                "chapter1Section": "CHAPTER 01", "chapter1Eyebrow": "EXECUTIVE", "chapter1Title": st(0), "chapter1Intro": sc(0)[:220], "chapter1Body1": sc(0), "dropCap1": (sc(0)[:1] or "S").upper(),
+                "chapter2Section": "CHAPTER 02", "chapter2Eyebrow": "TECHNOLOGY", "chapter2Title": st(1), "chapter2Intro": sc(1)[:220], "chapter2Body1": sc(1), "dropCap2": (sc(1)[:1] or "O").upper(),
+                "chapter3Section": "CHAPTER 03", "chapter3Eyebrow": "COMMUNICATION", "chapter3Title": st(2), "chapter3Intro": sc(2)[:220], "chapter3Body1": sc(2), "dropCap3": (sc(2)[:1] or "I").upper(),
+                "chapter4Section": "CHAPTER 04", "chapter4Eyebrow": "APPROVALS", "chapter4Title": st(3), "chapter4Intro": sc(3)[:220], "chapter4Body1": sc(3), "dropCap4": (sc(3)[:1] or "C").upper(),
+                "chapter5Section": "CHAPTER 05", "chapter5Eyebrow": "TIMELINES", "chapter5Title": st(4), "chapter5Intro": sc(4)[:220], "chapter5Body1": sc(4), "dropCap5": (sc(4)[:1] or "A").upper(),
                 "chapter6Section": "CHAPTER 06", "chapter6Eyebrow": "OUTCOMES", "chapter6Title": st(5), "chapter6Intro": sc(5)[:220], "chapter6Body1": sc(5), "dropCap6": (sc(5)[:1] or "M").upper(),
                 "imagePage4Url": img1, "imagePage5Url": img2, "imagePage6Url": img3,
                 "imageCaption1": "Strategic Assessment", "imageCaption2": "Market Context", "imageCaption3": "Technical Audit",
@@ -299,36 +304,54 @@ OUTPUT — Return ONLY valid JSON:
         main_topic = signals.get('main_topic', 'Adaptive Reuse').replace("REINTERPRET: ", "")
         return {
             "title": f"{main_topic} Executive Guide",
-            "summary": f"A comprehensive strategic assessment of {main_topic} opportunities, focusing on technical feasibility, regulatory compliance, and commercial ROI.",
-            "outcome_statement": "Maximize asset value through expert-led adaptive reuse strategies.",
-            "commercial_analysis": "Commercial stakeholders must evaluate the demolition vs. retrofit ROI. Key metrics include CapEx reduction through structural reuse and NOI uplift from unique heritage branding.",
-            "government_analysis": "Government authorities prioritize urban regeneration and carbon reduction. This guide addresses historic preservation compliance and Public-Private Partnership (PPP) alignment.",
-            "architect_analysis": "Architectural implementation requires a deep-dive into structural constraints, thermal bridging in heritage envelopes, and BIM-to-Field integration for legacy assets.",
-            "contractor_analysis": "Construction sequencing in live urban cores requires rigorous hazardous material abatement (asbestos/lead) and advanced site logistics for restricted heritage sites.",
+            "summary": "A data-backed strategic assessment focused on solving the four critical pain points of adaptive reuse: Tech Complexity, Communication, Approvals, and Timelines.",
+            "outcome_statement": "Maximize asset value through expert-led mitigation of retrofit risks.",
+            "commercial_analysis": "Commercial stakeholders face significant ROI risks from Tech Complexity and Timeline delays. Mitigation requires early BIM integration (reducing rework by 15%) and phased sequencing to maintain NOI during construction.",
+            "government_analysis": "Government authorities prioritize ESG and urban regeneration. Addressing the 'Approvals' pain point through parallel submission strategies can reduce urban planning cycles by up to 3 months.",
+            "architect_analysis": "Architects must navigate structural constraints and heritage envelopes. Solving 'Tech Complexity' via 3D LiDAR scanning reduces RFI escalation patterns by 22% in complex heritage conversions.",
+            "contractor_analysis": "Contractors carry the highest execution risk from 'Long Timelines' and 'Surprises'. Structured hazardous material abatement and live-building sequencing are critical for maintaining liability buffers.",
             "key_insights": [
-                "Structural integrity assessment is the first milestone in any adaptive reuse project.",
-                "Zoning overlays and heritage listings can significantly impact project timelines.",
-                "Energy efficiency retrofits can reduce operational costs by up to 40%.",
-                "Adaptive reuse typically has 15-20% lower embodied carbon than new construction.",
-                "Community engagement is critical for securing urban regeneration approvals."
+                "Early LiDAR scanning reduces structural surprises by 30%.",
+                "Structured OAC communication models decrease change-order inflation by 12%.",
+                "Parallel heritage/zoning submissions accelerate approvals by 8-12 weeks.",
+                "Phased abatement sequencing can compress overall timelines by 15%.",
+                "BIM-to-Field integration reduces onsite RFI volume by 40%."
             ],
             "pull_quotes": [
-                "The greenest building is the one that already exists.",
-                "Adaptive reuse is not just about preservation; it's about evolution.",
-                "Strategic retrofitting turns legacy liabilities into high-performance assets."
+                "Tech complexity isn't a barrier; it's a data management challenge.",
+                "The cost of poor communication in retrofit is measured in months, not days.",
+                "Approvals are accelerated by documentation precision, not just persistence."
             ],
             "sections": [
-                {"title": "Strategic Foundation", "content": "Professional analysis of the economic and vision-setting phase for adaptive reuse. This section covers market alignment and preliminary feasibility studies required to secure project funding."},
-                {"title": "Market & Regulatory Framework", "content": "Detailed overview of zoning laws, heritage preservation requirements, and the regulatory landscape that governs the transformation of legacy buildings into modern assets."},
-                {"title": "Technical Framework", "content": "In-depth look at structural engineering, MEP systems, and building envelope retrofitting. Focus on maintaining heritage character while meeting modern energy codes."},
-                {"title": "Implementation Roadmap", "content": "A 5-phase execution plan covering everything from site audit to final delivery, ensuring minimized risk and optimized construction sequencing."},
-                {"title": "Risk & Governance", "content": "Legal and operational safeguards for complex retrofits, including hazardous material handling and insurance requirements for live-building construction."},
-                {"title": "Measurable Outcomes", "content": "Final KPIs and performance metrics to evaluate the success of the adaptive reuse project, focusing on sustainability goals and financial returns."}
+                {
+                    "title": "Executive Summary: Solving the Retrofit Crisis",
+                    "content": "The adaptive reuse market is currently constrained by four primary pain points: Tech Complexity, Poor Communication, Approval bottlenecks, and unpredictable Timelines. This guide provides a technical mandate for navigating these challenges using data-backed strategies and senior-level consulting insights."
+                },
+                {
+                    "title": "Pain Point 1: Solving Tech Complexity (BIM, LiDAR, Structural)",
+                    "content": "Tech complexity in adaptive reuse stems from the delta between legacy documentation and actual site conditions. Root causes include undocumented structural modifications and thermal bridging in heritage envelopes. Examples: 1) LiDAR-to-BIM conversion for a 1920s warehouse. 2) Façade retention engineering in a dense urban core. 3) MEP modernization within restricted heritage shells. Impact: Unmanaged complexity leads to a 15-25% increase in change orders. Mitigation: Mandatory 3D scanning and structural audit prior to CD phase. KPIs: 40% reduction in onsite RFIs."
+                },
+                {
+                    "title": "Pain Point 2: Resolving Communication Breakdowns (OAC, RFI, Change Orders)",
+                    "content": "Misalignment between Owner, Architect, and Contractor (OAC) typically triggers change-order inflation. Root causes include delayed feedback loops and RFI escalation. Examples: 1) Structured feedback loop for a mixed-use conversion. 2) Live-building tenant coordination model. 3) Digital RFI tracking dashboard implementation. Impact: Poor communication adds 5-10% to total project CapEx. Mitigation: Implementation of a centralized Project Information Model (PIM). KPIs: 20% faster decision-making cycles."
+                },
+                {
+                    "title": "Pain Point 3: Accelerating Approvals (Zoning, Heritage, Compliance)",
+                    "content": "Approval delays are often caused by incomplete documentation regarding heritage preservation and change-of-use permissions. Examples: 1) Parallel zoning and environmental submission. 2) Fire and life-safety retrofit compliance strategy. 3) Heritage board negotiation for façade modifications. Impact: Approval bottlenecks can stall projects for 6-18 months. Mitigation: Early engagement with planning authorities and comprehensive code-compliance audits. KPIs: 12-week reduction in permit acquisition time."
+                },
+                {
+                    "title": "Pain Point 4: Compressing Timelines (Surprises, Logistics, Abatement)",
+                    "content": "Long timelines are driven by unknown site conditions and hazardous material surprises. Examples: 1) Asbestos abatement sequencing in a live mill. 2) Urban logistics management for a restricted heritage site. 3) Structural reinforcement surprises in a 19th-century office block. Impact: Timeline slippage reduces project IRR by 2-5 points. Mitigation: Risk-based buffer allocation and phased construction sequencing. KPIs: 15% schedule compression via early works packages."
+                },
+                {
+                    "title": "Measurable Outcomes: The Strategic Roadmap",
+                    "content": "Successful adaptive reuse requires a transition from reactive problem-solving to proactive risk management. By quantifying the impact of the four pain points and implementing technical safeguards (LiDAR, PIM, Parallel Approvals), stakeholders can achieve predictable ROI and superior asset performance."
+                }
             ],
             "call_to_action": {
-                "headline": "Ready to Transform Your Asset?",
-                "description": "Our senior consultants are ready to help you navigate the complexities of adaptive reuse.",
-                "button_text": "Schedule a Strategy Session"
+                "headline": "Ready to De-Risk Your Conversion?",
+                "description": "Our methodology turns the four pain points into competitive advantages through technical precision and strategic governance.",
+                "button_text": "Schedule a Technical Audit"
             }
         }
 
