@@ -343,31 +343,47 @@ export const dashboardApi = {
           const isRelative = pdf_url.startsWith('/') || !pdf_url.startsWith('http');
           
           if (isRelative) {
+            console.log('🔄 Initiating secure download for:', pdf_url);
             const downloadRes = await apiClient.get(pdf_url, { responseType: 'blob' });
+            
+            // Create a blob from the response data
             const blob = new Blob([downloadRes.data], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
             
+            // Trigger download using a hidden link
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `lead-magnet-${data.lead_magnet_id}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();
+            
+            // Clean up the URL object
             window.URL.revokeObjectURL(url);
+            console.log('✅ Secure download triggered');
           } else {
             // If it's an absolute URL (like Cloudinary), try direct download
+            console.log('🔄 Initiating direct download for:', pdf_url);
             const link = document.createElement('a');
             link.href = pdf_url;
             link.setAttribute('download', `lead-magnet-${data.lead_magnet_id}.pdf`);
-            link.setAttribute('target', '_blank'); // Open in new tab if download fails
+            link.setAttribute('target', '_blank'); 
             document.body.appendChild(link);
             link.click();
             link.remove();
+            console.log('✅ Direct download triggered');
           }
         } catch (downloadErr) {
-          console.error('Failed to trigger PDF download:', downloadErr);
+          console.error('❌ Secure download failed, attempting fallback:', downloadErr);
+          
           // Fallback to direct navigation if Axios download fails
-          window.open(pdf_url, '_blank');
+          // Ensure we use the full backend URL if it's a relative path
+          const fullUrl = (pdf_url.startsWith('/') || !pdf_url.startsWith('http'))
+            ? `${apiClient.defaults.baseURL}${pdf_url.startsWith('/') ? '' : '/'}${pdf_url}`
+            : pdf_url;
+            
+          console.log('🔄 Fallback redirect to:', fullUrl);
+          window.open(fullUrl, '_blank');
         }
       }
     } catch (error) {
