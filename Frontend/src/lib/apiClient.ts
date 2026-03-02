@@ -62,22 +62,20 @@ if (!apiClient.defaults.baseURL || typeof apiClient.defaults.baseURL !== 'string
   } catch {}
 }
 
-// Add request interceptor to add auth token and debug requests
+// Add request interceptor to inject JWT token
 apiClient.interceptors.request.use(
   (config) => {
-    // Log request for debugging 400 errors
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
-    }
+    const token = localStorage.getItem('access_token');
     
-    // ONLY add Authorization header if it's an API request (relative or matches baseURL)
-    const isExternal = config.url?.startsWith('http') && !config.url?.includes(config.baseURL || '');
+    // Only send Authorization header if:
+    // 1. We have a token
+    // 2. The request is to our own API (starts with /api or matches baseURL)
+    // This prevents sending our JWT to external services like Cloudinary on redirects.
+    const isRelative = config.url?.startsWith('/') || !config.url?.startsWith('http');
+    const isSameOrigin = config.url?.startsWith(apiClient.defaults.baseURL || '');
     
-    if (!isExternal) {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    if (token && (isRelative || isSameOrigin)) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     
     return config;

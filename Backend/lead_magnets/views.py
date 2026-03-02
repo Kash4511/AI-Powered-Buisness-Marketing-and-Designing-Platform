@@ -495,10 +495,14 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
         # If storage provides a URL (e.g. Cloudinary), proxy the file content.
         # This prevents 401 errors when Axios follows redirects with Authorization headers.
         if hasattr(lm.pdf_file, 'url') and (lm.pdf_file.url.startswith('http') or lm.pdf_file.url.startswith('https')):
-            logger.info(f"Proxying Cloudinary URL for LeadMagnet {lead_magnet_id}")
+            logger.info(f"Proxying Cloudinary URL for LeadMagnet {lead_magnet_id}: {lm.pdf_file.url}")
             try:
                 # Stream the file from Cloudinary to the client
-                proxy_resp = requests.get(lm.pdf_file.url, stream=True, timeout=30)
+                # Use a standard User-Agent to avoid blocks
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                proxy_resp = requests.get(lm.pdf_file.url, stream=True, timeout=30, headers=headers)
                 proxy_resp.raise_for_status()
                 
                 # Create a FileResponse from the requests response stream
@@ -510,9 +514,12 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
                 return response
             except Exception as e:
                 logger.error(f"Cloudinary proxy failed for LeadMagnet {lead_magnet_id}: {str(e)}")
-                # Fallback to direct redirect if proxying fails
-                from django.shortcuts import redirect
-                return redirect(lm.pdf_file.url)
+                # DO NOT redirect as it causes 401 leaks on frontend.
+                # Instead, return a descriptive error so we can debug.
+                return Response({
+                    'error': 'Storage access failed',
+                    'details': str(e) if settings.DEBUG else 'Failed to retrieve file from storage'
+                }, status=status.HTTP_502_BAD_GATEWAY)
 
         try:
             # Fallback: Serve via FileResponse (local storage)
