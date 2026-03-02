@@ -495,27 +495,59 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
         # If storage provides a URL (e.g. Cloudinary), proxy the file content.
         # This prevents 401 errors when Axios follows redirects with Authorization headers.
         if hasattr(lm.pdf_file, 'url') and (lm.pdf_file.url.startswith('http') or lm.pdf_file.url.startswith('https')):
-            logger.info(f"Proxying Cloudinary URL for LeadMagnet {lead_magnet_id}: {lm.pdf_file.url}")
+            cloudinary_url = lm.pdf_file.url
+            logger.info(f"Proxying Cloudinary URL for LeadMagnet {lead_magnet_id}: {cloudinary_url}")
+            
             try:
-                # Stream the file from Cloudinary to the client
-                # Use a standard User-Agent to avoid blocks
+                # 1. Standardize the URL if it's missing the .pdf extension but is clearly a PDF
+                # Cloudinary sometimes strips extensions from URLs depending on upload settings.
+                if not cloudinary_url.lower().endswith('.pdf'):
+                    # Check if we should append .pdf (only if it's an upload URL)
+                    if '/upload/' in cloudinary_url and not cloudinary_url.endswith('/'):
+                        cloudinary_url += '.pdf'
+                        logger.info(f"Appended .pdf extension to proxy URL: {cloudinary_url}")
+
+                # 2. Fetch the stream from Cloudinary
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
-                proxy_resp = requests.get(lm.pdf_file.url, stream=True, timeout=30, headers=headers)
+                
+                # Use a smaller timeout for the initial connection, longer for streaming
+                proxy_resp = requests.get(cloudinary_url, stream=True, timeout=(10, 60), headers=headers)
+                
+                # If we get a 404 with the appended extension, try the original URL
+                if proxy_resp.status_code == 404 and cloudinary_url != lm.pdf_file.url:
+                    logger.warning(f"404 with .pdf extension, retrying original URL: {lm.pdf_file.url}")
+                    proxy_resp = requests.get(lm.pdf_file.url, stream=True, timeout=(10, 60), headers=headers)
+
                 proxy_resp.raise_for_status()
                 
-                # Create a FileResponse from the requests response stream
-                response = FileResponse(proxy_resp.raw, content_type='application/pdf')
+                # 3. Stream the response back to the client
+                from django.http import StreamingHttpResponse
+                
+                # We use a generator to yield chunks from the proxy response
+                def chunk_generator():
+                    for chunk in proxy_resp.iter_content(chunk_size=8192):
+                        if chunk:
+                            yield chunk
+                
+                response = StreamingHttpResponse(
+                    chunk_generator(),
+                    content_type='application/pdf'
+                )
                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
-                # Pass through relevant headers from Cloudinary
+                
+                # Pass through relevant headers if they exist
                 if 'Content-Length' in proxy_resp.headers:
                     response['Content-Length'] = proxy_resp.headers['Content-Length']
+                
                 return response
+
             except Exception as e:
-                logger.error(f"Cloudinary proxy failed for LeadMagnet {lead_magnet_id}: {str(e)}")
-                # DO NOT redirect as it causes 401 leaks on frontend.
-                # Instead, return a descriptive error so we can debug.
+                logger.error(f"Cloudinary proxy failed for LeadMagnet {lead_magnet_id}: {str(e)}\nURL: {cloudinary_url}")
+                # Log full traceback for 502 debugging
+                logger.debug(traceback.format_exc())
+                
                 return Response({
                     'error': 'Storage access failed',
                     'details': str(e) if settings.DEBUG else 'Failed to retrieve file from storage'

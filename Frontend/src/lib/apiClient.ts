@@ -65,6 +65,11 @@ if (!apiClient.defaults.baseURL || typeof apiClient.defaults.baseURL !== 'string
 // Add request interceptor to inject JWT token
 apiClient.interceptors.request.use(
   (config) => {
+    // Log request for debugging 400/500 errors
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
+    }
+
     const token = localStorage.getItem('access_token');
     
     // Only send Authorization header if:
