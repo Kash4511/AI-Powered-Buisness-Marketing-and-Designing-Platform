@@ -40,7 +40,8 @@
             background: #a0a0a8;
             padding: 28px 20px;
             color: var(--ink);
-            font-size: 1.15rem; /* Increase base font size by ~15% */
+            font-size: 1.3rem; /* Further increased for better readability and fill */
+            line-height: 1.6;
         }
 
         .book { width: 210mm; margin: 0 auto; }
@@ -177,75 +178,76 @@
         /* ── TYPOGRAPHY ──────────────────────── */
         .ch-eyebrow {
             display: flex; align-items: center; gap: 12px;
-            margin-bottom: 10px; break-after: avoid;
+            margin-bottom: 12px; break-after: avoid;
         }
         .ch-eyebrow-label {
-            font-family: var(--fm); font-size: 8px; letter-spacing: 0.32em;
+            font-family: var(--fm); font-size: 10px; letter-spacing: 0.32em;
             text-transform: uppercase; color: var(--navy); white-space: nowrap; flex-shrink: 0;
         }
-        .ch-eyebrow-rule { flex: 1; height: 1px; background: var(--rule); }
+        .ch-eyebrow-rule { flex: 1; height: 1.5px; background: var(--rule); }
 
         .ch-h1 {
-            font-family: var(--fd); font-size: 32px; font-weight: 700;
-            color: var(--navy); line-height: 1.08; letter-spacing: -0.4px;
-            margin-bottom: 16px; break-after: avoid;
+            font-family: var(--fd); font-size: 42px; font-weight: 700;
+            color: var(--navy); line-height: 1.1; letter-spacing: -0.5px;
+            margin-bottom: 24px; break-after: avoid;
         }
 
         .sec-h {
-            font-family: var(--fd); font-size: 15px; font-weight: 700;
-            color: var(--navy); margin: 18px 0 7px; break-after: avoid;
+            font-family: var(--fd); font-size: 20px; font-weight: 700;
+            color: var(--navy); margin: 24px 0 10px; break-after: avoid;
         }
         .sec-h2 {
-            font-family: var(--fs); font-size: 10.5px; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            color: var(--navy); margin: 16px 0 6px; break-after: avoid;
+            font-family: var(--fs); font-size: 14px; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--navy); margin: 20px 0 8px; break-after: avoid;
         }
 
         .body {
-            font-family: var(--fs); font-size: 11.5px; line-height: 1.90;
-            color: var(--mid); font-weight: 300; margin-bottom: 12px;
+            font-family: var(--fs); font-size: 14.5px; line-height: 1.75;
+            color: var(--mid); font-weight: 400; margin-bottom: 18px;
+            text-align: justify;
         }
         .body-sm {
-            font-family: var(--fs); font-size: 10.5px; line-height: 1.85;
-            color: var(--mid); font-weight: 300; margin-bottom: 10px;
+            font-family: var(--fs); font-size: 13.5px; line-height: 1.7;
+            color: var(--mid); font-weight: 400; margin-bottom: 14px;
         }
 
         .drop-cap-wrap { overflow: hidden; }
         .drop-letter {
-            font-family: var(--fd); font-size: 72px; font-weight: 900;
-            color: var(--navy); float: left; line-height: 0.74;
-            margin: 9px 7px 0 0; padding-right: 2px;
+            font-family: var(--fd); font-size: 84px; font-weight: 900;
+            color: var(--navy); float: left; line-height: 0.7;
+            margin: 12px 10px 0 0; padding-right: 4px;
         }
 
-        .h-rule { height: 0.75px; background: var(--rule); margin: 16px 0; }
-        .accent-dash { width: 32px; height: 3px; background: var(--navy); margin: 12px 0 16px; }
+        .h-rule { height: 1.5px; background: var(--rule); margin: 24px 0; }
+        .accent-dash { width: 40px; height: 4px; background: var(--navy); margin: 16px 0 20px; }
 
         /* Callout blocks */
         .callout {
-            background: var(--off2); border-left: 3px solid var(--navy);
-            padding: 15px 20px; margin: 12px 0; break-inside: avoid;
+            background: var(--off2); border-left: 4px solid var(--navy);
+            padding: 20px 25px; margin: 18px 0; break-inside: avoid;
         }
         .callout-title {
-            font-family: var(--fd); font-size: 14px; font-weight: 700;
-            color: var(--navy); margin-bottom: 6px; break-after: avoid;
+            font-family: var(--fd); font-size: 18px; font-weight: 700;
+            color: var(--navy); margin-bottom: 8px; break-after: avoid;
         }
         .callout-body {
-            font-family: var(--fs); font-size: 10.5px; font-weight: 300;
-            color: var(--mid); line-height: 1.78;
+            font-family: var(--fs); font-size: 14px; font-weight: 400;
+            color: var(--mid); line-height: 1.65;
         }
 
         .callout.navy-fill { background: var(--navy); }
         .callout.navy-fill .callout-title { color: var(--white); }
-        .callout.navy-fill .callout-body { color: rgba(255,255,255,0.58); }
+        .callout.navy-fill .callout-body { color: rgba(255,255,255,0.75); }
 
         /* Bullet list */
-        .b-list { list-style: none; margin: 8px 0 12px; padding: 0; }
+        .b-list { list-style: none; margin: 12px 0 18px; padding: 0; }
         .b-list li {
-            font-family: var(--fs); font-size: 11px; font-weight: 300;
-            color: var(--mid); line-height: 1.80; padding: 5px 0 5px 20px;
-            border-bottom: 0.75px solid var(--rule); position: relative;
+            font-family: var(--fs); font-size: 14px; font-weight: 400;
+            color: var(--mid); line-height: 1.7; padding: 8px 0 8px 25px;
+            border-bottom: 1px solid var(--rule); position: relative;
         }
-        .b-list li:first-child { border-top: 0.75px solid var(--rule); }
+        .b-list li:first-child { border-top: 1px solid var(--rule); }
         .b-list li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
 
         /* Two-column */
@@ -343,6 +345,55 @@
         .bc-sub { font-family: var(--fs); font-size: 22px; font-weight: 300; color: rgba(255,255,255,0.55); position: relative; z-index: 10; }
         .bc-sub strong { font-weight: 700; color: var(--white); }
 
+        /* ── TOC / CONTENT LIST (Image 3 Style) ── */
+        .content-list {
+            margin-top: 40px;
+            position: relative;
+            padding-left: 20px;
+        }
+        .content-list::before {
+            content: '';
+            position: absolute;
+            left: 55px;
+            top: 10px;
+            bottom: 10px;
+            width: 1px;
+            background: var(--rule);
+        }
+        .content-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 40px;
+            margin-bottom: 35px;
+            position: relative;
+        }
+        .content-num {
+            font-family: var(--fm);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--navy);
+            width: 40px;
+            flex-shrink: 0;
+            background: var(--white);
+            z-index: 1;
+        }
+        .content-info {
+            flex: 1;
+        }
+        .content-title {
+            font-family: var(--fd);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+        .content-desc {
+            font-family: var(--fs);
+            font-size: 14px;
+            color: var(--grey);
+            line-height: 1.5;
+        }
+
         /* ── CTA ─────────────────────────────── */
         .cta-navy-box { background: var(--navy); padding: 20px 24px; margin: 16px 0; break-inside: avoid; }
         .cta-box-eyebrow { font-family: var(--fm); font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 8px; display: block; }
@@ -396,44 +447,59 @@
     </div>
 </div>
 
-<!-- PAGE 2 — TERMS OF USE -->
+<!-- PAGE 2 — CONTENT (Image 3 Style) -->
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">{{termsSectionLabel}}</span><span class="pg-num">{{pageNumber2}}</span></div>
+        <div class="pg-head-row"><span class="pg-label">Content</span><span class="pg-num">{{pageNumber2}}</span></div>
     </div>
-    <div class="bw">
-        <h1 class="terms-h">{{termsHeadline}}</h1>
-        <p class="terms-body">{{termsParagraph1}}</p>
-        <p class="terms-body">{{termsParagraph2}}</p>
-        <div class="terms-quote"><p>{{termsPullQuote}}</p></div>
-        <p class="terms-body">{{termsParagraph3}}</p>
-        <p class="terms-body">{{termsParagraph4}}</p>
-        <p class="terms-body">{{termsCopyright}}</p>
-    </div>
-    <div class="pg-foot">
-        <span class="pg-foot-l">{{footerText}}</span>
-        <span class="pg-foot-r">{{documentTitle}}</span>
-    </div>
-</div>
-
-<!-- PAGE 3 — TABLE OF CONTENTS -->
-<div class="page">
-    <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">{{tocSectionLabel}}</span><span class="pg-num">{{pageNumber3}}</span></div>
-    </div>
-    <div class="bw">
-        <div class="toc-big-bold">{{tocHeadlineBold}}</div>
-        <div class="toc-big-italic">{{tocHeadlineItalic}}</div>
-        <p class="toc-intro">{{tocIntro}}</p>
-
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">01</span><span class="toc-t">{{tocItem1}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber4}}</span></div><div class="toc-sub">{{tocSub1}}</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">02</span><span class="toc-t">{{tocItem2}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber5}}</span></div><div class="toc-sub">{{tocSub2}}</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">03</span><span class="toc-t">{{tocItem3}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber6}}</span></div><div class="toc-sub">{{tocSub3}}</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">04</span><span class="toc-t">{{tocItem4}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber7}}</span></div><div class="toc-sub">{{tocSub4}}</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">05</span><span class="toc-t">{{tocItem5}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber8}}</span></div><div class="toc-sub">{{tocSub5}}</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">06</span><span class="toc-t">{{tocItem6}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber9}}</span></div><div class="toc-sub">{{tocSub6}}</div></div>
+    <div class="bw" style="padding-top: 40px;">
+        <h1 style="font-family: var(--fd); font-size: 64px; font-weight: 400; color: var(--navy); margin-bottom: 50px;">Table <br> of content</h1>
+        
+        <div class="content-list">
+            <div class="content-item">
+                <div class="content-num">01</div>
+                <div class="content-info">
+                    <div class="content-title">{{tocItem1}}</div>
+                    <div class="content-desc">{{tocSub1}}</div>
+                </div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">02</div>
+                <div class="content-info">
+                    <div class="content-title">{{tocItem2}}</div>
+                    <div class="content-desc">{{tocSub2}}</div>
+                </div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">03</div>
+                <div class="content-info">
+                    <div class="content-title">{{tocItem3}}</div>
+                    <div class="content-desc">{{tocSub3}}</div>
+                </div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">04</div>
+                <div class="content-info">
+                    <div class="content-title">{{tocItem4}}</div>
+                    <div class="content-desc">{{tocSub4}}</div>
+                </div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">05</div>
+                <div class="content-info">
+                    <div class="content-title">{{tocItem5}}</div>
+                    <div class="content-desc">{{tocSub5}}</div>
+                </div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">06</div>
+                <div class="content-info">
+                    <div class="content-title">{{tocItem6}}</div>
+                    <div class="content-desc">{{tocSub6}}</div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="pg-foot">
         <span class="pg-foot-l">{{footerText}}</span>
@@ -639,7 +705,7 @@
     </div>
 </div>
 
-<!-- PAGE 8 — COMMUNITY ENGAGEMENT (full-width image + bullet list) -->
+<!-- PAGE 8 — COMMUNITY ENGAGEMENT (bullet list) -->
 <div class="page">
     <div class="pg-head">
         <div class="pg-rule1"></div><div class="pg-rule2"></div>
@@ -655,22 +721,6 @@
         </div>
 
         <p class="body">{{chapter5Body1}}</p>
-
-        <div class="img-container full-width-center">
-            <div class="img-wrapper">
-                <div class="img-ph-single" style="height:155px;">
-                    {% if imagePage8Url %}
-                        <img src="{{imagePage8Url}}" alt="{{imageCaption5}}">
-                    {% else %}
-                        <div class="img-ph-inner">
-                            <div class="img-icon"><svg width="22" height="22" stroke="var(--navy)"><use href="#cam"/></svg></div>
-                            <span class="img-label-text">{{imagePlaceholderLabel5}}</span>
-                        </div>
-                    {% endif %}
-                </div>
-                <span class="img-cap">{{imageCaption5}}</span>
-            </div>
-        </div>
 
         <div class="h-rule"></div>
         <div class="sec-h2">{{engagementMethodsTitle}}</div>
