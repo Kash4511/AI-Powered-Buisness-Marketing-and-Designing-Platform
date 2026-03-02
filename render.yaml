@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: lead-magnet-api
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python Backend/scripts/test_db_connection.py
+    startCommand: sh Backend/scripts/render_start.sh
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: django_project.settings
+      - fromContext: PORT
+    healthCheckPath: /api/ping/

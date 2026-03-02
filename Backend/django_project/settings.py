@@ -28,7 +28,14 @@ DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
     "localhost,127.0.0.1,django-msvx.onrender.com,django-six-gamma.vercel.app"
-).split(",")
+).replace(" ", "").split(",")
+
+# Allow all Render subdomains for flexibility
+ALLOWED_HOSTS.append(".onrender.com")
+
+# Ensure Render's own health-check domain is allowed if needed (though usually handled by Render)
+if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(os.getenv("RENDER_EXTERNAL_HOSTNAME"))
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -60,6 +67,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Add Whitenoise for static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -95,66 +103,57 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # -----------------------------
 # Database
 # -----------------------------
-# Configures Postgres (compatible with Supabase).
-POSTGRES_DB = os.getenv("POSTGRES_DB")
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "require")
-# Prioritize Supabase configuration over generic DATABASE_URL (which Render might set to its internal DB).
+import dj_database_url
+
 DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL") or os.getenv("SUPABASE_STRING") or os.getenv("DATABASE_URL")
 
-if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
+if DATABASE_URL:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': POSTGRES_DB,
-            'USER': POSTGRES_USER,
-            'PASSWORD': POSTGRES_PASSWORD,
-            'HOST': POSTGRES_HOST,
-            'PORT': POSTGRES_PORT,
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {
-                'sslmode': POSTGRES_SSLMODE,
-            },
-        }
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-elif DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
-    # Minimal parser for DATABASE_URL if provided
-    try:
-        from urllib.parse import urlparse, parse_qs
-        parsed = urlparse(DATABASE_URL)
-        qs = parse_qs(parsed.query)
+    # Ensure sslmode=require for Supabase
+    if 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {}
+    DATABASES['default']['OPTIONS']['sslmode'] = os.getenv("POSTGRES_SSLMODE", "require")
+else:
+    # Fallback to individual vars if DATABASE_URL is missing
+    POSTGRES_DB = os.getenv("POSTGRES_DB")
+    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+
+    if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': parsed.path.lstrip('/'),
-                'USER': parsed.username or '',
-                'PASSWORD': parsed.password or '',
-                'HOST': parsed.hostname or '',
-                'PORT': str(parsed.port or '5432'),
+                'NAME': POSTGRES_DB,
+                'USER': POSTGRES_USER,
+                'PASSWORD': POSTGRES_PASSWORD,
+                'HOST': POSTGRES_HOST,
+                'PORT': POSTGRES_PORT,
                 'CONN_MAX_AGE': 600,
                 'OPTIONS': {
-                    'sslmode': (qs.get('sslmode', ['require'])[0]),
+                    'sslmode': os.getenv("POSTGRES_SSLMODE", "require"),
                 },
             }
         }
-    except Exception as e:
-        print(f"❌ Error parsing DATABASE_URL: {e}")
-        raise e
-else:
-    print("❌ No PostgreSQL configuration found. Supabase connection required.")
-    if DEBUG:
-        print("⚠️ Falling back to SQLite for local development DEBUG mode only.")
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
-        }
     else:
-        raise Exception("PostgreSQL environment variables are missing. Database connection is required for production.")
+        print("❌ No PostgreSQL configuration found. Supabase connection required.")
+        if DEBUG:
+            print("⚠️ Falling back to SQLite for local development DEBUG mode only.")
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': BASE_DIR / 'db.sqlite3',
+                }
+            }
+        else:
+            raise Exception("PostgreSQL environment variables are missing. Database connection is required for production.")
 
 default_db = DATABASES.get('default', {})
 print(f"🔌 DB backend: {default_db.get('ENGINE', '')}")
@@ -187,6 +186,17 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Enable WhiteNoise's Gzip compression of static assets.
+# See: https://whitenoise.readthedocs.io/en/stable/django.html#infinitely-cacheable-assets-and-compression
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -198,7 +208,6 @@ CLOUDINARY_STORAGE = {
     'API_KEY': os.getenv("CLOUDINARY_API_KEY"),
     'API_SECRET': os.getenv("CLOUDINARY_API_SECRET"),
 }
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 # -----------------------------
 # Authentication
