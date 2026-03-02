@@ -355,10 +355,33 @@ def _run_generation_job(job_id, body, user_id):
             pdf_data = result.get('pdf_data')
             filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
             
-            # Save to model
-            lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
-            lead_magnet.status = 'completed'
-            lead_magnet.save(update_fields=['status'])
+            # Save to model via Cloudinary with explicit resource_type="raw"
+            # We use the ContentFile to stream the PDF data directly.
+            try:
+                import cloudinary.uploader
+                
+                # Cloudinary uploader needs the actual bytes for the 'file' parameter
+                # We also explicitly set resource_type="raw" to ensure PDF is not treated as image
+                upload_result = cloudinary.uploader.upload(
+                    pdf_data,
+                    resource_type="raw",
+                    folder="lead_magnets",
+                    public_id=f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}"
+                )
+                
+                # Save the Cloudinary reference to our model
+                # Note: CloudinaryField expects the public_id
+                public_id = upload_result.get('public_id')
+                lead_magnet.pdf_file = public_id
+                lead_magnet.status = 'completed'
+                lead_magnet.save(update_fields=['pdf_file', 'status'])
+                
+                logger.info(f"✅ Cloudinary Raw Upload Success: {public_id}")
+            except Exception as upload_err:
+                logger.error(f"⚠️ Cloudinary Raw Upload Failed, falling back to default: {upload_err}")
+                lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
+                lead_magnet.status = 'completed'
+                lead_magnet.save(update_fields=['status'])
             
             logger.info(f"✅ PDF Generation Success | Duration: {pdf_duration:.2f}s")
             

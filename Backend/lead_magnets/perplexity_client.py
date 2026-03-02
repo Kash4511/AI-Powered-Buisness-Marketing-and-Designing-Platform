@@ -132,7 +132,7 @@ class PerplexityClient:
                     logger.warning(f"JSON Decode Error (Attempt {'Retry' if is_retry else '1'}): {str(e)}\nRaw snippet: {raw[:100]}...")
                     return None, raw
             except Exception as e:
-                logger.error(f"AI Generation Attempt Exception: {str(exc)}\n{traceback.format_exc()}")
+                logger.error(f"AI Generation Attempt Exception: {str(e)}\n{traceback.format_exc()}")
                 return None, None
 
         # First Attempt
@@ -407,7 +407,7 @@ OUTPUT — Return ONLY valid JSON:
             return {"mainTitle": "Expert Guide"}
 
     def _build_fallback_content(self, signals: Dict[str, Any], fp: Dict[str, Any]) -> Dict[str, Any]:
-        main_topic = signals.get('main_topic', 'Adaptive Reuse').replace("REINTERPRET: ", "")
+        main_topic = signals.get('main_topic', 'Adaptive Reuse').replace("REINTERPRET & EXPAND: ", "")
         return {
             "title": f"{main_topic} Institutional Advisory Report",
             "summary": "This institutional strategic assessment provides a data-backed technical mandate for navigating the complexities of large-scale adaptive reuse. Focusing on Technical Complexity, Institutional Communication, Regulatory Acceleration, and Timeline Compression, the report details elite intervention models—including 3D LiDAR-to-BIM scanning, Project Information Models (PIM), and parallel heritage/zoning submission strategies. Prepared for institutional asset managers and municipal authorities, it provides the necessary technical and financial framework for achieving predictable project IRR and superior ESG performance in complex urban retrofits.",
