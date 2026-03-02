@@ -166,8 +166,12 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
                 elif key in ['firm_website', 'primary_brand_color', 'secondary_brand_color', 
                            'phone_number', 'location', 'branding_guidelines']:
                     data[key] = ""
-                # Required fields should not be sent as empty strings if we want to avoid validation errors
-                # But if they are sent as empty, we let the serializer handle the "This field is required" error.
+            
+            # Special handling for URLField (firm_website)
+            if key == 'firm_website' and data[key] and isinstance(data[key], str):
+                url = data[key].strip().lower()
+                if url and not url.startswith(('http://', 'https://')):
+                    data[key] = f"https://{url}"
         
         # 3. Handle logo/image fields specifically if they are strings (URLs)
         for key in ['logo', 'preferred_cover_image']:

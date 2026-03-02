@@ -121,17 +121,27 @@ const BrandAssets: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
+    const validatedData = { ...formData };
+    
+    // Ensure firm_website has protocol if provided
+    if (validatedData.firm_website && typeof validatedData.firm_website === 'string') {
+      const url = validatedData.firm_website.trim();
+      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        validatedData.firm_website = `https://${url}`;
+      }
+    }
+
+    if (!validateForm(validatedData)) {
       return;
     }
     setSaving(true)
     try {
-      await dashboardApi.updateFirmProfile(formData)
+      await dashboardApi.updateFirmProfile(validatedData)
       setHasExistingAssets(true)
       updateBrandColors({
-        primaryColor: formData.primary_brand_color || '#2a5766',
-        secondaryColor: formData.secondary_brand_color || '#ffffff',
-        fontStyle: formData.preferred_font_style || 'no-preference'
+        primaryColor: validatedData.primary_brand_color || '#2a5766',
+        secondaryColor: validatedData.secondary_brand_color || '#ffffff', 
+        fontStyle: validatedData.preferred_font_style || 'no-preference'
       })
       setShowConfirmation(true);
     } catch (err) {
@@ -141,37 +151,56 @@ const BrandAssets: React.FC = () => {
     }
   }
 
-  const validateForm = (): boolean => {
+  const validateForm = (data: Partial<FirmProfile> = formData): boolean => {
     const errors: string[] = [];
     const hex = /^#([A-Fa-f0-9]{6})$/;
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.firm_name) errors.push('Firm name is required');
-    if (!formData.work_email) {
+    // URL regex that expects a protocol
+    const urlRe = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+
+    if (!data.firm_name) errors.push('Firm name is required');
+    if (!data.work_email) {
       errors.push('Work email is required');
-    } else if (!emailRe.test(String(formData.work_email).trim())) {
+    } else if (!emailRe.test(String(data.work_email).trim())) {
       errors.push('Work email must be a valid email address');
     }
+    
+    if (data.firm_website && !urlRe.test(String(data.firm_website).trim())) {
+      errors.push('Firm website must be a valid URL');
+    }
+
     // phone_number is optional in the model, so we'll make it optional here too
-    if (formData.phone_number && formData.phone_number.length > 20) {
+    if (data.phone_number && data.phone_number.length > 20) {
       errors.push('Phone number is too long');
     }
-    if (!formData.primary_brand_color || !hex.test(formData.primary_brand_color)) errors.push('Primary color must be a valid hex like #2a5766');
-    if (!formData.secondary_brand_color || !hex.test(formData.secondary_brand_color)) errors.push('Secondary color must be a valid hex like #ffffff');
+    
+    if (!data.primary_brand_color || !hex.test(data.primary_brand_color)) errors.push('Primary color must be a valid hex like #2a5766');
+    if (!data.secondary_brand_color || !hex.test(data.secondary_brand_color)) errors.push('Secondary color must be a valid hex like #ffffff');
     setFormErrors(errors);
     return errors.length === 0;
   };
 
   const handleSaveAndContinue = async () => {
-    if (!validateForm()) {
+    const validatedData = { ...formData };
+    
+    // Ensure firm_website has protocol if provided
+    if (validatedData.firm_website && typeof validatedData.firm_website === 'string') {
+      const url = validatedData.firm_website.trim();
+      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        validatedData.firm_website = `https://${url}`;
+      }
+    }
+
+    if (!validateForm(validatedData)) {
       return;
     }
     try {
       // Save profile first
-      await dashboardApi.updateFirmProfile(formData);
+      await dashboardApi.updateFirmProfile(validatedData);
       updateBrandColors({
-        primaryColor: formData.primary_brand_color || '#2a5766',
-        secondaryColor: formData.secondary_brand_color || '#ffffff',
-        fontStyle: formData.preferred_font_style || 'no-preference'
+        primaryColor: validatedData.primary_brand_color || '#2a5766',
+        secondaryColor: validatedData.secondary_brand_color || '#ffffff',
+        fontStyle: validatedData.preferred_font_style || 'no-preference'
       });
       // Continue to Create Lead Magnet without showing preview here
       navigate('/create-lead-magnet');
