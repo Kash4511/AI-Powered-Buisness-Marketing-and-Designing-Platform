@@ -146,19 +146,22 @@ OUTPUT — Return ONLY valid JSON:
         out: Dict[str, Any] = {
             "title": "", "summary": "", "outcome_statement": "",
             "key_insights": [], "pull_quotes": [], "stats": {},
-            "commercial_analysis": "", "government_analysis": "", "architect_analysis": "", "contractor_analysis": "",
+            "commercial_analysis": "Strategic assessment for commercial stakeholders.", 
+            "government_analysis": "Regulatory and urban impact assessment for government authorities.", 
+            "architect_analysis": "Technical and structural considerations for architectural implementation.", 
+            "contractor_analysis": "Logistical and construction sequencing for contractors.",
             "checklists": [], "info_cards": [], "callouts": [], "sections": [],
-            "call_to_action": {"headline": "", "description": "", "button_text": ""},
+            "call_to_action": {"headline": "Start Your Project", "description": "Ready to move forward?", "button_text": "Connect Now"},
         }
         if not isinstance(raw, dict): return out
-        def ct(v: Any) -> str: return str(v).strip() if v else ""
+        def ct(v: Any, fb="") -> str: return str(v).strip() if v else fb
         out["title"] = ct(raw.get("title"))
         out["summary"] = ct(raw.get("summary"))
         out["outcome_statement"] = ct(raw.get("outcome_statement"))
-        out["commercial_analysis"] = ct(raw.get("commercial_analysis"))
-        out["government_analysis"] = ct(raw.get("government_analysis"))
-        out["architect_analysis"] = ct(raw.get("architect_analysis"))
-        out["contractor_analysis"] = ct(raw.get("contractor_analysis"))
+        out["commercial_analysis"] = ct(raw.get("commercial_analysis"), out["commercial_analysis"])
+        out["government_analysis"] = ct(raw.get("government_analysis"), out["government_analysis"])
+        out["architect_analysis"] = ct(raw.get("architect_analysis"), out["architect_analysis"])
+        out["contractor_analysis"] = ct(raw.get("contractor_analysis"), out["contractor_analysis"])
         out["key_insights"] = [ct(ki) for ki in raw.get("key_insights", []) if ki]
         out["pull_quotes"] = [ct(q) for q in raw.get("pull_quotes", []) if q]
         out["stats"] = {k: ct(v) for k, v in raw.get("stats", {}).items()}
@@ -171,7 +174,7 @@ OUTPUT — Return ONLY valid JSON:
         for item in raw.get("sections", []):
             if isinstance(item, dict): out["sections"].append({"title": ct(item.get("title")), "content": ct(item.get("content"))})
         cta = raw.get("call_to_action", {})
-        if isinstance(cta, dict): out["call_to_action"] = {k: ct(cta.get(k)) for k in ["headline", "description", "button_text"]}
+        if isinstance(cta, dict): out["call_to_action"] = {k: ct(cta.get(k), out["call_to_action"].get(k)) for k in ["headline", "description", "button_text"]}
         return out
 
     def map_to_template_vars(self, ai_content: Dict[str, Any], firm_profile: Optional[Dict[str, Any]] = None,
@@ -200,6 +203,9 @@ OUTPUT — Return ONLY valid JSON:
             def cc(i, fb=""): return str(cards[i].get("content") if i < len(cards) else fb)
             def ol(i, fb=""): return str(callouts[i].get("label") if i < len(callouts) else fb)
             def oc(i, fb=""): return str(callouts[i].get("content") if i < len(callouts) else fb)
+            def chk(i, j, fb=""): 
+                try: return str(ai_content.get("checklists", [])[i].get("items", [])[j])
+                except: return fb
             
             main_title = str(ai_content.get("title") or f"{ua.get('main_topic','Adaptive Reuse')} Guide").strip()
             hl_parts = main_title.split(":", 1)
@@ -220,8 +226,12 @@ OUTPUT — Return ONLY valid JSON:
                 "governmentAnalysis": ai_content.get("government_analysis", ""),
                 "architectAnalysis": ai_content.get("architect_analysis", ""),
                 "contractorAnalysis": ai_content.get("contractor_analysis", ""),
-                "coverSeriesLabel": "EXECUTIVE SERIES", "coverEyebrow": "STRATEGIC ANALYSIS",
-                "coverHeadlineLine1": hl1, "coverHeadlineLine2": hl2, "coverHeadlineLine3": company,
+                "coverBrand": company.upper(),
+                "coverAudience": "STRATEGIC ANALYSIS",
+                "coverTitleBold": hl1.upper(),
+                "coverTitleItalic": hl2,
+                "coverFooterLeft": f"© {year} {company}",
+                "coverFooterRight": "EXECUTIVE SERIES",
                 "coverTagline": ai_content.get("outcome_statement","")[:80],
                 "stat1Value": "100%", "stat1Label": "PROFESSIONAL", "stat2Value": "AI", "stat2Label": "OPTIMISED", "stat3Value": year, "stat3Label": "EDITION",
                 "sectionTitle1": "Introduction", "pageNumber2": "2", "termsHeadline": f"{hl1}: {hl2}", "termsParagraph1": ai_content.get("summary",""),
@@ -242,12 +252,42 @@ OUTPUT — Return ONLY valid JSON:
                 "chapter6Section": "CHAPTER 06", "chapter6Eyebrow": "OUTCOMES", "chapter6Title": st(5), "chapter6Intro": sc(5)[:220], "chapter6Body1": sc(5), "dropCap6": (sc(5)[:1] or "M").upper(),
                 "imagePage4Url": img1, "imagePage5Url": img2, "imagePage6Url": img3,
                 "imageCaption1": "Strategic Assessment", "imageCaption2": "Market Context", "imageCaption3": "Technical Audit",
-                "callout1Title": ol(0, "KEY TAKEAWAY"), "callout1Body": oc(0, "Execution beats strategy."),
+                "callout1Title": ol(0, "STRATEGIC VISION"), "callout1Body": oc(0, "Adaptive reuse is the most sustainable form of urban regeneration."),
+                "callout2Title": ol(1, "REGULATORY EDGE"), "callout2Body": oc(1, "Zoning overlays can be unlocked with the right technical data."),
+                "callout3Title": ol(2, "TECHNICAL FEASIBILITY"), "callout3Body": oc(2, "Structural integrity determines the ceiling for asset transformation."),
+                "callout4Title": ol(3, "IMPLEMENTATION FOCUS"), "callout4Body": oc(3, "Phasing ensures minimal operational disruption during retrofit."),
+                "callout5Title": ol(4, "RISK MITIGATION"), "callout5Body": oc(4, "Hazardous material abatement is a prerequisite for project success."),
+                "tradeoffsTitle": "Market Trade-offs",
+                "tradeoff1Term": cl(0, "CapEx"), "tradeoff1Desc": cc(0, "Balancing structural reuse with modern system integration."),
+                "tradeoff2Term": cl(1, "Heritage"), "tradeoff2Desc": cc(1, "Preserving character vs. achieving high-performance envelopes."),
+                "tradeoff3Term": cl(2, "Carbon"), "tradeoff3Desc": cc(2, "Embodied carbon savings vs. operational energy demands."),
+                "tradeoff4Term": cl(3, "Zoning"), "tradeoff4Desc": cc(3, "Existing use rights vs. proposed functional shifts."),
+                "tradeoff5Term": cl(4, "Speed"), "tradeoff5Desc": cc(4, "Retrofit timelines vs. new build lead times."),
+                "phase1Title": cl(5, "Audit & Assessment"), "phase1Desc": cc(5, "Detailed structural and hazardous material audits."),
+                "phase2Title": cl(6, "Concept & Feasibility"), "phase2Desc": cc(6, "Aligning commercial goals with technical constraints."),
+                "caseStudy1Title": "Metropolitan Retrofit", "caseStudy1Desc": "Transformation of a 1920s warehouse into Grade-A office space.", "caseStudy1Result": "40% faster speed-to-market.",
+                "caseStudy2Title": "Urban Heritage Hub", "caseStudy2Desc": "Adaptive reuse of a heritage textile mill for mixed-use retail.", "caseStudy2Result": "25% lower CapEx per sq ft.",
+                "engagementMethodsTitle": "Strategic Methodology",
+                "method1Phase": "Audit", "method1Desc": chk(0, 0, "Structural integrity review."),
+                "method2Phase": "Design", "method2Desc": chk(0, 1, "Heritage-compliant BIM modeling."),
+                "method3Phase": "Abatement", "method3Desc": chk(1, 0, "Lead and asbestos remediation."),
+                "method4Phase": "Systems", "method4Desc": chk(1, 1, "High-efficiency MEP integration."),
+                "method5Phase": "Delivery", "method5Desc": chk(2, 0, "Final certification and tenant handover."),
+                "ctaIntro1": "The transition from legacy asset to high-performance building requires technical precision and strategic vision.",
+                "ctaIntro2": "Our adaptive reuse methodology ensures that every project meets commercial ROI, regulatory requirements, and sustainability goals.",
+                "ctaEyebrow": "NEXT STEPS",
+                "contactLabel1": "EMAIL", "contactValue1": email,
+                "contactLabel2": "PHONE", "contactValue2": phone,
+                "contactLabel3": "WEBSITE", "contactValue3": website.replace("https://","").replace("http://",""),
                 "stat1v": sv("s1v", "85%"), "stat1l": sv("s1l", "Alignment"),
                 "stat2v": sv("s2v", "2.4x"), "stat2l": sv("s2l", "Efficiency"),
                 "ctaTitle": (ai_content.get("call_to_action") or {}).get("headline") or "Start Your Journey",
                 "ctaBody": (ai_content.get("call_to_action") or {}).get("description") or "Ready to begin?",
                 "ctaButtonText": (ai_content.get("call_to_action") or {}).get("button_text") or "Connect Now",
+                "backCoverBrand": company.upper(),
+                "backCoverTitle": main_title.upper(),
+                "backCoverSub": "EXECUTIVE STRATEGY SERIES",
+                "backCoverYear": year,
                 "pageNumber4": "4", "pageNumber5": "5", "pageNumber6": "6", "pageNumber7": "7", "pageNumber8": "8", "pageNumber9": "9"
             }
             return v
@@ -256,7 +296,41 @@ OUTPUT — Return ONLY valid JSON:
             return {"mainTitle": "Expert Guide"}
 
     def _build_fallback_content(self, signals: Dict[str, Any], fp: Dict[str, Any]) -> Dict[str, Any]:
-        return {"title": "Adaptive Reuse Guide", "summary": "Strategic overview.", "sections": [{"title": "Foundation", "content": "Professional analysis..."}]}
+        main_topic = signals.get('main_topic', 'Adaptive Reuse').replace("REINTERPRET: ", "")
+        return {
+            "title": f"{main_topic} Executive Guide",
+            "summary": f"A comprehensive strategic assessment of {main_topic} opportunities, focusing on technical feasibility, regulatory compliance, and commercial ROI.",
+            "outcome_statement": "Maximize asset value through expert-led adaptive reuse strategies.",
+            "commercial_analysis": "Commercial stakeholders must evaluate the demolition vs. retrofit ROI. Key metrics include CapEx reduction through structural reuse and NOI uplift from unique heritage branding.",
+            "government_analysis": "Government authorities prioritize urban regeneration and carbon reduction. This guide addresses historic preservation compliance and Public-Private Partnership (PPP) alignment.",
+            "architect_analysis": "Architectural implementation requires a deep-dive into structural constraints, thermal bridging in heritage envelopes, and BIM-to-Field integration for legacy assets.",
+            "contractor_analysis": "Construction sequencing in live urban cores requires rigorous hazardous material abatement (asbestos/lead) and advanced site logistics for restricted heritage sites.",
+            "key_insights": [
+                "Structural integrity assessment is the first milestone in any adaptive reuse project.",
+                "Zoning overlays and heritage listings can significantly impact project timelines.",
+                "Energy efficiency retrofits can reduce operational costs by up to 40%.",
+                "Adaptive reuse typically has 15-20% lower embodied carbon than new construction.",
+                "Community engagement is critical for securing urban regeneration approvals."
+            ],
+            "pull_quotes": [
+                "The greenest building is the one that already exists.",
+                "Adaptive reuse is not just about preservation; it's about evolution.",
+                "Strategic retrofitting turns legacy liabilities into high-performance assets."
+            ],
+            "sections": [
+                {"title": "Strategic Foundation", "content": "Professional analysis of the economic and vision-setting phase for adaptive reuse. This section covers market alignment and preliminary feasibility studies required to secure project funding."},
+                {"title": "Market & Regulatory Framework", "content": "Detailed overview of zoning laws, heritage preservation requirements, and the regulatory landscape that governs the transformation of legacy buildings into modern assets."},
+                {"title": "Technical Framework", "content": "In-depth look at structural engineering, MEP systems, and building envelope retrofitting. Focus on maintaining heritage character while meeting modern energy codes."},
+                {"title": "Implementation Roadmap", "content": "A 5-phase execution plan covering everything from site audit to final delivery, ensuring minimized risk and optimized construction sequencing."},
+                {"title": "Risk & Governance", "content": "Legal and operational safeguards for complex retrofits, including hazardous material handling and insurance requirements for live-building construction."},
+                {"title": "Measurable Outcomes", "content": "Final KPIs and performance metrics to evaluate the success of the adaptive reuse project, focusing on sustainability goals and financial returns."}
+            ],
+            "call_to_action": {
+                "headline": "Ready to Transform Your Asset?",
+                "description": "Our senior consultants are ready to help you navigate the complexities of adaptive reuse.",
+                "button_text": "Schedule a Strategy Session"
+            }
+        }
 
     def ensure_section_content(self, sections: List[Dict[str, str]], signals: Dict[str, str], firm_profile: Dict[str, Any]) -> List[Dict[str, str]]:
         while len(sections) < 6: sections.append({"title": f"Strategic Focus {len(sections)+1}", "content": ""})
