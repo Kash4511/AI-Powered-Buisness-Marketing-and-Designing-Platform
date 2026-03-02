@@ -153,95 +153,171 @@ class PerplexityClient:
         self, signals: Dict[str, str], firm_profile: Dict[str, Any]
     ) -> str:
         """
-        Engineered to return every data structure the template needs.
-        10 sections × ~180 words ≈ 1 800 words body.
-        Supporting arrays ≈ 600 tokens.  Total budget ≤ 4 000 tokens.
+        Engineered for high-density, specialized professional content.
+        Uses a 'Deep Topic Immersion' framework to ensure expert-level output.
         """
+        lead_magnet_type = signals.get('lead_magnet_type', 'Expert Report')
+        main_topic = signals.get('main_topic', 'Professional Strategy')
+        target_audience = signals.get('target_audience', 'Industry Leaders')
+        pain_points = signals.get('audience_pain_points', 'Efficiency and Growth')
+        desired_outcome = signals.get('desired_outcome', 'INFER_FROM_CONTEXT')
+        special_requests = signals.get('special_requests', 'None')
+
         return f"""
-You are a senior expert content strategist. Generate a COMPLETE professional Lead Magnet.
+You are a senior industry expert writing a deeply specialized professional PDF.
 
-RULES:
-1. INFER_FROM_CONTEXT signals → synthesise from Topic + Audience.
-2. REINTERPRET: [text] signals → professionalize and expand, never copy verbatim.
-3. NEVER output empty strings, placeholders, or "…" filler.
-4. Output ONLY valid JSON. No markdown. No commentary.
-5. Every "content" field MUST be 150-220 words of full professional paragraphs.
-6. You MUST produce ALL 10 sections — do not stop early.
+INPUT:
+- Main Topic: {main_topic}
+- Lead Magnet Type: {lead_magnet_type}
+- Target Audience: {target_audience}
+- Audience Pain Points: {pain_points}
+- Desired Outcome: {desired_outcome}
+- Special Requests: {special_requests}
 
-SIGNALS:
-  Lead Magnet Type : {signals.get('lead_magnet_type', 'Expert Report')}
-  Main Topic       : {signals.get('main_topic',        'Professional Strategy')}
-  Target Audience  : {signals.get('target_audience',   'Industry Leaders')}
-  Pain Points      : {signals.get('audience_pain_points','Efficiency and Growth')}
-  Desired Outcome  : {signals.get('desired_outcome',   'INFER_FROM_CONTEXT')}
-  Call to Action   : {signals.get('call_to_action',    'INFER_FROM_CONTEXT')}
-  Firm             : {firm_profile.get('firm_name',    'Expert Firm')}
+CRITICAL INSTRUCTIONS:
 
-OUTPUT — return this exact JSON structure, fully populated:
+1. FULL TOPIC IMMERSION
+Before writing, internally analyze:
+- What this topic actually means in practice.
+- Real-world systems, technologies, frameworks, regulations, workflows, tools, and methodologies associated with it.
+- Industry-specific terminology used by experts.
+- Current trends and practical implementation realities.
+
+Do NOT write generic corporate language.
+Do NOT write reusable filler paragraphs.
+Do NOT repeat sentence structures across chapters.
+
+2. AUDIENCE-SPECIFIC DEPTH
+For each target audience group:
+- Address how this topic impacts them specifically.
+- Use language appropriate to their expertise level.
+- Provide context they actually deal with.
+- Tie solutions directly to their listed pain points.
+
+3. PAIN-POINT SOLVING STRUCTURE
+For every pain point:
+- Explain why it occurs in this specific topic.
+- Provide concrete, realistic solutions.
+- Mention tools, systems, processes, or frameworks when relevant.
+- Avoid vague phrases like “align objectives” or “ensure excellence”.
+
+4. TECHNICAL AND PRACTICAL DETAIL REQUIREMENT
+Each chapter must include:
+- Specific mechanisms (how it works)
+- Implementation steps (how to execute)
+- Operational considerations
+- Risk factors
+- Measurement metrics or KPIs
+
+If the topic is technical, include technical detail.
+If strategic, include frameworks and models.
+If creative, include process and execution specifics.
+
+5. NO GENERIC CONSULTING LANGUAGE
+Forbidden phrases:
+- “critical junction”
+- “align core objectives”
+- “drive excellence”
+- “transform vision into reality”
+- “robust framework” (unless defined concretely)
+
+6. DIFFERENTIATE CHAPTERS
+Each chapter must:
+- Focus on a distinct dimension of the topic.
+- Not reuse the same paragraph pattern.
+- Introduce new information.
+- Deepen understanding progressively.
+
+7. REALISTIC OUTCOMES
+When discussing results:
+- Use believable performance metrics.
+- Reference measurable improvements.
+- Avoid unrealistic percentages unless logically justified.
+
+8. CONTENT DENSITY
+- Minimum 700–1000 words per major chapter/section.
+- No short filler paragraphs.
+- No single-sentence sections.
+- Maintain professional flow.
+
+9. NATURAL EXPERT TONE
+Write like:
+- A subject-matter expert
+- Not a motivational speaker
+- Not a marketing copywriter
+
+10. FINAL VALIDATION CHECK (IMPORTANT)
+Before finalizing:
+- Replace the topic name with another random topic mentally.
+- If the document still works unchanged → rewrite to increase specificity.
+- Ensure it would NOT make sense if topic was swapped.
+- Include at least 5 topic-specific terms per chapter that would only be used by professionals in this field.
+
+OUTPUT — Return ONLY valid JSON in this exact structure:
 {{
   "title": "Compelling professional title",
-  "summary": "Executive summary 60-80 words",
+  "summary": "Executive summary 80-120 words",
   "outcome_statement": "Concrete value proposition (one sentence)",
   "key_insights": [
-    "Insight 1 — one strong sentence",
+    "Insight 1 — specific technical/strategic observation",
     "Insight 2",
     "Insight 3",
     "Insight 4",
     "Insight 5"
   ],
   "pull_quotes": [
-    "Memorable quote 1 (15-25 words)",
-    "Memorable quote 2 (15-25 words)",
-    "Memorable quote 3 (15-25 words)"
+    "Expert quote 1 (20-30 words)",
+    "Expert quote 2 (20-30 words)",
+    "Expert quote 3 (20-30 words)"
   ],
   "stats": {{
-    "s1v": "85%",  "s1l": "stat label 1",
-    "s2v": "2.4x", "s2l": "stat label 2",
-    "s3v": "10k+", "s3l": "stat label 3",
-    "s4v": "3x",   "s4l": "stat label 4",
-    "s5v": "67%",  "s5l": "stat label 5",
-    "s6v": "92%",  "s6l": "stat label 6",
-    "s7v": "40%",  "s7l": "stat label 7",
-    "s8v": "5x",   "s8l": "stat label 8",
-    "s9v": "98%",  "s9l": "stat label 9"
+    "s1v": "Value", "s1l": "Specific metric label",
+    "s2v": "Value", "s2l": "Specific metric label",
+    "s3v": "Value", "s3l": "Specific metric label",
+    "s4v": "Value", "s4l": "Specific metric label",
+    "s5v": "Value", "s5l": "Specific metric label",
+    "s6v": "Value", "s6l": "Specific metric label",
+    "s7v": "Value", "s7l": "Specific metric label",
+    "s8v": "Value", "s8l": "Specific metric label",
+    "s9v": "Value", "s9l": "Specific metric label"
   }},
   "checklists": [
-    {{ "items": ["Action 1", "Action 2", "Action 3", "Action 4"] }},
-    {{ "items": ["Step 1",   "Step 2",   "Step 3",   "Step 4"  ] }},
-    {{ "items": ["Result 1", "Result 2", "Result 3"            ] }}
+    {{ "items": ["Technical step 1", "Technical step 2", "Technical step 3", "Technical step 4"] }},
+    {{ "items": ["Process step 1", "Process step 2", "Process step 3", "Process step 4"] }},
+    {{ "items": ["KPI 1", "KPI 2", "KPI 3"] }}
   ],
   "info_cards": [
-    {{ "label": "CARD LABEL 1", "content": "2-3 sentence professional insight." }},
-    {{ "label": "CARD LABEL 2", "content": "2-3 sentence professional insight." }},
-    {{ "label": "CARD LABEL 3", "content": "2-3 sentence professional insight." }},
-    {{ "label": "CARD LABEL 4", "content": "2-3 sentence professional insight." }},
-    {{ "label": "CARD LABEL 5", "content": "2-3 sentence professional insight." }},
-    {{ "label": "CARD LABEL 6", "content": "2-3 sentence professional insight." }},
-    {{ "label": "CARD LABEL 7", "content": "2-3 sentence professional insight." }}
+    {{ "label": "TECHNICAL FOCUS 1", "content": "3-4 sentence deep technical/strategic insight." }},
+    {{ "label": "TECHNICAL FOCUS 2", "content": "3-4 sentence deep technical/strategic insight." }},
+    {{ "label": "TECHNICAL FOCUS 3", "content": "3-4 sentence deep technical/strategic insight." }},
+    {{ "label": "TECHNICAL FOCUS 4", "content": "3-4 sentence deep technical/strategic insight." }},
+    {{ "label": "TECHNICAL FOCUS 5", "content": "3-4 sentence deep technical/strategic insight." }},
+    {{ "label": "TECHNICAL FOCUS 6", "content": "3-4 sentence deep technical/strategic insight." }},
+    {{ "label": "TECHNICAL FOCUS 7", "content": "3-4 sentence deep technical/strategic insight." }}
   ],
   "callouts": [
-    {{ "label": "KEY TAKEAWAY",  "content": "One powerful actionable sentence." }},
-    {{ "label": "PRO TIP",       "content": "One powerful actionable sentence." }},
-    {{ "label": "EXPERT NOTE",   "content": "One powerful actionable sentence." }},
-    {{ "label": "INSIGHT",       "content": "One powerful actionable sentence." }},
-    {{ "label": "CRITICAL POINT","content": "One powerful actionable sentence." }}
+    {{ "label": "IMPLEMENTATION NOTE", "content": "Highly specific actionable advice." }},
+    {{ "label": "RISK MITIGATION", "content": "Highly specific actionable advice." }},
+    {{ "label": "OPERATIONAL KPI", "content": "Highly specific actionable advice." }},
+    {{ "label": "REGULATORY NOTE", "content": "Highly specific actionable advice." }},
+    {{ "label": "EXPERT FRAMEWORK", "content": "Highly specific actionable advice." }}
   ],
   "sections": [
-    {{ "title": "Section 1 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 2 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 3 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 4 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 5 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 6 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 7 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 8 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 9 Title",  "content": "150-220 word professional paragraph…" }},
-    {{ "title": "Section 10 Title", "content": "150-220 word professional paragraph…" }}
+    {{ "title": "Chapter 1: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 2: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 3: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 4: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 5: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 6: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 7: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 8: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 9: Specific Focus", "content": "700-1000 words of deep expert analysis..." }},
+    {{ "title": "Chapter 10: Specific Focus", "content": "700-1000 words of deep expert analysis..." }}
   ],
   "call_to_action": {{
-    "headline":    "High-converting CTA headline",
-    "description": "2-3 sentence reasoning for the next step",
-    "button_text": "Action verb phrase"
+    "headline": "High-converting technical CTA headline",
+    "description": "3-4 sentence expert reasoning for the next step",
+    "button_text": "Technical action phrase"
   }}
 }}
 """.strip()
