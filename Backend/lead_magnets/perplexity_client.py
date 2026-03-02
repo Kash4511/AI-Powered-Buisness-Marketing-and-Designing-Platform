@@ -88,69 +88,64 @@ class PerplexityClient:
     def _create_content_prompt(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
         main_topic = signals.get('main_topic', 'Adaptive Reuse Executive Guide')
         return f"""
-You are a senior adaptive-reuse consultant with 20+ years of experience delivering complex commercial, heritage, and mixed-use retrofit projects.
-You are refining an Institutional Adaptive Reuse Executive Guide for asset managers, city officials, and institutional developers.
+Act as a Senior Institutional Adaptive-Reuse Consultant for Global Asset Managers. 
+Generate an elite, 13-page Technical Advisory Report for '{main_topic}'.
 
-CORE OBJECTIVE: INCREASE INTELLECTUAL DENSITY & TRANSFORM INTO A FULLY PACKED INSTITUTIONAL ADVISORY REPORT.
-The document must read like a McKinsey, BCG, or institutional advisory report. No fluff. No motivational filler.
+The document must read like a McKinsey, BCG, or institutional advisory report. No fluff. No motivational filler. Use formal, technical, and precise language.
 
 DOCUMENT STRUCTURE (MANDATORY 9 SECTIONS):
-1. EXECUTIVE SUMMARY: Solving the Retrofit Crisis.
-2. PAIN POINT 1: TECH COMPLEXITY (BIM, LiDAR, Structural).
-3. PAIN POINT 2: COMMUNICATION BREAKDOWNS (OAC, RFI, Change-Order).
-4. PAIN POINT 3: APPROVAL ACCELERATION (Zoning, Heritage).
-5. PAIN POINT 4: TIMELINE COMPRESSION (Surprises, Logistics).
-6. FINANCIAL MODELING & INVESTMENT STRATEGY.
-7. RISK ALLOCATION & CONTRACT STRATEGY.
-8. ESG & URBAN REGENERATION IMPACT.
-9. PERFORMANCE DASHBOARD (Outcomes & KPIs).
+1. EXECUTIVE SUMMARY: Solving the Retrofit Crisis through Strategic Asset Transformation.
+2. PAIN POINT 1: TECHNICAL COMPLEXITY & STRUCTURAL INTEGRITY (LiDAR-to-BIM, Load-Bearing Analysis, Envelope Retrofits).
+3. PAIN POINT 2: INSTITUTIONAL COMMUNICATION & STAKEHOLDER ALIGNMENT (OAC Protocols, RFI Streamlining, Change-Order Mitigation).
+4. PAIN POINT 3: REGULATORY ACCELERATION & ZONING UNLOCKS (Heritage Compliance, Mixed-Use Fire/Life Safety, Policy Leverage).
+5. PAIN POINT 4: TIMELINE COMPRESSION & HAZARDOUS LOGISTICS (Phased Abatement, Early Works Sequencing, Critical Path Optimization).
+6. STRATEGIC FINANCIAL MODELING: IRR Sensitivity, CapEx Predictability, and Asset Appreciation.
+7. RISK ALLOCATION & CONTRACTUAL GOVERNANCE: GMP vs CM-at-Risk, Latent Condition Indemnity.
+8. ESG PERFORMANCE & URBAN REGENERATION: Embodied Carbon Credits, Green Financing, Social Value Multipliers.
+9. PERFORMANCE DASHBOARD: Quantified Strategic Outcomes & Institutional KPIs.
 
 FOR EVERY CHAPTER (MANDATORY CONTENT DENSITY):
-- Target 600-800 words of technical, data-backed consulting content.
-- Convert short statements into structured analysis:
-    - Root Cause (Technical & Operational)
-    - Financial Impact (IRR, CapEx, Carrying Costs)
-    - Technical Mechanism (Why the issue occurs)
-    - Quantified Risk (Probability & Severity)
-    - Mitigation Framework (Step-by-step intervention)
-    - Before vs After Comparison (Quantified metrics)
-    - KPI Dashboard (3-5 specific metrics)
-- Include 2-3 additional technical sub-sections per chapter.
-- Provide deep technical detail on:
-    - LiDAR-to-BIM conversion workflow (step-by-step).
-    - Structural reinforcement modeling constraints in heritage shells.
-    - Heritage envelope thermal retrofitting details (U-values, dew point analysis).
-    - Zoning overlay unlocking strategies via urban policy leverage.
-    - Fire/Life Safety compliance acceleration tactics for mixed-use.
-    - Early Works package sequencing methodology for hazardous abatement.
-    - GMP vs CM-at-Risk financial modeling breakdown.
-    - ESG financing instruments (Green Bonds, Brownfield Tax Credits, Carbon Offsets).
+- Target 1000 words of technical, data-backed consulting content per section.
+- Convert short statements into deep structured analysis:
+    - Root Cause Analysis (Technical & Operational factors)
+    - Financial Impact Assessment (IRR, CapEx, Carrying Costs, Yield-on-Cost)
+    - Technical Mechanism (The engineering or regulatory physics of the issue)
+    - Quantified Risk Profile (Probability, Severity, and Financial Exposure)
+    - Strategic Mitigation Framework (Step-by-step institutional intervention)
+    - Before vs After Comparison (Quantified performance metrics)
+    - KPI Dashboard (3-5 specific, measurable institutional metrics)
+- Include 3-4 additional technical sub-sections per chapter.
+- Provide extreme technical detail on:
+    - LiDAR-to-BIM: Point cloud density, feature extraction algorithms, and LOD 350+ modeling.
+    - Heritage Envelopes: Dew point analysis, vacuum-insulated glazing (VIG) U-values, and breathability constraints.
+    - ESG Financing: Green Bond frameworks, Brownfield Tax Credits, and Carbon Offset verification.
+    - Risk Transfer: Latent condition allocation in legacy industrial shells.
 
 OUTPUT — Return ONLY valid JSON:
 {{
   "title": "{main_topic}", 
-  "summary": "150-200 words of elite institutional overview focused on strategic risk mitigation.", 
-  "outcome_statement": "Institutional value proposition (max 80 chars).",
-  "key_insights": ["Strategic Insight 1", "Strategic Insight 2", "Strategic Insight 3", "Strategic Insight 4", "Strategic Insight 5"],
-  "pull_quotes": ["Institutional Expert Quote 1", "Institutional Expert Quote 2", "Institutional Expert Quote 3"],
+  "summary": "250-300 words of elite institutional overview focused on strategic risk mitigation and asset yield.", 
+  "outcome_statement": "Institutional value proposition: 25% schedule compression and 40% risk reduction.",
+  "key_insights": ["Insight 1: Technical", "Insight 2: Financial", "Insight 3: Regulatory", "Insight 4: Operational", "Insight 5: ESG"],
+  "pull_quotes": ["Institutional Quote 1", "Institutional Quote 2", "Institutional Quote 3"],
   "stats": {{ "s1v": "Val", "s1l": "Label", "s2v": "V", "s2l": "L", "s3v": "V", "s3l": "L", "s4v": "V", "s4l": "L", "s5v": "V", "s5l": "L", "s6v": "V", "s6l": "L", "s7v": "V", "s7l": "L", "s8v": "V", "s8l": "L", "s9v": "V", "s9l": "L" }},
-  "commercial_analysis": "ROI/NOI/IRR sensitivity analysis (250-300 words).",
-  "government_analysis": "Urban Regeneration/ESG/PPP impact analysis (250-300 words).",
-  "architect_analysis": "Technical/Design/Compliance impact analysis (250-300 words).",
-  "contractor_analysis": "Execution/Risk/Sequencing impact analysis (250-300 words).",
-  "checklists": [ {{ "items": ["Technical Step 1", "Technical Step 2", "Technical Step 3", "Technical Step 4"] }}, {{ "items": ["Metric 1", "Metric 2", "Metric 3", "Metric 4"] }}, {{ "items": ["KPI 1", "KPI 2", "KPI 3"] }} ],
+  "commercial_analysis": "ROI/NOI/IRR sensitivity analysis (300-350 words) for asset managers.",
+  "government_analysis": "Urban Regeneration/ESG/PPP impact analysis (300-350 words) for municipal authorities.",
+  "architect_analysis": "Technical/Design/Compliance impact analysis (300-350 words) for lead consultants.",
+  "contractor_analysis": "Execution/Risk/Sequencing impact analysis (300-350 words) for construction partners.",
+  "checklists": [ {{ "items": ["Step 1", "Step 2", "Step 3", "Step 4"] }}, {{ "items": ["Metric 1", "Metric 2", "Metric 3", "Metric 4"] }}, {{ "items": ["KPI 1", "KPI 2", "KPI 3"] }} ],
   "info_cards": [ {{ "label": "Case Study", "content": "Detailed institutional case summary" }}, {{ "label": "Financial Metric", "content": "Numeric breakdown" }}, {{ "label": "Technical Spec", "content": "Protocol detail" }}, {{ "label": "Risk Matrix", "content": "Allocation detail" }}, {{ "label": "ESG Bench", "content": "Performance detail" }}, {{ "label": "Timeline Bench", "content": "Compression detail" }}, {{ "label": "CapEx Bench", "content": "Predictability detail" }} ],
   "callouts": [ {{ "label": "STRATEGIC ANALYSIS", "content": "Deep dive detail" }}, {{ "label": "FINANCIAL IMPACT", "content": "IRR sensitivity detail" }}, {{ "label": "TECHNICAL PROTOCOL", "content": "Step-by-step detail" }}, {{ "label": "RISK MITIGATION", "content": "Intervention detail" }}, {{ "label": "KPI DASHBOARD", "content": "Measurable detail" }} ],
   "sections": [
-    {{ "title": "Executive Summary", "content": "600-800 words of dense institutional analysis..." }},
-    {{ "title": "Pain Point 1: Tech Complexity", "content": "600-800 words following structured analysis format..." }},
-    {{ "title": "Pain Point 2: Communication", "content": "600-800 words following structured analysis format..." }},
-    {{ "title": "Pain Point 3: Approvals", "content": "600-800 words following structured analysis format..." }},
-    {{ "title": "Pain Point 4: Timelines", "content": "600-800 words following structured analysis format..." }},
-    {{ "title": "Financial Modeling", "content": "600-800 words including GMP vs CM-at-Risk and ESG financing..." }},
-    {{ "title": "Risk Allocation", "content": "600-800 words including risk transfer matrix and insurance..." }},
-    {{ "title": "ESG & Regeneration", "content": "600-800 words including carbon offsets and social value..." }},
-    {{ "title": "Performance Dashboard", "content": "600-800 words including institutional benchmarking and KPIs..." }}
+    {{ "title": "Executive Summary", "content": "1000 words of dense institutional analysis..." }},
+    {{ "title": "Pain Point 1: Technical Complexity", "content": "1000 words following structured analysis format..." }},
+    {{ "title": "Pain Point 2: Communication", "content": "1000 words following structured analysis format..." }},
+    {{ "title": "Pain Point 3: Approvals", "content": "1000 words following structured analysis format..." }},
+    {{ "title": "Pain Point 4: Timelines", "content": "1000 words following structured analysis format..." }},
+    {{ "title": "Strategic Financial Modeling", "content": "1000 words following structured analysis format..." }},
+    {{ "title": "Risk Allocation & Contract Strategy", "content": "1000 words following structured analysis format..." }},
+    {{ "title": "ESG & Urban Regeneration", "content": "1000 words following structured analysis format..." }},
+    {{ "title": "Performance Dashboard", "content": "1000 words following structured analysis format..." }}
   ],
   "call_to_action": {{ "headline": "Headline", "description": "Expert reasoning", "button_text": "Action" }}
 }}
@@ -328,60 +323,71 @@ OUTPUT — Return ONLY valid JSON:
         main_topic = signals.get('main_topic', 'Adaptive Reuse').replace("REINTERPRET: ", "")
         return {
             "title": f"{main_topic} Institutional Advisory Report",
-            "summary": "This institutional strategic assessment provides a data-backed technical mandate for navigating the complexities of large-scale adaptive reuse. Focusing on Tech Complexity, Communication, Approvals, and Timelines, the report details elite intervention models—including 3D LiDAR scanning, Project Information Models (PIM), and parallel submission strategies. Prepared for asset managers and city officials, it provides the necessary framework for achieving predictable ROI and superior ESG performance in complex urban retrofits.",
-            "outcome_statement": "Institutional de-risking of complex retrofit assets through technical precision.",
-            "commercial_analysis": "Institutional stakeholders face significant IRR erosion from unmanaged tech complexity and timeline slippage. Mitigation requires early-stage BIM integration, which typically reduces field rework by 18-25%. Phased construction sequencing is mandatory to maintain Net Operating Income (NOI) during main works, especially in mixed-use conversions where tenant retention is critical for CapEx amortization. Financial modeling must account for the 'Heritage Premium'—a 15-20% rental uplift typical for repositioned assets in prime urban locations. IRR sensitivity analysis indicates that a 3-month approval delay costs approximately 180-220 basis points in institutional financing charges and carrying costs.",
-            "government_analysis": "Government authorities and municipal planning boards prioritize ESG compliance and urban regeneration multiplier effects. Addressing the 'Approvals' bottleneck through parallel heritage and zoning submissions can compress urban planning cycles by 10-14 weeks. Every ton of embodied carbon saved through structural reuse represents a 60-75% reduction compared to new build GWP (Global Warming Potential), directly aligning with municipal Net Zero mandates and social value frameworks. Public-Private Partnership (PPP) leverage is maximized when technical audits provide a clear roadmap for brownfield tax credits and green bond eligibility.",
-            "architect_analysis": "Architectural implementation requires a rigorous 'BIM-to-Field' protocol to manage the delta between legacy documentation and as-built reality. Solving 'Tech Complexity' via 3D LiDAR point-cloud generation reduces RFI escalation patterns by 32% in complex heritage conversions. Detailed thermal bridging audits of heritage envelopes, including dew point analysis and vacuum glazing feasibility, are required to meet modern Part L/Title 24 energy performance standards. Modeling constraints must account for undocumented structural modifications over decades, ensuring that seismic and wind-load reinforcements are integrated without compromising heritage character.",
-            "contractor_analysis": "Contractors carry the highest execution risk from 'Long Timelines' and latent site conditions. Structured hazardous material protocols (Asbestos/Lead) and live-building sequencing are prerequisites for maintaining liability buffers and safety standards. Implementation of an 'Early Works' package methodology for abatement and structural reinforcement reduces surprise reinforcement costs by an average of 15% across the core project lifecycle. GMP (Guaranteed Maximum Price) models are recommended for execution, while CM-at-Risk provides greater transparency during the discovery phase of heritage conversions.",
+            "summary": "This institutional strategic assessment provides a data-backed technical mandate for navigating the complexities of large-scale adaptive reuse. Focusing on Technical Complexity, Institutional Communication, Regulatory Acceleration, and Timeline Compression, the report details elite intervention models—including 3D LiDAR-to-BIM scanning, Project Information Models (PIM), and parallel heritage/zoning submission strategies. Prepared for institutional asset managers and municipal authorities, it provides the necessary technical and financial framework for achieving predictable project IRR and superior ESG performance in complex urban retrofits.",
+            "outcome_statement": "Institutional de-risking of complex retrofit assets through technical precision: 25% schedule compression and 40% risk reduction.",
+            "commercial_analysis": "Institutional stakeholders face significant IRR erosion from unmanaged technical complexity and timeline slippage. Mitigation requires early-stage BIM integration (LOD 350+), which typically reduces field rework by 18-25%. Phased construction sequencing is mandatory to maintain Net Operating Income (NOI) during main works, especially in mixed-use conversions where tenant retention is critical for CapEx amortization. Financial modeling must account for the 'Heritage Premium'—a 15-20% rental uplift typical for repositioned assets in prime urban locations. IRR sensitivity analysis indicates that a 3-month approval delay costs approximately 180-220 basis points in institutional financing charges and carrying costs. Yield-on-Cost (YoC) is optimized through structural reuse, saving 35-45% on core shell costs.",
+            "government_analysis": "Government authorities and municipal planning boards prioritize ESG compliance and urban regeneration multiplier effects. Addressing the 'Approvals' bottleneck through parallel heritage and zoning submissions can compress urban planning cycles by 10-14 weeks. Every ton of embodied carbon saved through structural reuse represents a 60-75% reduction compared to new build GWP (Global Warming Potential), directly aligning with municipal Net Zero mandates and social value frameworks. Public-Private Partnership (PPP) leverage is maximized when technical audits provide a clear roadmap for brownfield tax credits and green bond eligibility. Urban regeneration creates a 4.0x multiplier effect on local economic activity through strategic placemaking and institutional talent attraction.",
+            "architect_analysis": "Architectural implementation requires a rigorous 'BIM-to-Field' protocol to manage the delta between legacy documentation and as-built reality. Solving 'Technical Complexity' via 3D LiDAR point-cloud generation reduces RFI escalation patterns by 32% in complex heritage conversions. Detailed thermal bridging audits of heritage envelopes, including dew point analysis and vacuum-insulated glazing (VIG) feasibility, are required to meet modern Part L/Title 24 energy performance standards. Modeling constraints must account for undocumented structural modifications over decades, ensuring that seismic and wind-load reinforcements are integrated without compromising heritage character. LOD 350+ models are the prerequisite for coordination in restricted floor-to-ceiling heritage shells.",
+            "contractor_analysis": "Contractors carry the highest execution risk from 'Timeline Compression' and latent site conditions. Structured hazardous material protocols (Asbestos/Lead) and live-building sequencing are prerequisites for maintaining liability buffers and safety standards. Implementation of an 'Early Works' package methodology for abatement and structural reinforcement reduces surprise reinforcement costs by an average of 15% across the core project lifecycle. GMP (Guaranteed Maximum Price) models are recommended for execution, while CM-at-Risk provides greater transparency during the discovery phase. Critical Path Optimization requires 10-15% risk-based buffers for 'Discovery Phase' adjustments in heritage assets.",
             "key_insights": [
-                "3D LiDAR scanning reduces structural surprise variance by 35% vs traditional site audits.",
-                "Structured OAC communication models decrease change-order inflation by 16% on average.",
-                "Parallel heritage/zoning submission strategies accelerate project commencement by 12 weeks.",
-                "Phased hazardous material abatement compresses overall schedule by 20% in dense urban cores.",
-                "BIM-to-Field integration reduces onsite RFI volume by 45% in heritage shell retrofits."
+                "Insight 1: 3D LiDAR-to-BIM scanning reduces structural surprise variance by 35% vs traditional audits.",
+                "Insight 2: Structured OAC communication models decrease change-order inflation by 16% on average.",
+                "Insight 3: Parallel heritage/zoning submission strategies accelerate project commencement by 12 weeks.",
+                "Insight 4: Phased hazardous material abatement compresses overall schedule by 20% in urban cores.",
+                "Insight 5: BIM-to-Field integration reduces onsite RFI volume by 45% in heritage shell retrofits."
             ],
             "pull_quotes": [
                 "Institutional de-risking in retrofit is defined by data management, not just design aspiration.",
                 "The cost of poor communication is not just delay; it is the compounding of institutional risk.",
                 "Technical precision in the audit phase is the only hedge against IRR erosion in complex retrofit."
             ],
+            "stats": {
+                "s1v": "25%", "s1l": "Schedule Compression",
+                "s2v": "40%", "s2l": "Risk Reduction",
+                "s3v": "35%", "s3l": "RFI Reduction",
+                "s4v": "20%", "s4l": "CapEx Predictability",
+                "s5v": "70%", "s5l": "Carbon Savings",
+                "s6v": "450bps", "s6l": "IRR Improvement",
+                "s7v": "15%", "s7l": "Rental Premium",
+                "s8v": "4.0x", "s8l": "Economic Multiplier",
+                "s9v": "100%", "s9l": "Technical Audit"
+            },
             "sections": [
                 {
-                    "title": "Executive Summary: Solving the Retrofit Crisis",
-                    "content": "The global adaptive reuse market is currently constrained by four primary pain points that drive institutional CapEx variance and timeline slippage: Tech Complexity, Communication silos, Approval bottlenecks, and unpredictable Timelines. This guide provides a technical mandate for navigating these challenges using elite intervention models. Institutional developers are increasingly pivoting to retrofit over demolition, driven by 15-20% lower embodied carbon and significantly accelerated speed-to-market in supply-constrained urban cores. Root Cause: Failure typically resides in the delta between legacy documentation and physical site reality. Technical Mechanism: Misalignment between design intent and physical reality triggers late-stage field modifications, which are 3-5x more expensive than pre-construction adjustments. Mitigation: Transition from reactive problem-solving to proactive data-backed governance, ensuring that every design decision is grounded in measurable site constraints via early-stage technical audits and LiDAR-to-BIM conversion. KPIs: 45% reduction in onsite RFIs and a 15% improvement in CapEx predictability."
+                    "title": "EXECUTIVE SUMMARY: Solving the Retrofit Crisis through Strategic Asset Transformation",
+                    "content": "The global adaptive reuse market is currently constrained by four primary pain points that drive institutional CapEx variance and timeline slippage: Technical Complexity, Communication silos, Approval bottlenecks, and unpredictable Timelines. This guide provides a technical mandate for navigating these challenges using elite intervention models. Institutional developers are increasingly pivoting to retrofit over demolition, driven by 15-20% lower embodied carbon and significantly accelerated speed-to-market in supply-constrained urban cores. Root Cause: Failure typically resides in the delta between legacy documentation and physical site reality. Technical Mechanism: Misalignment between design intent and physical reality triggers late-stage field modifications, which are 3-5x more expensive than pre-construction adjustments. Financial Impact: Unmanaged retrofit risk can erode project IRR by 400-600 basis points. Mitigation: Transition from reactive problem-solving to proactive data-backed governance, ensuring that every design decision is grounded in measurable site constraints via early-stage technical audits and LiDAR-to-BIM conversion. KPIs: 45% reduction in onsite RFIs and a 15% improvement in CapEx predictability. Before: 18% change order risk from latent conditions. After: 7% change order variance via precision data."
                 },
                 {
-                    "title": "Pain Point 1: Tech Complexity (LiDAR-to-BIM & Structural)",
-                    "content": "Problem: Tech complexity in adaptive reuse stems from the delta between legacy documentation and actual site conditions. Technical Root Causes: Undocumented structural modifications over decades, thermal bridging in heritage envelopes, and MEP routing constraints within restricted floor-to-ceiling heights. LiDAR-to-BIM Workflow: 1) High-density point-cloud generation (±2mm accuracy). 2) Automated feature extraction for structural members. 3) Integration of MEP point-clouds into existing heritage models. 4) Verification of floor slab levels and wall verticality. Quantified Impact: Unmanaged complexity leads to a 15-25% increase in change orders and a 32% RFI escalation rate. Mitigation: Mandatory 3D LiDAR point-cloud generation and LiDAR-to-BIM conversion prior to CD phase. Before: 18% change order risk from latent conditions. After: 7% change order variance via precision data. KPIs: 40% reduction in onsite structural RFIs. Micro-case: In a 150,000 sq ft warehouse conversion, LiDAR identified a 150mm floor slab variance that would have cost $180k in remedial leveling if discovered during fit-out."
+                    "title": "PAIN POINT 1: TECHNICAL COMPLEXITY & STRUCTURAL INTEGRITY (LiDAR-to-BIM & Envelope Retrofits)",
+                    "content": "Problem: Technical complexity in adaptive reuse stems from the delta between legacy documentation and actual site conditions. Technical Root Causes: Undocumented structural modifications over decades, thermal bridging in heritage envelopes, and MEP routing constraints within restricted floor-to-ceiling heights. LiDAR-to-BIM Workflow: 1) High-density point-cloud generation (±2mm accuracy). 2) Automated feature extraction for structural members. 3) Integration of MEP point-clouds into existing heritage models (LOD 350+). 4) Verification of floor slab levels and wall verticality. Quantified Impact: Unmanaged complexity leads to a 15-25% increase in change orders and a 32% RFI escalation rate. Financial Impact: Structural surprises typically account for 60% of contingency drawdown. Mitigation: Mandatory 3D LiDAR point-cloud generation and LiDAR-to-BIM conversion prior to CD phase. Technical Mechanism: Precise point-cloud data eliminates the 'Assumed Dimension' risk in architectural modeling. Before: 18% change order risk from latent conditions. After: 7% change order variance via precision data. KPIs: 40% reduction in onsite structural RFIs. Micro-case: In a 150,000 sq ft warehouse conversion, LiDAR identified a 150mm floor slab variance that would have cost $180k in remedial leveling if discovered during fit-out."
                 },
                 {
-                    "title": "Pain Point 2: Resolving Communication Breakdowns (OAC & PIM)",
+                    "title": "PAIN POINT 2: INSTITUTIONAL COMMUNICATION & STAKEHOLDER ALIGNMENT (OAC & PIM)",
                     "content": "Problem: Misalignment between Owner, Architect, and Contractor (OAC) typically triggers change-order inflation and sequencing conflicts. Technical Root Causes: Delayed feedback loops from approval authorities and fragmented Project Information Models (PIM). Mechanism: Asynchronous information flow leads to procurement errors and trade sequencing clashes in restricted heritage sites. Mitigation: Implementation of a centralized Project Information Model (PIM) and a structured coordination governance framework with 48-hour RFI response mandates. Quantified Risk: Poor communication adds 5-10% to total project CapEx and delays delivery by an average of 14 weeks. Mitigation Framework: 1) Unified CDE (Common Data Environment) setup. 2) Weekly automated clash detection reports. 3) RFI escalation matrix with clear liability triggers. Before: 14-week communication breakdown delay. After: 3-week decision response cycle. KPIs: 30% faster decision-making cycles and 18% reduction in coordination-driven change orders. Micro-case: A heritage mill conversion utilized a digital RFI dashboard to resolve 90% of coordination issues within the 48-hour mandate, saving 7 weeks of idle trade time."
                 },
                 {
-                    "title": "Pain Point 3: Accelerating Approvals (Zoning & Heritage)",
-                    "content": "Problem: Approval delays are driven by incomplete documentation regarding heritage preservation and change-of-use permissions. Technical Root Causes: Sequential zoning overlays and lack of early-stage fire/life-safety compliance audits. Quantified Impact: Approval bottlenecks can stall projects for 6-18 months, reducing project IRR by 400-600 basis points. Mechanism: Permit dependency chains create critical-path slippage when heritage boards request mid-stream design revisions. Mitigation: Parallel submission strategy combined with early engagement ('Pre-App') with planning authorities and comprehensive heritage envelope audits. Strategy: Unlock zoning overlays via urban policy leverage, demonstrating how residential conversion supports municipal housing targets. Before: 12-month average approval cycle. After: 6-month approval cycle via precision documentation. KPIs: 18-week reduction in total permit acquisition time. Micro-case: By submitting heritage and environmental permits in parallel for a downtown retrofit, the developer shaved 5 months off the financing cost, saving $320k in interest carry."
+                    "title": "PAIN POINT 3: REGULATORY ACCELERATION & ZONING UNLOCKS (Heritage & Policy Leverage)",
+                    "content": "Problem: Approval delays are driven by incomplete documentation regarding heritage preservation and change-of-use permissions. Technical Root Causes: Sequential zoning overlays and lack of early-stage fire/life-safety compliance audits. Quantified Impact: Approval bottlenecks can stall projects for 6-18 months, reducing project IRR by 400-600 basis points. Mechanism: Permit dependency chains create critical-path slippage when heritage boards request mid-stream design revisions. Mitigation: Parallel submission strategy combined with early engagement ('Pre-App') with planning authorities and comprehensive heritage envelope audits. Strategy: Unlock zoning overlays via urban policy leverage, demonstrating how residential conversion supports municipal housing targets. Technical Protocol: Submit Heritage Impact Assessments (HIA) and Environmental Audits in parallel with Zoning Variance applications. Before: 12-month average approval cycle. After: 6-month approval cycle via precision documentation. KPIs: 18-week reduction in total permit acquisition time. Micro-case: By submitting heritage and environmental permits in parallel for a downtown retrofit, the developer shaved 5 months off the financing cost, saving $320k in interest carry."
                 },
                 {
-                    "title": "Pain Point 4: Compressing Timelines (Surprises & Abatement)",
+                    "title": "PAIN POINT 4: TIMELINE COMPRESSION & HAZARDOUS LOGISTICS (Early Works Sequencing)",
                     "content": "Problem: Long timelines are primarily driven by unknown site conditions and hazardous material surprises during main works. Technical Root Causes: Asbestos/lead abatement and structural reinforcement surprises in heritage shells. Quantified Impact: Timeline slippage reduces project IRR by 3-6 points and increases construction financing costs by 15-18%. Mechanism: Discovery of hazardous materials during main trade works disrupts the entire trade sequencing chain. Mitigation: Early Works Package Sequencing: 1) Structural audit and hazardous material survey. 2) Strip-out and abatement under early works contract. 3) Main works contract commencement only after 'Safe Site' certification. Phased construction sequencing allocates 10-15% risk-based buffers. Before: 28-month projected timeline for complex retrofit. After: 22-month delivery via early works packages. KPIs: 20% schedule compression. Micro-case: A phased abatement strategy in an industrial-to-office conversion allowed fit-out trades to commence 4 months early, resulting in a $520k early-tenant-move-in premium."
                 },
                 {
-                    "title": "Financial Modeling & Investment Strategy",
-                    "content": "Elite institutional financial modeling for adaptive reuse must account for the 'Heritage Premium' and CapEx sensitivity. GMP vs CM-at-Risk: GMP models are recommended for execution risk transfer, while CM-at-Risk provides the necessary transparency during the discovery phase of heritage conversions. Financial Modeling Breakdown: Structural reuse typically saves 35-45% on core costs but requires a 15-18% increase in MEP spend to accommodate heritage shell constraints. IRR Sensitivity: A 3-month approval delay costs approximately 200 basis points in institutional financing charges. Repositioning Valuation: Strategic conversion of vacant Grade-B office assets into mixed-use hubs attracts high-value talent and increases municipal tax revenue by 15-20%. ESG Financing: Leverage green bonds and brownfield tax credits to offset initial audit costs. A comparison of Demolition vs Retrofit ROI shows that while retrofit CapEx may be 5-10% higher initially, the 25% faster speed-to-market and 65% lower carbon footprint result in a superior 5-year IRR for institutional investors."
+                    "title": "STRATEGIC FINANCIAL MODELING: IRR Sensitivity, CapEx Predictability, and Asset Appreciation",
+                    "content": "Elite institutional financial modeling for adaptive reuse must account for the 'Heritage Premium' and CapEx sensitivity. GMP vs CM-at-Risk: GMP models are recommended for execution risk transfer, while CM-at-Risk provides the necessary transparency during the discovery phase of heritage conversions. Financial Modeling Breakdown: Structural reuse typically saves 35-45% on core shell costs but requires a 15-18% increase in MEP spend to accommodate heritage shell constraints. IRR Sensitivity: A 3-month approval delay costs approximately 200 basis points in institutional financing charges. Repositioning Valuation: Strategic conversion of vacant Grade-B office assets into mixed-use hubs attracts high-value talent and increases municipal tax revenue by 15-20%. ESG Financing: Leverage green bonds and brownfield tax credits to offset initial audit costs. A comparison of Demolition vs Retrofit ROI shows that while retrofit CapEx may be 5-10% higher initially, the 25% faster speed-to-market and 65% lower carbon footprint result in a superior 5-year IRR for institutional investors. Technical Mechanism: Capitalizing on existing structural value reduces 'Yield-on-Cost' (YoC) barriers by 150-250 bps."
                 },
                 {
-                    "title": "Risk Allocation & Contract Strategy",
-                    "content": "Standard contract models often fail in institutional adaptive reuse due to improper risk transfer regarding latent site conditions. Technical Intervention: Risk Transfer Matrix: Allocates 'Existing Condition' risk to the Owner while shifting 'Execution' and 'Sequencing' risk to the Contractor through GMP (Guaranteed Maximum Price) models. Insurance Frameworks: Live-building retrofits require specialized 'Surrounding Property' and hazardous material liability coverage. Contingency Allocation: Implementation of a structured contingency allocation (typical range 10-15%) reduces dispute volume by 40% by providing a clear mechanism for 'Discovery Phase' adjustments. Dispute Reduction: 35% reduction in legal claims achieved via mandatory pre-construction structural audits and 3D point-cloud verification. Liability Frameworks: Clearly define hazardous material abatement boundaries to prevent RFI escalation during main works sequencing."
+                    "title": "RISK ALLOCATION & CONTRACTUAL GOVERNANCE: GMP vs CM-at-Risk & Latent Conditions",
+                    "content": "Standard contract models often fail in institutional adaptive reuse due to improper risk transfer regarding latent site conditions. Technical Intervention: Risk Transfer Matrix: Allocates 'Existing Condition' risk to the Owner while shifting 'Execution' and 'Sequencing' risk to the Contractor through GMP (Guaranteed Maximum Price) models. Insurance Frameworks: Live-building retrofits require specialized 'Surrounding Property' and hazardous material liability coverage. Contingency Allocation: Implementation of a structured contingency allocation (typical range 10-15%) reduces dispute volume by 40% by providing a clear mechanism for 'Discovery Phase' adjustments. Dispute Reduction: 35% reduction in legal claims achieved via mandatory pre-construction structural audits and 3D point-cloud verification. Liability Frameworks: Clearly define hazardous material abatement boundaries to prevent RFI escalation during main works sequencing. Contractual Mechanism: Use of AIA A133 or similar CM-at-Risk agreements allows for early contractor engagement during the 'Technical Audit' phase."
                 },
                 {
-                    "title": "ESG & Urban Regeneration Impact",
-                    "content": "Adaptive reuse is the primary lever for urban ESG performance and social value generation. Embodied Carbon: Structural reuse saves an average of 650-800kg CO2/m2 compared to new build construction. Operational Energy: High-performance envelope retrofitting, including internal wall insulation, vacuum glazing, and dew point analysis, achieves 45-50% reduction in kWh/m2/year. ESG Financing Instruments: Green bonds and carbon offset credits provide 150-200 bps financing advantages for deep-retrofit projects. Social Value: Brownfield regeneration creates a 4.0x multiplier effect on local economic activity through urban placemaking and Public-Private Partnership (PPP) leverage. Urban Regeneration: Strategic conversions revitalization declining urban cores, attracting high-value institutional talent and increasing municipal tax revenue by 15-22% post-completion. Social impact metrics must include community placemaking and heritage preservation value."
+                    "title": "ESG PERFORMANCE & URBAN REGENERATION: Embodied Carbon & Green Financing",
+                    "content": "Adaptive reuse is the primary lever for urban ESG performance and social value generation. Embodied Carbon: Structural reuse saves an average of 650-800kg CO2/m2 compared to new build construction. Operational Energy: High-performance envelope retrofitting, including internal wall insulation, vacuum glazing, and dew point analysis, achieves 45-50% reduction in kWh/m2/year. ESG Financing Instruments: Green bonds and carbon offset credits provide 150-200 bps financing advantages for deep-retrofit projects. Social Value: Brownfield regeneration creates a 4.0x multiplier effect on local economic activity through urban placemaking and Public-Private Partnership (PPP) leverage. Urban Regeneration: Strategic conversions revitalization declining urban cores, attracting high-value institutional talent and increasing municipal tax revenue by 15-22% post-completion. Social impact metrics must include community placemaking and heritage preservation value. Technical Protocol: Verification of carbon credits requires rigorous as-built structural verification (LiDAR-to-BIM)."
                 },
                 {
-                    "title": "Performance Dashboard: Strategic Outcomes",
-                    "content": "Institutional Performance Report: 1) Approval Cycle Reduction: 5 months saved via parallel submission. 2) Change Order Reduction: 15% decrease through LiDAR point-cloud audits. 3) RFI Volume Reduction: 45% via BIM-to-Field coordination. 4) Schedule Compression: 20% through early works abatement packages. 5) IRR Improvement: 450 bps through optimized financing and rental premium. 6) Asset Value Uplift: 30% post-repositioning. 7) CapEx Predictability: 18% variance reduction. 8) Embodied Carbon Savings: 70% vs new build GWP. Institutional Benchmarking: A 200,000 sq ft heritage mill conversion achieved 22-month delivery (vs 28-month baseline) with only 7% change order variance, resulting in a 26% project IRR. This dashboard provides the necessary data-backed evidence for asset managers to approve deep-retrofit mandates over traditional demolition-rebuild models."
+                    "title": "PERFORMANCE DASHBOARD: Quantified Strategic Outcomes & Institutional KPIs",
+                    "content": "Institutional Performance Report: 1) Approval Cycle Reduction: 5 months saved via parallel submission. 2) Change Order Reduction: 15% decrease through LiDAR point-cloud audits. 3) RFI Volume Reduction: 45% via BIM-to-Field coordination. 4) Schedule Compression: 20% through early works abatement packages. 5) IRR Improvement: 450 bps through optimized financing and rental premium. 6) Asset Value Uplift: 30% post-repositioning. 7) CapEx Predictability: 18% variance reduction. 8) Embodied Carbon Savings: 70% vs new build GWP. Institutional Benchmarking: A 200,000 sq ft heritage mill conversion achieved 22-month delivery (vs 28-month baseline) with only 7% change order variance, resulting in a 26% project IRR. This dashboard provides the necessary data-backed evidence for asset managers to approve deep-retrofit mandates over traditional demolition-rebuild models. KPI Framework: Target <10% contingency drawdown and >15% rental premium post-repositioning."
                 }
             ],
             "call_to_action": {
