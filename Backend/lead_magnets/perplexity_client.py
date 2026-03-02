@@ -380,12 +380,6 @@ OUTPUT — Return ONLY valid JSON:
                 "button_text": "Schedule a Technical Audit"
             }
         }
-            "call_to_action": {
-                "headline": "Ready to De-Risk Your Conversion?",
-                "description": "Our methodology turns the four pain points into competitive advantages through technical precision and strategic governance.",
-                "button_text": "Schedule a Technical Audit"
-            }
-        }
 
     def ensure_section_content(self, sections: List[Dict[str, str]], signals: Dict[str, str], firm_profile: Dict[str, Any]) -> List[Dict[str, str]]:
         while len(sections) < 9: sections.append({"title": f"Strategic Focus {len(sections)+1}", "content": ""})
