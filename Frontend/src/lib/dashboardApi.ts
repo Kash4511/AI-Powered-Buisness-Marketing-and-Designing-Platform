@@ -338,52 +338,35 @@ export const dashboardApi = {
       // 3. Download the result
       if (pdf_url) {
         try {
-          // If it's a relative path starting with /api or /media, download it using apiClient
-          // to ensure we send the Authorization header and use the correct base URL.
-          const isRelative = pdf_url.startsWith('/') || !pdf_url.startsWith('http');
+          // Strictly use apiClient for secure authenticated blob download.
+          // No fallback logic to window.open or direct URLs.
+          console.log('🔄 Initiating secure authenticated download for:', pdf_url);
           
-          if (isRelative) {
-            console.log('🔄 Initiating secure download for:', pdf_url);
-            const downloadRes = await apiClient.get(pdf_url, { responseType: 'blob' });
-            
-            // Create a blob from the response data
-            const blob = new Blob([downloadRes.data], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(blob);
-            
-            // Trigger download using a hidden link
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `lead-magnet-${data.lead_magnet_id}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            
-            // Clean up the URL object
-            window.URL.revokeObjectURL(url);
-            console.log('✅ Secure download triggered');
-          } else {
-            // If it's an absolute URL (like Cloudinary), try direct download
-            console.log('🔄 Initiating direct download for:', pdf_url);
-            const link = document.createElement('a');
-            link.href = pdf_url;
-            link.setAttribute('download', `lead-magnet-${data.lead_magnet_id}.pdf`);
-            link.setAttribute('target', '_blank'); 
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            console.log('✅ Direct download triggered');
-          }
+          const downloadRes = await apiClient.get(pdf_url, { 
+            responseType: 'blob',
+            // Ensure timeout is sufficient for proxy stream
+            timeout: 60000 
+          });
+          
+          // Create a blob from the response data
+          const blob = new Blob([downloadRes.data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          
+          // Trigger download using a hidden link
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `lead-magnet-${data.lead_magnet_id}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          
+          // Clean up the URL object
+          window.URL.revokeObjectURL(url);
+          console.log('✅ Secure download successful');
+          
         } catch (downloadErr) {
-          console.error('❌ Secure download failed, attempting fallback:', downloadErr);
-          
-          // Fallback to direct navigation if Axios download fails
-          // Ensure we use the full backend URL if it's a relative path
-          const fullUrl = (pdf_url.startsWith('/') || !pdf_url.startsWith('http'))
-            ? `${apiClient.defaults.baseURL}${pdf_url.startsWith('/') ? '' : '/'}${pdf_url}`
-            : pdf_url;
-            
-          console.log('🔄 Fallback redirect to:', fullUrl);
-          window.open(fullUrl, '_blank');
+          console.error('❌ Secure download failed:', downloadErr);
+          throw new Error('Failed to download PDF. Please try again or contact support.');
         }
       }
     } catch (error) {

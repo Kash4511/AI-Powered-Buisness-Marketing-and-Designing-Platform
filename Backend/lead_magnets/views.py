@@ -469,58 +469,68 @@ def generate_pdf_status_compat(request):
     # No job and not completed yet
     return Response({'status': 'pending'}, status=status.HTTP_200_OK)
 
+from cloudinary.utils import cloudinary_url as get_cloudinary_url
+import requests
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id: int):
     """
-    Serve the generated PDF file for a given lead magnet.
-    Resilient implementation that uses Django's storage abstraction to avoid 502/401 proxy issues.
+    Secure PDF download endpoint.
+    Generates a signed Cloudinary URL and streams the file via FileResponse.
+    No fallback logic, production-safe, and JWT protected.
     """
     try:
-        # 1. Fetch LeadMagnet with ownership check
+        # 1. Fetch LeadMagnet with strict ownership validation
         try:
             lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
         except LeadMagnet.DoesNotExist:
-            logger.warning(f"Download failed: LeadMagnet {lead_magnet_id} not found for user {request.user.id}")
+            logger.warning(f"Download failed: LeadMagnet {lead_magnet_id} not found or not owned by user {request.user.id}")
             return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 2. Check if file exists
+        # 2. Check if file exists in the model
         if not lm.pdf_file:
-            logger.warning(f"Download failed: No PDF file for LeadMagnet {lead_magnet_id}")
+            logger.warning(f"Download failed: No PDF file assigned to LeadMagnet {lead_magnet_id}")
             return Response({'error': 'PDF not generated yet'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 3. Serving Logic via Storage Abstraction
-        # This is the most robust way to serve from Cloudinary/S3/Local without 401/502 errors.
-        filename = os.path.basename(lm.pdf_file.name) or f"lead-magnet-{lead_magnet_id}.pdf"
-        
+        # 3. Generate Signed Cloudinary URL
+        # We extract the public_id from the CloudinaryField/FileField
         try:
-            # We use .open() which works across all Django storage backends (Cloudinary, S3, Local)
-            # This avoids the "header leak" 401 redirect and the "stream timeout" 502 proxy issues.
-            file_handle = lm.pdf_file.open('rb')
+            # For django-cloudinary-storage, the 'name' attribute usually contains the public_id
+            public_id = lm.pdf_file.name
             
-            # Using FileResponse with streaming=True (default) for efficiency.
-            # It will automatically close the file handle when finished.
-            response = FileResponse(file_handle, content_type='application/pdf')
+            signed_url, options = get_cloudinary_url(
+                public_id,
+                resource_type="raw",
+                sign_url=True,
+                secure=True
+            )
+            
+            logger.info(f"Generated signed URL for LeadMagnet {lead_magnet_id}")
+            
+            # 4. Stream the file via FileResponse
+            # We use a stream from requests to fetch the signed Cloudinary asset
+            proxy_resp = requests.get(signed_url, stream=True, timeout=30)
+            proxy_resp.raise_for_status()
+            
+            filename = os.path.basename(lm.pdf_file.name) or f"lead-magnet-{lead_magnet_id}.pdf"
+            if not filename.endswith('.pdf'):
+                filename += '.pdf'
+
+            response = FileResponse(
+                proxy_resp.raw, 
+                content_type="application/pdf"
+            )
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             
-            # If storage provides a size, add it
-            try:
-                response['Content-Length'] = lm.pdf_file.size
-            except:
-                pass
-            
-            logger.info(f"Successfully initiated PDF download for LeadMagnet {lead_magnet_id}")
+            # Pass through content length if available
+            if 'Content-Length' in proxy_resp.headers:
+                response['Content-Length'] = proxy_resp.headers['Content-Length']
+                
             return response
 
         except Exception as e:
-            logger.error(f"Storage read failed for LeadMagnet {lead_magnet_id}: {str(e)}")
-            
-            # Final fallback: If reading fails but we have a URL, redirect as a last resort
-            if hasattr(lm.pdf_file, 'url'):
-                logger.info(f"Redirecting to storage URL as final fallback for LeadMagnet {lead_magnet_id}")
-                from django.shortcuts import redirect
-                return redirect(lm.pdf_file.url)
-                
+            logger.error(f"Failed to generate signed URL or stream file for LeadMagnet {lead_magnet_id}: {str(e)}")
             return Response({
                 'error': 'Failed to retrieve file from storage',
                 'details': str(e) if settings.DEBUG else None
@@ -529,8 +539,7 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
     except Exception as exc:
         logger.critical(f"Critical error in download view: {str(exc)}\n{traceback.format_exc()}")
         return Response({
-            'error': 'Internal server error during download',
-            'details': str(exc) if settings.DEBUG else None
+            'error': 'Internal server error during download'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class CreateLeadMagnetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
