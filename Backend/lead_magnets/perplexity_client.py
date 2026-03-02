@@ -698,6 +698,25 @@ OUTPUT — return this exact JSON structure, fully populated:
         hl2        = hl_parts[1].strip() if len(hl_parts) > 1 else "Professional Report"
         year       = str(datetime.now().year)
 
+        # ── Dynamic Theme Colors ──────────────────────────────────────────────
+        # Logic: User pref > Time of day > System theme (approximated)
+        hour = datetime.now().hour
+        theme_primary = primary
+        
+        # Simple time-based theme override if no user preference is detected
+        # If user didn't specify a custom color (using default), we can be dynamic.
+        is_default_color = (primary.lower() == "#2a5766")
+        
+        if is_default_color:
+            if 6 <= hour < 12:    # Morning: Fresh blue/green
+                theme_primary = "#2E7D32" # Forest Green
+            elif 12 <= hour < 18: # Afternoon: Professional blue
+                theme_primary = "#1565C0" # Strong Blue
+            elif 18 <= hour < 22: # Evening: Warm sunset
+                theme_primary = "#D84315" # Deep Orange
+            else:                 # Night: Dark slate
+                theme_primary = "#263238" # Blue Grey
+        
         # ═════════════════════════════════════════════════════════════════════
         # COMPLETE VARIABLE MAP  (aligns 1-to-1 with every {{…}} in v5 template)
         # ═════════════════════════════════════════════════════════════════════
@@ -714,7 +733,7 @@ OUTPUT — return this exact JSON structure, fully populated:
             "footerText":       f"© {year} {company}",
 
             # ── Colors (v5 uses color-mix() — only 2 base vars required) ─────
-            "primaryColor":   primary,
+            "primaryColor":   theme_primary,
             "secondaryColor": secondary,
             "tertiaryColor":  "#1E3A5F",
             "accentColor":    "#4F7A8B",
@@ -836,15 +855,17 @@ OUTPUT — return this exact JSON structure, fully populated:
             # ── PAGE 7 — CHAPTER 4 ───────────────────────────────────────────
             "chapter4Section":   "CHAPTER 04",
             "chapter4Eyebrow":   "CASE STUDIES",
-            "chapter4Title":     st(3),
-            "chapter4Intro":     sc(3)[:220] if sc(3) else "",
+            "chapter4Title":     st(3, "Strategic Case Studies"),
+            "chapter4Intro":     sc(3) if sc(3) else "Evidence-based analysis of successful implementations across diverse sectors.",
             "dropCap4":          (sc(3)[:1] or "E").upper() if sc(3) else "E",
-            "caseStudy1Title": "Strategic Transformation",
-            "caseStudy1Desc":  "A concise account demonstrating improved performance through structured delivery.",
-            "caseStudy2Title": "Operational Excellence",
-            "caseStudy2Desc":  "A scenario that surfaces lessons learned and risk trade-offs in execution.",
-            "callout5Title":   ol(4, "KEY INSIGHT"),
-            "callout5Body":    oc(4, "Execution is the ultimate differentiator in competitive markets."),
+            "caseStudy1Title":   cl(0, "Enterprise Transformation"),
+            "caseStudy1Desc":    cc(0, "A detailed look at how scaling strategy led to significant efficiency gains and market alignment."),
+            "caseStudy1Result":  sv("s1v", "85% Improvement"),
+            "caseStudy2Title":   cl(1, "Operational Excellence"),
+            "caseStudy2Desc":    cc(1, "Analysis of process optimization in a high-stakes environment, focusing on risk mitigation."),
+            "caseStudy2Result":  sv("s2v", "2.4x ROI"),
+            "callout5Title":     ol(4, "KEY INSIGHT"),
+            "callout5Body":      oc(4, "Execution is the ultimate differentiator in competitive markets."),
 
             # ── PAGE 8 — CHAPTER 5 ───────────────────────────────────────────
             "chapter5Section":   "CHAPTER 05",

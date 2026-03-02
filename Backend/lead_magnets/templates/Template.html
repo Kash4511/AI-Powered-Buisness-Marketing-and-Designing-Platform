@@ -101,7 +101,38 @@
         .pg-foot-l { font-family: var(--fs); font-size: 8px; color: var(--grey); font-style: italic; }
         .pg-foot-r { font-family: var(--fm); font-size: 8px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
 
-        .bw { padding: 16px 16mm 20px; flex: 1; }
+        .bw { 
+            padding: 16px 16mm 20px; 
+            flex: 1; 
+            overflow: hidden; /* Prevent content from leaking into footer */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Content blocks that should respect container limits */
+        .body, .ch-p-intro, .drop-cap-wrap, .col2, .b-list {
+            max-width: 100%;
+        }
+
+        /* Ensure images don't push content too far */
+        .img-wrapper { max-height: 250px; overflow: hidden; }
+        .img-ph-single { max-height: 220px; }
+
+        /* Limit text length visually if it's too long */
+        .body {
+            display: -webkit-box;
+            -webkit-line-clamp: 12; /* Limit to ~12 lines per paragraph to prevent overflow */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .body-sm {
+            display: -webkit-box;
+            -webkit-line-clamp: 8;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* ── DYNAMIC IMAGE PLACEHOLDERS (hybrid of both templates) ── */
         .img-ph-single {
@@ -687,10 +718,12 @@
             <div>
                 <div class="sec-h">{{caseStudy1Title}}</div>
                 <p class="body-sm">{{caseStudy1Desc}}</p>
+                <p class="body-sm" style="font-style: italic; color: var(--grey);">Key Result: {{caseStudy1Result}}</p>
             </div>
             <div>
                 <div class="sec-h">{{caseStudy2Title}}</div>
                 <p class="body-sm">{{caseStudy2Desc}}</p>
+                <p class="body-sm" style="font-style: italic; color: var(--grey);">Key Result: {{caseStudy2Result}}</p>
             </div>
         </div>
 
