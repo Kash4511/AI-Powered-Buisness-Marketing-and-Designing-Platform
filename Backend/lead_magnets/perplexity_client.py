@@ -11,7 +11,7 @@ import re
 import logging
 import concurrent.futures
 import traceback
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 
 try:
@@ -57,33 +57,94 @@ class PerplexityClient:
     def interpret_field(self, field_value: Any) -> str:
         if not self._is_meaningful(field_value): return "INFER_FROM_CONTEXT"
         cleaned = ", ".join(str(x).strip() for x in field_value) if isinstance(field_value, list) else " ".join(str(field_value).split())
-        return "INFER_FROM_CONTEXT" if len(cleaned) < 2 else f"REINTERPRET: {cleaned}"
+        
+        # Strengthen weak inputs for the AI
+        if len(cleaned) < 3: # If single char or very short
+            return "INFER_FROM_CONTEXT"
+            
+        return f"REINTERPRET: {cleaned}"
 
     def get_semantic_signals(self, user_answers: Dict[str, Any]) -> Dict[str, str]:
         return {k: self.interpret_field(v) for k, v in user_answers.items()}
 
     def generate_lead_magnet_json(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         if not self.api_key: return self._build_fallback_content(signals, firm_profile)
-        try:
-            response = requests.post(
-                self.base_url,
-                headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", "Accept": "application/json"},
-                json={
-                    "model": "sonar",
-                    "messages": [
-                        {"role": "system", "content": "You are a senior adaptive-reuse consultant. Output ONLY valid JSON. No markdown. No commentary."},
-                        {"role": "user", "content": self._create_content_prompt(signals, firm_profile)},
-                    ],
-                    "max_tokens": 4000,
-                    "temperature": 0.7,
-                },
-                timeout=60,
-            )
-            if response.status_code != 200: return self._build_fallback_content(signals, firm_profile)
-            raw = response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
-            return json.loads(self._extract_json_from_markdown(raw))
-        except Exception:
-            return self._build_fallback_content(signals, firm_profile)
+        
+        prompt = self._create_content_prompt(signals, firm_profile)
+        system_prompt = (
+            "You are a senior institutional adaptive-reuse consultant. "
+            "Output ONLY valid JSON. "
+            "STRICT REQUIREMENTS:\n"
+            "1. NO markdown code fences (do not use ```json or ```).\n"
+            "2. NO introductory or concluding text.\n"
+            "3. NO commentary or explanations.\n"
+            "4. Start with '{' and end with '}'.\n"
+            "5. Follow the provided schema exactly.\n"
+            "6. Ensure all strings are properly escaped for JSON."
+        )
+
+        def attempt_generation(current_prompt: str, is_retry: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+            try:
+                response = requests.post(
+                    self.base_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}", 
+                        "Content-Type": "application/json", 
+                        "Accept": "application/json"
+                    },
+                    json={
+                        "model": "sonar",
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": current_prompt},
+                        ],
+                        "max_tokens": 4000,
+                        "temperature": 0.7 if not is_retry else 0.3, # Lower temp on retry for stability
+                    },
+                    timeout=90,
+                )
+                if response.status_code != 200:
+                    logger.error(f"AI API Error: {response.status_code} - {response.text}")
+                    return None, None
+                
+                raw = response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
+                if not raw:
+                    return None, None
+
+                # JSON Sanitation Layer
+                sanitized = self._extract_json(raw)
+                try:
+                    return json.loads(sanitized), raw
+                except json.JSONDecodeError as e:
+                    logger.warning(f"JSON Decode Error (Attempt {'Retry' if is_retry else '1'}): {str(e)}\nRaw snippet: {raw[:100]}...")
+                    return None, raw
+            except Exception as e:
+                logger.error(f"AI Generation Attempt Exception: {str(e)}")
+                return None, None
+
+        # First Attempt
+        result, failed_text = attempt_generation(prompt)
+        
+        # Retry Logic (One-time correction)
+        if result is None:
+            logger.info("🔄 Invalid JSON detected. Attempting one-time correction...")
+            # If we have the failed text, ask the AI specifically to fix it
+            if failed_text:
+                correction_prompt = (
+                    f"The following output was intended to be a valid JSON object but failed parsing. "
+                    f"Please correct it and return ONLY the valid JSON object. No markdown, no extra text.\n\n"
+                    f"FAILED OUTPUT:\n{failed_text}"
+                )
+            else:
+                correction_prompt = prompt # Fallback to original prompt
+                
+            result, _ = attempt_generation(correction_prompt, is_retry=True)
+
+        if result:
+            return result
+        
+        logger.error("❌ Deterministic AI generation failed after retries. Using fallback.")
+        return self._build_fallback_content(signals, firm_profile)
 
     def _create_content_prompt(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
         main_topic = signals.get('main_topic', 'Adaptive Reuse Executive Guide')
@@ -151,13 +212,20 @@ OUTPUT — Return ONLY valid JSON:
 }}
 """.strip()
 
-    def _extract_json_from_markdown(self, text: str) -> str:
+    def _extract_json(self, text: str) -> str:
+        """Robust JSON extraction layer to handle AI output variability."""
         if not text: return ""
-        m = re.search(r'```(?:json)?\s*([\s\S]*?)```', text)
-        if m: text = m.group(1).strip()
-        a, b = text.find('{'), text.rfind('}')
-        if a == -1 or b == -1: return text.strip()
-        return text[a:b + 1].strip()
+        
+        # 1. Remove markdown code fences if present
+        text = re.sub(r'```(?:json)?\s*([\s\S]*?)```', r'\1', text).strip()
+        
+        # 2. Extract first JSON object from text using regex
+        # Look for the first '{' and the last '}'
+        match = re.search(r"(\{.*\})", text, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+            
+        return text.strip()
 
     def normalize_ai_output(self, raw: Any) -> Dict[str, Any]:
         out: Dict[str, Any] = {

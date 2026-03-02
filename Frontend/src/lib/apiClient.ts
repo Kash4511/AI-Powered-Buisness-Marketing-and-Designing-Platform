@@ -70,10 +70,16 @@ apiClient.interceptors.request.use(
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
     }
     
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // ONLY add Authorization header if it's an API request (relative or matches baseURL)
+    const isExternal = config.url?.startsWith('http') && !config.url?.includes(config.baseURL || '');
+    
+    if (!isExternal) {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+    
     return config;
   },
   (error) => {

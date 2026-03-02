@@ -492,13 +492,31 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
         # 3. Serving Logic
         filename = os.path.basename(lm.pdf_file.name) or f"lead-magnet-{lead_magnet_id}.pdf"
         
+        # If storage provides a URL (e.g. Cloudinary), proxy the file content.
+        # This prevents 401 errors when Axios follows redirects with Authorization headers.
+        if hasattr(lm.pdf_file, 'url') and (lm.pdf_file.url.startswith('http') or lm.pdf_file.url.startswith('https')):
+            logger.info(f"Proxying Cloudinary URL for LeadMagnet {lead_magnet_id}")
+            try:
+                # Stream the file from Cloudinary to the client
+                proxy_resp = requests.get(lm.pdf_file.url, stream=True, timeout=30)
+                proxy_resp.raise_for_status()
+                
+                # Create a FileResponse from the requests response stream
+                response = FileResponse(proxy_resp.raw, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                # Pass through relevant headers from Cloudinary
+                if 'Content-Length' in proxy_resp.headers:
+                    response['Content-Length'] = proxy_resp.headers['Content-Length']
+                return response
+            except Exception as e:
+                logger.error(f"Cloudinary proxy failed for LeadMagnet {lead_magnet_id}: {str(e)}")
+                # Fallback to direct redirect if proxying fails
+                from django.shortcuts import redirect
+                return redirect(lm.pdf_file.url)
+
         try:
-            # Try serving via FileResponse (preferred for streaming)
-            # We call .open() to get the handle.
+            # Fallback: Serve via FileResponse (local storage)
             file_handle = lm.pdf_file.open('rb')
-            
-            # If it's a Cloudinary file, it might not support seek/tell perfectly for FileResponse
-            # but usually it's fine. If it fails, the exception block will catch it.
             response = FileResponse(file_handle, content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
@@ -506,7 +524,7 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
         except Exception as e:
             logger.error(f"FileResponse failed for LeadMagnet {lead_magnet_id}: {str(e)}")
             
-            # Fallback 1: Read into memory and serve via HttpResponse
+            # Final fallback: Read into memory and serve via HttpResponse
             try:
                 logger.info(f"Attempting memory-buffered fallback for LeadMagnet {lead_magnet_id}")
                 lm.pdf_file.open('rb')
@@ -518,13 +536,6 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
                 return response
             except Exception as e2:
                 logger.error(f"Memory fallback failed: {str(e2)}")
-                
-                # Fallback 2: Redirect to URL if storage provides one (e.g. Cloudinary)
-                if hasattr(lm.pdf_file, 'url'):
-                    logger.info(f"Redirecting to storage URL for LeadMagnet {lead_magnet_id}")
-                    from django.shortcuts import redirect
-                    return redirect(lm.pdf_file.url)
-                
                 raise e2
 
     except Exception as exc:
