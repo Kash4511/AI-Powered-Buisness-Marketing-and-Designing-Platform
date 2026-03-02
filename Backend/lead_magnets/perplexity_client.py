@@ -91,60 +91,56 @@ class PerplexityClient:
 You are a senior adaptive-reuse consultant with 20+ years of experience delivering complex commercial, heritage, and mixed-use retrofit projects.
 You are refining an existing Adaptive Reuse Executive Guide to elite consultant-grade depth for investors, city officials, and institutional developers.
 
-CORE RULE: STRUCTURE THE ENTIRE GUIDE AROUND DATA-BACKED INTERVENTION MODELS.
-Do NOT use generic phrases like "strategic vision", "robust methodology", "holistic", "innovative approach", "industry-leading".
+CORE RULE: INCREASE VISUAL DENSITY & INTELLECTUAL DEPTH.
+Do NOT use generic filler. Every paragraph must provide technical value.
 
-DOCUMENT STRUCTURE (MANDATORY):
-
-1. EXECUTIVE SUMMARY: Solving the Retrofit Crisis. (Strategic Overview of the 4 Pain Points).
-2. PAIN POINT 1: TECH COMPLEXITY (BIM, LiDAR, Structural Retrofitting).
-3. PAIN POINT 2: COMMUNICATION BREAKDOWNS (OAC, RFI, Change-Order Inflation).
-4. PAIN POINT 3: APPROVAL ACCELERATION (Zoning, Heritage, Compliance).
-5. PAIN POINT 4: TIMELINE COMPRESSION (Surprises, Logistics, Abatement).
-6. FINANCIAL MODELING & INVESTMENT STRATEGY (ROI, IRR Sensitivity, CapEx Breakdown).
-7. RISK ALLOCATION & CONTRACT STRATEGY (GMP vs DB, transfer matrix, liability).
-8. ESG & URBAN REGENERATION IMPACT (Embodied Carbon, Social Value, Energy Benchmarks).
+DOCUMENT STRUCTURE (MANDATORY 9 SECTIONS):
+1. EXECUTIVE SUMMARY: Solving the Retrofit Crisis.
+2. PAIN POINT 1: TECH COMPLEXITY (BIM, LiDAR, Structural).
+3. PAIN POINT 2: COMMUNICATION BREAKDOWNS (OAC, RFI, Change-Order).
+4. PAIN POINT 3: APPROVAL ACCELERATION (Zoning, Heritage).
+5. PAIN POINT 4: TIMELINE COMPRESSION (Surprises, Logistics).
+6. FINANCIAL MODELING & INVESTMENT STRATEGY.
+7. RISK ALLOCATION & CONTRACT STRATEGY.
+8. ESG & URBAN REGENERATION IMPACT.
 9. PERFORMANCE DASHBOARD (Outcomes & KPIs).
 
-FOR EACH PAIN POINT SECTION (2-5):
-- Define the problem in adaptive-reuse context.
-- Identify technical root causes.
-- Quantify impact (Timeline, IRR, CapEx, RFI, Change Orders).
-- Explain WHY those impacts occur (mechanism).
-- Provide a step-by-step mitigation intervention model.
-- Show BEFORE vs AFTER comparison with measurable improvements.
+FOR EVERY CHAPTER (MANDATORY CONTENT DENSITY):
+- Target 500-700 words of technical analysis.
+- Replace one-sentence statements with 4-6 sentence structured technical explanations.
+- Include at least 3 measurable metrics (e.g., % CapEx variance, RFI reduction %, kWh/m2/year).
+- Include 1 micro-case example (e.g., "In a Grade-II listed warehouse conversion in London...").
+- Use technical sub-sections and structured bullet diagnostics.
+- Reference specific protocols: BIM coordination, LiDAR-to-BIM, Hazardous material abatement (asbestos/lead), Zoning overlays, Heritage envelope performance.
 
-TECHNICAL REQUIREMENTS:
-- Minimum 25 measurable metrics.
-- Minimum 20 adaptive-reuse-specific technical references (e.g., thermal bridging, façade retention, LiDAR-to-BIM, MEP heritage integration).
-- Minimum 5 mini case-style examples.
-- Realistic numbers only (no exaggerated claims).
+FOR PAIN POINTS (SECTIONS 2-5):
+- Root cause explanation + Quantified impact + Mechanism (why it occurs) + Step-by-step mitigation model + Before/After comparison.
 
 OUTPUT — Return ONLY valid JSON:
 {{
   "title": "{main_topic}", 
-  "summary": "80-120 words of elite strategic overview.", 
-  "outcome_statement": "Concrete value proposition (max 80 chars).",
+  "summary": "120-150 words of dense strategic overview.", 
+  "outcome_statement": "Elite value proposition (max 80 chars).",
   "key_insights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4", "Insight 5"],
   "pull_quotes": ["Expert Quote 1", "Expert Quote 2", "Expert Quote 3"],
   "stats": {{ "s1v": "Val", "s1l": "Label", "s2v": "V", "s2l": "L", "s3v": "V", "s3l": "L", "s4v": "V", "s4l": "L", "s5v": "V", "s5l": "L", "s6v": "V", "s6l": "L", "s7v": "V", "s7l": "L", "s8v": "V", "s8l": "L", "s9v": "V", "s9l": "L" }},
-  "commercial_analysis": "ROI/NOI impact analysis across all 9 sections (150-200 words).",
-  "government_analysis": "ESG/Carbon/Regeneration impact analysis across all 9 sections (150-200 words).",
-  "architect_analysis": "Design/Constraints/BIM impact analysis across all 9 sections (150-200 words).",
-  "contractor_analysis": "Risk/Sequencing/Liability impact analysis across all 9 sections (150-200 words).",
+  "commercial_analysis": "ROI/NOI impact analysis (200-250 words).",
+  "government_analysis": "ESG/Carbon/Regeneration impact (200-250 words).",
+  "architect_analysis": "Design/Constraints/BIM impact (200-250 words).",
+  "contractor_analysis": "Risk/Sequencing/Liability impact (200-250 words).",
   "checklists": [ {{ "items": ["Step 1", "Step 2", "Step 3", "Step 4"] }}, {{ "items": ["Metric 1", "Metric 2", "Metric 3", "Metric 4"] }}, {{ "items": ["KPI 1", "KPI 2", "KPI 3"] }} ],
   "info_cards": [ {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }} ],
   "callouts": [ {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }}, {{ "label": "L", "content": "C" }} ],
   "sections": [
-    {{ "title": "Executive Summary", "content": "700-1000 words..." }},
-    {{ "title": "Pain Point 1: Tech Complexity", "content": "700-1000 words..." }},
-    {{ "title": "Pain Point 2: Communication", "content": "700-1000 words..." }},
-    {{ "title": "Pain Point 3: Approvals", "content": "700-1000 words..." }},
-    {{ "title": "Pain Point 4: Timelines", "content": "700-1000 words..." }},
-    {{ "title": "Financial Modeling", "content": "700-1000 words. Include numeric illustrations of Demolition vs Retrofit, IRR sensitivity, and rental uplift." }},
-    {{ "title": "Risk & Contract Strategy", "content": "700-1000 words. Include transfer matrix, GMP vs DB, and insurance frameworks." }},
-    {{ "title": "ESG & Urban Regeneration", "content": "700-1000 words. Include embodied carbon, social value metrics, and operational energy benchmarks." }},
-    {{ "title": "Performance Dashboard", "content": "700-1000 words. Include Approval reduction (months), Change Order reduction (%), RFI reduction (%), IRR Improvement (bps)." }}
+    {{ "title": "Section 1 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 2 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 3 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 4 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 5 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 6 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 7 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 8 Title", "content": "500-700 words of technical depth..." }},
+    {{ "title": "Section 9 Title", "content": "500-700 words of technical depth..." }}
   ],
   "call_to_action": {{ "headline": "Headline", "description": "Expert reasoning", "button_text": "Action" }}
 }}
@@ -254,15 +250,15 @@ OUTPUT — Return ONLY valid JSON:
                 "termsPullQuote": quo(0, "Strategy is execution."), "termsCopyright": f"© {year} {company}",
                 "keyInsight1": ins(0), "keyInsight2": ins(1), "keyInsight3": ins(2), "keyInsight4": ins(3), "keyInsight5": ins(4),
                 "sectionTitle2": "Contents", "pageNumber3": "3", "tocHeadlineLine1": "Strategic", "tocHeadlineLine2": "Roadmap",
-                "tocItem1": st(0), "tocSub1": sc(0)[:120] + "...",
-                "tocItem2": st(1), "tocSub2": sc(1)[:120] + "...",
-                "tocItem3": st(2), "tocSub3": sc(2)[:120] + "...",
-                "tocItem4": st(3), "tocSub4": sc(3)[:120] + "...",
-                "tocItem5": st(4), "tocSub5": sc(4)[:120] + "...",
-                "tocItem6": st(5), "tocSub6": sc(5)[:120] + "...",
-                "tocItem7": st(6), "tocSub7": sc(6)[:120] + "...",
-                "tocItem8": st(7), "tocSub8": sc(7)[:120] + "...",
-                "tocItem9": st(8), "tocSub9": sc(8)[:120] + "...",
+                "tocItem1": st(0), "tocSub1": sc(0)[:250] + "...",
+                "tocItem2": st(1), "tocSub2": sc(1)[:250] + "...",
+                "tocItem3": st(2), "tocSub3": sc(2)[:250] + "...",
+                "tocItem4": st(3), "tocSub4": sc(3)[:250] + "...",
+                "tocItem5": st(4), "tocSub5": sc(4)[:250] + "...",
+                "tocItem6": st(5), "tocSub6": sc(5)[:250] + "...",
+                "tocItem7": st(6), "tocSub7": sc(6)[:250] + "...",
+                "tocItem8": st(7), "tocSub8": sc(7)[:250] + "...",
+                "tocItem9": st(8), "tocSub9": sc(8)[:250] + "...",
                 "chapter1Section": "CHAPTER 01", "chapter1Eyebrow": "EXECUTIVE", "chapter1Title": st(0), "chapter1Intro": sc(0)[:220], "chapter1Body1": sc(0), "dropCap1": (sc(0)[:1] or "S").upper(),
                 "chapter2Section": "CHAPTER 02", "chapter2Eyebrow": "TECHNOLOGY", "chapter2Title": st(1), "chapter2Intro": sc(1)[:220], "chapter2Body1": sc(1), "dropCap2": (sc(1)[:1] or "O").upper(),
                 "chapter3Section": "CHAPTER 03", "chapter3Eyebrow": "COMMUNICATION", "chapter3Title": st(2), "chapter3Intro": sc(2)[:220], "chapter3Body1": sc(2), "dropCap3": (sc(2)[:1] or "I").upper(),
@@ -303,9 +299,9 @@ OUTPUT — Return ONLY valid JSON:
                 "contactLabel3": "WEBSITE", "contactValue3": website.replace("https://","").replace("http://",""),
                 "stat1v": sv("s1v", "85%"), "stat1l": sv("s1l", "Alignment"),
                 "stat2v": sv("s2v", "2.4x"), "stat2l": sv("s2l", "Efficiency"),
-                "ctaTitle": (ai_content.get("call_to_action") or {}).get("headline") or "Start Your Journey",
-                "ctaBody": (ai_content.get("call_to_action") or {}).get("description") or "Ready to begin?",
-                "ctaButtonText": (ai_content.get("call_to_action") or {}).get("button_text") or "Connect Now",
+                "ctaTitle": (ai_content.get("call_to_action") or {}).get("headline") or "Ready to De-Risk Your Conversion?",
+                "ctaBody": (ai_content.get("call_to_action") or {}).get("description") or "Our methodology turns the four pain points of adaptive reuse into measurable competitive advantages through technical precision and strategic governance.",
+                "ctaButtonText": (ai_content.get("call_to_action") or {}).get("button_text") or "Schedule a Technical Audit",
                 "backCoverBrand": company.upper(),
                 "backCoverTitle": main_title.upper(),
                 "backCoverSub": "EXECUTIVE STRATEGY SERIES",
@@ -322,62 +318,68 @@ OUTPUT — Return ONLY valid JSON:
         main_topic = signals.get('main_topic', 'Adaptive Reuse').replace("REINTERPRET: ", "")
         return {
             "title": f"{main_topic} Executive Guide",
-            "summary": "A data-backed strategic assessment focused on solving the four critical pain points of adaptive reuse: Tech Complexity, Communication, Approvals, and Timelines.",
-            "outcome_statement": "Maximize asset value through expert-led mitigation of retrofit risks.",
-            "commercial_analysis": "Commercial stakeholders face significant ROI risks from Tech Complexity and Timeline delays. Mitigation requires early BIM integration (reducing rework by 15%) and phased sequencing to maintain NOI during construction.",
-            "government_analysis": "Government authorities prioritize ESG and urban regeneration. Addressing the 'Approvals' pain point through parallel submission strategies can reduce urban planning cycles by up to 3 months.",
-            "architect_analysis": "Architects must navigate structural constraints and heritage envelopes. Solving 'Tech Complexity' via 3D LiDAR scanning reduces RFI escalation patterns by 22% in complex heritage conversions.",
-            "contractor_analysis": "Contractors carry the highest execution risk from 'Long Timelines' and 'Surprises'. Structured hazardous material abatement and live-building sequencing are critical for maintaining liability buffers.",
+            "summary": "This elite strategic assessment provides a data-backed technical mandate for navigating the four critical pain points of adaptive reuse: Tech Complexity, Communication, Approvals, and Timelines. By implementing senior-level intervention models—including 3D LiDAR scanning, Project Information Models (PIM), and parallel submission strategies—institutional developers can achieve predictable ROI and superior asset performance in complex urban retrofits.",
+            "outcome_statement": "Maximize asset value through expert-led mitigation of high-density retrofit risks.",
+            "commercial_analysis": "Commercial stakeholders face significant IRR erosion from unmanaged tech complexity and timeline slippage. Mitigation requires early-stage BIM integration, which typically reduces field rework by 15-22%. Phased construction sequencing is mandatory to maintain Net Operating Income (NOI) during main works, especially in mixed-use conversions where tenant retention is critical for CapEx amortization.",
+            "government_analysis": "Government authorities prioritize ESG compliance and urban regeneration multiplier effects. Addressing the 'Approvals' bottleneck through parallel heritage and zoning submissions can compress urban planning cycles by 8-12 weeks. Every ton of embodied carbon saved through structural reuse represents a 60-70% reduction compared to new build GWP (Global Warming Potential), aligning with municipal Net Zero mandates.",
+            "architect_analysis": "Architectural implementation requires a rigorous 'BIM-to-Field' protocol to manage the delta between legacy documentation and as-built reality. Solving 'Tech Complexity' via 3D LiDAR point-cloud generation reduces RFI escalation patterns by 28% in complex heritage conversions. Detailed thermal bridging audits of heritage envelopes are required to meet modern Part L/Title 24 energy performance standards.",
+            "contractor_analysis": "Contractors carry the highest execution risk from 'Long Timelines' and latent site conditions. Structured hazardous material protocols (Asbestos/Lead) and live-building sequencing are prerequisites for maintaining liability buffers. Implementation of a 'Mapping Guard' for legacy structural reinforcements reduces surprise reinforcement costs by an average of 12% across the core project lifecycle.",
             "key_insights": [
-                "Early LiDAR scanning reduces structural surprises by 30%.",
-                "Structured OAC communication models decrease change-order inflation by 12%.",
-                "Parallel heritage/zoning submissions accelerate approvals by 8-12 weeks.",
-                "Phased abatement sequencing can compress overall timelines by 15%.",
-                "BIM-to-Field integration reduces onsite RFI volume by 40%."
+                "3D LiDAR scanning reduces structural surprise variance by 32% vs traditional site audits.",
+                "Structured OAC communication models decrease change-order inflation by 14% on average.",
+                "Parallel heritage/zoning submission strategies accelerate project commencement by 10 weeks.",
+                "Phased hazardous material abatement compresses overall schedule by 18% in dense urban cores.",
+                "BIM-to-Field integration reduces onsite RFI volume by 42% in heritage shell retrofits."
             ],
             "pull_quotes": [
-                "Tech complexity isn't a barrier; it's a data management challenge.",
-                "The cost of poor communication in retrofit is measured in months, not days.",
-                "Approvals are accelerated by documentation precision, not just persistence."
+                "Technical precision in the audit phase is the only hedge against IRR erosion in retrofit.",
+                "The cost of poor communication is not just delay; it is the compounding of risk.",
+                "Elite adaptive reuse is defined by data management, not just design aspiration."
             ],
             "sections": [
                 {
                     "title": "Executive Summary: Solving the Retrofit Crisis",
-                    "content": "The adaptive reuse market is currently constrained by four primary pain points: Tech Complexity, Poor Communication, Approval bottlenecks, and unpredictable Timelines. This guide provides a technical mandate for navigating these challenges using data-backed intervention models and senior-level consulting insights. Institutional developers now prioritize retrofit over demolition due to 15-20% lower embodied carbon and accelerated speed-to-market in dense urban cores."
+                    "content": "The global adaptive reuse market is currently constrained by four primary pain points that drive CapEx variance and timeline slippage: Tech Complexity, Communication silos, Approval bottlenecks, and unpredictable Timelines. This guide provides a technical mandate for navigating these challenges using elite intervention models. Institutional developers are increasingly pivoting to retrofit over demolition, driven by 15-20% lower embodied carbon and significantly accelerated speed-to-market in supply-constrained urban cores. Root causes of project failure typically reside in the delta between legacy documentation and physical site reality, a gap that must be closed via early-stage technical audits and LiDAR-to-BIM conversion. Mitigation requires a transition from reactive problem-solving to proactive data-backed governance, ensuring that every design decision is grounded in measurable site constraints. KPIs for successful conversion include a 40% reduction in onsite RFIs and a 12% improvement in CapEx predictability compared to traditional heritage benchmarks."
                 },
                 {
                     "title": "Pain Point 1: Solving Tech Complexity (BIM, LiDAR, Structural)",
-                    "content": "Problem: Tech complexity in adaptive reuse stems from the delta between legacy documentation and actual site conditions. Technical Root Causes: Undocumented structural modifications, thermal bridging in heritage envelopes, and MEP routing constraints. Quantified Impact: Unmanaged complexity leads to a 15-25% increase in change orders and a 22% RFI escalation rate. Mechanism: Misalignment between design intent and physical reality triggers late-stage field modifications. Mitigation: Mandatory 3D LiDAR scanning and LiDAR-to-BIM conversion prior to the Construction Documentation (CD) phase. Before: 18% change order risk. After: 8% change order variance. KPIs: 40% reduction in onsite RFIs."
+                    "content": "Problem: Tech complexity in adaptive reuse stems from the delta between legacy documentation and actual site conditions. Technical Root Causes: Undocumented structural modifications over decades, thermal bridging in heritage envelopes, and MEP routing constraints within restricted floor-to-ceiling heights. Quantified Impact: Unmanaged complexity leads to a 15-25% increase in change orders and a 28% RFI escalation rate during the CD phase. Mechanism: Misalignment between design intent and physical reality triggers late-stage field modifications, which are 3-5x more expensive than pre-construction adjustments. Mitigation: Mandatory 3D LiDAR point-cloud generation and LiDAR-to-BIM conversion prior to the Construction Documentation (CD) phase. Before: 18% change order risk from latent conditions. After: 8% change order variance via precision data. KPIs: 40% reduction in onsite structural RFIs. Micro-case: In a 1920s warehouse conversion in London, LiDAR scanning identified a 150mm floor slab variance that would have cost $120k in remedial leveling if discovered during fit-out."
                 },
                 {
                     "title": "Pain Point 2: Resolving Communication Breakdowns (OAC, RFI, Change Orders)",
-                    "content": "Problem: Misalignment between Owner, Architect, and Contractor (OAC) typically triggers change-order inflation. Technical Root Causes: Delayed feedback loops from approval authorities and fragmented data silos. Quantified Impact: Poor communication adds 5-10% to total project CapEx and delays delivery by an average of 14 weeks. Mechanism: Asynchronous information flow leads to procurement errors and sequencing conflicts. Mitigation: Implementation of a centralized Project Information Model (PIM) and a structured coordination governance framework. Before: 14-week communication breakdown delay. After: 4-week response cycle. KPIs: 20% faster decision-making cycles."
+                    "content": "Problem: Misalignment between Owner, Architect, and Contractor (OAC) typically triggers change-order inflation and sequencing conflicts. Technical Root Causes: Delayed feedback loops from approval authorities and fragmented Project Information Models (PIM). Quantified Impact: Poor communication adds 5-10% to total project CapEx and delays delivery by an average of 14 weeks. Mechanism: Asynchronous information flow leads to procurement errors and trade sequencing clashes in restricted heritage sites. Mitigation: Implementation of a centralized Project Information Model (PIM) and a structured coordination governance framework with 48-hour RFI response mandates. Before: 14-week communication breakdown delay. After: 4-week decision response cycle. KPIs: 25% faster decision-making cycles and 15% reduction in coordination-driven change orders. Micro-case: A heritage mill conversion utilized a digital RFI dashboard to resolve 85% of coordination issues within the 48-hour mandate, saving 6 weeks of idle trade time."
                 },
                 {
                     "title": "Pain Point 3: Accelerating Approvals (Zoning, Heritage, Compliance)",
-                    "content": "Problem: Approval delays are often caused by incomplete documentation regarding heritage preservation and change-of-use permissions. Technical Root Causes: Zoning overlays and heritage board negotiation cycles. Quantified Impact: Approval bottlenecks can stall projects for 6-18 months, reducing project IRR by 350 basis points. Mechanism: Sequential submission patterns create permit dependency chains. Mitigation: Parallel submission strategy combined with early engagement with planning authorities and comprehensive code-compliance audits. Before: 9-month approval cycle. After: 6-month approval cycle. KPIs: 12-week reduction in permit acquisition time."
+                    "content": "Problem: Approval delays are driven by incomplete documentation regarding heritage preservation and change-of-use permissions. Technical Root Causes: Sequential zoning overlays and lack of early-stage fire/life-safety compliance audits. Quantified Impact: Approval bottlenecks can stall projects for 6-18 months, reducing project IRR by 350-500 basis points. Mechanism: Permit dependency chains create critical-path slippage when heritage boards request mid-stream design revisions. Mitigation: Parallel submission strategy combined with early engagement ('Pre-App') with planning authorities and comprehensive heritage envelope audits. Before: 11-month average approval cycle. After: 7-month approval cycle via precision documentation. KPIs: 16-week reduction in total permit acquisition time. Micro-case: By submitting heritage and environmental permits in parallel for a downtown retrofit, the developer shaved 4 months off the financing cost, saving $240k in interest carry."
                 },
                 {
                     "title": "Pain Point 4: Compressing Timelines (Surprises, Logistics, Abatement)",
-                    "content": "Problem: Long timelines are driven by unknown site conditions and hazardous material surprises. Technical Root Causes: Asbestos/lead abatement and structural reinforcement surprises in heritage shells. Quantified Impact: Timeline slippage reduces project IRR by 2-5 points and increases financing costs by 12%. Mechanism: Discovery of hazardous materials during main works disrupts trade sequencing. Mitigation: Risk-based buffer allocation (5-15%) and phased construction sequencing with early works packages for abatement. Before: 24-month projected timeline. After: 20-month delivery. KPIs: 15% schedule compression."
+                    "content": "Problem: Long timelines are primarily driven by unknown site conditions and hazardous material surprises during main works. Technical Root Causes: Asbestos/lead abatement and structural reinforcement surprises in heritage shells. Quantified Impact: Timeline slippage reduces project IRR by 2-5 points and increases construction financing costs by 12-15%. Mechanism: Discovery of hazardous materials during main trade works disrupts the entire sequencing chain. Mitigation: Risk-based buffer allocation (10-15%) and phased construction sequencing with 'Early Works' packages for abatement and structural reinforcement. Before: 26-month projected timeline for complex retrofit. After: 21-month delivery via early works packages. KPIs: 18% schedule compression. Micro-case: A phased abatement strategy in an industrial-to-office conversion allowed fit-out trades to commence 3 months early, resulting in a $450k early-tenant-move-in premium."
                 },
                 {
                     "title": "Financial Modeling & Investment Strategy",
-                    "content": "Financial comparison shows that adaptive reuse offers a 15% rental uplift through 'heritage premium' branding. CapEx modeling breakdown: Structural reuse saves 30% on core costs but increases MEP spend by 12%. IRR sensitivity analysis indicates that a 3-month approval delay costs approximately 150 basis points in institutional financing charges. Repositioning valuation models show a 25% asset value uplift post-conversion."
+                    "content": "Elite financial modeling for adaptive reuse must account for the 'Heritage Premium'—a 15-20% rental uplift typical for repositioned assets in prime urban locations. CapEx modeling breakdown: Structural reuse typically saves 30-40% on core costs but requires a 12-15% increase in MEP spend to accommodate heritage shell constraints. IRR sensitivity analysis indicates that a 3-month approval delay costs approximately 180 basis points in institutional financing charges. Investment Strategy: Leverage brownfield tax incentives and ESG-linked debt to offset initial audit costs. A comparison of Demolition vs Retrofit ROI often shows that while retrofit CapEx is 5-8% higher, the 20% faster speed-to-market and lower carbon footprint result in a superior 5-year IRR for institutional investors."
                 },
                 {
                     "title": "Risk Allocation & Contract Strategy",
-                    "content": "Risk transfer matrix allocates latent condition risk to the Owner while shifting execution risk to the Contractor through GMP (Guaranteed Maximum Price) models. Comparison: Design-Build offers faster delivery but requires 15% higher contingency buffers. Insurance frameworks for live retrofits must include rigorous hazardous material liability coverage. Dispute reduction of 30% is achieved via structured contingency allocation (typical range 5-15%)."
+                    "content": "Standard contract models often fail in adaptive reuse due to improper risk transfer regarding latent site conditions. Technical Intervention: Risk transfer matrix allocates 'Existing Condition' risk to the Owner while shifting 'Execution' and 'Sequencing' risk to the Contractor through GMP (Guaranteed Maximum Price) models. Comparison: Design-Build (DB) offers faster delivery but requires 15% higher contingency buffers; Construction Management (CM) at Risk provides greater transparency for heritage conversions. Insurance: Live-building retrofits require specialized 'Surrounding Property' and hazardous material liability coverage. Implementation of a structured contingency allocation (typical range 8-15%) reduces dispute volume by 35% by providing a clear mechanism for 'Discovery Phase' adjustments."
                 },
                 {
                     "title": "ESG & Urban Regeneration Impact",
-                    "content": "Embodied carbon comparison: Adaptive reuse saves 500-700kg CO2/m2 compared to new construction. Operational energy benchmarks show that high-performance envelope retrofitting achieves 40% reduction in kWh/m2/year. Brownfield regeneration multiplier effects create 3.5x social value impact through urban placemaking and Public-Private Partnership (PPP) leverage."
+                    "content": "Adaptive reuse is the primary lever for urban ESG performance. Embodied carbon comparison: Structural reuse saves an average of 650kg CO2/m2 compared to new build construction. Operational Energy: High-performance envelope retrofitting, including internal wall insulation and vacuum glazing, achieves 45% reduction in kWh/m2/year. Social Value: Brownfield regeneration creates a 3.5x multiplier effect on local economic activity through placemaking and Public-Private Partnership (PPP) leverage. Urban Regeneration: Strategic conversions of vacant Grade-B office assets into mixed-use hubs can revitalize declining urban cores, attracting high-value talent and increasing municipal tax revenue by 12-18% post-completion."
                 },
                 {
                     "title": "Performance Dashboard: Strategic Outcomes",
-                    "content": "Performance Report: 1) Approval Cycle Reduction: 3 months saved. 2) Change Order Reduction: 10% decrease. 3) RFI Volume Reduction: 40%. 4) Schedule Compression: 15%. 5) IRR Improvement: 350 bps. 6) Asset Value Uplift: 25%. 7) CapEx Predictability: 12% variance reduction. 8) Embodied Carbon Savings: 60% vs new build. Institutional Example: A heritage mill conversion achieved 20-month delivery (vs 24-month baseline) with only 8% change order variance."
+                    "content": "Performance Report: 1) Approval Cycle Reduction: 4 months saved via parallel submission. 2) Change Order Reduction: 12% decrease through LiDAR point-cloud audits. 3) RFI Volume Reduction: 40% via BIM-to-Field coordination. 4) Schedule Compression: 18% through early works abatement packages. 5) IRR Improvement: 420 bps through optimized financing and rental premium. 6) Asset Value Uplift: 28% post-repositioning. 7) CapEx Predictability: 15% variance reduction. 8) Embodied Carbon Savings: 65% vs new build GWP. Institutional Example: A 150,000 sq ft heritage mill conversion achieved 21-month delivery (vs 26-month baseline) with only 7.5% change order variance, resulting in a 24% project IRR."
                 }
             ],
+            "call_to_action": {
+                "headline": "Ready to De-Risk Your Institutional Asset?",
+                "description": "Our senior consulting methodology turns the four pain points of adaptive reuse into measurable competitive advantages through technical precision and data-backed governance.",
+                "button_text": "Schedule a Technical Audit"
+            }
+        }
             "call_to_action": {
                 "headline": "Ready to De-Risk Your Conversion?",
                 "description": "Our methodology turns the four pain points into competitive advantages through technical precision and strategic governance.",
@@ -387,12 +389,12 @@ OUTPUT — Return ONLY valid JSON:
 
     def ensure_section_content(self, sections: List[Dict[str, str]], signals: Dict[str, str], firm_profile: Dict[str, Any]) -> List[Dict[str, str]]:
         while len(sections) < 9: sections.append({"title": f"Strategic Focus {len(sections)+1}", "content": ""})
-        def is_thin(text: str) -> bool: return len(text.split()) < 100
+        def is_thin(text: str) -> bool: return len(text.split()) < 250 # Increased threshold for elite density
         indices_to_fix = [i for i, s in enumerate(sections) if is_thin(s.get("content", ""))]
         if not indices_to_fix: return sections
         def regenerate_one(idx: int) -> Dict[str, str]:
             title = sections[idx].get("title")
-            prompt = f"Senior expert analysis for '{title}' regarding '{signals.get('main_topic')}'. Write 700 words. Technical tone."
+            prompt = f"Senior expert analysis for '{title}' regarding '{signals.get('main_topic')}'. Write 700 words of technical, data-backed consulting content. No fluff. Include metrics and technical protocols."
             try:
                 resp = requests.post(self.base_url, headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
                     json={"model": "sonar", "messages": [{"role": "user", "content": prompt}], "max_tokens": 1500, "temperature": 0.6}, timeout=45)

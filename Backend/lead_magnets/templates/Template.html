@@ -40,8 +40,8 @@
             background: #a0a0a8;
             padding: 28px 20px;
             color: var(--ink);
-            font-size: 1.3rem; /* Further increased for better readability and fill */
-            line-height: 1.6;
+            font-size: 1.15rem; /* Reduced for professional consulting report density */
+            line-height: 1.45; /* Reduced line spacing */
         }
 
         .book { width: 210mm; margin: 0 auto; }
@@ -102,9 +102,9 @@
         .pg-foot-r { font-family: var(--fm); font-size: 8px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
 
         .bw { 
-            padding: 16px 16mm 20px; 
+            padding: 12px 14mm 16px; /* Reduced margins for better page utilization */
             flex: 1; 
-            overflow: hidden; /* Prevent content from leaking into footer */
+            overflow: hidden; 
             display: flex;
             flex-direction: column;
         }
@@ -208,63 +208,63 @@
 
         /* ── TYPOGRAPHY ──────────────────────── */
         .ch-eyebrow {
-            display: flex; align-items: center; gap: 12px;
-            margin-bottom: 12px; break-after: avoid;
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px; break-after: avoid;
         }
         .ch-eyebrow-label {
-            font-family: var(--fm); font-size: 10px; letter-spacing: 0.32em;
+            font-family: var(--fm); font-size: 9px; letter-spacing: 0.28em;
             text-transform: uppercase; color: var(--navy); white-space: nowrap; flex-shrink: 0;
         }
-        .ch-eyebrow-rule { flex: 1; height: 1.5px; background: var(--rule); }
+        .ch-eyebrow-rule { flex: 1; height: 1px; background: var(--rule); }
 
         .ch-h1 {
-            font-family: var(--fd); font-size: 42px; font-weight: 700;
-            color: var(--navy); line-height: 1.1; letter-spacing: -0.5px;
-            margin-bottom: 24px; break-after: avoid;
+            font-family: var(--fd); font-size: 34px; font-weight: 700;
+            color: var(--navy); line-height: 1.05; letter-spacing: -0.4px;
+            margin-bottom: 16px; break-after: avoid;
         }
 
         .sec-h {
-            font-family: var(--fd); font-size: 20px; font-weight: 700;
-            color: var(--navy); margin: 24px 0 10px; break-after: avoid;
+            font-family: var(--fd); font-size: 18px; font-weight: 700;
+            color: var(--navy); margin: 18px 0 8px; break-after: avoid;
         }
         .sec-h2 {
-            font-family: var(--fs); font-size: 14px; font-weight: 700;
-            letter-spacing: 0.12em; text-transform: uppercase;
-            color: var(--navy); margin: 20px 0 8px; break-after: avoid;
+            font-family: var(--fs); font-size: 13px; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--navy); margin: 14px 0 6px; break-after: avoid;
         }
 
         .body {
-            font-family: var(--fs); font-size: 14.5px; line-height: 1.75;
-            color: var(--mid); font-weight: 400; margin-bottom: 18px;
+            font-family: var(--fs); font-size: 13px; line-height: 1.6;
+            color: var(--mid); font-weight: 400; margin-bottom: 14px;
             text-align: justify;
         }
         .body-sm {
-            font-family: var(--fs); font-size: 13.5px; line-height: 1.7;
-            color: var(--mid); font-weight: 400; margin-bottom: 14px;
+            font-family: var(--fs); font-size: 12px; line-height: 1.55;
+            color: var(--mid); font-weight: 400; margin-bottom: 10px;
         }
 
         .drop-cap-wrap { overflow: hidden; }
         .drop-letter {
-            font-family: var(--fd); font-size: 84px; font-weight: 900;
-            color: var(--navy); float: left; line-height: 0.7;
-            margin: 12px 10px 0 0; padding-right: 4px;
+            font-family: var(--fd); font-size: 72px; font-weight: 900;
+            color: var(--navy); float: left; line-height: 0.65;
+            margin: 8px 8px 0 0; padding-right: 2px;
         }
 
-        .h-rule { height: 1.5px; background: var(--rule); margin: 24px 0; }
-        .accent-dash { width: 40px; height: 4px; background: var(--navy); margin: 16px 0 20px; }
+        .h-rule { height: 1px; background: var(--rule); margin: 18px 0; }
+        .accent-dash { width: 30px; height: 3px; background: var(--navy); margin: 12px 0 16px; }
 
         /* Callout blocks */
         .callout {
-            background: var(--off2); border-left: 4px solid var(--navy);
-            padding: 20px 25px; margin: 18px 0; break-inside: avoid;
+            background: var(--off2); border-left: 3.5px solid var(--navy);
+            padding: 16px 20px; margin: 14px 0; break-inside: avoid;
         }
         .callout-title {
-            font-family: var(--fd); font-size: 18px; font-weight: 700;
-            color: var(--navy); margin-bottom: 8px; break-after: avoid;
+            font-family: var(--fd); font-size: 16px; font-weight: 700;
+            color: var(--navy); margin-bottom: 6px; break-after: avoid;
         }
         .callout-body {
-            font-family: var(--fs); font-size: 14px; font-weight: 400;
-            color: var(--mid); line-height: 1.65;
+            font-family: var(--fs); font-size: 12.5px; font-weight: 400;
+            color: var(--mid); line-height: 1.55;
         }
 
         .callout.navy-fill { background: var(--navy); }
@@ -292,13 +292,8 @@
             position: relative; overflow: hidden;
         }
 
-        /* Arc watermarks (decorative, no dynamic colors needed) */
-        .arc { position: absolute; pointer-events: none; }
-        .arc-1 { width: 500px; height: 500px; border-radius: 50%; border: 60px solid rgba(255,255,255,0.04); top: -170px; right: -150px; }
-        .arc-2 { width: 340px; height: 340px; border-radius: 50%; border: 45px solid rgba(255,255,255,0.035); top: -80px; right: -60px; }
-        .arc-3 { width: 270px; height: 270px; border-radius: 50%; background: rgba(255,255,255,0.025); top: 50px; right: 20px; }
-        .arc-4 { width: 400px; height: 400px; border-radius: 50%; border: 52px solid rgba(255,255,255,0.028); bottom: -190px; left: -100px; }
-        .arc-5 { width: 200px; height: 200px; border-radius: 50%; border: 30px solid rgba(255,255,255,0.022); bottom: -60px; left: 60px; }
+        /* Removed arc watermarks for cleaner consultant report look */
+        .arc { display: none; }
 
         .cv-top {
             position: relative; z-index: 10;
@@ -484,9 +479,6 @@
 
 <!-- PAGE 1 — COVER (dynamic) -->
 <div class="page cover">
-    <div class="arc arc-1"></div><div class="arc arc-2"></div>
-    <div class="arc arc-3"></div><div class="arc arc-4"></div><div class="arc arc-5"></div>
-
     <div class="cv-top">
         <div class="cv-name">{{coverBrand}}</div>
     </div>
@@ -957,9 +949,6 @@
 
 <!-- PAGE 13 — BACK COVER -->
 <div class="page back-cover">
-    <div class="arc arc-1"></div><div class="arc arc-2"></div>
-    <div class="arc arc-3"></div><div class="arc arc-4"></div><div class="arc arc-5"></div>
-
     <div style="position:relative;z-index:10;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;">
         <div class="bc-brand">{{backCoverBrand}}</div>
         <div class="bc-title">{{backCoverTitle}}</div>
