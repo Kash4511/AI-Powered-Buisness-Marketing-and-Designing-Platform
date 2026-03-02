@@ -128,35 +128,51 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
-        data = request.data.copy()
         
-        # Correctly handle industry_specialties from multipart/form-data (QueryDict)
-        if hasattr(data, 'getlist'):
-            specialties = data.getlist('industry_specialties')
-            if specialties:
-                # If only one item and it's a JSON string, try to parse it
-                if len(specialties) == 1 and specialties[0].startswith('['):
-                    try:
-                        data['industry_specialties'] = json.loads(specialties[0])
-                    except json.JSONDecodeError:
-                        data['industry_specialties'] = specialties
+        # Convert QueryDict to a plain dict to handle list fields correctly
+        if hasattr(request.data, 'getlist'):
+            # Use getlist for all keys to ensure we don't miss any list data
+            # but then simplify for non-list fields
+            data = {}
+            for key in request.data.keys():
+                values = request.data.getlist(key)
+                if key == 'industry_specialties':
+                    # If it's a single item and looks like a JSON list, try parsing it
+                    if len(values) == 1 and isinstance(values[0], str) and values[0].startswith('['):
+                        try:
+                            data[key] = json.loads(values[0])
+                        except json.JSONDecodeError:
+                            data[key] = values
+                    else:
+                        data[key] = values
                 else:
-                    data['industry_specialties'] = specialties
+                    # For all other fields, just take the last value
+                    data[key] = values[-1] if values else None
         else:
-            # Fallback for plain dict
-            specialties = data.get('industry_specialties')
-            if isinstance(specialties, str) and specialties.startswith('['):
-                try:
-                    data['industry_specialties'] = json.loads(specialties)
-                except json.JSONDecodeError:
-                    pass
+            data = request.data.copy()
+
+        # Remove empty string values for fields that should be null or ignored
+        # This prevents validation errors for ImageFields, URLFields, etc.
+        for key in list(data.keys()):
+            if data[key] == "":
+                # For specific fields, an empty string should be treated as None
+                if key in ['logo', 'preferred_cover_image', 'firm_website', 'phone_number', 'location', 'branding_guidelines']:
+                    data[key] = None
+                # For color fields, if they are somehow empty, we might want to skip them
+                # to avoid validation errors, or let the serializer handle it.
+                elif key in ['primary_brand_color', 'secondary_brand_color']:
+                    # Only remove if empty to avoid CharField(max_length=7) failure
+                    data.pop(key)
         
         serializer = self.get_serializer(instance, data=data, partial=True)
         if serializer.is_valid():
             self.perform_update(serializer)
             return Response(serializer.data)
         
-        logger.error(f"❌ FirmProfile update validation failed: {serializer.errors}")
+        # Log detailed errors for debugging
+        logger.error(f"❌ FirmProfile update validation failed for user {request.user.email}: {serializer.errors}")
+        logger.debug(f"Received data: {data}")
+        
         return Response(
             {
                 'error': 'Firm profile update failed',

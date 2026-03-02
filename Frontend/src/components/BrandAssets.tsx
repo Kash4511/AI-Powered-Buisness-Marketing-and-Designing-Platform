@@ -151,7 +151,10 @@ const BrandAssets: React.FC = () => {
     } else if (!emailRe.test(String(formData.work_email).trim())) {
       errors.push('Work email must be a valid email address');
     }
-    if (!formData.phone_number) errors.push('Phone number is required');
+    // phone_number is optional in the model, so we'll make it optional here too
+    if (formData.phone_number && formData.phone_number.length > 20) {
+      errors.push('Phone number is too long');
+    }
     if (!formData.primary_brand_color || !hex.test(formData.primary_brand_color)) errors.push('Primary color must be a valid hex like #2a5766');
     if (!formData.secondary_brand_color || !hex.test(formData.secondary_brand_color)) errors.push('Secondary color must be a valid hex like #ffffff');
     setFormErrors(errors);
