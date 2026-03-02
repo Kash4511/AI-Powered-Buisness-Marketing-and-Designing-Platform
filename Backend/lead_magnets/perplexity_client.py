@@ -50,19 +50,26 @@ class PerplexityClient:
         if isinstance(value, list): return any(self._is_meaningful(i) for i in value)
         v = str(value).strip()
         if len(v) < 2: return False
-        FILLERS = {"test","testing","none","n/a","na","null","empty","ok","yes","no",
-                   "placeholder","asdf","qwerty","lorem","ipsum","...","h","ok.",".","–"}
+        
+        # Comprehensive list of filler/weak inputs to ignore
+        FILLERS = {
+            "test", "testing", "none", "n/a", "na", "null", "empty", "ok", "yes", "no",
+            "placeholder", "asdf", "qwerty", "lorem", "ipsum", "...", "h", "ok.", ".", "–",
+            "abc", "xyz", "stuff", "things", "data", "info", "etc", "...", "???"
+        }
         return v.lower() not in FILLERS
 
     def interpret_field(self, field_value: Any) -> str:
-        if not self._is_meaningful(field_value): return "INFER_FROM_CONTEXT"
+        if not self._is_meaningful(field_value): 
+            return "INFER_FROM_CONTEXT (The user provided a weak or placeholder input here. Please use your senior advisory expertise to infer the most logical institutional content based on the rest of the report context.)"
+            
         cleaned = ", ".join(str(x).strip() for x in field_value) if isinstance(field_value, list) else " ".join(str(field_value).split())
         
         # Strengthen weak inputs for the AI
-        if len(cleaned) < 3: # If single char or very short
-            return "INFER_FROM_CONTEXT"
+        if len(cleaned) < 4: # If single char or very short (e.g. "h", "abc")
+            return "INFER_FROM_CONTEXT (Input was too short/vague. Infer elite institutional details.)"
             
-        return f"REINTERPRET: {cleaned}"
+        return f"REINTERPRET & EXPAND: {cleaned}"
 
     def get_semantic_signals(self, user_answers: Dict[str, Any]) -> Dict[str, str]:
         return {k: self.interpret_field(v) for k, v in user_answers.items()}
@@ -80,11 +87,16 @@ class PerplexityClient:
             "3. NO commentary or explanations.\n"
             "4. Start with '{' and end with '}'.\n"
             "5. Follow the provided schema exactly.\n"
-            "6. Ensure all strings are properly escaped for JSON."
+            "6. Ensure all strings are properly escaped for JSON.\n\n"
+            "EXAMPLE OF VALID OUTPUT:\n"
+            "{\"title\": \"Example Title\", \"summary\": \"Example Summary...\", ...}"
         )
 
         def attempt_generation(current_prompt: str, is_retry: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
             try:
+                # Log attempt
+                logger.info(f"🚀 AI Generation Attempt {'Retry' if is_retry else '1'}")
+                
                 response = requests.post(
                     self.base_url,
                     headers={
@@ -99,7 +111,7 @@ class PerplexityClient:
                             {"role": "user", "content": current_prompt},
                         ],
                         "max_tokens": 4000,
-                        "temperature": 0.7 if not is_retry else 0.3, # Lower temp on retry for stability
+                        "temperature": 0.5 if not is_retry else 0.2, # Low temp for deterministic JSON
                     },
                     timeout=90,
                 )
@@ -109,9 +121,10 @@ class PerplexityClient:
                 
                 raw = response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
                 if not raw:
+                    logger.warning("Empty content from AI")
                     return None, None
 
-                # JSON Sanitation Layer
+                # JSON Extraction Layer
                 sanitized = self._extract_json(raw)
                 try:
                     return json.loads(sanitized), raw
@@ -119,7 +132,7 @@ class PerplexityClient:
                     logger.warning(f"JSON Decode Error (Attempt {'Retry' if is_retry else '1'}): {str(e)}\nRaw snippet: {raw[:100]}...")
                     return None, raw
             except Exception as e:
-                logger.error(f"AI Generation Attempt Exception: {str(e)}")
+                logger.error(f"AI Generation Attempt Exception: {str(exc)}\n{traceback.format_exc()}")
                 return None, None
 
         # First Attempt
@@ -133,7 +146,8 @@ class PerplexityClient:
                 correction_prompt = (
                     f"The following output was intended to be a valid JSON object but failed parsing. "
                     f"Please correct it and return ONLY the valid JSON object. No markdown, no extra text.\n\n"
-                    f"FAILED OUTPUT:\n{failed_text}"
+                    f"FAILED OUTPUT:\n{failed_text}\n\n"
+                    f"RE-OUTPUT VALID JSON NOW:"
                 )
             else:
                 correction_prompt = prompt # Fallback to original prompt
@@ -141,6 +155,7 @@ class PerplexityClient:
             result, _ = attempt_generation(correction_prompt, is_retry=True)
 
         if result:
+            logger.info("✅ Deterministic AI generation successful")
             return result
         
         logger.error("❌ Deterministic AI generation failed after retries. Using fallback.")
