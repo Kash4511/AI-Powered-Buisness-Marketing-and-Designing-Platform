@@ -10,6 +10,7 @@ class FirmProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = FirmProfile
         fields = "__all__"
+        read_only_fields = ["user"]
 
     def create(self, validated_data):
         from django.core.files.storage import default_storage
@@ -74,10 +75,10 @@ class CreateLeadMagnetSerializer(serializers.Serializer):
                 fp_serializer.is_valid(raise_exception=True)
                 fp_serializer.save()
             else:
-                # Create only if required fields are present in the payload
-                fp_serializer = FirmProfileSerializer(data={**firm_profile_data, "user": user.id})
+                # Create with user from context
+                fp_serializer = FirmProfileSerializer(data=firm_profile_data)
                 fp_serializer.is_valid(raise_exception=True)
-                fp_serializer.save()
+                fp_serializer.save(user=user)
 
         # Create LeadMagnet first
         lead_magnet = LeadMagnet.objects.create(

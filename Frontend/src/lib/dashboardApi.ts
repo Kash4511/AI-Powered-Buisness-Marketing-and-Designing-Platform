@@ -275,8 +275,16 @@ export const dashboardApi = {
         if (value !== undefined && value !== null) {
           if (key === 'industry_specialties' && Array.isArray(value)) {
             value.forEach(v => formData.append('industry_specialties', v));
-          } else if (key === 'logo' && value instanceof File) {
-            formData.append('logo', value);
+          } else if (key === 'logo') {
+            if (value instanceof File) {
+              formData.append('logo', value);
+            }
+            // Skip if logo is a string (URL) or anything else
+          } else if (key === 'preferred_cover_image') {
+            if (value instanceof File) {
+              formData.append('preferred_cover_image', value);
+            }
+            // Skip if it's a string (URL)
           } else {
             formData.append(key, String(value));
           }

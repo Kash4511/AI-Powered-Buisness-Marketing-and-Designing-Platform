@@ -129,16 +129,34 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
         data = request.data.copy()
-        specialties = data.get('industry_specialties')
-        if isinstance(specialties, str):
-            try:
-                data['industry_specialties'] = json.loads(specialties)
-            except json.JSONDecodeError:
-                pass
+        
+        # Correctly handle industry_specialties from multipart/form-data (QueryDict)
+        if hasattr(data, 'getlist'):
+            specialties = data.getlist('industry_specialties')
+            if specialties:
+                # If only one item and it's a JSON string, try to parse it
+                if len(specialties) == 1 and specialties[0].startswith('['):
+                    try:
+                        data['industry_specialties'] = json.loads(specialties[0])
+                    except json.JSONDecodeError:
+                        data['industry_specialties'] = specialties
+                else:
+                    data['industry_specialties'] = specialties
+        else:
+            # Fallback for plain dict
+            specialties = data.get('industry_specialties')
+            if isinstance(specialties, str) and specialties.startswith('['):
+                try:
+                    data['industry_specialties'] = json.loads(specialties)
+                except json.JSONDecodeError:
+                    pass
+        
         serializer = self.get_serializer(instance, data=data, partial=True)
         if serializer.is_valid():
             self.perform_update(serializer)
             return Response(serializer.data)
+        
+        logger.error(f"❌ FirmProfile update validation failed: {serializer.errors}")
         return Response(
             {
                 'error': 'Firm profile update failed',
