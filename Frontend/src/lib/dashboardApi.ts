@@ -95,8 +95,9 @@ const handleApiError = (error: unknown, context: string) => {
     if (err.response.data instanceof Blob) {
       errorMessage = 'PDF generation failed. Check server logs for details.';
     } else if (typeof err.response.data === 'object' && err.response.data !== null) {
-      const errorData = err.response.data as { error?: string; details?: string };
-      errorMessage = errorData.error || errorData.details || JSON.stringify(err.response.data);
+      const errorData = err.response.data as { error?: string; details?: any };
+      const detailsStr = errorData.details ? JSON.stringify(errorData.details) : '';
+      errorMessage = `${errorData.error || 'Validation error'} ${detailsStr}`.trim();
     } else {
       errorMessage = String(err.response.data || 'Unknown error');
     }

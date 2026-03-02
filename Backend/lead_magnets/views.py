@@ -129,49 +129,65 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
         
-        # Convert QueryDict to a plain dict to handle list fields correctly
-        if hasattr(request.data, 'getlist'):
-            # Use getlist for all keys to ensure we don't miss any list data
-            # but then simplify for non-list fields
-            data = {}
-            for key in request.data.keys():
-                values = request.data.getlist(key)
-                if key == 'industry_specialties':
-                    # If it's a single item and looks like a JSON list, try parsing it
-                    if len(values) == 1 and isinstance(values[0], str) and values[0].startswith('['):
-                        try:
-                            data[key] = json.loads(values[0])
-                        except json.JSONDecodeError:
-                            data[key] = values
-                    else:
-                        data[key] = values
-                else:
-                    # For all other fields, just take the last value
-                    data[key] = values[-1] if values else None
-        else:
-            data = request.data.copy()
-
-        # Remove empty string values for fields that should be null or ignored
-        # This prevents validation errors for ImageFields, URLFields, etc.
-        for key in list(data.keys()):
-            if data[key] == "":
-                # For specific fields, an empty string should be treated as None
-                if key in ['logo', 'preferred_cover_image', 'firm_website', 'phone_number', 'location', 'branding_guidelines']:
-                    data[key] = None
-                # For color fields, if they are somehow empty, we might want to skip them
-                # to avoid validation errors, or let the serializer handle it.
-                elif key in ['primary_brand_color', 'secondary_brand_color']:
-                    # Only remove if empty to avoid CharField(max_length=7) failure
-                    data.pop(key)
+        # Log the incoming data for debugging
+        logger.debug(f"PATCH FirmProfile for user {request.user.email}")
         
+        # Start with a copy of the data
+        data = request.data.copy()
+        
+        # 1. Handle industry_specialties if it's coming from multipart/form-data
+        if hasattr(request.data, 'getlist'):
+            # Reconstruct the data correctly for QueryDict
+            processed_data = {}
+            for key in request.data.keys():
+                if key == 'industry_specialties':
+                    specialties = request.data.getlist(key)
+                    # Handle case where it's a single string like '["A", "B"]'
+                    if len(specialties) == 1 and isinstance(specialties[0], str) and specialties[0].startswith('['):
+                        try:
+                            processed_data[key] = json.loads(specialties[0])
+                        except json.JSONDecodeError:
+                            processed_data[key] = specialties
+                    else:
+                        processed_data[key] = specialties
+                else:
+                    processed_data[key] = request.data.get(key)
+            data = processed_data
+
+        # 2. Sanitize fields: empty strings should be null or removed if they violate constraints
+        # Especially for ImageFields and URLFields
+        for key in list(data.keys()):
+            val = data[key]
+            if val == "" or val == "null" or val == "undefined":
+                # Fields that allow NULL
+                if key in ['logo', 'preferred_cover_image']:
+                    data[key] = None
+                # Fields that do NOT allow NULL but allow BLANK (empty string)
+                elif key in ['firm_website', 'primary_brand_color', 'secondary_brand_color', 
+                           'phone_number', 'location', 'branding_guidelines']:
+                    data[key] = ""
+                # Required fields should not be sent as empty strings if we want to avoid validation errors
+                # But if they are sent as empty, we let the serializer handle the "This field is required" error.
+        
+        # 3. Handle logo/image fields specifically if they are strings (URLs)
+        for key in ['logo', 'preferred_cover_image']:
+            if key in data and isinstance(data[key], str):
+                # If it's a URL string, remove it from the update payload
+                data.pop(key)
+        
+        # 4. Ensure industry_specialties is a list
+        if 'industry_specialties' in data and data['industry_specialties'] is None:
+            data['industry_specialties'] = []
+
         serializer = self.get_serializer(instance, data=data, partial=True)
         if serializer.is_valid():
             self.perform_update(serializer)
             return Response(serializer.data)
         
         # Log detailed errors for debugging
-        logger.error(f"❌ FirmProfile update validation failed for user {request.user.email}: {serializer.errors}")
-        logger.debug(f"Received data: {data}")
+        error_msg = f"❌ FirmProfile update validation failed for user {request.user.email}: {serializer.errors}"
+        logger.error(error_msg)
+        print(error_msg) # Ensure it shows up in stdout
         
         return Response(
             {
