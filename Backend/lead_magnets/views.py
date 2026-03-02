@@ -494,20 +494,22 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
         filename = os.path.basename(lm.pdf_file.name) or f"lead-magnet-{lead_magnet_id}.pdf"
         
         try:
-            # We use .read() which works across all Django storage backends (Cloudinary, S3, Local)
+            # We use .open() which works across all Django storage backends (Cloudinary, S3, Local)
             # This avoids the "header leak" 401 redirect and the "stream timeout" 502 proxy issues.
-            lm.pdf_file.open('rb')
-            content = lm.pdf_file.read()
-            lm.pdf_file.close()
+            file_handle = lm.pdf_file.open('rb')
             
-            if not content:
-                raise ValueError("Retrieved file content is empty")
-
-            response = HttpResponse(content, content_type='application/pdf')
+            # Using FileResponse with streaming=True (default) for efficiency.
+            # It will automatically close the file handle when finished.
+            response = FileResponse(file_handle, content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            response['Content-Length'] = len(content)
             
-            logger.info(f"Successfully served PDF for LeadMagnet {lead_magnet_id} ({len(content)} bytes)")
+            # If storage provides a size, add it
+            try:
+                response['Content-Length'] = lm.pdf_file.size
+            except:
+                pass
+            
+            logger.info(f"Successfully initiated PDF download for LeadMagnet {lead_magnet_id}")
             return response
 
         except Exception as e:
@@ -523,13 +525,6 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
                 'error': 'Failed to retrieve file from storage',
                 'details': str(e) if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    except Exception as exc:
-        logger.critical(f"Critical error in download view: {str(exc)}\n{traceback.format_exc()}")
-        return Response({
-            'error': 'Internal server error during download',
-            'details': str(exc) if settings.DEBUG else None
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     except Exception as exc:
         logger.critical(f"Critical error in download view: {str(exc)}\n{traceback.format_exc()}")
