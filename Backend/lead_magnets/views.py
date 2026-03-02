@@ -473,21 +473,66 @@ def generate_pdf_status_compat(request):
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id: int):
     """
-    Serve the generated PDF file for a given lead magnet, supporting relative download route.
+    Serve the generated PDF file for a given lead magnet.
+    Resilient implementation that handles Cloudinary and local storage.
     """
     try:
-        lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
-    except LeadMagnet.DoesNotExist:
-        return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
-    if not lm.pdf_file:
-        return Response({'error': 'PDF file not generated yet'}, status=status.HTTP_404_NOT_FOUND)
-    try:
-        fh = lm.pdf_file.open('rb')
-        resp = FileResponse(fh, content_type='application/pdf')
-        resp['Content-Disposition'] = f'attachment; filename="{os.path.basename(lm.pdf_file.name)}"'
-        return resp
-    except FileNotFoundError:
-        return Response({'error': 'PDF file not found on server disk'}, status=status.HTTP_404_NOT_FOUND)
+        # 1. Fetch LeadMagnet with ownership check
+        try:
+            lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
+        except LeadMagnet.DoesNotExist:
+            logger.warning(f"Download failed: LeadMagnet {lead_magnet_id} not found for user {request.user.id}")
+            return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 2. Check if file exists
+        if not lm.pdf_file:
+            logger.warning(f"Download failed: No PDF file for LeadMagnet {lead_magnet_id}")
+            return Response({'error': 'PDF not generated yet'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 3. Serving Logic
+        filename = os.path.basename(lm.pdf_file.name) or f"lead-magnet-{lead_magnet_id}.pdf"
+        
+        try:
+            # Try serving via FileResponse (preferred for streaming)
+            # We call .open() to get the handle.
+            file_handle = lm.pdf_file.open('rb')
+            
+            # If it's a Cloudinary file, it might not support seek/tell perfectly for FileResponse
+            # but usually it's fine. If it fails, the exception block will catch it.
+            response = FileResponse(file_handle, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        except Exception as e:
+            logger.error(f"FileResponse failed for LeadMagnet {lead_magnet_id}: {str(e)}")
+            
+            # Fallback 1: Read into memory and serve via HttpResponse
+            try:
+                logger.info(f"Attempting memory-buffered fallback for LeadMagnet {lead_magnet_id}")
+                lm.pdf_file.open('rb')
+                content = lm.pdf_file.read()
+                lm.pdf_file.close()
+                
+                response = HttpResponse(content, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+            except Exception as e2:
+                logger.error(f"Memory fallback failed: {str(e2)}")
+                
+                # Fallback 2: Redirect to URL if storage provides one (e.g. Cloudinary)
+                if hasattr(lm.pdf_file, 'url'):
+                    logger.info(f"Redirecting to storage URL for LeadMagnet {lead_magnet_id}")
+                    from django.shortcuts import redirect
+                    return redirect(lm.pdf_file.url)
+                
+                raise e2
+
+    except Exception as exc:
+        logger.critical(f"Critical error in download view: {str(exc)}\n{traceback.format_exc()}")
+        return Response({
+            'error': 'Internal server error during download',
+            'details': str(exc) if settings.DEBUG else None
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class CreateLeadMagnetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

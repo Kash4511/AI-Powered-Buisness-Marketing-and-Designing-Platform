@@ -311,6 +311,10 @@ OUTPUT — Return ONLY valid JSON:
                 "backCoverTitle": main_title.upper(),
                 "backCoverSub": "EXECUTIVE STRATEGY SERIES",
                 "backCoverYear": year,
+                "commercialAnalysis": ai_content.get("commercial_analysis", ""),
+                "governmentAnalysis": ai_content.get("government_analysis", ""),
+                "architectAnalysis": ai_content.get("architect_analysis", ""),
+                "contractorAnalysis": ai_content.get("contractor_analysis", ""),
                 "pageNumber4": "4", "pageNumber5": "5", "pageNumber6": "6", "pageNumber7": "7", "pageNumber8": "8", "pageNumber9": "9",
                 "pageNumber10": "10", "pageNumber11": "11", "pageNumber12": "12"
             }
