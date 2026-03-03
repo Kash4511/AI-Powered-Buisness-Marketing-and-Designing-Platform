@@ -284,7 +284,7 @@ def _run_generation_job(job_id, body, user_id):
             try:
                 _set_job(job_id, status="processing", progress=15, message="Generating AI content... (~45s)")
                 start_ai = time.time()
-                # 5.1 AI Call
+                # 5.1 AI Call - validation happens INSIDE generate_lead_magnet_json
                 logger.info("🤖 AI Generation Start (Step 2)")
                 raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
                 ai_duration = time.time() - start_ai
@@ -302,25 +302,24 @@ def _run_generation_job(job_id, body, user_id):
                 sections = ai_content.get('sections', [])
                 logger.info(f"✅ AI Content Normalized. Count: {len(sections)} | Duration: {norm_duration:.2f}s")
                 
-                _set_job(job_id, status="processing", progress=65, message="Validating...")
-                # 5.3 CONTENT GUARANTEE LAYER (Step 4)
-                # Ensures every section has meaningful content (120-250 words)
-                start_guarantee = time.time()
-                ai_content['sections'] = ai_client.ensure_section_content(sections, signals, firm_profile)
-                guarantee_duration = time.time() - start_guarantee
-                logger.info(f"🛡️ Content Guarantee Layer Complete. Duration: {guarantee_duration:.2f}s")
-
-                # 5.4 Map to Template Variables (Safety Layer)
-                # PDF layer must NEVER consume raw AI output. 
-                # It only consumes normalized 'ai_content'.
+                _set_job(job_id, status="processing", progress=65, message="Final mapping...")
+                
+                # 5.3 Map to Template Variables (Safety Layer)
+                # Validation was already performed in step 5.1.
+                # If it reached here, content is guaranteed high-density and unique.
                 architectural_images = body.get('architectural_images', [])
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals, architectural_images)
                 
-                # IMPORTANT: Include structured sections for ReportLab
+                # IMPORTANT: Include structured sections
                 template_vars['sections'] = ai_content.get('sections', [])
                 
+            except ValueError as ve:
+                # Validation error - fail loudly with specific message
+                logger.error(f"⚠️ AI Validation Failed: {str(ve)}")
+                _set_job(job_id, status="failed", error=f"Quality Check Failed: {str(ve)}")
+                return
             except Exception as e:
-                # Mandatory Logging: Traceback on failure
+                # Generic failure
                 logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
                 _set_job(job_id, status="failed", error=f"AI generation failed: {str(e)}")
                 return

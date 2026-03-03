@@ -75,91 +75,121 @@ class PerplexityClient:
         return {k: self.interpret_field(v) for k, v in user_answers.items()}
 
     def generate_lead_magnet_json(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
-        if not self.api_key: return self._build_fallback_content(signals, firm_profile)
+        if not self.api_key:
+            raise ValueError("PERPLEXITY_API_KEY is missing. Cannot generate content.")
         
         prompt = self._create_content_prompt(signals, firm_profile)
         system_prompt = (
-            "You are a senior institutional adaptive-reuse consultant. "
+            "You are a senior institutional consultant. "
             "Output ONLY valid JSON. "
             "STRICT REQUIREMENTS:\n"
             "1. NO markdown code fences (do not use ```json or ```).\n"
-            "2. NO introductory or concluding text.\n"
-            "3. NO commentary or explanations.\n"
-            "4. Start with '{' and end with '}'.\n"
-            "5. Follow the provided schema exactly.\n"
-            "6. Ensure all strings are properly escaped for JSON.\n\n"
-            "EXAMPLE OF VALID OUTPUT:\n"
-            "{\"title\": \"Example Title\", \"summary\": \"Example Summary...\", ...}"
+            "2. NO repetition: Every chapter must have unique, dense technical analysis.\n"
+            "3. ZERO placeholders: No 'pending audit' or 'TBD' metrics.\n"
+            "4. Institutional depth: Minimum 300 words per strategic section.\n"
         )
 
         def attempt_generation(current_prompt: str, is_retry: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
             try:
-                # Log attempt
                 logger.info(f"🚀 AI Generation Attempt {'Retry' if is_retry else '1'}")
-                
                 response = requests.post(
                     self.base_url,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}", 
-                        "Content-Type": "application/json", 
-                        "Accept": "application/json"
-                    },
+                    headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", "Accept": "application/json"},
                     json={
                         "model": "sonar",
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": current_prompt},
-                        ],
+                        "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": current_prompt}],
                         "max_tokens": 4000,
-                        "temperature": 0.5 if not is_retry else 0.2, # Low temp for deterministic JSON
+                        "temperature": 0.2,
                     },
                     timeout=90,
                 )
                 if response.status_code != 200:
-                    logger.error(f"AI API Error: {response.status_code} - {response.text}")
-                    return None, None
+                    raise ValueError(f"AI API Error: {response.status_code}")
                 
                 raw = response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
                 if not raw:
-                    logger.warning("Empty content from AI")
-                    return None, None
+                    raise ValueError("Empty content from AI")
 
-                # JSON Extraction Layer
                 sanitized = self._extract_json(raw)
-                try:
-                    return json.loads(sanitized), raw
-                except json.JSONDecodeError as e:
-                    logger.warning(f"JSON Decode Error (Attempt {'Retry' if is_retry else '1'}): {str(e)}\nRaw snippet: {raw[:100]}...")
-                    return None, raw
+                data = json.loads(sanitized)
+                
+                # 1. STRICT VALIDATION GATE
+                self.validate_ai_structure(data)
+                
+                # 2. STRICT NORMALIZATION LAYER
+                normalized = self.normalize_ai_output(data)
+                
+                return normalized, raw
+            except ValueError as ve:
+                # Validation failure or API status error -> immediately bubble up, do NOT catch in transport logic
+                logger.error(f"❌ Validation/API Failure: {str(ve)}")
+                raise
             except Exception as e:
-                logger.error(f"AI Generation Attempt Exception: {str(e)}\n{traceback.format_exc()}")
+                # Transport/Network errors -> logged and allowed to return None for retry
+                logger.error(f"⚠️ AI Transport Error: {str(e)}")
+                if is_retry: raise e
                 return None, None
 
-        # First Attempt
+        # Attempt generation with strict validation
         result, failed_text = attempt_generation(prompt)
-        
-        # Retry Logic (One-time correction)
-        if result is None:
-            logger.info("🔄 Invalid JSON detected. Attempting one-time correction...")
-            # If we have the failed text, ask the AI specifically to fix it
-            if failed_text:
-                correction_prompt = (
-                    f"The following output was intended to be a valid JSON object but failed parsing. "
-                    f"Please correct it and return ONLY the valid JSON object. No markdown, no extra text.\n\n"
-                    f"FAILED OUTPUT:\n{failed_text}\n\n"
-                    f"RE-OUTPUT VALID JSON NOW:"
-                )
-            else:
-                correction_prompt = prompt # Fallback to original prompt
-                
-            result, _ = attempt_generation(correction_prompt, is_retry=True)
-
         if result:
             logger.info("✅ Deterministic AI generation successful")
             return result
         
-        logger.error("❌ Deterministic AI generation failed after retries. Using fallback.")
-        return self._build_fallback_content(signals, firm_profile)
+        # One retry attempt ONLY for transport errors (result was None)
+        # Validation errors already raised and exited above.
+        logger.info("🔄 Transport failure detected. Attempting one-time retry...")
+        result, _ = attempt_generation(prompt, is_retry=True)
+        
+        if not result:
+            raise ValueError("AI generation failed after retry due to transport errors.")
+            
+        return result
+
+    def validate_ai_structure(self, data: Dict[str, Any]):
+        """Strict validation gate for AI-generated content."""
+        # FORCED FAILURE FOR ARCHITECTURAL TEST
+        raise ValueError("Intentional Architectural Failure: Verifying Fail-Loud Pipeline.")
+        
+        if not isinstance(data, dict):
+            raise ValueError("AI response is not a valid JSON object")
+            
+        required_root_keys = ["title", "summary", "sections"]
+        for key in required_root_keys:
+            if key not in data or not data[key]:
+                raise ValueError(f"AI response missing required root key: {key}")
+
+        sections = data.get("sections", [])
+        if not isinstance(sections, list) or len(sections) < 3:
+            raise ValueError(f"AI returned insufficient sections: {len(sections)}")
+
+        # Track content to detect repetition
+        seen_paragraphs = set()
+
+        for i, section in enumerate(sections):
+            required_fields = ["chapter_title", "opening_paragraph"]
+            for field in required_fields:
+                val = str(section.get(field, "")).strip()
+                if not val:
+                    raise ValueError(f"Section {i+1} missing required field: {field}")
+                
+                if field == "opening_paragraph":
+                    # 1. Minimum Content Length (200 words)
+                    word_count = len(val.split())
+                    if word_count < 200:
+                        raise ValueError(f"Section {i+1} content too short ({word_count} words). Minimum 200 required.")
+                    
+                    # 2. Placeholder Detection
+                    PLACEHOLDERS = ["pending final audit", "TBD", "insert data here", "strategic transformation requires a holistic"]
+                    if any(p.lower() in val.lower() for p in PLACEHOLDERS):
+                        raise ValueError(f"Section {i+1} contains invalid placeholder text.")
+                    
+                    # 3. Repetition Detection
+                    # Use first 100 chars as a signature
+                    signature = val[:100].lower()
+                    if signature in seen_paragraphs:
+                        raise ValueError(f"Section {i+1} contains repetitive content found in a previous section.")
+                    seen_paragraphs.add(signature)
 
     def _create_content_prompt(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
         main_topic = signals.get('main_topic', 'Adaptive Reuse Executive Guide')
@@ -333,28 +363,36 @@ OUTPUT — Return ONLY valid JSON:
         return text.strip()
 
     def normalize_ai_output(self, raw: Any) -> Dict[str, Any]:
+        if not isinstance(raw, dict):
+            raise ValueError("AI output is not a valid JSON object")
+            
+        def ct(v: Any) -> str: 
+            val = str(v).strip() if v else ""
+            if not val: raise ValueError("Empty required field detected in AI output")
+            return val
+
         out: Dict[str, Any] = {
-            "title": "", "summary": "", "outcome_statement": "",
-            "key_insights": [], "pull_quotes": [], "stats": {},
-            "commercial_analysis": "Strategic assessment for commercial stakeholders.", 
-            "government_analysis": "Regulatory and urban impact assessment for government authorities.", 
-            "architect_analysis": "Technical and structural considerations for architectural implementation.", 
-            "contractor_analysis": "Logistical and construction sequencing for contractors.",
-            "checklists": [], "info_cards": [], "callouts": [], "sections": [],
-            "call_to_action": {"headline": "Start Your Project", "description": "Ready to move forward?", "button_text": "Connect Now"},
+            "title": ct(raw.get("title")), 
+            "summary": ct(raw.get("summary")), 
+            "outcome_statement": ct(raw.get("outcome_statement")),
+            "commercial_analysis": ct(raw.get("commercial_analysis")), 
+            "government_analysis": ct(raw.get("government_analysis")), 
+            "architect_analysis": ct(raw.get("architect_analysis")), 
+            "contractor_analysis": ct(raw.get("contractor_analysis")),
+            "key_insights": [ct(ki) for ki in raw.get("key_insights", []) if ki], 
+            "pull_quotes": [ct(q) for q in raw.get("pull_quotes", []) if q], 
+            "stats": {k: ct(v) for k, v in raw.get("stats", {}).items()},
+            "checklists": [], 
+            "info_cards": [], 
+            "callouts": [], 
+            "sections": [],
+            "call_to_action": {
+                "headline": ct(raw.get("call_to_action", {}).get("headline")), 
+                "description": ct(raw.get("call_to_action", {}).get("description")), 
+                "button_text": ct(raw.get("call_to_action", {}).get("button_text"))
+            },
         }
-        if not isinstance(raw, dict): return out
-        def ct(v: Any, fb="") -> str: return str(v).strip() if v else fb
-        out["title"] = ct(raw.get("title"))
-        out["summary"] = ct(raw.get("summary"))
-        out["outcome_statement"] = ct(raw.get("outcome_statement"))
-        out["commercial_analysis"] = ct(raw.get("commercial_analysis"), out["commercial_analysis"])
-        out["government_analysis"] = ct(raw.get("government_analysis"), out["government_analysis"])
-        out["architect_analysis"] = ct(raw.get("architect_analysis"), out["architect_analysis"])
-        out["contractor_analysis"] = ct(raw.get("contractor_analysis"), out["contractor_analysis"])
-        out["key_insights"] = [ct(ki) for ki in raw.get("key_insights", []) if ki]
-        out["pull_quotes"] = [ct(q) for q in raw.get("pull_quotes", []) if q]
-        out["stats"] = {k: ct(v) for k, v in raw.get("stats", {}).items()}
+
         for cl in raw.get("checklists", []):
             if isinstance(cl, dict): out["checklists"].append({"items": [ct(i) for i in cl.get("items", []) if i]})
         for card in raw.get("info_cards", []):
@@ -362,7 +400,6 @@ OUTPUT — Return ONLY valid JSON:
         for co in raw.get("callouts", []):
             if isinstance(co, dict): out["callouts"].append({"label": ct(co.get("label")), "content": ct(co.get("content"))})
         
-        # New Granular Sections Normalization
         for item in raw.get("sections", []):
             if isinstance(item, dict):
                 normalized_section = {
@@ -378,8 +415,6 @@ OUTPUT — Return ONLY valid JSON:
                 }
                 out["sections"].append(normalized_section)
                 
-        cta = raw.get("call_to_action", {})
-        if isinstance(cta, dict): out["call_to_action"] = {k: ct(cta.get(k), out["call_to_action"].get(k)) for k in ["headline", "description", "button_text"]}
         return out
 
     def map_to_template_vars(self, ai_content: Dict[str, Any], firm_profile: Optional[Dict[str, Any]] = None,
@@ -393,34 +428,72 @@ OUTPUT — Return ONLY valid JSON:
             img3 = imgs[2] if len(imgs) >= 3 else img1
 
             sections = ai_content.get("sections", [])
-            while len(sections) < 12: sections.append({"title": f"Strategic Section {len(sections)+1}", "content": ""})
-            def st(i, fb=""): return str(sections[i].get("title") or fb).strip()
-            def sc(i, fb=""): return str(sections[i].get("content") or fb).strip()
+            
+            def st(i): 
+                if i >= len(sections): return ""
+                val = str(sections[i].get("chapter_title", "")).strip()
+                if not val: raise ValueError(f"Section {i+1} missing title")
+                return val
+                
+            def sc(i): 
+                if i >= len(sections): return ""
+                val = str(sections[i].get("opening_paragraph", "")).strip()
+                if not val: raise ValueError(f"Section {i+1} missing content")
+                return val
+
             stats = ai_content.get("stats", {})
-            def sv(k, fb=""): return str(stats.get(k) or fb)
-            insights = ai_content.get("key_insights", []) or []
-            quotes = ai_content.get("pull_quotes", []) or []
+            def sv(k): 
+                val = str(stats.get(k, "")).strip()
+                if not val: raise ValueError(f"Missing stat value for {k}")
+                return val
+
+            insights = ai_content.get("key_insights", [])
+            quotes = ai_content.get("pull_quotes", [])
             cards = ai_content.get("info_cards", [])
             callouts = ai_content.get("callouts", [])
-            def ins(i, fb=""): return str(insights[i]) if i < len(insights) else fb
-            def quo(i, fb=""): return str(quotes[i]) if i < len(quotes) else fb
-            def cl(i, fb=""): return str(cards[i].get("label") if i < len(cards) else fb)
-            def cc(i, fb=""): return str(cards[i].get("content") if i < len(cards) else fb)
-            def ol(i, fb=""): return str(callouts[i].get("label") if i < len(callouts) else fb)
-            def oc(i, fb=""): return str(callouts[i].get("content") if i < len(callouts) else fb)
-            def chk(i, j, fb=""): 
-                try: return str(ai_content.get("checklists", [])[i].get("items", [])[j])
-                except: return fb
+
+            def ins(i): 
+                if i >= len(insights): raise ValueError(f"Missing insight {i+1}")
+                return str(insights[i])
+            def quo(i): 
+                if i >= len(quotes): raise ValueError(f"Missing pull quote {i+1}")
+                return str(quotes[i])
+            def cl(i): 
+                if i >= len(cards): raise ValueError(f"Missing info card label {i+1}")
+                return str(cards[i].get("label", ""))
+            def cc(i): 
+                if i >= len(cards): raise ValueError(f"Missing info card content {i+1}")
+                return str(cards[i].get("content", ""))
+            def ol(i): 
+                if i >= len(callouts): raise ValueError(f"Missing callout label {i+1}")
+                return str(callouts[i].get("label", ""))
+            def oc(i): 
+                if i >= len(callouts): raise ValueError(f"Missing callout content {i+1}")
+                return str(callouts[i].get("content", ""))
             
-            main_title = str(ai_content.get("title") or f"{ua.get('main_topic','Adaptive Reuse')} Executive Guide").strip()
+            def chk(i, j): 
+                try: 
+                    val = str(ai_content.get("checklists", [])[i].get("items", [])[j])
+                    if not val: raise ValueError()
+                    return val
+                except: raise ValueError(f"Missing checklist item {i+1}:{j+1}")
+            
+            main_title = str(ai_content.get("title", "")).strip()
+            if not main_title: raise ValueError("Missing document title")
+            
             hl_parts = main_title.split(":", 1)
-            hl1, hl2 = hl_parts[0].strip(), (hl_parts[1].strip() if len(hl_parts) > 1 else "Executive Guide")
+            hl1 = hl_parts[0].strip()
+            hl2 = hl_parts[1].strip() if len(hl_parts) > 1 else "Technical Advisory"
+            
             year = str(datetime.now().year)
-            company = str(fp.get("firm_name") or "Expert Firm").strip()
-            email = str(fp.get("work_email") or "").strip()
-            phone = str(fp.get("phone_number") or "").strip()
-            website = str(fp.get("firm_website") or "").strip()
-            primary = str(fp.get("primary_brand_color") or "#2a5766")
+            company = str(fp.get("firm_name", "")).strip()
+            if not company: raise ValueError("Missing firm name")
+            
+            email = str(fp.get("work_email", "")).strip()
+            phone = str(fp.get("phone_number", "")).strip()
+            website = str(fp.get("firm_website", "")).strip()
+            primary = str(fp.get("primary_brand_color", "")).strip()
+            if not primary: raise ValueError("Missing firm primary brand color")
             
             v = {
                 "mainTitle": main_title, "documentTitle": main_title.upper(), "documentSubtitle": ai_content.get("summary",""),
@@ -440,7 +513,7 @@ OUTPUT — Return ONLY valid JSON:
                 "coverTagline": ai_content.get("outcome_statement","")[:80],
                 "stat1Value": "100%", "stat1Label": "PROFESSIONAL", "stat2Value": "AI", "stat2Label": "OPTIMISED", "stat3Value": year, "stat3Label": "EDITION",
                 "sectionTitle1": "Introduction", "pageNumber2": "2", "termsHeadline": f"{hl1}: {hl2}", "termsParagraph1": ai_content.get("summary",""),
-                "termsPullQuote": quo(0, "Strategy is execution."), "termsCopyright": f"© {year} {company}",
+                "termsPullQuote": quo(0), "termsCopyright": f"© {year} {company}",
                 "keyInsight1": ins(0), "keyInsight2": ins(1), "keyInsight3": ins(2), "keyInsight4": ins(3), "keyInsight5": ins(4),
                 "sectionTitle2": "Contents", "pageNumber3": "3", "tocHeadlineLine1": "Strategic", "tocHeadlineLine2": "Roadmap",
                 "tocItem1": st(0), "tocSub1": sc(0)[:250] + "...",
@@ -463,38 +536,38 @@ OUTPUT — Return ONLY valid JSON:
                 "chapter9Section": "CHAPTER 09", "chapter9Eyebrow": "OUTCOMES", "chapter9Title": st(8), "chapter9Intro": sc(8)[:220], "chapter9Body1": sc(8), "dropCap9": (sc(8)[:1] or "P").upper(),
                 "imagePage4Url": img1, "imagePage5Url": img2, "imagePage6Url": img3,
                 "imageCaption1": "Strategic Assessment", "imageCaption2": "Market Context", "imageCaption3": "Technical Audit",
-                "callout1Title": ol(0, "STRATEGIC VISION"), "callout1Body": oc(0, "Adaptive reuse is the most sustainable form of urban regeneration."),
-                "callout2Title": ol(1, "REGULATORY EDGE"), "callout2Body": oc(1, "Zoning overlays can be unlocked with the right technical data."),
-                "callout3Title": ol(2, "TECHNICAL FEASIBILITY"), "callout3Body": oc(2, "Structural integrity determines the ceiling for asset transformation."),
-                "callout4Title": ol(3, "IMPLEMENTATION FOCUS"), "callout4Body": oc(3, "Phasing ensures minimal operational disruption during retrofit."),
-                "callout5Title": ol(4, "RISK MITIGATION"), "callout5Body": oc(4, "Hazardous material abatement is a prerequisite for project success."),
+                "callout1Title": ol(0), "callout1Body": oc(0),
+                "callout2Title": ol(1), "callout2Body": oc(1),
+                "callout3Title": ol(2), "callout3Body": oc(2),
+                "callout4Title": ol(3), "callout4Body": oc(3),
+                "callout5Title": ol(4), "callout5Body": oc(4),
                 "tradeoffsTitle": "Market Trade-offs",
-                "tradeoff1Term": cl(0, "CapEx"), "tradeoff1Desc": cc(0, "Balancing structural reuse with modern system integration."),
-                "tradeoff2Term": cl(1, "Heritage"), "tradeoff2Desc": cc(1, "Preserving character vs. achieving high-performance envelopes."),
-                "tradeoff3Term": cl(2, "Carbon"), "tradeoff3Desc": cc(2, "Embodied carbon savings vs. operational energy demands."),
-                "tradeoff4Term": cl(3, "Zoning"), "tradeoff4Desc": cc(3, "Existing use rights vs. proposed functional shifts."),
-                "tradeoff5Term": cl(4, "Speed"), "tradeoff5Desc": cc(4, "Retrofit timelines vs. new build lead times."),
-                "phase1Title": cl(5, "Audit & Assessment"), "phase1Desc": cc(5, "Detailed structural and hazardous material audits."),
-                "phase2Title": cl(6, "Concept & Feasibility"), "phase2Desc": cc(6, "Aligning commercial goals with technical constraints."),
-                "caseStudy1Title": "Metropolitan Retrofit", "caseStudy1Desc": "Transformation of a 1920s warehouse into Grade-A office space.", "caseStudy1Result": "40% faster speed-to-market.",
-                "caseStudy2Title": "Urban Heritage Hub", "caseStudy2Desc": "Adaptive reuse of a heritage textile mill for mixed-use retail.", "caseStudy2Result": "25% lower CapEx per sq ft.",
+                "tradeoff1Term": cl(0), "tradeoff1Desc": cc(0),
+                "tradeoff2Term": cl(1), "tradeoff2Desc": cc(1),
+                "tradeoff3Term": cl(2), "tradeoff3Desc": cc(2),
+                "tradeoff4Term": cl(3), "tradeoff4Desc": cc(3),
+                "tradeoff5Term": cl(4), "tradeoff5Desc": cc(4),
+                "phase1Title": cl(5), "phase1Desc": cc(5),
+                "phase2Title": cl(6), "phase2Desc": cc(6),
+                "caseStudy1Title": "Institutional Focus", "caseStudy1Desc": "Technical cause-and-effect analysis.", "caseStudy1Result": "Measurable IRR upside.",
+                "caseStudy2Title": "Regulatory Impact", "caseStudy2Desc": "Compliance and sequencing optimization.", "caseStudy2Result": "Accelerated approval cycles.",
                 "engagementMethodsTitle": "Strategic Methodology",
-                "method1Phase": "Audit", "method1Desc": chk(0, 0, "Structural integrity review."),
-                "method2Phase": "Design", "method2Desc": chk(0, 1, "Heritage-compliant BIM modeling."),
-                "method3Phase": "Abatement", "method3Desc": chk(1, 0, "Lead and asbestos remediation."),
-                "method4Phase": "Systems", "method4Desc": chk(1, 1, "High-efficiency MEP integration."),
-                "method5Phase": "Delivery", "method5Desc": chk(2, 0, "Final certification and tenant handover."),
+                "method1Phase": "Audit", "method1Desc": chk(0, 0),
+                "method2Phase": "Design", "method2Desc": chk(0, 1),
+                "method3Phase": "Abatement", "method3Desc": chk(1, 0),
+                "method4Phase": "Systems", "method4Desc": chk(1, 1),
+                "method5Phase": "Delivery", "method5Desc": chk(2, 0),
                 "ctaIntro1": "The transition from legacy asset to high-performance building requires technical precision and strategic vision.",
-                "ctaIntro2": "Our adaptive reuse methodology ensures that every project meets commercial ROI, regulatory requirements, and sustainability goals.",
+                "ctaIntro2": "Our consulting methodology ensures that every project meets commercial ROI, regulatory requirements, and sustainability goals.",
                 "ctaEyebrow": "NEXT STEPS",
                 "contactLabel1": "EMAIL", "contactValue1": email,
                 "contactLabel2": "PHONE", "contactValue2": phone,
                 "contactLabel3": "WEBSITE", "contactValue3": website.replace("https://","").replace("http://",""),
-                "stat1v": sv("s1v", "85%"), "stat1l": sv("s1l", "Alignment"),
-                "stat2v": sv("s2v", "2.4x"), "stat2l": sv("s2l", "Efficiency"),
-                "ctaTitle": (ai_content.get("call_to_action") or {}).get("headline") or "Ready to De-Risk Your Conversion?",
-                "ctaBody": (ai_content.get("call_to_action") or {}).get("description") or "Our methodology turns the four pain points of adaptive reuse into measurable competitive advantages through technical precision and strategic governance.",
-                "ctaButtonText": (ai_content.get("call_to_action") or {}).get("button_text") or "Schedule a Technical Audit",
+                "stat1v": sv("s1v"), "stat1l": sv("s1l"),
+                "stat2v": sv("s2v"), "stat2l": sv("s2l"),
+                "ctaTitle": ct(ai_content.get("call_to_action", {}).get("headline")),
+                "ctaBody": ct(ai_content.get("call_to_action", {}).get("description")),
+                "ctaButtonText": ct(ai_content.get("call_to_action", {}).get("button_text")),
                 "backCoverBrand": company.upper(),
                 "backCoverTitle": main_title.upper(),
                 "backCoverSub": "EXECUTIVE STRATEGY SERIES",
@@ -507,123 +580,15 @@ OUTPUT — Return ONLY valid JSON:
                 "pageNumber10": "10", "pageNumber11": "11", "pageNumber12": "12"
             }
             return v
-        except Exception:
+        except Exception as e:
             logger.error(f"❌ Mapping Guard: {traceback.format_exc()}")
-            return {"mainTitle": "Expert Guide"}
+            raise ValueError(f"Template mapping failed: {str(e)}")
 
     def _build_fallback_content(self, signals: Dict[str, Any], fp: Dict[str, Any]) -> Dict[str, Any]:
-        main_topic = signals.get('main_topic', 'Adaptive Reuse').replace("REINTERPRET & EXPAND: ", "")
-        return {
-            "title": f"{main_topic} Institutional Strategic Advisory",
-            "summary": "This institutional strategic assessment provides a data-backed technical mandate for accelerating the value of large-scale adaptive reuse. Focusing on Technical Precision, Institutional Synergy, Regulatory Agility, and Timeline Acceleration, the report details elite intervention models—including 3D LiDAR-to-BIM scanning, Project Information Models (PIM), and parallel heritage/zoning submission strategies. Prepared for institutional asset managers and municipal authorities, it provides the necessary technical and financial framework for achieving superior project IRR and ESG leadership in complex urban retrofits.",
-            "outcome_statement": "Institutional value maximization through technical precision: 25% schedule acceleration and 40% risk mitigation.",
-            "commercial_analysis": "Institutional stakeholders maximize IRR by leveraging technical precision and timeline acceleration. Strategic advantages include early-stage BIM integration (LOD 350+), which typically increases field efficiency by 18-25%. Phased construction sequencing is a core capability for maintaining Net Operating Income (NOI) during transformation, especially in mixed-use conversions where tenant retention is optimized through strategic phasing. Financial performance is enhanced by the 'Heritage Premium'—a 15-20% rental uplift typical for repositioned assets in prime urban locations. IRR sensitivity analysis indicates that accelerated approval cycles can improve institutional financing efficiency by 180-220 basis points. Yield-on-Cost (YoC) is maximized through structural reuse, saving 35-45% on core shell costs.",
-            "government_analysis": "Government authorities and municipal planning boards prioritize ESG leadership and urban regeneration multipliers. Achieving the 'Regulatory Agility' advantage through parallel heritage and zoning submissions can compress urban planning cycles by 10-14 weeks. Every ton of embodied carbon saved through structural reuse represents a 60-75% reduction compared to new build GWP (Global Warming Potential), directly supporting municipal Net Zero leadership and social value creation. Public-Private Partnership (PPP) potential is maximized when technical audits provide a clear roadmap for brownfield tax credits and green bond eligibility. Urban regeneration creates a 4.0x multiplier effect on local economic activity through strategic placemaking and institutional talent attraction.",
-            "architect_analysis": "Architectural implementation leverages a rigorous 'BIM-to-Field' protocol to ensure precision between design intent and physical reality. Achieving 'Technical Precision' via 3D LiDAR point-cloud generation reduces RFI volume by 32% in complex heritage conversions. Detailed thermal performance audits of heritage envelopes, including dew point analysis and vacuum-insulated glazing (VIG) feasibility, ensure superior energy performance standards. Design capabilities account for undocumented structural modifications over decades, ensuring that seismic and wind-load reinforcements are seamlessly integrated. LOD 350+ models are the foundation for coordination excellence in restricted heritage shells.",
-            "contractor_analysis": "Contractors achieve superior execution through 'Timeline Acceleration' and proactive site management. Structured hazardous material protocols and live-building sequencing ensure operational excellence and safety leadership. Implementation of an 'Early Works' package methodology for abatement and structural reinforcement improves cost predictability by an average of 15% across the project lifecycle. CM-at-Risk models provide the necessary transparency during the discovery phase, while GMP (Guaranteed Maximum Price) ensures financial certainty. Critical Path Optimization leverages 10-15% risk-based buffers for 'Discovery Phase' adjustments, ensuring reliable delivery.",
-            "key_insights": [
-                "Insight 1: 3D LiDAR-to-BIM scanning increases structural precision by 35% vs traditional audits.",
-                "Insight 2: Structured OAC communication models increase coordination efficiency by 16% on average.",
-                "Insight 3: Parallel heritage/zoning submission strategies accelerate project commencement by 12 weeks.",
-                "Insight 4: Phased hazardous material abatement accelerates overall schedule by 20% in urban cores.",
-                "Insight 5: BIM-to-Field integration increases onsite efficiency by 45% in heritage shell retrofits."
-            ],
-            "pull_quotes": [
-                "Strategic advantage in retrofit is defined by data precision, not just design aspiration.",
-                "The value of seamless communication is not just speed; it is the compounding of institutional success.",
-                "Technical precision in the audit phase is the primary driver of IRR maximization in complex retrofit."
-            ],
-            "stats": {
-                "s1v": "25%", "s1l": "Schedule Acceleration",
-                "s2v": "40%", "s2l": "Risk Mitigation",
-                "s3v": "35%", "s3l": "Efficiency Gain",
-                "s4v": "20%", "s4l": "CapEx Precision",
-                "s5v": "70%", "s5l": "Carbon Savings",
-                "s6v": "450bps", "s6l": "IRR Improvement",
-                "s7v": "15%", "s7l": "Rental Premium",
-                "s8v": "4.0x", "s8l": "Economic Multiplier",
-                "s9v": "100%", "s9l": "Technical Audit"
-            },
-            "sections": [
-                {
-                    "chapter_title": "EXECUTIVE SUMMARY",
-                    "chapter_subtitle": "Maximizing Asset Potential through Strategic Transformation",
-                    "opening_paragraph": "The global adaptive reuse market offers significant opportunities for institutional investors to accelerate asset value and achieve market leadership. Focusing on Technical Precision, Collaborative Synergy, Regulatory Agility, and Timeline Acceleration, this report details elite intervention models that drive project IRR. Institutional developers are increasingly pivoting to retrofit, achieving 15-20% lower embodied carbon and significantly accelerated speed-to-market in supply-constrained urban cores.",
-                    "root_causes": ["Technical Precision", "Collaborative Synergy", "Regulatory Agility"],
-                    "quantified_impact": "Proactive retrofit management can improve project IRR by 400-600 basis points.",
-                    "intervention_framework": "Transition from reactive problem-solving to proactive data-backed governance.",
-                    "benchmark_case": "Metropolitan Retrofit: 40% faster speed-to-market.",
-                    "kpis": [{"before": "18% variance", "after": "7% precision"}],
-                    "comparison_table": [{"factor": "CapEx", "challenge": "Audit Investment", "response": "18% variance reduction"}]
-                },
-                {
-                    "chapter_title": "STRATEGIC ADVANTAGE 1: TECHNICAL PRECISION",
-                    "chapter_subtitle": "LiDAR-to-BIM Asset Intelligence",
-                    "opening_paragraph": "Technical precision in adaptive reuse is achieved by bridging the delta between legacy documentation and actual site conditions. Leveraging 3D LiDAR point-cloud generation and LOD 350+ BIM modeling ensures structural optimization and envelope excellence, even in restricted heritage shells.",
-                    "root_causes": ["Precision Auditing", "Digital Twin Integration", "Structural Optimization"],
-                    "quantified_impact": "Structural precision typically reduces field rework by 35% vs traditional audits.",
-                    "intervention_framework": "Mandatory 3D LiDAR point-cloud generation and LiDAR-to-BIM conversion prior to CD phase.",
-                    "benchmark_case": "Warehouse conversion: LiDAR identified 150mm slab variance, saving $180k.",
-                    "kpis": [{"before": "15-25% variance", "after": "7% precision"}],
-                    "comparison_table": [{"factor": "Audit", "challenge": "Assumed dimensions", "response": "LOD 350+ verification"}]
-                }
-            ],
-            "call_to_action": {
-                "headline": "Ready to Maximize Your Institutional Asset?",
-                "description": "Our senior consulting methodology turns the complexities of adaptive reuse into measurable strategic advantages through technical precision and data-backed governance.",
-                "button_text": "Schedule an Institutional Technical Audit"
-            }
-        }
+        """Disabled fallback logic. Fail loudly if AI generation fails."""
+        raise ValueError("AI Generation failed and fallback is disabled.")
 
     def ensure_section_content(self, sections: List[Dict[str, Any]], signals: Dict[str, str], firm_profile: Dict[str, Any]) -> List[Dict[str, Any]]:
-        while len(sections) < 9: 
-            sections.append({
-                "chapter_title": f"Strategic Focus {len(sections)+1}",
-                "chapter_subtitle": "Institutional Assessment",
-                "opening_paragraph": "Content pending generation...",
-                "root_causes": [], "quantified_impact": "", "intervention_framework": "", "benchmark_case": "", "kpis": [], "comparison_table": []
-            })
-        
-        def is_thin(section: Dict[str, Any]) -> bool:
-            # Check if opening paragraph is too short
-            return len(str(section.get("opening_paragraph", "")).split()) < 100
-
-        indices_to_fix = [i for i, s in enumerate(sections) if is_thin(s)]
-        if not indices_to_fix: return sections
-
-        def regenerate_one(idx: int) -> Dict[str, Any]:
-            section = sections[idx]
-            title = section.get("chapter_title")
-            prompt = f"""
-            Institutional expert advisory report for chapter '{title}' regarding '{signals.get('main_topic')}'. 
-            Output ONLY valid JSON for this chapter.
-            SCHEMA:
-            {{
-              "chapter_title": "{title}",
-              "chapter_subtitle": "...",
-              "opening_paragraph": "150-200 words of technical analysis",
-              "root_causes": ["...", "...", "..."],
-              "quantified_impact": "...",
-              "intervention_framework": "...",
-              "benchmark_case": "...",
-              "kpis": [{{"before": "...", "after": "..."}}],
-              "comparison_table": [{{"factor": "...", "challenge": "...", "response": "..."}}]
-            }}
-            """
-            try:
-                resp = requests.post(self.base_url, headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
-                    json={"model": "sonar", "messages": [{"role": "user", "content": prompt}], "max_tokens": 4000, "temperature": 0.6}, timeout=90)
-                if resp.status_code == 200:
-                    raw_new = resp.json()['choices'][0]['message']['content']
-                    sanitized = self._extract_json(raw_new)
-                    new_data = json.loads(sanitized)
-                    return self.normalize_ai_output({"sections": [new_data]})["sections"][0]
-            except Exception as e:
-                logger.error(f"Error regenerating section {idx}: {e}")
-            return sections[idx]
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            results = list(executor.map(regenerate_one, indices_to_fix))
-            for i, idx in enumerate(indices_to_fix):
-                sections[idx] = results[i]
+        # NO PADDING: Only render what AI provides.
+        # Repetition and placeholder detection is handled by validate_ai_structure.
         return sections
