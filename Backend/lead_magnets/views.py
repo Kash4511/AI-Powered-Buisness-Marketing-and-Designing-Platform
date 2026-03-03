@@ -28,9 +28,9 @@ from .serializers import (
     FirmProfileSerializer, LeadMagnetGenerationSerializer, CreateLeadMagnetSerializer,
     TemplateSerializer
 )
-from .services import DocRaptorService
+from .services import DocRaptorService, render_template
+from .reportlab_service import ReportLabService
 from .perplexity_client import PerplexityClient
-from .services import render_template
 from .models import Template
 
 logger = logging.getLogger(__name__)
@@ -316,6 +316,9 @@ def _run_generation_job(job_id, body, user_id):
                 architectural_images = body.get('architectural_images', [])
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals, architectural_images)
                 
+                # IMPORTANT: Include structured sections for ReportLab
+                template_vars['sections'] = ai_content.get('sections', [])
+                
             except Exception as e:
                 # Mandatory Logging: Traceback on failure
                 logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
@@ -337,7 +340,7 @@ def _run_generation_job(job_id, body, user_id):
 
         # 6. PDF RENDERING (Step 4 of Pipeline)
         # PDF renderer only receives plain strings (enforced in map_to_template_vars)
-        template_service = DocRaptorService()
+        template_service = ReportLabService()
         try:
             _set_job(job_id, status="processing", progress=80, message="Rendering PDF...")
             start_pdf = time.time()
@@ -840,7 +843,7 @@ class FormaAIConversationView(APIView):
         }
 
         ai_client = PerplexityClient()
-        template_service = DocRaptorService()
+        template_service = ReportLabService()
 
         try:
             # Step 1: Signals (Derived from message)
@@ -924,7 +927,7 @@ class FormaAIConversationView(APIView):
         # If requested, generate PDF and return as file response
         if generate_pdf:
             try:
-                result = template_service.generate_pdf_with_ai_content(template_id, template_vars)
+                result = template_service.generate_pdf(template_id, template_vars)
                 if result.get('success'):
                     pdf_data = result.get('pdf_data', b'')
                     response = HttpResponse(pdf_data, content_type=result.get('content_type', 'application/pdf'))
