@@ -38,14 +38,14 @@ class PerplexityClient:
                     except Exception as e:
                         logger.warning(f"⚠️  Failed to load .env from {env_path}: {e}")
 
-        self.api_key  = os.getenv('PERPLEXITY_API_KEY')
+        self.api_key  = os.getenv('PERPLEXITY_API_KEY', '').strip().strip('"').strip("'")
         self.base_url = "https://api.perplexity.ai/chat/completions"
         if not self.api_key:
             logger.warning("⚠️  PERPLEXITY_API_KEY not found in environment")
             print("DEBUG: PERPLEXITY_API_KEY is missing!")
         else:
             logger.info("✅ PerplexityClient ready")
-            print(f"DEBUG: PERPLEXITY_API_KEY found: {self.api_key[:8]}...")
+            print(f"DEBUG: PERPLEXITY_API_KEY found: {self.api_key[:8]}... (Length: {len(self.api_key)})")
 
     def _is_meaningful(self, value: Any) -> bool:
         if value is None: return False
@@ -108,7 +108,12 @@ class PerplexityClient:
                     timeout=90,
                 )
                 if response.status_code != 200:
-                    raise ValueError(f"AI API Error: {response.status_code}")
+                    try:
+                        err_json = response.json()
+                        err_msg = err_json.get('error', {}).get('message') or response.text
+                    except:
+                        err_msg = response.text
+                    raise ValueError(f"AI API Error: {response.status_code} - {err_msg}")
                 
                 raw = response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
                 if not raw:

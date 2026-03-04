@@ -235,6 +235,7 @@ def _run_generation_job(job_id, body, user_id):
             return
 
         ai_client = PerplexityClient()
+        print(f"DEBUG: Background job calling PerplexityClient with key (sanitized): {ai_client.api_key[:8] if ai_client.api_key else 'NONE'}...")
         
         # Merge generation_data with user_answers
         all_answers = {
