@@ -220,13 +220,13 @@ Generate an elite, 13-page Technical Advisory Report for '{main_topic}'.
 The document must read like a McKinsey, BCG, or institutional advisory report. No fluff. No motivational filler. Use formal, technical, and precise language. Use positive, solution-oriented terminology. Focus on capabilities, strategic advantages, and outcomes. NEVER use the term "pain points" or emphasize negative framing.
 
 DOCUMENT STRUCTURE (MANDATORY 9 SECTIONS):
-1. EXECUTIVE SUMMARY: Accelerating Asset Value through Strategic Transformation.
-2. STRATEGIC ADVANTAGE 1: TECHNICAL PRECISION & BIM INTEGRATION (Digital Twins, Structural Optimization, Envelope Excellence).
-3. STRATEGIC ADVANTAGE 2: INSTITUTIONAL SYNERGY & COLLABORATION (Unified OAC Protocols, RFI Efficiency, Seamless Stakeholder Alignment).
-4. STRATEGIC ADVANTAGE 3: REGULATORY AGILITY & POLICY LEVERAGE (Expedited Compliance, Zoning Unlock, Heritage Value Capture).
-5. STRATEGIC ADVANTAGE 4: TIMELINE ACCELERATION & OPERATIONAL EXCELLENCE (Phased Abatement, Early Works Sequencing, Critical Path Optimization).
-6. FINANCIAL PERFORMANCE MODELING: IRR Maximization, CapEx Efficiency, and Long-Term Asset Appreciation.
-7. GOVERNANCE & STRATEGIC RISK TRANSFER: Proactive GMP Frameworks, CM-at-Risk, Latent Condition Management.
+1.  Accelerating Asset Value through Strategic Transformation.
+2. TECHNICAL PRECISION & BIM INTEGRATION (Digital Twins, Structural Optimization, Envelope Excellence).
+3. INSTITUTIONAL SYNERGY & COLLABORATION (Unified OAC Protocols, RFI Efficiency, Seamless Stakeholder Alignment).
+4. REGULATORY AGILITY & POLICY LEVERAGE (Expedited Compliance, Zoning Unlock, Heritage Value Capture).
+5.  TIMELINE ACCELERATION & OPERATIONAL EXCELLENCE (Phased Abatement, Early Works Sequencing, Critical Path Optimization).
+6.  IRR Maximization, CapEx Efficiency, and Long-Term Asset Appreciation.
+7.: Proactive GMP Frameworks, CM-at-Risk, Latent Condition Management.
 8. ESG LEADERSHIP & URBAN REGENERATION: Carbon Credit Monetization, Green Financing, Social Value Creation.
 9. STRATEGIC PERFORMANCE DASHBOARD: Quantified Outcomes & Institutional KPIs.
 
