@@ -280,6 +280,11 @@ def _run_generation_job(job_id, body, user_id):
                 
                 logger.info("🤖 AI Generation Start via Groq")
                 ai_content = ai_service.generate_lead_magnet(ai_input_data)
+                
+                # Expand content for institutional depth (Prevents blank pages)
+                _set_job(job_id, status="processing", progress=40, message="Expanding content for 8-page depth...")
+                ai_content = ai_service.expand_content_sections(ai_content, ai_input_data)
+                
                 ai_duration = time.time() - start_ai
                 
                 logger.info(f"📊 AI Generation Success | Duration: {ai_duration:.2f}s")
@@ -291,6 +296,11 @@ def _run_generation_job(job_id, body, user_id):
                 # so we map it here to maintain compatibility with existing ReportLab templates if possible
                 # or provide a clean base for rendering.
                 
+                exp = ai_content.get('expansions', {})
+                ch1_exp = exp.get('Strategic Challenges', {})
+                ch2_exp = exp.get('Technical Solutions', {})
+                ch3_exp = exp.get('Implementation Framework', {})
+
                 template_vars = {
                     'mainTitle': ai_content.get('title', lead_magnet.title),
                     'documentSubtitle': ai_content.get('subtitle', ''),
@@ -305,6 +315,13 @@ def _run_generation_job(job_id, body, user_id):
                     'solutions': ai_content.get('solutions', []),
                     'roi': ai_content.get('roi_section', {}),
                     'cta': ai_content.get('call_to_action', ''),
+                    # Technical Expansions for Template.html
+                    'ch1_detailed': ch1_exp.get('detailed_analysis', ''),
+                    'ch1_impact': ch1_exp.get('quantified_impact', ''),
+                    'ch1_case': ch1_exp.get('case_study', ''),
+                    'ch2_detailed': ch2_exp.get('detailed_analysis', ''),
+                    'ch2_impact': ch2_exp.get('quantified_impact', ''),
+                    'ch3_detailed': ch3_exp.get('detailed_analysis', ''),
                 }
                 
             except ValueError as ve:
@@ -369,19 +386,19 @@ def _run_generation_job(job_id, body, user_id):
                 # Page 4 (Chapter 1 - using AI pain points)
                 'chapter1Title': "STRATEGIC CHALLENGES",
                 'chapter1Intro': template_vars.get('summary'),
-                'chapter1Body1': "Institutional success requires addressing complex pain points with precision.",
+                'chapter1Body1': template_vars.get('ch1_detailed') or "Institutional success requires addressing complex pain points with precision.",
                 'callout1Title': template_vars.get('key_pain_points')[0].get('title') if template_vars.get('key_pain_points') else "Risk Factor",
-                'callout1Body': template_vars.get('key_pain_points')[0].get('description') if template_vars.get('key_pain_points') else "Detailed mitigation strategy required.",
+                'callout1Body': template_vars.get('ch1_impact') or (template_vars.get('key_pain_points')[0].get('description') if template_vars.get('key_pain_points') else "Detailed mitigation strategy required."),
                 
                 # Page 5 (Chapter 2 - using AI solutions)
                 'chapter2Title': "STRATEGIC SOLUTIONS",
                 'chapter2Intro': "Our proposed framework provides actionable interventions for high-impact results.",
-                'chapter2Body1': template_vars.get('solutions')[0].get('expected_outcome') if template_vars.get('solutions') else "Optimized outcomes via data-driven execution.",
+                'chapter2Body1': template_vars.get('ch2_detailed') or (template_vars.get('solutions')[0].get('expected_outcome') if template_vars.get('solutions') else "Optimized outcomes via data-driven execution."),
                 'tradeoffsTitle': "CORE INTERVENTIONS",
                 'tradeoff1Term': template_vars.get('solutions')[0].get('title') if template_vars.get('solutions') else "Framework",
                 'tradeoff1Desc': ", ".join(template_vars.get('solutions')[0].get('implementation_steps', [])) if template_vars.get('solutions') else "Technical implementation details.",
                 'tradeoff2Term': template_vars.get('solutions')[1].get('title') if len(template_vars.get('solutions', [])) > 1 else "Strategic Alignment",
-                'tradeoff2Desc': ", ".join(template_vars.get('solutions')[1].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 1 else "Optimizing resources for long-term sustainability.",
+                'tradeoff2Desc': template_vars.get('ch2_impact') or (", ".join(template_vars.get('solutions')[1].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 1 else "Optimizing resources for long-term sustainability."),
                 'tradeoff3Term': template_vars.get('solutions')[2].get('title') if len(template_vars.get('solutions', [])) > 2 else "Scalability",
                 'tradeoff3Desc': ", ".join(template_vars.get('solutions')[2].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 2 else "Ensuring the framework grows with your institutional needs.",
                 'tradeoff4Term': "ROI Analysis",
@@ -395,7 +412,7 @@ def _run_generation_job(job_id, body, user_id):
                 'chapter3Title': "EXECUTION ROADMAP",
                 'chapter3Intro': "A structured rollout is critical for capturing strategic value.",
                 'phase1Title': "Phase 01: Integration",
-                'phase1Desc': "Aligning existing workflows with the new strategic framework.",
+                'phase1Desc': template_vars.get('ch3_detailed') or "Aligning existing workflows with the new strategic framework.",
                 'phase2Title': "Phase 02: Optimization",
                 'phase2Desc': "Refining processes based on real-time performance metrics.",
                 'callout4Title': "Strategic Outlook",

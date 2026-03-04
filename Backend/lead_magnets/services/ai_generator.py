@@ -89,6 +89,40 @@ class LeadMagnetAIService:
             text = text[:-3]
         return text.strip()
 
+    def expand_content_sections(self, base_content: dict, data: dict) -> dict:
+        """
+        Takes the base AI response and generates expanded, technical content for each chapter 
+        to ensure no page is left blank or generic.
+        """
+        main_topic = data.get("main_topic", "Business Strategy")
+        target_audience = data.get("target_audience", "Executives")
+        
+        expansion_prompt = f"""You are a senior institutional consultant. 
+Expand the following lead magnet structure into a detailed 8-page technical report.
+TOPIC: {main_topic}
+AUDIENCE: {target_audience}
+
+BASE STRUCTURE:
+{json.dumps(base_content, indent=2)}
+
+REQUIREMENTS:
+1. Generate a 'chapter_expansions' object.
+2. For each expansion, provide:
+   - 'detailed_analysis': 300 words of technical, data-heavy analysis.
+   - 'quantified_impact': Specific metrics (e.g. "22% reduction in Opex").
+   - 'case_study': A realistic institutional example.
+3. Chapters to expand: 'Strategic Challenges', 'Technical Solutions', 'Implementation Framework'.
+
+JSON ONLY. NO MARKDOWN. NO FLUFF."""
+
+        try:
+            expanded = self._call_ai(self._get_system_prompt(), expansion_prompt)
+            base_content['expansions'] = expanded.get('chapter_expansions', {})
+            return base_content
+        except Exception as e:
+            logger.error(f"⚠️ AI Expansion failed: {e}")
+            return base_content
+
     def _get_system_prompt(self) -> str:
         return """You are a senior business strategist and conversion copywriter. 
 Your goal is to generate high-value, institutional-grade lead magnet content.
