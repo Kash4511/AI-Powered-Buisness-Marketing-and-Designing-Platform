@@ -104,9 +104,6 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // Log response error for debugging 400 errors
-    console.error(`[API Response Error] ${error.response?.status} ${error.config?.url}`, error.response?.data || error.message);
-    
     const originalRequest = error.config;
     
     // Skip token refresh logic for auth endpoints
@@ -114,8 +111,15 @@ apiClient.interceptors.response.use(
                          originalRequest.url?.includes('/api/auth/register/') ||
                          originalRequest.url?.includes('/api/auth/token/refresh/');
     
+    // If it's a 401 that we can refresh, don't log an error yet to avoid console clutter
+    const canRefresh = error.response?.status === 401 && !originalRequest._retry && !isAuthRequest;
+    
+    if (!canRefresh) {
+      console.error(`[API Response Error] ${error.response?.status} ${error.config?.url}`, error.response?.data || error.message);
+    }
+    
     // If error is 401 and we haven't tried to refresh token yet, and it's NOT an auth request
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
+    if (canRefresh) {
       originalRequest._retry = true;
       
       try {

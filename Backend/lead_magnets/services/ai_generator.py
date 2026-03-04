@@ -1,7 +1,18 @@
 import os
 import json
 import logging
+from pathlib import Path
 from groq import Groq
+
+# Attempt to load .env for local development / background threads
+try:
+    from dotenv import load_dotenv
+    # Look for .env in the Backend directory (parent of services/..)
+    env_path = Path(__file__).resolve().parent.parent.parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +22,20 @@ class LeadMagnetAIService:
     """
 
     def __init__(self):
+        # Prioritize GROQ_API_KEY
         api_key = os.getenv("GROQ_API_KEY")
+        
+        # Fallback to the misconfigured key name if present
         if not api_key:
-            # Check for common mistake in .env
             api_key = os.getenv("GROQ_API_KEY_API_KEY")
             
         if not api_key:
-            logger.error("❌ GROQ_API_KEY is missing from environment.")
-            raise ValueError("GROQ_API_KEY is required for AI content generation.")
+            logger.error("❌ GROQ_API_KEY is missing from environment variables.")
+            raise ValueError(
+                "GROQ_API_KEY is required for AI content generation. "
+                "If you are on Render, add this key to your environment variables in the dashboard. "
+                "If local, ensure it is set in Backend/.env"
+            )
             
         self.client = Groq(api_key=api_key)
         self.model = "llama-3.1-8b-instant"
@@ -121,8 +138,15 @@ SCHEMA:
 
     def _construct_prompt(self, data: dict) -> str:
         main_topic = data.get("main_topic", "Business Strategy")
+        
         target_audience = data.get("target_audience", "Executives")
-        pain_points = ", ".join(data.get("pain_points", []))
+        if isinstance(target_audience, list):
+            target_audience = ", ".join(target_audience)
+            
+        pain_points = data.get("pain_points", [])
+        if isinstance(pain_points, list):
+            pain_points = ", ".join(pain_points)
+            
         tone = data.get("tone", "Professional")
         
         return f"""Generate lead magnet content for the following profile:
