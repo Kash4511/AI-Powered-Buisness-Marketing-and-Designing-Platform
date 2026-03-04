@@ -34,12 +34,15 @@ class UserLoginSerializer(serializers.Serializer):
         if email and password:
             # Normalize email for case-insensitive lookup
             email = email.lower().strip()
+            print(f"DEBUG: Login validation for email: {email}")
             user = authenticate(username=email, password=password)
+            print(f"DEBUG: Authenticate result: {user}")
             
             if not user:
                 # Log detailed failure for debugging (don't return sensitive info to client)
                 from .models import User
                 user_exists = User.objects.filter(email=email).exists()
+                print(f"DEBUG: User exists check for {email}: {user_exists}")
                 if not user_exists:
                     raise serializers.ValidationError({'email': ['Account with this email does not exist.']})
                 else:

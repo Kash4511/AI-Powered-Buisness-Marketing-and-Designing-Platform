@@ -53,20 +53,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('AuthContext: Attempting login...');
       const response = await apiClient.post('/api/auth/login/', {
         email,
         password,
       })
 
+      if (!response.data || !response.data.access) {
+        throw new Error('Invalid login response from server');
+      }
+
       const { access, refresh } = response.data
       localStorage.setItem('access_token', access)
       localStorage.setItem('refresh_token', refresh)
 
-      // Fetch user profile
-      const profileResponse = await apiClient.get('/api/auth/profile/')
-      setUser(profileResponse.data)
+      // Fetch user profile - if this fails, we want to clear tokens and throw
+      try {
+        console.log('AuthContext: Fetching user profile...');
+        const profileResponse = await apiClient.get('/api/auth/profile/')
+        setUser(profileResponse.data)
+        console.log('AuthContext: Login successful');
+      } catch (profileError) {
+        console.error('AuthContext: Profile fetch failed after login:', profileError)
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        throw profileError
+      }
     } catch (error: unknown) {
-      console.error('Login failed:', error)
+      console.error('AuthContext: Login failed:', error)
       throw error
     }
   }

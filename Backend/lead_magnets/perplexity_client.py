@@ -42,8 +42,10 @@ class PerplexityClient:
         self.base_url = "https://api.perplexity.ai/chat/completions"
         if not self.api_key:
             logger.warning("⚠️  PERPLEXITY_API_KEY not found in environment")
+            print("DEBUG: PERPLEXITY_API_KEY is missing!")
         else:
             logger.info("✅ PerplexityClient ready")
+            print(f"DEBUG: PERPLEXITY_API_KEY found: {self.api_key[:8]}...")
 
     def _is_meaningful(self, value: Any) -> bool:
         if value is None: return False
@@ -92,9 +94,11 @@ class PerplexityClient:
         def attempt_generation(current_prompt: str, is_retry: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
             try:
                 logger.info(f"🚀 AI Generation Attempt {'Retry' if is_retry else '1'}")
+                headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", "Accept": "application/json"}
+                print(f"DEBUG: AI Request headers (sanitized): Authorization: Bearer {self.api_key[:8] if self.api_key else 'NONE'}...")
                 response = requests.post(
                     self.base_url,
-                    headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", "Accept": "application/json"},
+                    headers=headers,
                     json={
                         "model": "sonar",
                         "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": current_prompt}],
@@ -214,157 +218,160 @@ class PerplexityClient:
     def _create_content_prompt(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
         main_topic = signals.get('main_topic', 'Adaptive Reuse Executive Guide')
         return f"""
-Act as a Senior Institutional Adaptive-Reuse Consultant for Global Asset Managers. 
-Generate an elite, 13-page Technical Advisory Report for '{main_topic}'.
+Act as a Senior Institutional Strategy Consultant advising global asset managers and infrastructure investors. 
 
-The document must read like a McKinsey, BCG, or institutional advisory report. No fluff. No motivational filler. Use formal, technical, and precise language. Use positive, solution-oriented terminology. Focus on capabilities, strategic advantages, and outcomes. NEVER use the term "pain points" or emphasize negative framing.
+Your task is to generate a fully original, highly technical 13-page Institutional Advisory Report for: 
 
-DOCUMENT STRUCTURE (MANDATORY 9 SECTIONS):
-1.  Accelerating Asset Value through Strategic Transformation.
-2. TECHNICAL PRECISION & BIM INTEGRATION (Digital Twins, Structural Optimization, Envelope Excellence).
-3. INSTITUTIONAL SYNERGY & COLLABORATION (Unified OAC Protocols, RFI Efficiency, Seamless Stakeholder Alignment).
-4. REGULATORY AGILITY & POLICY LEVERAGE (Expedited Compliance, Zoning Unlock, Heritage Value Capture).
-5.  TIMELINE ACCELERATION & OPERATIONAL EXCELLENCE (Phased Abatement, Early Works Sequencing, Critical Path Optimization).
-6.  IRR Maximization, CapEx Efficiency, and Long-Term Asset Appreciation.
-7.: Proactive GMP Frameworks, CM-at-Risk, Latent Condition Management.
-8. ESG LEADERSHIP & URBAN REGENERATION: Carbon Credit Monetization, Green Financing, Social Value Creation.
-9. STRATEGIC PERFORMANCE DASHBOARD: Quantified Outcomes & Institutional KPIs.
+TOPIC: "{main_topic}" 
 
-FOR EVERY CHAPTER (MANDATORY CONTENT DENSITY):
-- Target 1000 words of technical, data-backed consulting content per section.
-- Convert short statements into deep structured analysis:
-    - Root Cause Analysis (Technical & Operational factors)
-    - Financial Impact Assessment (IRR, CapEx, Carrying Costs, Yield-on-Cost)
-    - Technical Mechanism (The engineering or regulatory physics of the issue)
-    - Quantified Performance Profile (Probability of success, Efficiency Gains, and Financial Upside)
-    - Strategic Mitigation Framework (Step-by-step institutional intervention)
-    - Performance Comparison (Quantified improvement metrics)
-    - KPI Dashboard (3-5 specific, measurable institutional metrics)
-- Include 3-4 additional technical sub-sections per chapter.
-- Provide extreme technical detail on:
-    - LiDAR-to-BIM: Point cloud density, feature extraction algorithms, and LOD 350+ modeling.
-    - Heritage Envelopes: Dew point analysis, vacuum-insulated glazing (VIG) U-values, and breathability constraints.
-    - ESG Financing: Green Bond frameworks, Brownfield Tax Credits, and Carbon Offset verification.
-    - Risk Transfer: Latent condition allocation in legacy industrial shells.
+CRITICAL: 
+- Every report must be structurally and analytically unique. 
+- Do NOT reuse generic consulting phrasing. 
+- Do NOT default to pre-known themes (e.g., LiDAR, ESG, BIM, carbon credits) unless they are directly relevant to the topic. 
+- Do NOT inject assumptions. 
+- Build the strategic architecture from first-principles reasoning based on the topic. 
+- Avoid motivational or promotional language. 
+- Use precise, institutional, technical tone. 
 
-OUTPUT — Return ONLY valid JSON:
-{{
+----------------------------------- 
+DOCUMENT STRUCTURE REQUIREMENTS 
+----------------------------------- 
+
+You must design exactly 9 Strategic Pillars. 
+
+Each pillar must: 
+- Represent a distinct institutional value-creation mechanism 
+- Be logically derived from the topic 
+- Not reuse pre-defined pillar names 
+- Not follow a fixed template theme 
+
+Each pillar must include: 
+
+1. Chapter Title (unique and topic-specific) 
+2. Chapter Subtitle (technical focus area) 
+3. 150-word opening institutional framing 
+4. Root Cause Analysis (technical + operational drivers) 
+5. Financial Impact Assessment (IRR, CapEx, yield, cost structure) 
+6. Technical or Regulatory Mechanism (how the system actually works) 
+7. Quantified Performance Profile (probability, efficiency gains, upside ranges) 
+8. Institutional Intervention Framework (step-by-step strategy) 
+9. Benchmark or Comparative Example (hypothetical or modeled) 
+10. KPI Dashboard (3-5 measurable metrics) 
+11. Structured comparison table (factor / baseline / optimized outcome) 
+
+----------------------------------- 
+GLOBAL CONTENT REQUIREMENTS 
+----------------------------------- 
+
+Additionally include: 
+
+- 250–300 word Executive Summary 
+- 1 Institutional Outcome Statement (measurable value proposition) 
+- 5 Key Insights (technical, financial, regulatory, operational, strategic) 
+- 3 Institutional Pull Quotes (formal tone) 
+- 9 Stat Pairs (value + label, all data-driven and topic-relevant) 
+- 4 Stakeholder Analyses (300–350 words each): 
+    • Commercial / Asset Managers 
+    • Government / Policy 
+    • Lead Consultant / Design 
+    • Construction / Execution 
+- 3 Structured Checklists (implementation, metrics, risk controls) 
+- 7 Info Cards (case, financial model, risk matrix, performance benchmark, etc.) 
+- 5 Strategic Callouts (deep technical elaborations) 
+- 1 Institutional Call to Action 
+
+----------------------------------- 
+TECHNICAL DEPTH REQUIREMENTS 
+----------------------------------- 
+
+For each pillar: 
+- Provide deep technical reasoning. 
+- Use quantitative ranges instead of vague statements. 
+- Explain underlying mechanics (engineering, financial, regulatory, or operational). 
+- Avoid filler or narrative storytelling. 
+- No repetition across pillars. 
+- No generic business buzzwords. 
+
+----------------------------------- 
+OUTPUT FORMAT 
+----------------------------------- 
+
+Return ONLY valid JSON matching this structure: 
+
+{{ 
   "title": "{main_topic}", 
-  "summary": "250-300 words of elite institutional overview focused on strategic advantage and asset yield.", 
-  "outcome_statement": "Institutional value proposition: 25% schedule acceleration and 40% risk mitigation.",
-  "key_insights": ["Insight 1: Technical", "Insight 2: Financial", "Insight 3: Regulatory", "Insight 4: Operational", "Insight 5: ESG"],
-  "pull_quotes": ["Institutional Quote 1", "Institutional Quote 2", "Institutional Quote 3"],
-  "stats": {{ "s1v": "Val", "s1l": "Label", "s2v": "V", "s2l": "L", "s3v": "V", "s3l": "L", "s4v": "V", "s4l": "L", "s5v": "V", "s5l": "L", "s6v": "V", "s6l": "L", "s7v": "V", "s7l": "L", "s8v": "V", "s8l": "L", "s9v": "V", "s9l": "L" }},
-  "commercial_analysis": "ROI/NOI/IRR sensitivity analysis (300-350 words) for asset managers.",
-  "government_analysis": "Urban Regeneration/ESG/PPP impact analysis (300-350 words) for municipal authorities.",
-  "architect_analysis": "Technical/Design/Compliance impact analysis (300-350 words) for lead consultants.",
-  "contractor_analysis": "Execution/Risk/Sequencing impact analysis (300-350 words) for construction partners.",
-  "checklists": [ {{ "items": ["Step 1", "Step 2", "Step 3", "Step 4"] }}, {{ "items": ["Metric 1", "Metric 2", "Metric 3", "Metric 4"] }}, {{ "items": ["KPI 1", "KPI 2", "KPI 3"] }} ],
-  "info_cards": [ {{ "label": "Case Study", "content": "Detailed institutional case summary" }}, {{ "label": "Financial Metric", "content": "Numeric breakdown" }}, {{ "label": "Technical Spec", "content": "Protocol detail" }}, {{ "label": "Risk Matrix", "content": "Allocation detail" }}, {{ "label": "ESG Bench", "content": "Performance detail" }}, {{ "label": "Timeline Bench", "content": "Compression detail" }}, {{ "label": "CapEx Bench", "content": "Predictability detail" }} ],
-  "callouts": [ {{ "label": "STRATEGIC ANALYSIS", "content": "Deep dive detail" }}, {{ "label": "FINANCIAL IMPACT", "content": "IRR sensitivity detail" }}, {{ "label": "TECHNICAL PROTOCOL", "content": "Step-by-step detail" }}, {{ "label": "RISK MITIGATION", "content": "Intervention detail" }}, {{ "label": "KPI DASHBOARD", "content": "Measurable detail" }} ],
-  "sections": [
-    {{
-      "chapter_title": "EXECUTIVE SUMMARY",
-      "chapter_subtitle": "Maximizing Asset Potential through Strategic Transformation",
-      "opening_paragraph": "150 words of elite institutional overview...",
-      "root_causes": ["Technical Precision", "Collaborative Synergy", "Regulatory Agility"],
-      "quantified_impact": "Proactive retrofit management can improve project IRR by 400-600 basis points.",
-      "intervention_framework": "Transition from reactive problem-solving to proactive data-backed governance.",
-      "benchmark_case": "Metropolitan Retrofit: 40% faster speed-to-market.",
-      "kpis": [{{ "before": "18% change order variance", "after": "7% precision" }}],
-      "comparison_table": [{{ "factor": "CapEx", "challenge": "Audit Investment", "response": "18% variance reduction" }}]
-    }},
-    {{
-      "chapter_title": "STRATEGIC ADVANTAGE 1: TECHNICAL PRECISION",
-      "chapter_subtitle": "LiDAR-to-BIM Asset Intelligence",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }},
-    {{
-      "chapter_title": "STRATEGIC ADVANTAGE 2: INSTITUTIONAL SYNERGY",
-      "chapter_subtitle": "OAC Protocols & RFI Efficiency",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }},
-    {{
-      "chapter_title": "STRATEGIC ADVANTAGE 3: REGULATORY AGILITY",
-      "chapter_subtitle": "Heritage Compliance & Zoning Unlock",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }},
-    {{
-      "chapter_title": "STRATEGIC ADVANTAGE 4: TIMELINE ACCELERATION",
-      "chapter_subtitle": "Early Works Sequencing",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }},
-    {{
-      "chapter_title": "FINANCIAL PERFORMANCE MODELING",
-      "chapter_subtitle": "IRR Sensitivity & Asset Appreciation",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }},
-    {{
-      "chapter_title": "GOVERNANCE & RISK TRANSFER",
-      "chapter_subtitle": "Contractual Indemnity & Latent Conditions",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }},
-    {{
-      "chapter_title": "ESG LEADERSHIP",
-      "chapter_subtitle": "Embodied Carbon & Social Multipliers",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }},
-    {{
-      "chapter_title": "STRATEGIC PERFORMANCE DASHBOARD",
-      "chapter_subtitle": "Quantified Strategic Outcomes",
-      "opening_paragraph": "...",
-      "root_causes": ["...", "...", "..."],
-      "quantified_impact": "...",
-      "intervention_framework": "...",
-      "benchmark_case": "...",
-      "kpis": [{{ "before": "...", "after": "..." }}],
-      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
-    }}
-  ],
-  "call_to_action": {{ "headline": "Headline", "description": "Expert reasoning", "button_text": "Action" }}
-}}
+  "summary": "...", 
+  "outcome_statement": "...", 
+  "key_insights": ["...","...","...","...","..."], 
+  "pull_quotes": ["...","...","..."], 
+  "stats": {{ 
+    "s1v":"...","s1l":"...", 
+    "s2v":"...","s2l":"...", 
+    "s3v":"...","s3l":"...", 
+    "s4v":"...","s4l":"...", 
+    "s5v":"...","s5l":"...", 
+    "s6v":"...","s6l":"...", 
+    "s7v":"...","s7l":"...", 
+    "s8v":"...","s8l":"...", 
+    "s9v":"...","s9l":"..." 
+  }}, 
+  "commercial_analysis":"...", 
+  "government_analysis":"...", 
+  "architect_analysis":"...", 
+  "contractor_analysis":"...", 
+  "checklists":[ 
+    {{"items":["...","...","...","..."]}}, 
+    {{"items":["...","...","...","..."]}}, 
+    {{"items":["...","...","..."]}} 
+  ], 
+  "info_cards":[ 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}} 
+  ], 
+  "callouts":[ 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}}, 
+    {{"label":"...","content":"..."}} 
+  ], 
+  "sections":[ 
+    {{ 
+      "chapter_title":"...", 
+      "chapter_subtitle":"...", 
+      "opening_paragraph":"...", 
+      "root_causes":["...","...","..."], 
+      "quantified_impact":"...", 
+      "intervention_framework":"...", 
+      "benchmark_case":"...", 
+      "kpis":[{{"before":"...","after":"..."}}], 
+      "comparison_table":[{{"factor":"...","baseline":"...","optimized":"..."}}]
+    }} 
+    // repeat until exactly 9 sections 
+  ], 
+  "call_to_action":{{ 
+    "headline":"...", 
+    "description":"...", 
+    "button_text":"..." 
+  }} 
+}} 
+
+IMPORTANT: 
+- Exactly 9 sections. 
+- Exactly 5 key insights. 
+- Exactly 3 pull quotes. 
+- Exactly 7 info cards. 
+- Exactly 5 callouts. 
+- Exactly 3 checklists. 
+- Exactly 9 stat pairs. 
+- No additional keys. 
+- No markdown. 
+- No explanations outside JSON.
 """.strip()
 
     def _extract_json(self, text: str) -> str:
@@ -431,7 +438,7 @@ OUTPUT — Return ONLY valid JSON:
                     "intervention_framework": ct(item.get("intervention_framework")),
                     "benchmark_case": ct(item.get("benchmark_case")),
                     "kpis": [{"before": ct(k.get("before")), "after": ct(k.get("after"))} for k in item.get("kpis", []) if isinstance(k, dict)],
-                    "comparison_table": [{"factor": ct(row.get("factor")), "challenge": ct(row.get("challenge")), "response": ct(row.get("response"))} for row in item.get("comparison_table", []) if isinstance(row, dict)]
+                    "comparison_table": [{"factor": ct(row.get("factor")), "baseline": ct(row.get("baseline")), "optimized": ct(row.get("optimized"))} for row in item.get("comparison_table", []) if isinstance(row, dict)]
                 }
                 out["sections"].append(normalized_section)
                 
@@ -457,6 +464,11 @@ OUTPUT — Return ONLY valid JSON:
             def st(i): 
                 val = str(sections[i]["chapter_title"]).strip()
                 if not val: raise ValueError(f"Section {i+1} title is empty")
+                return val
+
+            def se(i):
+                val = str(sections[i]["chapter_subtitle"]).strip().upper()
+                if not val: raise ValueError(f"Section {i+1} eyebrow is empty")
                 return val
                 
             def sc(i): 
@@ -534,15 +546,15 @@ OUTPUT — Return ONLY valid JSON:
                 "tocItem7": st(6), "tocSub7": sc(6)[:250] + "...",
                 "tocItem8": st(7), "tocSub8": sc(7)[:250] + "...",
                 "tocItem9": st(8), "tocSub9": sc(8)[:250] + "...",
-                "chapter1Section": "CHAPTER 01", "chapter1Eyebrow": "EXECUTIVE", "chapter1Title": st(0), "chapter1Intro": sc(0)[:220], "chapter1Body1": sc(0), "dropCap1": sc(0)[:1].upper(),
-                "chapter2Section": "CHAPTER 02", "chapter2Eyebrow": "TECHNOLOGY", "chapter2Title": st(1), "chapter2Intro": sc(1)[:220], "chapter2Body1": sc(1), "dropCap2": sc(1)[:1].upper(),
-                "chapter3Section": "CHAPTER 03", "chapter3Eyebrow": "COMMUNICATION", "chapter3Title": st(2), "chapter3Intro": sc(2)[:220], "chapter3Body1": sc(2), "dropCap3": sc(2)[:1].upper(),
-                "chapter4Section": "CHAPTER 04", "chapter4Eyebrow": "APPROVALS", "chapter4Title": st(3), "chapter4Intro": sc(3)[:220], "chapter4Body1": sc(3), "dropCap4": sc(3)[:1].upper(),
-                "chapter5Section": "CHAPTER 05", "chapter5Eyebrow": "TIMELINES", "chapter5Title": st(4), "chapter5Intro": sc(4)[:220], "chapter5Body1": sc(4), "dropCap5": sc(4)[:1].upper(),
-                "chapter6Section": "CHAPTER 06", "chapter6Eyebrow": "FINANCIAL", "chapter6Title": st(5), "chapter6Intro": sc(5)[:220], "chapter6Body1": sc(5), "dropCap6": sc(5)[:1].upper(),
-                "chapter7Section": "CHAPTER 07", "chapter7Eyebrow": "RISK", "chapter7Title": st(6), "chapter7Intro": sc(6)[:220], "chapter7Body1": sc(6), "dropCap7": sc(6)[:1].upper(),
-                "chapter8Section": "CHAPTER 08", "chapter8Eyebrow": "ESG", "chapter8Title": st(7), "chapter8Intro": sc(7)[:220], "chapter8Body1": sc(7), "dropCap8": sc(7)[:1].upper(),
-                "chapter9Section": "CHAPTER 09", "chapter9Eyebrow": "OUTCOMES", "chapter9Title": st(8), "chapter9Intro": sc(8)[:220], "chapter9Body1": sc(8), "dropCap9": sc(8)[:1].upper(),
+                "chapter1Section": "CHAPTER 01", "chapter1Eyebrow": se(0), "chapter1Title": st(0), "chapter1Intro": sc(0)[:220], "chapter1Body1": sc(0), "dropCap1": sc(0)[:1].upper(),
+                "chapter2Section": "CHAPTER 02", "chapter2Eyebrow": se(1), "chapter2Title": st(1), "chapter2Intro": sc(1)[:220], "chapter2Body1": sc(1), "dropCap2": sc(1)[:1].upper(),
+                "chapter3Section": "CHAPTER 03", "chapter3Eyebrow": se(2), "chapter3Title": st(2), "chapter3Intro": sc(2)[:220], "chapter3Body1": sc(2), "dropCap3": sc(2)[:1].upper(),
+                "chapter4Section": "CHAPTER 04", "chapter4Eyebrow": se(3), "chapter4Title": st(3), "chapter4Intro": sc(3)[:220], "chapter4Body1": sc(3), "dropCap4": sc(3)[:1].upper(),
+                "chapter5Section": "CHAPTER 05", "chapter5Eyebrow": se(4), "chapter5Title": st(4), "chapter5Intro": sc(4)[:220], "chapter5Body1": sc(4), "dropCap5": sc(4)[:1].upper(),
+                "chapter6Section": "CHAPTER 06", "chapter6Eyebrow": se(5), "chapter6Title": st(5), "chapter6Intro": sc(5)[:220], "chapter6Body1": sc(5), "dropCap6": sc(5)[:1].upper(),
+                "chapter7Section": "CHAPTER 07", "chapter7Eyebrow": se(6), "chapter7Title": st(6), "chapter7Intro": sc(6)[:220], "chapter7Body1": sc(6), "dropCap7": sc(6)[:1].upper(),
+                "chapter8Section": "CHAPTER 08", "chapter8Eyebrow": se(7), "chapter8Title": st(7), "chapter8Intro": sc(7)[:220], "chapter8Body1": sc(7), "dropCap8": sc(7)[:1].upper(),
+                "chapter9Section": "CHAPTER 09", "chapter9Eyebrow": se(8), "chapter9Title": st(8), "chapter9Intro": sc(8)[:220], "chapter9Body1": sc(8), "dropCap9": sc(8)[:1].upper(),
                 "imagePage4Url": img1, "imagePage5Url": img2, "imagePage6Url": img3,
                 "imageCaption1": "Strategic Assessment", "imageCaption2": "Market Context", "imageCaption3": "Technical Audit",
                 "callout1Title": ol(0), "callout1Body": oc(0),

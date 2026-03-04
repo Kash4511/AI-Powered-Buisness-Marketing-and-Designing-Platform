@@ -72,14 +72,18 @@ apiClient.interceptors.request.use(
 
     const token = localStorage.getItem('access_token');
     
+    // Skip token for auth endpoints to avoid expired token blocking login (401)
+    const isAuthEndpoint = config.url?.includes('/api/auth/login/') || 
+                          config.url?.includes('/api/auth/register/');
+    
     // Only send Authorization header if:
     // 1. We have a token
-    // 2. The request is to our own API (starts with /api or matches baseURL)
-    // This prevents sending our JWT to external services like Cloudinary on redirects.
+    // 2. The request is NOT to an auth endpoint
+    // 3. The request is to our own API (starts with /api or matches baseURL)
     const isRelative = config.url?.startsWith('/') || !config.url?.startsWith('http');
     const isSameOrigin = config.url?.startsWith(apiClient.defaults.baseURL || '');
     
-    if (token && (isRelative || isSameOrigin)) {
+    if (token && !isAuthEndpoint && (isRelative || isSameOrigin)) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     
@@ -105,8 +109,13 @@ apiClient.interceptors.response.use(
     
     const originalRequest = error.config;
     
-    // If error is 401 and we haven't tried to refresh token yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip token refresh logic for auth endpoints
+    const isAuthRequest = originalRequest.url?.includes('/api/auth/login/') || 
+                         originalRequest.url?.includes('/api/auth/register/') ||
+                         originalRequest.url?.includes('/api/auth/token/refresh/');
+    
+    // If error is 401 and we haven't tried to refresh token yet, and it's NOT an auth request
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
       
       try {
