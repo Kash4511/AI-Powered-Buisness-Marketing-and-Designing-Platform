@@ -30,7 +30,7 @@ from .serializers import (
 )
 from .services import DocRaptorService, render_template
 from .reportlab_service import ReportLabService
-from .perplexity_client import PerplexityClient
+from .services.ai_generator import LeadMagnetAIService
 from .models import Template
 
 logger = logging.getLogger(__name__)
@@ -228,31 +228,23 @@ def _run_generation_job(job_id, body, user_id):
             _set_job(job_id, status="failed", error="Lead magnet not found")
             return
 
-        # 3. SEMANTIC IGNORE (Step 1 of Pipeline)
+        # 3. GENERATE AI CONTENT
         gen_data = getattr(lead_magnet, 'generation_data', None)
         if not gen_data:
             _set_job(job_id, status="failed", error="Lead magnet is missing generation data")
             return
 
-        ai_client = PerplexityClient()
-        print(f"DEBUG: Background job calling PerplexityClient with key (sanitized): {ai_client.api_key[:8] if ai_client.api_key else 'NONE'}...")
+        ai_service = LeadMagnetAIService()
         
-        # Merge generation_data with user_answers
-        all_answers = {
-            'lead_magnet_type': gen_data.lead_magnet_type,
+        # Prepare data for AI generation
+        ai_input_data = {
             'main_topic': gen_data.main_topic,
             'target_audience': gen_data.target_audience,
-            'audience_pain_points': gen_data.audience_pain_points,
-            'desired_outcome': gen_data.desired_outcome,
-            'call_to_action': gen_data.call_to_action,
-            'special_requests': gen_data.special_requests,
+            'pain_points': gen_data.audience_pain_points if isinstance(gen_data.audience_pain_points, list) else [gen_data.audience_pain_points],
+            'tone': "Professional and Institutional",
+            'color_theme': "Corporate"
         }
-        if isinstance(user_answers, dict):
-            all_answers.update(user_answers)
 
-        # Convert fields to interpreted signals (Semantic Ignore happens here)
-        signals = ai_client.get_semantic_signals(all_answers)
-        
         # 4. PREPARE FIRM PROFILE
         try:
             fp = FirmProfile.objects.get(user=user)
@@ -278,61 +270,59 @@ def _run_generation_job(job_id, body, user_id):
                 'industry': 'Architecture',
             }
 
-        # 5. AI CALL & NORMALIZATION (Steps 2 & 3 of Pipeline)
+        # 5. AI CALL & NORMALIZATION
         template_vars = {}
 
         if use_ai_content:
             try:
-                _set_job(job_id, status="processing", progress=15, message="Generating AI content... (~45s)")
+                _set_job(job_id, status="processing", progress=15, message="Generating AI content via Groq... (~15s)")
                 start_ai = time.time()
-                # 5.1 AI Call - validation happens INSIDE generate_lead_magnet_json
-                logger.info("🤖 AI Generation Start (Step 2)")
-                raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                
+                logger.info("🤖 AI Generation Start via Groq")
+                ai_content = ai_service.generate_lead_magnet(ai_input_data)
                 ai_duration = time.time() - start_ai
                 
-                # Mandatory Logging: AI raw type and duration
-                logger.info(f"📊 AI RAW TYPE: {type(raw_ai_content)} | Duration: {ai_duration:.2f}s")
+                logger.info(f"📊 AI Generation Success | Duration: {ai_duration:.2f}s")
 
-                _set_job(job_id, status="processing", progress=55, message="Structuring content...")
-                # 5.2 Mandatory Normalization Layer (Step 3)
-                start_norm = time.time()
-                ai_content = ai_client.normalize_ai_output(raw_ai_content)
-                norm_duration = time.time() - start_norm
+                _set_job(job_id, status="processing", progress=65, message="Structuring content for PDF...")
                 
-                # Mandatory Logging: Section count after normalization
-                sections = ai_content.get('sections', [])
-                logger.info(f"✅ AI Content Normalized. Count: {len(sections)} | Duration: {norm_duration:.2f}s")
+                # Map Groq output to template variables
+                # The Groq schema is different from the old Perplexity one, 
+                # so we map it here to maintain compatibility with existing ReportLab templates if possible
+                # or provide a clean base for rendering.
                 
-                _set_job(job_id, status="processing", progress=65, message="Final mapping...")
-                
-                # 5.3 Map to Template Variables (Safety Layer)
-                # Validation was already performed in step 5.1.
-                # If it reached here, content is guaranteed high-density and unique.
-                architectural_images = body.get('architectural_images', [])
-                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals, architectural_images)
-                
-                # IMPORTANT: Include structured sections
-                template_vars['sections'] = ai_content.get('sections', [])
+                template_vars = {
+                    'mainTitle': ai_content.get('title', lead_magnet.title),
+                    'documentSubtitle': ai_content.get('subtitle', ''),
+                    'companyName': firm_profile.get('firm_name', ''),
+                    'emailAddress': firm_profile.get('work_email', ''),
+                    'phoneNumber': firm_profile.get('phone_number', ''),
+                    'website': firm_profile.get('firm_website', ''),
+                    'primaryColor': firm_profile.get('primary_brand_color', '#2a5766'),
+                    'secondaryColor': firm_profile.get('secondary_brand_color', '#FFFFFF'),
+                    'summary': ai_content.get('target_audience_summary', ''),
+                    'key_pain_points': ai_content.get('key_pain_points', []),
+                    'solutions': ai_content.get('solutions', []),
+                    'roi': ai_content.get('roi_section', {}),
+                    'cta': ai_content.get('call_to_action', ''),
+                }
                 
             except ValueError as ve:
-                # Validation error - fail loudly with specific message
-                logger.error(f"⚠️ AI Validation Failed: {str(ve)}")
-                _set_job(job_id, status="failed", error=f"Quality Check Failed: {str(ve)}")
+                logger.error(f"⚠️ AI Generation Failed: {str(ve)}")
+                _set_job(job_id, status="failed", error=f"AI Error: {str(ve)}")
                 return
             except Exception as e:
-                # Generic failure
                 logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
                 _set_job(job_id, status="failed", error=f"AI generation failed: {str(e)}")
                 return
         else:
-            # Basic non-AI mapping using signals
-            def clean_sig(s): return s.replace("REINTERPRET: ", "") if s.startswith("REINTERPRET") else ""
+            # Basic non-AI mapping
             template_vars = {
                 'primaryColor': firm_profile.get('primary_brand_color') or '',
                 'secondaryColor': firm_profile.get('secondary_brand_color') or '',
                 'companyName': firm_profile.get('firm_name') or '',
-                'mainTitle': clean_sig(signals.get('main_topic')) or lead_magnet.title,
-                'documentSubtitle': clean_sig(signals.get('desired_outcome')) or 'Professional Insights',
+                'mainTitle': lead_magnet.title,
+                'documentSubtitle': 'Professional Insights',
                 'emailAddress': firm_profile.get('work_email') or '',
                 'phoneNumber': firm_profile.get('phone_number') or '',
                 'website': firm_profile.get('firm_website') or '',
