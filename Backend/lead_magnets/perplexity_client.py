@@ -147,48 +147,68 @@ class PerplexityClient:
         return result
 
     def validate_ai_structure(self, data: Dict[str, Any]):
-        """Strict validation gate for AI-generated content."""
-        # FORCED FAILURE FOR ARCHITECTURAL TEST
-        raise ValueError("Intentional Architectural Failure: Verifying Fail-Loud Pipeline.")
-        
+        """Strict structural enforcement gate for institutional-grade content."""
         if not isinstance(data, dict):
             raise ValueError("AI response is not a valid JSON object")
             
-        required_root_keys = ["title", "summary", "sections"]
+        # 1. ROOT FIELD ENFORCEMENT
+        required_root_keys = [
+            "title", "summary", "outcome_statement", 
+            "commercial_analysis", "government_analysis", 
+            "architect_analysis", "contractor_analysis",
+            "sections", "key_insights", "pull_quotes", 
+            "info_cards", "callouts", "stats", "checklists"
+        ]
         for key in required_root_keys:
             if key not in data or not data[key]:
-                raise ValueError(f"AI response missing required root key: {key}")
+                raise ValueError(f"AI response missing or empty required root key: {key}")
 
-        sections = data.get("sections", [])
-        if not isinstance(sections, list) or len(sections) < 3:
-            raise ValueError(f"AI returned insufficient sections: {len(sections)}")
+        # 2. EXACT COUNT ENFORCEMENT (Aligns with Template.html requirements)
+        counts = {
+            "sections": 9,
+            "key_insights": 5,
+            "pull_quotes": 3,
+            "callouts": 5,
+            "info_cards": 7,
+            "checklists": 3
+        }
+        for key, expected in counts.items():
+            actual = len(data.get(key, []))
+            if actual != expected:
+                raise ValueError(f"Structural Mismatch: '{key}' must have exactly {expected} items. Got {actual}.")
 
-        # Track content to detect repetition
+        # 3. STATS COUNT ENFORCEMENT (Exactly 9 pairs: s1v-s9v, s1l-s9l)
+        stats = data.get("stats", {})
+        for i in range(1, 10):
+            if f"s{i}v" not in stats or not str(stats[f"s{i}v"]).strip():
+                raise ValueError(f"Missing required stat value: s{i}v")
+            if f"s{i}l" not in stats or not str(stats[f"s{i}l"]).strip():
+                raise ValueError(f"Missing required stat label: s{i}l")
+
+        # 4. SECTION DEPTH & QUALITY ENFORCEMENT
         seen_paragraphs = set()
-
-        for i, section in enumerate(sections):
-            required_fields = ["chapter_title", "opening_paragraph"]
+        for i, section in enumerate(data["sections"]):
+            required_fields = ["chapter_title", "chapter_subtitle", "opening_paragraph"]
             for field in required_fields:
                 val = str(section.get(field, "")).strip()
                 if not val:
                     raise ValueError(f"Section {i+1} missing required field: {field}")
                 
                 if field == "opening_paragraph":
-                    # 1. Minimum Content Length (200 words)
+                    # Minimum 200 words per strategic chapter
                     word_count = len(val.split())
                     if word_count < 200:
-                        raise ValueError(f"Section {i+1} content too short ({word_count} words). Minimum 200 required.")
+                        raise ValueError(f"Section {i+1} too short ({word_count} words). Minimum 200 required.")
                     
-                    # 2. Placeholder Detection
+                    # Placeholder detection
                     PLACEHOLDERS = ["pending final audit", "TBD", "insert data here", "strategic transformation requires a holistic"]
                     if any(p.lower() in val.lower() for p in PLACEHOLDERS):
                         raise ValueError(f"Section {i+1} contains invalid placeholder text.")
                     
-                    # 3. Repetition Detection
-                    # Use first 100 chars as a signature
+                    # Repetition detection (signature-based)
                     signature = val[:100].lower()
                     if signature in seen_paragraphs:
-                        raise ValueError(f"Section {i+1} contains repetitive content found in a previous section.")
+                        raise ValueError(f"Section {i+1} contains repetitive content from a previous section.")
                     seen_paragraphs.add(signature)
 
     def _create_content_prompt(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> str:
@@ -243,7 +263,7 @@ OUTPUT — Return ONLY valid JSON:
   "info_cards": [ {{ "label": "Case Study", "content": "Detailed institutional case summary" }}, {{ "label": "Financial Metric", "content": "Numeric breakdown" }}, {{ "label": "Technical Spec", "content": "Protocol detail" }}, {{ "label": "Risk Matrix", "content": "Allocation detail" }}, {{ "label": "ESG Bench", "content": "Performance detail" }}, {{ "label": "Timeline Bench", "content": "Compression detail" }}, {{ "label": "CapEx Bench", "content": "Predictability detail" }} ],
   "callouts": [ {{ "label": "STRATEGIC ANALYSIS", "content": "Deep dive detail" }}, {{ "label": "FINANCIAL IMPACT", "content": "IRR sensitivity detail" }}, {{ "label": "TECHNICAL PROTOCOL", "content": "Step-by-step detail" }}, {{ "label": "RISK MITIGATION", "content": "Intervention detail" }}, {{ "label": "KPI DASHBOARD", "content": "Measurable detail" }} ],
   "sections": [
-    {
+    {{
       "chapter_title": "EXECUTIVE SUMMARY",
       "chapter_subtitle": "Maximizing Asset Potential through Strategic Transformation",
       "opening_paragraph": "150 words of elite institutional overview...",
@@ -251,10 +271,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "Proactive retrofit management can improve project IRR by 400-600 basis points.",
       "intervention_framework": "Transition from reactive problem-solving to proactive data-backed governance.",
       "benchmark_case": "Metropolitan Retrofit: 40% faster speed-to-market.",
-      "kpis": [{"before": "18% change order variance", "after": "7% precision"}],
-      "comparison_table": [{"factor": "CapEx", "challenge": "Audit Investment", "response": "18% variance reduction"}]
-    },
-    {
+      "kpis": [{{ "before": "18% change order variance", "after": "7% precision" }}],
+      "comparison_table": [{{ "factor": "CapEx", "challenge": "Audit Investment", "response": "18% variance reduction" }}]
+    }},
+    {{
       "chapter_title": "STRATEGIC ADVANTAGE 1: TECHNICAL PRECISION",
       "chapter_subtitle": "LiDAR-to-BIM Asset Intelligence",
       "opening_paragraph": "...",
@@ -262,10 +282,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    },
-    {
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }},
+    {{
       "chapter_title": "STRATEGIC ADVANTAGE 2: INSTITUTIONAL SYNERGY",
       "chapter_subtitle": "OAC Protocols & RFI Efficiency",
       "opening_paragraph": "...",
@@ -273,10 +293,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    },
-    {
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }},
+    {{
       "chapter_title": "STRATEGIC ADVANTAGE 3: REGULATORY AGILITY",
       "chapter_subtitle": "Heritage Compliance & Zoning Unlock",
       "opening_paragraph": "...",
@@ -284,10 +304,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    },
-    {
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }},
+    {{
       "chapter_title": "STRATEGIC ADVANTAGE 4: TIMELINE ACCELERATION",
       "chapter_subtitle": "Early Works Sequencing",
       "opening_paragraph": "...",
@@ -295,10 +315,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    },
-    {
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }},
+    {{
       "chapter_title": "FINANCIAL PERFORMANCE MODELING",
       "chapter_subtitle": "IRR Sensitivity & Asset Appreciation",
       "opening_paragraph": "...",
@@ -306,10 +326,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    },
-    {
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }},
+    {{
       "chapter_title": "GOVERNANCE & RISK TRANSFER",
       "chapter_subtitle": "Contractual Indemnity & Latent Conditions",
       "opening_paragraph": "...",
@@ -317,10 +337,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    },
-    {
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }},
+    {{
       "chapter_title": "ESG LEADERSHIP",
       "chapter_subtitle": "Embodied Carbon & Social Multipliers",
       "opening_paragraph": "...",
@@ -328,10 +348,10 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    },
-    {
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }},
+    {{
       "chapter_title": "STRATEGIC PERFORMANCE DASHBOARD",
       "chapter_subtitle": "Quantified Strategic Outcomes",
       "opening_paragraph": "...",
@@ -339,12 +359,12 @@ OUTPUT — Return ONLY valid JSON:
       "quantified_impact": "...",
       "intervention_framework": "...",
       "benchmark_case": "...",
-      "kpis": [{"before": "...", "after": "..."}],
-      "comparison_table": [{"factor": "...", "challenge": "...", "response": "..."}]
-    }
+      "kpis": [{{ "before": "...", "after": "..." }}],
+      "comparison_table": [{{ "factor": "...", "challenge": "...", "response": "..." }}]
+    }}
   ],
-  "call_to_action": { "headline": "Headline", "description": "Expert reasoning", "button_text": "Action" }
-}
+  "call_to_action": {{ "headline": "Headline", "description": "Expert reasoning", "button_text": "Action" }}
+}}
 """.strip()
 
     def _extract_json(self, text: str) -> str:
@@ -423,96 +443,85 @@ OUTPUT — Return ONLY valid JSON:
             fp = firm_profile or {}
             ua = user_answers or {}
             imgs = architectural_images or []
-            img1 = imgs[0] if len(imgs) >= 1 else "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='480'><rect width='100%' height='100%' fill='%23eeeeee'/></svg>"
+            
+            # 1. MANDATORY IMAGE CHECK (No fallbacks allowed)
+            if len(imgs) < 1:
+                raise ValueError("Missing required architectural image 1 for lead magnet generation.")
+            
+            img1 = imgs[0]
             img2 = imgs[1] if len(imgs) >= 2 else img1
             img3 = imgs[2] if len(imgs) >= 3 else img1
 
-            sections = ai_content.get("sections", [])
+            sections = ai_content["sections"]
             
             def st(i): 
-                if i >= len(sections): return ""
-                val = str(sections[i].get("chapter_title", "")).strip()
-                if not val: raise ValueError(f"Section {i+1} missing title")
+                val = str(sections[i]["chapter_title"]).strip()
+                if not val: raise ValueError(f"Section {i+1} title is empty")
                 return val
                 
             def sc(i): 
-                if i >= len(sections): return ""
-                val = str(sections[i].get("opening_paragraph", "")).strip()
-                if not val: raise ValueError(f"Section {i+1} missing content")
+                val = str(sections[i]["opening_paragraph"]).strip()
+                if not val: raise ValueError(f"Section {i+1} content is empty")
                 return val
 
-            stats = ai_content.get("stats", {})
+            stats = ai_content["stats"]
             def sv(k): 
-                val = str(stats.get(k, "")).strip()
+                val = str(stats[k]).strip()
                 if not val: raise ValueError(f"Missing stat value for {k}")
                 return val
 
-            insights = ai_content.get("key_insights", [])
-            quotes = ai_content.get("pull_quotes", [])
-            cards = ai_content.get("info_cards", [])
-            callouts = ai_content.get("callouts", [])
+            insights = ai_content["key_insights"]
+            quotes = ai_content["pull_quotes"]
+            cards = ai_content["info_cards"]
+            callouts = ai_content["callouts"]
 
-            def ins(i): 
-                if i >= len(insights): raise ValueError(f"Missing insight {i+1}")
-                return str(insights[i])
-            def quo(i): 
-                if i >= len(quotes): raise ValueError(f"Missing pull quote {i+1}")
-                return str(quotes[i])
-            def cl(i): 
-                if i >= len(cards): raise ValueError(f"Missing info card label {i+1}")
-                return str(cards[i].get("label", ""))
-            def cc(i): 
-                if i >= len(cards): raise ValueError(f"Missing info card content {i+1}")
-                return str(cards[i].get("content", ""))
-            def ol(i): 
-                if i >= len(callouts): raise ValueError(f"Missing callout label {i+1}")
-                return str(callouts[i].get("label", ""))
-            def oc(i): 
-                if i >= len(callouts): raise ValueError(f"Missing callout content {i+1}")
-                return str(callouts[i].get("content", ""))
+            def ins(i): return str(insights[i])
+            def quo(i): return str(quotes[i])
+            def cl(i): return str(cards[i]["label"])
+            def cc(i): return str(cards[i]["content"])
+            def ol(i): return str(callouts[i]["label"])
+            def oc(i): return str(callouts[i]["content"])
             
             def chk(i, j): 
-                try: 
-                    val = str(ai_content.get("checklists", [])[i].get("items", [])[j])
-                    if not val: raise ValueError()
-                    return val
-                except: raise ValueError(f"Missing checklist item {i+1}:{j+1}")
+                val = str(ai_content["checklists"][i]["items"][j]).strip()
+                if not val: raise ValueError(f"Empty checklist item at {i+1}:{j+1}")
+                return val
             
-            main_title = str(ai_content.get("title", "")).strip()
-            if not main_title: raise ValueError("Missing document title")
+            main_title = str(ai_content["title"]).strip()
+            if not main_title: raise ValueError("Document title is empty")
             
             hl_parts = main_title.split(":", 1)
             hl1 = hl_parts[0].strip()
-            hl2 = hl_parts[1].strip() if len(hl_parts) > 1 else "Technical Advisory"
+            hl2 = hl_parts[1].strip() if len(hl_parts) > 1 else "Strategic Advisory"
             
             year = str(datetime.now().year)
-            company = str(fp.get("firm_name", "")).strip()
-            if not company: raise ValueError("Missing firm name")
+            company = str(fp["firm_name"]).strip()
+            if not company: raise ValueError("Firm name is missing in profile")
             
-            email = str(fp.get("work_email", "")).strip()
-            phone = str(fp.get("phone_number", "")).strip()
-            website = str(fp.get("firm_website", "")).strip()
-            primary = str(fp.get("primary_brand_color", "")).strip()
-            if not primary: raise ValueError("Missing firm primary brand color")
+            email = str(fp["work_email"]).strip()
+            phone = str(fp["phone_number"]).strip()
+            website = str(fp["firm_website"]).strip()
+            primary = str(fp["primary_brand_color"]).strip()
+            if not primary: raise ValueError("Primary brand color is missing in firm profile")
             
             v = {
-                "mainTitle": main_title, "documentTitle": main_title.upper(), "documentSubtitle": ai_content.get("summary",""),
+                "mainTitle": main_title, "documentTitle": main_title.upper(), "documentSubtitle": ai_content["summary"],
                 "companyName": company, "emailAddress": email, "phoneNumber": phone, "website": website, "footerText": f"© {year} {company}",
                 "primaryColor": primary, "secondaryColor": fp.get("secondary_brand_color","#B8860B"),
                 "tertiaryColor": "#1E3A5F", "accentColor": "#4F7A8B", "creamColor": "#F7F4EF", "inkColor": "#1A1A1A", "ruleColor": "#DDDDDD",
-                "commercialAnalysis": ai_content.get("commercial_analysis", ""),
-                "governmentAnalysis": ai_content.get("government_analysis", ""),
-                "architectAnalysis": ai_content.get("architect_analysis", ""),
-                "contractorAnalysis": ai_content.get("contractor_analysis", ""),
+                "commercialAnalysis": ai_content["commercial_analysis"],
+                "governmentAnalysis": ai_content["government_analysis"],
+                "architectAnalysis": ai_content["architect_analysis"],
+                "contractorAnalysis": ai_content["contractor_analysis"],
                 "coverBrand": company.upper(),
                 "coverAudience": "EXECUTIVE SERIES",
                 "coverTitleBold": hl1.upper(),
                 "coverTitleItalic": hl2,
                 "coverFooterLeft": f"© {year} {company}",
                 "coverFooterRight": "STRATEGIC ANALYSIS",
-                "coverTagline": ai_content.get("outcome_statement","")[:80],
-                "stat1Value": "100%", "stat1Label": "PROFESSIONAL", "stat2Value": "AI", "stat2Label": "OPTIMISED", "stat3Value": year, "stat3Label": "EDITION",
-                "sectionTitle1": "Introduction", "pageNumber2": "2", "termsHeadline": f"{hl1}: {hl2}", "termsParagraph1": ai_content.get("summary",""),
+                "coverTagline": ai_content["outcome_statement"][:80],
+                "stat1Value": sv("s1v"), "stat1Label": sv("s1l"), "stat2Value": sv("s2v"), "stat2Label": sv("s2l"), "stat3Value": sv("s3v"), "stat3Label": sv("s3l"),
+                "sectionTitle1": "Introduction", "pageNumber2": "2", "termsHeadline": f"{hl1}: {hl2}", "termsParagraph1": ai_content["summary"],
                 "termsPullQuote": quo(0), "termsCopyright": f"© {year} {company}",
                 "keyInsight1": ins(0), "keyInsight2": ins(1), "keyInsight3": ins(2), "keyInsight4": ins(3), "keyInsight5": ins(4),
                 "sectionTitle2": "Contents", "pageNumber3": "3", "tocHeadlineLine1": "Strategic", "tocHeadlineLine2": "Roadmap",
@@ -525,15 +534,15 @@ OUTPUT — Return ONLY valid JSON:
                 "tocItem7": st(6), "tocSub7": sc(6)[:250] + "...",
                 "tocItem8": st(7), "tocSub8": sc(7)[:250] + "...",
                 "tocItem9": st(8), "tocSub9": sc(8)[:250] + "...",
-                "chapter1Section": "CHAPTER 01", "chapter1Eyebrow": "EXECUTIVE", "chapter1Title": st(0), "chapter1Intro": sc(0)[:220], "chapter1Body1": sc(0), "dropCap1": (sc(0)[:1] or "S").upper(),
-                "chapter2Section": "CHAPTER 02", "chapter2Eyebrow": "TECHNOLOGY", "chapter2Title": st(1), "chapter2Intro": sc(1)[:220], "chapter2Body1": sc(1), "dropCap2": (sc(1)[:1] or "O").upper(),
-                "chapter3Section": "CHAPTER 03", "chapter3Eyebrow": "COMMUNICATION", "chapter3Title": st(2), "chapter3Intro": sc(2)[:220], "chapter3Body1": sc(2), "dropCap3": (sc(2)[:1] or "I").upper(),
-                "chapter4Section": "CHAPTER 04", "chapter4Eyebrow": "APPROVALS", "chapter4Title": st(3), "chapter4Intro": sc(3)[:220], "chapter4Body1": sc(3), "dropCap4": (sc(3)[:1] or "C").upper(),
-                "chapter5Section": "CHAPTER 05", "chapter5Eyebrow": "TIMELINES", "chapter5Title": st(4), "chapter5Intro": sc(4)[:220], "chapter5Body1": sc(4), "dropCap5": (sc(4)[:1] or "A").upper(),
-                "chapter6Section": "CHAPTER 06", "chapter6Eyebrow": "FINANCIAL", "chapter6Title": st(5), "chapter6Intro": sc(5)[:220], "chapter6Body1": sc(5), "dropCap6": (sc(5)[:1] or "F").upper(),
-                "chapter7Section": "CHAPTER 07", "chapter7Eyebrow": "RISK", "chapter7Title": st(6), "chapter7Intro": sc(6)[:220], "chapter7Body1": sc(6), "dropCap7": (sc(6)[:1] or "R").upper(),
-                "chapter8Section": "CHAPTER 08", "chapter8Eyebrow": "ESG", "chapter8Title": st(7), "chapter8Intro": sc(7)[:220], "chapter8Body1": sc(7), "dropCap8": (sc(7)[:1] or "E").upper(),
-                "chapter9Section": "CHAPTER 09", "chapter9Eyebrow": "OUTCOMES", "chapter9Title": st(8), "chapter9Intro": sc(8)[:220], "chapter9Body1": sc(8), "dropCap9": (sc(8)[:1] or "P").upper(),
+                "chapter1Section": "CHAPTER 01", "chapter1Eyebrow": "EXECUTIVE", "chapter1Title": st(0), "chapter1Intro": sc(0)[:220], "chapter1Body1": sc(0), "dropCap1": sc(0)[:1].upper(),
+                "chapter2Section": "CHAPTER 02", "chapter2Eyebrow": "TECHNOLOGY", "chapter2Title": st(1), "chapter2Intro": sc(1)[:220], "chapter2Body1": sc(1), "dropCap2": sc(1)[:1].upper(),
+                "chapter3Section": "CHAPTER 03", "chapter3Eyebrow": "COMMUNICATION", "chapter3Title": st(2), "chapter3Intro": sc(2)[:220], "chapter3Body1": sc(2), "dropCap3": sc(2)[:1].upper(),
+                "chapter4Section": "CHAPTER 04", "chapter4Eyebrow": "APPROVALS", "chapter4Title": st(3), "chapter4Intro": sc(3)[:220], "chapter4Body1": sc(3), "dropCap4": sc(3)[:1].upper(),
+                "chapter5Section": "CHAPTER 05", "chapter5Eyebrow": "TIMELINES", "chapter5Title": st(4), "chapter5Intro": sc(4)[:220], "chapter5Body1": sc(4), "dropCap5": sc(4)[:1].upper(),
+                "chapter6Section": "CHAPTER 06", "chapter6Eyebrow": "FINANCIAL", "chapter6Title": st(5), "chapter6Intro": sc(5)[:220], "chapter6Body1": sc(5), "dropCap6": sc(5)[:1].upper(),
+                "chapter7Section": "CHAPTER 07", "chapter7Eyebrow": "RISK", "chapter7Title": st(6), "chapter7Intro": sc(6)[:220], "chapter7Body1": sc(6), "dropCap7": sc(6)[:1].upper(),
+                "chapter8Section": "CHAPTER 08", "chapter8Eyebrow": "ESG", "chapter8Title": st(7), "chapter8Intro": sc(7)[:220], "chapter8Body1": sc(7), "dropCap8": sc(7)[:1].upper(),
+                "chapter9Section": "CHAPTER 09", "chapter9Eyebrow": "OUTCOMES", "chapter9Title": st(8), "chapter9Intro": sc(8)[:220], "chapter9Body1": sc(8), "dropCap9": sc(8)[:1].upper(),
                 "imagePage4Url": img1, "imagePage5Url": img2, "imagePage6Url": img3,
                 "imageCaption1": "Strategic Assessment", "imageCaption2": "Market Context", "imageCaption3": "Technical Audit",
                 "callout1Title": ol(0), "callout1Body": oc(0),
@@ -565,17 +574,17 @@ OUTPUT — Return ONLY valid JSON:
                 "contactLabel3": "WEBSITE", "contactValue3": website.replace("https://","").replace("http://",""),
                 "stat1v": sv("s1v"), "stat1l": sv("s1l"),
                 "stat2v": sv("s2v"), "stat2l": sv("s2l"),
-                "ctaTitle": ct(ai_content.get("call_to_action", {}).get("headline")),
-                "ctaBody": ct(ai_content.get("call_to_action", {}).get("description")),
-                "ctaButtonText": ct(ai_content.get("call_to_action", {}).get("button_text")),
+                "ctaTitle": ai_content["call_to_action"]["headline"],
+                "ctaBody": ai_content["call_to_action"]["description"],
+                "ctaButtonText": ai_content["call_to_action"]["button_text"],
                 "backCoverBrand": company.upper(),
                 "backCoverTitle": main_title.upper(),
                 "backCoverSub": "EXECUTIVE STRATEGY SERIES",
                 "backCoverYear": year,
-                "commercialAnalysis": ai_content.get("commercial_analysis", ""),
-                "governmentAnalysis": ai_content.get("government_analysis", ""),
-                "architectAnalysis": ai_content.get("architect_analysis", ""),
-                "contractorAnalysis": ai_content.get("contractor_analysis", ""),
+                "commercialAnalysis": ai_content["commercial_analysis"],
+                "governmentAnalysis": ai_content["government_analysis"],
+                "architectAnalysis": ai_content["architect_analysis"],
+                "contractorAnalysis": ai_content["contractor_analysis"],
                 "pageNumber4": "4", "pageNumber5": "5", "pageNumber6": "6", "pageNumber7": "7", "pageNumber8": "8", "pageNumber9": "9",
                 "pageNumber10": "10", "pageNumber11": "11", "pageNumber12": "12"
             }
