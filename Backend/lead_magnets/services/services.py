@@ -39,11 +39,19 @@ class DocRaptorService:
             template_name = 'BrandAssetsPreview.html'
         template = env.get_template(template_name)
         rendered_html = template.render(**variables)
+        
+        # DEBUG: Log if variables are missing in the template context
         logger.info('DocRaptorService: template rendered', extra={
             'template_id': template_id,
             'template_name': template_name,
             'variables_count': len(variables),
         })
+        
+        # Check for unpopulated placeholders in the rendered HTML
+        placeholders = re.findall(r'\{\{\s*(\w+)\s*\}\}', rendered_html)
+        if placeholders:
+            logger.warning(f"⚠️ Unpopulated Jinja2 placeholders found in {template_name}: {set(placeholders)}")
+        
         missing = [k for k, v in variables.items() if not v]
         sample_keys = list(variables.keys())[:10]
         print(f"🧩 Render complete")
