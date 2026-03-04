@@ -338,28 +338,28 @@ def _run_generation_job(job_id, body, user_id):
             logger.info("📄 PDF Generation Start (DocRaptor)")
             
             # Map variables for Template.html (DocRaptor)
-             # Template.html uses different variable names than ReportLab
-             docraptor_vars = {
-                 'documentTitle': template_vars.get('mainTitle'),
-                 'companyName': template_vars.get('companyName'),
-                 'primaryColor': template_vars.get('primaryColor') or '#2a5766',
-                 'secondaryColor': template_vars.get('secondaryColor') or '#B8860B',
-                 'tertiaryColor': '#4F7A8B',
-                 'accentColor': '#E8F1F4',
-                 'creamColor': '#F7F4EF',
-                 'creamDarkColor': '#EBE6DA',
-                 'inkColor': '#1A1A1A',
-                 'inkMidColor': '#444444',
-                 'inkLightColor': '#888888',
-                 'ruleColor': '#DDDDDD',
-                 'ruleLightColor': '#EEEEEE',
-                 'coverTextColor': '#FFFFFF',
-                 'coverLogoFilter': 'brightness(0) invert(1)',
-                 'footerText': f"© {template_vars.get('companyName')} Strategic Report",
-                 
-                 # Page 1 (Cover)
-                 'mainTitle': template_vars.get('mainTitle'),
-                 'summaryLine': template_vars.get('summary'),
+            # Template.html uses different variable names than ReportLab
+            docraptor_vars = {
+                'documentTitle': template_vars.get('mainTitle'),
+                'companyName': template_vars.get('companyName'),
+                'primaryColor': template_vars.get('primaryColor') or '#2a5766',
+                'secondaryColor': template_vars.get('secondaryColor') or '#B8860B',
+                'tertiaryColor': '#4F7A8B',
+                'accentColor': '#E8F1F4',
+                'creamColor': '#F7F4EF',
+                'creamDarkColor': '#EBE6DA',
+                'inkColor': '#1A1A1A',
+                'inkMidColor': '#444444',
+                'inkLightColor': '#888888',
+                'ruleColor': '#DDDDDD',
+                'ruleLightColor': '#EEEEEE',
+                'coverTextColor': '#FFFFFF',
+                'coverLogoFilter': 'brightness(0) invert(1)',
+                'footerText': f"© {template_vars.get('companyName')} Strategic Report",
+                
+                # Page 1 (Cover)
+                'mainTitle': template_vars.get('mainTitle'),
+                'summaryLine': template_vars.get('summary'),
                 
                 # Page 2 (Audience)
                 'governmentAnalysis': "Regulatory alignment and policy integration strategy for institutional assets.",
@@ -374,59 +374,59 @@ def _run_generation_job(job_id, body, user_id):
                 'callout1Body': template_vars.get('key_pain_points')[0].get('description') if template_vars.get('key_pain_points') else "Detailed mitigation strategy required.",
                 
                 # Page 5 (Chapter 2 - using AI solutions)
-                 'chapter2Title': "STRATEGIC SOLUTIONS",
-                 'chapter2Intro': "Our proposed framework provides actionable interventions for high-impact results.",
-                 'chapter2Body1': template_vars.get('solutions')[0].get('expected_outcome') if template_vars.get('solutions') else "Optimized outcomes via data-driven execution.",
-                 'tradeoffsTitle': "CORE INTERVENTIONS",
-                 'tradeoff1Term': template_vars.get('solutions')[0].get('title') if template_vars.get('solutions') else "Framework",
-                 'tradeoff1Desc': ", ".join(template_vars.get('solutions')[0].get('implementation_steps', [])) if template_vars.get('solutions') else "Technical implementation details.",
-                 'tradeoff2Term': template_vars.get('solutions')[1].get('title') if len(template_vars.get('solutions', [])) > 1 else "Strategic Alignment",
-                 'tradeoff2Desc': ", ".join(template_vars.get('solutions')[1].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 1 else "Optimizing resources for long-term sustainability.",
-                 'tradeoff3Term': template_vars.get('solutions')[2].get('title') if len(template_vars.get('solutions', [])) > 2 else "Scalability",
-                 'tradeoff3Desc': ", ".join(template_vars.get('solutions')[2].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 2 else "Ensuring the framework grows with your institutional needs.",
-                 'tradeoff4Term': "ROI Analysis",
-                 'tradeoff4Desc': template_vars.get('roi', {}).get('cost_savings', "Calculated financial upside."),
-                 'tradeoff5Term': "Competitive Edge",
-                 'tradeoff5Desc': template_vars.get('roi', {}).get('competitive_advantage', "Market positioning benefit."),
-                 'callout3Title': "Implementation Focus",
-                 'callout3Body': "Consistent application of these interventions ensures project stabilization.",
+                'chapter2Title': "STRATEGIC SOLUTIONS",
+                'chapter2Intro': "Our proposed framework provides actionable interventions for high-impact results.",
+                'chapter2Body1': template_vars.get('solutions')[0].get('expected_outcome') if template_vars.get('solutions') else "Optimized outcomes via data-driven execution.",
+                'tradeoffsTitle': "CORE INTERVENTIONS",
+                'tradeoff1Term': template_vars.get('solutions')[0].get('title') if template_vars.get('solutions') else "Framework",
+                'tradeoff1Desc': ", ".join(template_vars.get('solutions')[0].get('implementation_steps', [])) if template_vars.get('solutions') else "Technical implementation details.",
+                'tradeoff2Term': template_vars.get('solutions')[1].get('title') if len(template_vars.get('solutions', [])) > 1 else "Strategic Alignment",
+                'tradeoff2Desc': ", ".join(template_vars.get('solutions')[1].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 1 else "Optimizing resources for long-term sustainability.",
+                'tradeoff3Term': template_vars.get('solutions')[2].get('title') if len(template_vars.get('solutions', [])) > 2 else "Scalability",
+                'tradeoff3Desc': ", ".join(template_vars.get('solutions')[2].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 2 else "Ensuring the framework grows with your institutional needs.",
+                'tradeoff4Term': "ROI Analysis",
+                'tradeoff4Desc': template_vars.get('roi', {}).get('cost_savings', "Calculated financial upside."),
+                'tradeoff5Term': "Competitive Edge",
+                'tradeoff5Desc': template_vars.get('roi', {}).get('competitive_advantage', "Market positioning benefit."),
+                'callout3Title': "Implementation Focus",
+                'callout3Body': "Consistent application of these interventions ensures project stabilization.",
 
-                 # Page 6 (Implementation)
-                 'chapter3Title': "EXECUTION ROADMAP",
-                 'chapter3Intro': "A structured rollout is critical for capturing strategic value.",
-                 'phase1Title': "Phase 01: Integration",
-                 'phase1Desc': "Aligning existing workflows with the new strategic framework.",
-                 'phase2Title': "Phase 02: Optimization",
-                 'phase2Desc': "Refining processes based on real-time performance metrics.",
-                 'callout4Title': "Strategic Outlook",
-                 'callout4Body': template_vars.get('cta', "Contact us to begin your transformation."),
+                # Page 6 (Implementation)
+                'chapter3Title': "EXECUTION ROADMAP",
+                'chapter3Intro': "A structured rollout is critical for capturing strategic value.",
+                'phase1Title': "Phase 01: Integration",
+                'phase1Desc': "Aligning existing workflows with the new strategic framework.",
+                'phase2Title': "Phase 02: Optimization",
+                'phase2Desc': "Refining processes based on real-time performance metrics.",
+                'callout4Title': "Strategic Outlook",
+                'callout4Body': template_vars.get('cta', "Contact us to begin your transformation."),
 
-                 # Mapping defaults for other required fields in Template.html
-                 'chapter1Eyebrow': 'Analysis', 'chapter1Section': 'CH 01', 'pageNumber4': '04',
-                 'chapter2Eyebrow': 'Solution', 'chapter2Section': 'CH 02', 'pageNumber5': '05',
-                 'chapter3Eyebrow': 'Execution', 'chapter3Section': 'CH 03', 'pageNumber6': '06',
-                 'chapter4Eyebrow': 'Case Studies', 'chapter4Section': 'CH 04', 'pageNumber7': '07',
-                 'chapter5Eyebrow': 'Methods', 'chapter5Section': 'CH 05', 'pageNumber8': '08',
-                 'dropCap1': 'S', 'dropCap2': 'F', 'dropCap4': 'C', 'dropCap5': 'M',
-                 'imagePlaceholderLabel1': 'CHALLENGE', 'imagePlaceholderLabel2': 'SOLUTION', 'imagePlaceholderLabel3': 'ROADMAP',
-                 
-                 # Filling case studies and methods with defaults to avoid blank spaces
-                 'chapter4Title': 'SUCCESS BENCHMARKS',
-                 'chapter4Intro': 'Demonstrated results across diverse institutional portfolios.',
-                 'caseStudy1Title': 'Urban Regeneration', 'caseStudy1Desc': 'Full-scale sustainability integration.', 'caseStudy1Result': '20% Efficiency Gain',
-                 'caseStudy2Title': 'Portfolio Optimization', 'caseStudy2Desc': 'Data-driven asset repositioning.', 'caseStudy2Result': '15% NOI Increase',
-                 'callout5Title': 'Proven Track Record', 'callout5Body': 'Our methodologies are battle-tested in high-stakes environments.',
-                 
-                 'chapter5Title': 'ENGAGEMENT METHODS',
-                 'chapter5Intro': 'Customized approaches for unique institutional requirements.',
-                 'chapter5Body1': 'We provide a range of services from advisory to full-scale implementation.',
-                 'engagementMethodsTitle': 'SERVICE LEVELS',
-                 'method1Phase': 'Advisory', 'method1Desc': 'Strategic planning and risk assessment.',
-                 'method2Phase': 'Design', 'method2Desc': 'Sustainable architecture and engineering.',
-                 'method3Phase': 'Management', 'method3Desc': 'Project oversight and coordination.',
-                 'method4Phase': 'Analysis', 'method4Desc': 'Post-occupancy performance evaluation.',
-                 'method5Phase': 'Scaling', 'method5Desc': 'Replicating success across your portfolio.',
-             }
+                # Mapping defaults for other required fields in Template.html
+                'chapter1Eyebrow': 'Analysis', 'chapter1Section': 'CH 01', 'pageNumber4': '04',
+                'chapter2Eyebrow': 'Solution', 'chapter2Section': 'CH 02', 'pageNumber5': '05',
+                'chapter3Eyebrow': 'Execution', 'chapter3Section': 'CH 03', 'pageNumber6': '06',
+                'chapter4Eyebrow': 'Case Studies', 'chapter4Section': 'CH 04', 'pageNumber7': '07',
+                'chapter5Eyebrow': 'Methods', 'chapter5Section': 'CH 05', 'pageNumber8': '08',
+                'dropCap1': 'S', 'dropCap2': 'F', 'dropCap4': 'C', 'dropCap5': 'M',
+                'imagePlaceholderLabel1': 'CHALLENGE', 'imagePlaceholderLabel2': 'SOLUTION', 'imagePlaceholderLabel3': 'ROADMAP',
+                
+                # Filling case studies and methods with defaults to avoid blank spaces
+                'chapter4Title': 'SUCCESS BENCHMARKS',
+                'chapter4Intro': 'Demonstrated results across diverse institutional portfolios.',
+                'caseStudy1Title': 'Urban Regeneration', 'caseStudy1Desc': 'Full-scale sustainability integration.', 'caseStudy1Result': '20% Efficiency Gain',
+                'caseStudy2Title': 'Portfolio Optimization', 'caseStudy2Desc': 'Data-driven asset repositioning.', 'caseStudy2Result': '15% NOI Increase',
+                'callout5Title': 'Proven Track Record', 'callout5Body': 'Our methodologies are battle-tested in high-stakes environments.',
+                
+                'chapter5Title': 'ENGAGEMENT METHODS',
+                'chapter5Intro': 'Customized approaches for unique institutional requirements.',
+                'chapter5Body1': 'We provide a range of services from advisory to full-scale implementation.',
+                'engagementMethodsTitle': 'SERVICE LEVELS',
+                'method1Phase': 'Advisory', 'method1Desc': 'Strategic planning and risk assessment.',
+                'method2Phase': 'Design', 'method2Desc': 'Sustainable architecture and engineering.',
+                'method3Phase': 'Management', 'method3Desc': 'Project oversight and coordination.',
+                'method4Phase': 'Analysis', 'method4Desc': 'Post-occupancy performance evaluation.',
+                'method5Phase': 'Scaling', 'method5Desc': 'Replicating success across your portfolio.',
+            }
             
             # Use DocRaptor for high-fidelity HTML rendering
             result = pdf_service.generate_pdf('modern-guide', docraptor_vars)
