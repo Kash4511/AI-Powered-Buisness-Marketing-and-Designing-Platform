@@ -329,13 +329,56 @@ def _run_generation_job(job_id, body, user_id):
             }
 
         # 6. PDF RENDERING (Step 4 of Pipeline)
-        # PDF renderer only receives plain strings (enforced in map_to_template_vars)
-        template_service = ReportLabService()
+        # Choose rendering engine: DocRaptor (HTML-based) or ReportLab (Code-based)
+        # We prefer DocRaptor for Template.html compatibility.
+        pdf_service = DocRaptorService()
         try:
-            _set_job(job_id, status="processing", progress=80, message="Rendering PDF...")
+            _set_job(job_id, status="processing", progress=80, message="Rendering PDF via DocRaptor...")
             start_pdf = time.time()
-            logger.info("📄 PDF Generation Start (Step 4)")
-            result = template_service.generate_pdf(template_id, template_vars)
+            logger.info("📄 PDF Generation Start (DocRaptor)")
+            
+            # Map variables for Template.html (DocRaptor)
+            # Template.html uses different variable names than ReportLab
+            docraptor_vars = {
+                'documentTitle': template_vars.get('mainTitle'),
+                'companyName': template_vars.get('companyName'),
+                'primaryColor': template_vars.get('primaryColor'),
+                'secondaryColor': template_vars.get('secondaryColor'),
+                'footerText': f"© {template_vars.get('companyName')} Strategic Report",
+                
+                # Page 1 (Cover)
+                'mainTitle': template_vars.get('mainTitle'),
+                'summaryLine': template_vars.get('summary'),
+                
+                # Page 2 (Audience)
+                'governmentAnalysis': "Regulatory alignment and policy integration strategy for institutional assets.",
+                'architectAnalysis': "Technical coordination and sustainable design framework optimization.",
+                'contractorAnalysis': "Execution efficiency and risk-managed procurement protocols.",
+                
+                # Page 4 (Chapter 1 - using AI pain points)
+                'chapter1Title': "STRATEGIC CHALLENGES",
+                'chapter1Intro': template_vars.get('summary'),
+                'chapter1Body1': "Institutional success requires addressing complex pain points with precision.",
+                'callout1Title': template_vars.get('key_pain_points')[0].get('title') if template_vars.get('key_pain_points') else "Risk Factor",
+                'callout1Body': template_vars.get('key_pain_points')[0].get('description') if template_vars.get('key_pain_points') else "Detailed mitigation strategy required.",
+                
+                # Page 5 (Chapter 2 - using AI solutions)
+                'chapter2Title': "STRATEGIC SOLUTIONS",
+                'chapter2Intro': "Our proposed framework provides actionable interventions for high-impact results.",
+                'chapter2Body1': template_vars.get('solutions')[0].get('expected_outcome') if template_vars.get('solutions') else "Optimized outcomes via data-driven execution.",
+                'tradeoffsTitle': "CORE INTERVENTIONS",
+                'tradeoff1Term': template_vars.get('solutions')[0].get('title') if template_vars.get('solutions') else "Framework",
+                'tradeoff1Desc': ", ".join(template_vars.get('solutions')[0].get('implementation_steps', [])) if template_vars.get('solutions') else "Technical implementation details.",
+                
+                # Mapping defaults for other required fields in Template.html
+                'chapter1Eyebrow': 'Analysis', 'chapter1Section': 'CH 01', 'pageNumber4': '04',
+                'chapter2Eyebrow': 'Solution', 'chapter2Section': 'CH 02', 'pageNumber5': '05',
+                'dropCap1': 'S', 'dropCap2': 'F',
+                'imagePlaceholderLabel1': 'CHALLENGE', 'imagePlaceholderLabel2': 'SOLUTION',
+            }
+            
+            # Use DocRaptor for high-fidelity HTML rendering
+            result = pdf_service.generate_pdf('modern-guide', docraptor_vars)
             pdf_duration = time.time() - start_pdf
             
             if not result.get('success'):
