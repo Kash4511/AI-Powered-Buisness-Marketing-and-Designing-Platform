@@ -292,14 +292,8 @@ def _run_generation_job(job_id, body, user_id):
                 _set_job(job_id, status="processing", progress=65, message="Structuring content for PDF...")
                 
                 # Map Groq output to template variables
-                # The Groq schema is different from the old Perplexity one, 
-                # so we map it here to maintain compatibility with existing ReportLab templates if possible
-                # or provide a clean base for rendering.
-                
+                # Using the dense expansion keys provided in the replacement prompt
                 exp = ai_content.get('expansions', {})
-                ch1_exp = exp.get('Strategic Challenges', {})
-                ch2_exp = exp.get('Technical Solutions', {})
-                ch3_exp = exp.get('Implementation Framework', {})
 
                 template_vars = {
                     'mainTitle': ai_content.get('title', lead_magnet.title),
@@ -315,13 +309,18 @@ def _run_generation_job(job_id, body, user_id):
                     'solutions': ai_content.get('solutions', []),
                     'roi': ai_content.get('roi_section', {}),
                     'cta': ai_content.get('call_to_action', ''),
-                    # Technical Expansions for Template.html
-                    'ch1_detailed': ch1_exp.get('detailed_analysis', ''),
-                    'ch1_impact': ch1_exp.get('quantified_impact', ''),
-                    'ch1_case': ch1_exp.get('case_study', ''),
-                    'ch2_detailed': ch2_exp.get('detailed_analysis', ''),
-                    'ch2_impact': ch2_exp.get('quantified_impact', ''),
-                    'ch3_detailed': ch3_exp.get('detailed_analysis', ''),
+                    
+                    # Technical Expansions (Dense Prose)
+                    'ch1_detailed': exp.get('chapter_1_body', ''),
+                    'ch2_detailed': exp.get('chapter_2_body', ''),
+                    'ch3_detailed': exp.get('chapter_3_body', ''),
+                    'ch4_detailed': exp.get('chapter_4_body', ''),
+                    'ch5_detailed': exp.get('chapter_5_body', ''),
+                    'roi_detailed': exp.get('roi_detailed_analysis', ''),
+                    'ch1_case': exp.get('case_study_1', ''),
+                    'ch2_case': exp.get('case_study_2', ''),
+                    'ch3_impl': exp.get('implementation_framework', ''),
+                    'conclusion': exp.get('conclusion_strategy', ''),
                 }
                 
             except ValueError as ve:
@@ -388,17 +387,17 @@ def _run_generation_job(job_id, body, user_id):
                 'chapter1Intro': template_vars.get('summary'),
                 'chapter1Body1': template_vars.get('ch1_detailed') or "Institutional success requires addressing complex pain points with precision.",
                 'callout1Title': template_vars.get('key_pain_points')[0].get('title') if template_vars.get('key_pain_points') else "Risk Factor",
-                'callout1Body': template_vars.get('ch1_impact') or (template_vars.get('key_pain_points')[0].get('description') if template_vars.get('key_pain_points') else "Detailed mitigation strategy required."),
+                'callout1Body': template_vars.get('key_pain_points')[0].get('description') if template_vars.get('key_pain_points') else "Detailed mitigation strategy required.",
                 
                 # Page 5 (Chapter 2 - using AI solutions)
                 'chapter2Title': "STRATEGIC SOLUTIONS",
-                'chapter2Intro': "Our proposed framework provides actionable interventions for high-impact results.",
-                'chapter2Body1': template_vars.get('ch2_detailed') or (template_vars.get('solutions')[0].get('expected_outcome') if template_vars.get('solutions') else "Optimized outcomes via data-driven execution."),
+                'chapter2Intro': template_vars.get('ch2_detailed') or "Our proposed framework provides actionable interventions for high-impact results.",
+                'chapter2Body1': template_vars.get('roi_detailed') or (template_vars.get('solutions')[0].get('expected_outcome') if template_vars.get('solutions') else "Optimized outcomes via data-driven execution."),
                 'tradeoffsTitle': "CORE INTERVENTIONS",
                 'tradeoff1Term': template_vars.get('solutions')[0].get('title') if template_vars.get('solutions') else "Framework",
                 'tradeoff1Desc': ", ".join(template_vars.get('solutions')[0].get('implementation_steps', [])) if template_vars.get('solutions') else "Technical implementation details.",
                 'tradeoff2Term': template_vars.get('solutions')[1].get('title') if len(template_vars.get('solutions', [])) > 1 else "Strategic Alignment",
-                'tradeoff2Desc': template_vars.get('ch2_impact') or (", ".join(template_vars.get('solutions')[1].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 1 else "Optimizing resources for long-term sustainability."),
+                'tradeoff2Desc': ", ".join(template_vars.get('solutions')[1].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 1 else "Optimizing resources for long-term sustainability.",
                 'tradeoff3Term': template_vars.get('solutions')[2].get('title') if len(template_vars.get('solutions', [])) > 2 else "Scalability",
                 'tradeoff3Desc': ", ".join(template_vars.get('solutions')[2].get('implementation_steps', [])) if len(template_vars.get('solutions', [])) > 2 else "Ensuring the framework grows with your institutional needs.",
                 'tradeoff4Term': "ROI Analysis",
@@ -410,11 +409,11 @@ def _run_generation_job(job_id, body, user_id):
 
                 # Page 6 (Implementation)
                 'chapter3Title': "EXECUTION ROADMAP",
-                'chapter3Intro': "A structured rollout is critical for capturing strategic value.",
+                'chapter3Intro': template_vars.get('ch3_impl') or "A structured rollout is critical for capturing strategic value.",
                 'phase1Title': "Phase 01: Integration",
                 'phase1Desc': template_vars.get('ch3_detailed') or "Aligning existing workflows with the new strategic framework.",
                 'phase2Title': "Phase 02: Optimization",
-                'phase2Desc': "Refining processes based on real-time performance metrics.",
+                'phase2Desc': template_vars.get('conclusion') or "Refining processes based on real-time performance metrics.",
                 'callout4Title': "Strategic Outlook",
                 'callout4Body': template_vars.get('cta', "Contact us to begin your transformation."),
 
@@ -422,20 +421,20 @@ def _run_generation_job(job_id, body, user_id):
                 'chapter1Eyebrow': 'Analysis', 'chapter1Section': 'CH 01', 'pageNumber4': '04',
                 'chapter2Eyebrow': 'Solution', 'chapter2Section': 'CH 02', 'pageNumber5': '05',
                 'chapter3Eyebrow': 'Execution', 'chapter3Section': 'CH 03', 'pageNumber6': '06',
-                'chapter4Eyebrow': 'Case Studies', 'chapter4Section': 'CH 04', 'pageNumber7': '07',
+                'chapter4Eyebrow': 'Benchmarks', 'chapter4Section': 'CH 04', 'pageNumber7': '07',
                 'chapter5Eyebrow': 'Methods', 'chapter5Section': 'CH 05', 'pageNumber8': '08',
                 'dropCap1': 'S', 'dropCap2': 'F', 'dropCap4': 'C', 'dropCap5': 'M',
                 'imagePlaceholderLabel1': 'CHALLENGE', 'imagePlaceholderLabel2': 'SOLUTION', 'imagePlaceholderLabel3': 'ROADMAP',
                 
-                # Filling case studies and methods with defaults to avoid blank spaces
+                # Filling case studies and methods with dense content
                 'chapter4Title': 'SUCCESS BENCHMARKS',
-                'chapter4Intro': 'Demonstrated results across diverse institutional portfolios.',
-                'caseStudy1Title': 'Urban Regeneration', 'caseStudy1Desc': 'Full-scale sustainability integration.', 'caseStudy1Result': '20% Efficiency Gain',
-                'caseStudy2Title': 'Portfolio Optimization', 'caseStudy2Desc': 'Data-driven asset repositioning.', 'caseStudy2Result': '15% NOI Increase',
+                'chapter4Intro': template_vars.get('ch4_detailed') or 'Demonstrated results across diverse institutional portfolios.',
+                'caseStudy1Title': 'Urban Regeneration', 'caseStudy1Desc': template_vars.get('ch1_case') or 'Full-scale sustainability integration.', 'caseStudy1Result': '20% Efficiency Gain',
+                'caseStudy2Title': 'Portfolio Optimization', 'caseStudy2Desc': template_vars.get('ch2_case') or 'Data-driven asset repositioning.', 'caseStudy2Result': '15% NOI Increase',
                 'callout5Title': 'Proven Track Record', 'callout5Body': 'Our methodologies are battle-tested in high-stakes environments.',
                 
                 'chapter5Title': 'ENGAGEMENT METHODS',
-                'chapter5Intro': 'Customized approaches for unique institutional requirements.',
+                'chapter5Intro': template_vars.get('ch5_detailed') or 'Customized approaches for unique institutional requirements.',
                 'chapter5Body1': 'We provide a range of services from advisory to full-scale implementation.',
                 'engagementMethodsTitle': 'SERVICE LEVELS',
                 'method1Phase': 'Advisory', 'method1Desc': 'Strategic planning and risk assessment.',

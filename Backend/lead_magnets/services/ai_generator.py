@@ -61,7 +61,7 @@ class LeadMagnetAIService:
                 logger.error(f"❌ AI Generation failed after retry: {str(retry_err)}")
                 raise ValueError(f"AI content generation failed: {str(retry_err)}")
 
-    def _call_ai(self, system_prompt: str, user_prompt: str) -> dict:
+    def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> dict:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -69,7 +69,7 @@ class LeadMagnetAIService:
                 {"role": "user", "content": user_prompt}
             ],
             temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            max_tokens=max_tokens or self.max_tokens,
             response_format={"type": "json_object"}
         )
 
@@ -89,6 +89,12 @@ class LeadMagnetAIService:
             text = text[:-3]
         return text.strip()
 
+    def is_substantive(self, text, min_words=350) -> bool:
+        """Checks if the provided text meets the minimum word count requirement."""
+        if not text:
+            return False
+        return len(str(text).split()) >= min_words
+
     def expand_content_sections(self, base_content: dict, data: dict) -> dict:
         """
         Takes the base AI response and generates expanded, technical content for each chapter 
@@ -97,31 +103,111 @@ class LeadMagnetAIService:
         main_topic = data.get("main_topic", "Business Strategy")
         target_audience = data.get("target_audience", "Executives")
         
-        expansion_prompt = f"""You are a senior institutional consultant. 
-Expand the following lead magnet structure into a detailed 8-page technical report.
+        expansion_system_prompt = """You are generating an 8-page institutional-grade technical strategic report. 
+
+This is NOT a summary. 
+
+This must be a dense, fully written document suitable for executive review. 
+
+Strict Requirements: 
+
+Each chapter must contain: 
+- Minimum 400–600 words of continuous body text. 
+- At least 3 fully developed paragraphs. 
+- No bullet-only sections. 
+- No short placeholder sentences. 
+- No generic phrases like "This framework ensures success." 
+- No marketing fluff. 
+
+Content must: 
+- Explain mechanisms. 
+- Explain implementation details. 
+- Provide operational depth. 
+- Include quantified metrics (percentages, cost ranges, timeframes). 
+- Include technical terminology relevant to the topic. 
+- Include realistic constraints and tradeoffs. 
+
+Case studies must: 
+- Be minimum 250 words each. 
+- Describe context, problem, action taken, measurable outcome. 
+- Include numeric performance improvements. 
+
+ROI section must: 
+- Include cost modeling explanation. 
+- Include capital expenditure vs operational savings comparison. 
+- Include 5-year projection logic. 
+- Minimum 300 words. 
+
+Final document must exceed 3,500 total words. 
+
+Return JSON with these exact keys: 
+{ 
+ "chapter_1_body": "", 
+ "chapter_2_body": "", 
+ "chapter_3_body": "", 
+ "chapter_4_body": "", 
+ "chapter_5_body": "", 
+ "roi_detailed_analysis": "", 
+ "case_study_1": "", 
+ "case_study_2": "", 
+ "implementation_framework": "", 
+ "conclusion_strategy": "" 
+ } 
+
+Rules: 
+- No markdown 
+- No bullet points unless embedded within paragraphs 
+- No headings inside text 
+- No summaries 
+- No placeholders 
+- Continuous dense professional prose 
+- Return valid JSON only."""
+
+        expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 8-page technical report.
 TOPIC: {main_topic}
 AUDIENCE: {target_audience}
 
 BASE STRUCTURE:
 {json.dumps(base_content, indent=2)}
 
-REQUIREMENTS:
-1. Generate a 'chapter_expansions' object.
-2. For each expansion, provide:
-   - 'detailed_analysis': 300 words of technical, data-heavy analysis.
-   - 'quantified_impact': Specific metrics (e.g. "22% reduction in Opex").
-   - 'case_study': A realistic institutional example.
-3. Chapters to expand: 'Strategic Challenges', 'Technical Solutions', 'Implementation Framework'.
+Ensure all content is technical, data-driven, and provides immediate strategic value."""
 
-JSON ONLY. NO MARKDOWN. NO FLUFF."""
-
-        try:
-            expanded = self._call_ai(self._get_system_prompt(), expansion_prompt)
-            base_content['expansions'] = expanded.get('chapter_expansions', {})
-            return base_content
-        except Exception as e:
-            logger.error(f"⚠️ AI Expansion failed: {e}")
-            return base_content
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"🚀 AI Expansion Attempt {attempt + 1}")
+                # Increased max_tokens for dense content
+                expanded = self._call_ai(expansion_system_prompt, expansion_user_prompt, max_tokens=4096)
+                
+                # Validation Layer
+                is_valid = True
+                chapters_to_check = [
+                    'chapter_1_body', 'chapter_2_body', 'chapter_3_body', 
+                    'chapter_4_body', 'chapter_5_body'
+                ]
+                
+                for ch in chapters_to_check:
+                    content = expanded.get(ch, "")
+                    if not self.is_substantive(content, min_words=350):
+                        logger.warning(f"⚠️ {ch} is not substantive enough ({len(str(content).split())} words).")
+                        is_valid = False
+                        break
+                
+                if is_valid:
+                    logger.info("✅ AI Expansion passed substantive validation.")
+                    base_content['expansions'] = expanded
+                    return base_content
+                
+                if attempt == max_retries - 1:
+                    logger.error("❌ AI Expansion failed substantive validation after max retries.")
+                    base_content['expansions'] = expanded # Still return it as best effort
+                    
+            except Exception as e:
+                logger.error(f"⚠️ AI Expansion failed on attempt {attempt + 1}: {e}")
+                if attempt == max_retries - 1:
+                    return base_content
+                    
+        return base_content
 
     def _get_system_prompt(self) -> str:
         return """You are a senior business strategist and conversion copywriter. 
