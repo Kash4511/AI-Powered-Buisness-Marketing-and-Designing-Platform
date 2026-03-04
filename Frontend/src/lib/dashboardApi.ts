@@ -192,14 +192,25 @@ export const dashboardApi = {
       if (!data.title || !data.generation_data) {
         throw new Error('Title and generation_data are required');
       }
+
+      // 1. Rate Limiting Check (Local)
+      const lastCreated = localStorage.getItem('last_lead_magnet_created');
+      if (lastCreated) {
+        const diff = Date.now() - parseInt(lastCreated);
+        if (diff < 30000) { // 30 seconds local cooldown
+          throw new Error(`Rate limit: Please wait ${Math.ceil((30000 - diff) / 1000)}s before creating another lead magnet.`);
+        }
+      }
+
       const response = await apiClient.post('/api/create-lead-magnet/', data);
+      
+      // Update rate limit timestamp
+      localStorage.setItem('last_lead_magnet_created', Date.now().toString());
       
       console.log('✅ Lead magnet created successfully:', response.data);
       return response.data;
     } catch (error) {
       handleApiError(error, 'Creating lead magnet');
-      // The error is already thrown by handleApiError, but re-throwing the original
-      // ensures the promise is rejected, which is the correct behavior.
       throw error;
     }
   },

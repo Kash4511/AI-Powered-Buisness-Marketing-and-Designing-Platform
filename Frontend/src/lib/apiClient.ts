@@ -144,8 +144,9 @@ apiClient.interceptors.response.use(
         
         // Retry original request
         return apiClient(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         // Refresh token failed, clear tokens and let app routing handle navigation
+        console.error('Token refresh failed:', refreshError.response?.status, refreshError.response?.data);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         return Promise.reject(refreshError);

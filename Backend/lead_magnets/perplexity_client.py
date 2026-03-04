@@ -90,6 +90,13 @@ class PerplexityClient:
         if not self.api_key:
             raise ValueError("AI API key is missing (GEMINI_API_KEY or PERPLEXITY_API_KEY). Cannot generate content.")
         
+        # 1. CACHE CHECK (Simple in-memory cache to prevent redundant quota usage)
+        cache_key = f"{signals.get('main_topic')}_{signals.get('lead_magnet_type')}_{firm_profile.get('firm_name')}"
+        if not hasattr(self, '_cache'): self._cache = {}
+        if cache_key in self._cache:
+            logger.info(f"💾 Using cached AI content for: {cache_key}")
+            return self._cache[cache_key]
+
         prompt = self._create_content_prompt(signals, firm_profile)
         system_prompt = (
             "You are a senior institutional consultant. "
@@ -177,6 +184,9 @@ class PerplexityClient:
                 
                 # 2. STRICT NORMALIZATION LAYER
                 normalized = self.normalize_ai_output(data)
+                
+                # Save to cache on success
+                self._cache[cache_key] = normalized
                 
                 return normalized, raw
             except (ValueError, json.JSONDecodeError) as ve:

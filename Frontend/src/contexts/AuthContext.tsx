@@ -37,12 +37,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('access_token')
       if (token) {
         try {
+          console.log('AuthContext: Initial auth check...');
           const response = await apiClient.get('/api/auth/profile/')
           setUser(response.data)
-        } catch (error) {
+          console.log('AuthContext: Profile loaded successfully');
+        } catch (error: any) {
           console.error('Auth check failed:', error)
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
+          // Only clear if it's NOT a retry-able error (like a 401 that might be refreshed)
+          // apiClient already handles 401 refresh. If it reaches here, refresh also failed.
+          if (error.response?.status === 401 || !localStorage.getItem('refresh_token')) {
+            console.log('AuthContext: Session invalid, clearing tokens');
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+            setUser(null)
+          }
         }
       }
       setLoading(false)
