@@ -4,8 +4,9 @@ Aligned to magazine-template-v5.html with 4-segment audience analysis.
 """
 
 import os
-from pathlib import Path
+import time
 import json
+from pathlib import Path
 import requests
 import re
 import logging
@@ -21,9 +22,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 class PerplexityClient:
-    """Client for Perplexity AI — generates all content for lead-magnet PDFs."""
+    """Client for AI content generation — supports Gemini (default) or Perplexity."""
 
     def __init__(self):
         if load_dotenv:
@@ -38,14 +38,24 @@ class PerplexityClient:
                     except Exception as e:
                         logger.warning(f"⚠️  Failed to load .env from {env_path}: {e}")
 
-        self.api_key  = os.getenv('PERPLEXITY_API_KEY', '').strip().strip('"').strip("'")
-        self.base_url = "https://api.perplexity.ai/chat/completions"
-        if not self.api_key:
-            logger.warning("⚠️  PERPLEXITY_API_KEY not found in environment")
-            print("DEBUG: PERPLEXITY_API_KEY is missing!")
+        # Detect available API keys
+        self.gemini_key = os.getenv('GEMINI_API_KEY', '').strip().strip('"').strip("'")
+        self.perplexity_key = os.getenv('PERPLEXITY_API_KEY', '').strip().strip('"').strip("'")
+        
+        if self.gemini_key:
+            self.api_key = self.gemini_key
+            self.provider = "gemini"
+            self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+            logger.info(f"✅ Gemini API key found. Using Gemini provider.")
+        elif self.perplexity_key:
+            self.api_key = self.perplexity_key
+            self.provider = "perplexity"
+            self.base_url = "https://api.perplexity.ai/chat/completions"
+            logger.info(f"✅ Perplexity API key found. Using Perplexity provider.")
         else:
-            logger.info("✅ PerplexityClient ready")
-            print(f"DEBUG: PERPLEXITY_API_KEY found: {self.api_key[:8]}... (Length: {len(self.api_key)})")
+            self.api_key = ""
+            self.provider = None
+            logger.warning("⚠️  No AI API key (GEMINI_API_KEY or PERPLEXITY_API_KEY) found in environment")
 
     def _is_meaningful(self, value: Any) -> bool:
         if value is None: return False
@@ -78,7 +88,7 @@ class PerplexityClient:
 
     def generate_lead_magnet_json(self, signals: Dict[str, str], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         if not self.api_key:
-            raise ValueError("PERPLEXITY_API_KEY is missing. Cannot generate content.")
+            raise ValueError("AI API key is missing (GEMINI_API_KEY or PERPLEXITY_API_KEY). Cannot generate content.")
         
         prompt = self._create_content_prompt(signals, firm_profile)
         system_prompt = (
@@ -93,34 +103,74 @@ class PerplexityClient:
 
         def attempt_generation(current_prompt: str, is_retry: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
             try:
-                logger.info(f"🚀 AI Generation Attempt {'Retry' if is_retry else '1'}")
-                headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", "Accept": "application/json"}
-                print(f"DEBUG: AI Request headers (sanitized): Authorization: Bearer {self.api_key[:8] if self.api_key else 'NONE'}...")
-                response = requests.post(
-                    self.base_url,
-                    headers=headers,
-                    json={
+                logger.info(f"🚀 AI Generation Attempt {'Retry' if is_retry else '1'} via {self.provider}")
+                
+                if self.provider == "gemini":
+                    api_url = f"{self.base_url}?key={self.api_key}"
+                    payload = {
+                        "contents": [{"parts": [{"text": f"{system_prompt}\n\n{current_prompt}"}]}],
+                        "generationConfig": {
+                            "temperature": 0.2,
+                            "maxOutputTokens": 8192,
+                            "responseMimeType": "application/json"
+                        }
+                    }
+                    response = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=120)
+                else: # Perplexity
+                    headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", "Accept": "application/json"}
+                    payload = {
                         "model": "sonar",
                         "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": current_prompt}],
                         "max_tokens": 4000,
                         "temperature": 0.2,
-                    },
-                    timeout=90,
-                )
+                    }
+                    response = requests.post(self.base_url, headers=headers, json=payload, timeout=120)
+
                 if response.status_code != 200:
                     try:
                         err_json = response.json()
                         err_msg = err_json.get('error', {}).get('message') or response.text
                     except:
                         err_msg = response.text
-                    raise ValueError(f"AI API Error: {response.status_code} - {err_msg}")
-                
-                raw = response.json().get('choices', [{}])[0].get('message', {}).get('content', '')
-                if not raw:
-                    raise ValueError("Empty content from AI")
+                    
+                    if response.status_code == 429:
+                        # Extract wait time if present in message (e.g. "Please retry in 24.7s")
+                        wait_match = re.search(r'retry in ([\d\.]+)s', err_msg, re.IGNORECASE)
+                        wait_sec = float(wait_match.group(1)) if wait_match else 30.0
+                        logger.warning(f"🚨 Rate Limit (429) hit via {self.provider}. Quota exceeded. Must wait {wait_sec}s.")
+                        # If we're not already retrying, we can try to wait and retry once more
+                        if not is_retry:
+                            logger.info(f"⏳ Sleeping for {wait_sec + 2}s before retry...")
+                            time.sleep(wait_sec + 2)
+                            return attempt_generation(current_prompt, is_retry=True)
+                        else:
+                            raise ValueError(f"AI Quota Exceeded (429). Please try again in {wait_sec} seconds.")
 
-                sanitized = self._extract_json(raw)
-                data = json.loads(sanitized)
+                    raise ValueError(f"AI API Error ({self.provider}): {response.status_code} - {err_msg}")
+                
+                resp_data = response.json()
+                if self.provider == "gemini":
+                    raw = resp_data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                else: # Perplexity
+                    raw = resp_data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                
+                if not raw:
+                    raise ValueError(f"Empty content from AI ({self.provider})")
+
+                extracted = self._extract_json(raw)
+                sanitized = self._sanitize_json_content(extracted)
+                try:
+                    data = json.loads(sanitized)
+                except json.JSONDecodeError as jde:
+                    logger.warning(f"⚠️ JSON Decode Error. Attempting repair... {str(jde)}")
+                    repaired = self._repair_json(sanitized)
+                    try:
+                        data = json.loads(repaired)
+                    except json.JSONDecodeError as jde2:
+                        with open("debug_failed_ai_output.txt", "w", encoding="utf-8") as f:
+                            f.write(sanitized)
+                        logger.error(f"❌ JSON Decode Error after repair: {str(jde2)}. Saved output to debug_failed_ai_output.txt")
+                        raise
                 
                 # 1. STRICT VALIDATION GATE
                 self.validate_ai_structure(data)
@@ -129,29 +179,27 @@ class PerplexityClient:
                 normalized = self.normalize_ai_output(data)
                 
                 return normalized, raw
-            except ValueError as ve:
-                # Validation failure or API status error -> immediately bubble up, do NOT catch in transport logic
-                logger.error(f"❌ Validation/API Failure: {str(ve)}")
-                raise
+            except (ValueError, json.JSONDecodeError) as ve:
+                logger.error(f"❌ AI Content Error (Attempt {'2' if is_retry else '1'}): {str(ve)}")
+                if is_retry: raise ValueError(f"AI quality check failed after retry: {str(ve)}")
+                return None, None
             except Exception as e:
-                # Transport/Network errors -> logged and allowed to return None for retry
                 logger.error(f"⚠️ AI Transport Error: {str(e)}")
                 if is_retry: raise e
                 return None, None
 
-        # Attempt generation with strict validation
+        # Attempt generation
         result, failed_text = attempt_generation(prompt)
         if result:
-            logger.info("✅ Deterministic AI generation successful")
+            logger.info(f"✅ Deterministic AI generation successful via {self.provider}")
             return result
         
-        # One retry attempt ONLY for transport errors (result was None)
-        # Validation errors already raised and exited above.
-        logger.info("🔄 Transport failure detected. Attempting one-time retry...")
+        # One retry attempt for transport or parse errors
+        logger.info("🔄 Attempting one-time retry...")
         result, _ = attempt_generation(prompt, is_retry=True)
         
         if not result:
-            raise ValueError("AI generation failed after retry due to transport errors.")
+            raise ValueError(f"AI generation failed after retry via {self.provider}.")
             
         return result
 
@@ -380,19 +428,143 @@ IMPORTANT:
 """.strip()
 
     def _extract_json(self, text: str) -> str:
-        """Robust JSON extraction layer to handle AI output variability."""
-        if not text: return ""
+        """
+        Robustly extracts the primary JSON object from AI output.
+        Handles markdown blocks, prose, and stack-based brace matching.
+        """
+        if not text:
+            return ""
         
-        # 1. Remove markdown code fences if present
+        # 1. Basic cleaning
+        text = text.strip()
+
+        # 2. Handle Markdown blocks (Gemini often uses them despite instructions)
         text = re.sub(r'```(?:json)?\s*([\s\S]*?)```', r'\1', text).strip()
         
-        # 2. Extract first JSON object from text using regex
-        # Look for the first '{' and the last '}'
-        match = re.search(r"(\{.*\})", text, re.DOTALL)
-        if match:
-            return match.group(1).strip()
+        # 3. Find the first potential JSON start
+        start_idx = -1
+        for i, char in enumerate(text):
+            if char in '{[':
+                start_idx = i
+                break
+        
+        if start_idx == -1:
+            return text
             
+        # 4. Stack-based isolation of the root JSON object
+        # This correctly handles nested braces and ignores those inside strings
+        stack = []
+        in_string = False
+        escape = False
+        
+        for i in range(start_idx, len(text)):
+            char = text[i]
+            
+            # Handle escape sequences
+            if escape:
+                escape = False
+                continue
+            if char == '\\' and in_string:
+                escape = True
+                continue
+                
+            # Toggle string mode
+            if char == '"':
+                in_string = not in_string
+                continue
+                
+            # Handle braces outside of strings
+            if not in_string:
+                if char in '{[':
+                    stack.append(char)
+                elif char in '}]':
+                    if not stack:
+                        # Should not happen in valid JSON, but we return what we have
+                        return text[start_idx:i+1]
+                    opening = stack.pop()
+                    # Check for mismatch (e.g. { ]) - non-fatal here, just keep going
+                    if not stack:
+                        # We found the root matching brace
+                        return text[start_idx:i+1]
+        
+        # 5. If stack not empty, the JSON is truncated.
+        # We'll try to return the partial string and let json.loads handle it
+        # (It will likely fail, but attempt_generation will retry)
+        return text[start_idx:].strip()
+
+    def _sanitize_json_content(self, text: str) -> str:
+        """
+        Applies repair logic for common AI JSON syntax errors.
+        """
+        if not text:
+            return ""
+
+        # A. Handle unescaped newlines inside strings
+        def replace_unescaped_newlines(match):
+            s = match.group(0)
+            return s.replace('\n', '\\n').replace('\r', '\\r')
+        
+        # Match content between double quotes
+        text = re.sub(r'("(?:\\.|[^"\\])*")', replace_unescaped_newlines, text)
+        
+        # B. Remove common trailing commas before closing braces/brackets
+        text = re.sub(r',\s*([\]\}])', r'\1', text)
+        
+        # C. Fix missing commas between objects in arrays (e.g. } { -> }, {)
+        text = re.sub(r'\}\s*\{', r'}, {', text)
+        text = re.sub(r'\]\s*\[', r'], [', text)
+        
         return text.strip()
+
+    def _repair_json(self, text: str) -> str:
+        """
+        Last-resort repair for truncated or severely malformed JSON.
+        """
+        text = text.strip()
+        if not text:
+            return text
+            
+        # 1. Close unclosed string
+        # Count quotes (ignoring escaped ones)
+        quotes = 0
+        escape = False
+        for char in text:
+            if char == '\\' and not escape:
+                escape = True
+                continue
+            if char == '"' and not escape:
+                quotes += 1
+            escape = False
+            
+        if quotes % 2 != 0:
+            text += '"'
+            
+        # 2. Close unclosed braces/brackets
+        stack = []
+        in_string = False
+        escape = False
+        for char in text:
+            if char == '\\' and not escape:
+                escape = True
+                continue
+            if char == '"' and not escape:
+                in_string = not in_string
+            if not in_string:
+                if char in '{[':
+                    stack.append(char)
+                elif char in '}]':
+                    if stack:
+                        stack.pop()
+            escape = False
+            
+        while stack:
+            opening = stack.pop()
+            if opening == '{':
+                text += '}'
+            else:
+                text += ']'
+                
+        return text
 
     def normalize_ai_output(self, raw: Any) -> Dict[str, Any]:
         if not isinstance(raw, dict):
