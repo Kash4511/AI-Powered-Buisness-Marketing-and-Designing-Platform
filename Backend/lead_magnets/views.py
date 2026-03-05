@@ -51,61 +51,50 @@ def _get_job(job_id):
 
 class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get(self, request):
         user = request.user
-        
-        # Get user's lead magnets
         user_lead_magnets = LeadMagnet.objects.filter(owner=user)
-        
-        # Calculate stats
         total_lead_magnets = user_lead_magnets.count()
         active_lead_magnets = user_lead_magnets.filter(
             Q(status='completed') | Q(status='in-progress')
         ).count()
-        
-        # Get total downloads for user's lead magnets
         from .models import Download, Lead
-        total_downloads = Download.objects.filter(
-            lead_magnet__owner=user
-        ).count()
-        
-        # Get total leads generated for user's lead magnets
-        leads_generated = Lead.objects.filter(
-            lead_magnet__owner=user
-        ).count()
-        
+        total_downloads = Download.objects.filter(lead_magnet__owner=user).count()
+        leads_generated = Lead.objects.filter(lead_magnet__owner=user).count()
         stats = {
             'total_lead_magnets': total_lead_magnets,
             'active_lead_magnets': active_lead_magnets,
             'total_downloads': total_downloads,
             'leads_generated': leads_generated
         }
-        
         serializer = DashboardStatsSerializer(stats)
         return Response(serializer.data)
+
 
 class LeadMagnetListCreateView(generics.ListCreateAPIView):
     serializer_class = LeadMagnetSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         return LeadMagnet.objects.filter(owner=self.request.user)
-    
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
 
 class LeadMagnetDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = LeadMagnetSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         return LeadMagnet.objects.filter(owner=self.request.user)
+
 
 class FirmProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = FirmProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_object(self):
         user = self.request.user
         profile, created = FirmProfile.objects.get_or_create(
@@ -128,21 +117,14 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
-        
-        # Log the incoming data for debugging
         logger.debug(f"PATCH FirmProfile for user {request.user.email}")
-        
-        # Start with a copy of the data
         data = request.data.copy()
-        
-        # 1. Handle industry_specialties if it's coming from multipart/form-data
+
         if hasattr(request.data, 'getlist'):
-            # Reconstruct the data correctly for QueryDict
             processed_data = {}
             for key in request.data.keys():
                 if key == 'industry_specialties':
                     specialties = request.data.getlist(key)
-                    # Handle case where it's a single string like '["A", "B"]'
                     if len(specialties) == 1 and isinstance(specialties[0], str) and specialties[0].startswith('['):
                         try:
                             processed_data[key] = json.loads(specialties[0])
@@ -154,32 +136,23 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
                     processed_data[key] = request.data.get(key)
             data = processed_data
 
-        # 2. Sanitize fields: empty strings should be null or removed if they violate constraints
-        # Especially for ImageFields and URLFields
         for key in list(data.keys()):
             val = data[key]
             if val == "" or val == "null" or val == "undefined":
-                # Fields that allow NULL
                 if key in ['logo', 'preferred_cover_image']:
                     data[key] = None
-                # Fields that do NOT allow NULL but allow BLANK (empty string)
-                elif key in ['firm_website', 'primary_brand_color', 'secondary_brand_color', 
-                           'phone_number', 'location', 'branding_guidelines']:
+                elif key in ['firm_website', 'primary_brand_color', 'secondary_brand_color',
+                             'phone_number', 'location', 'branding_guidelines']:
                     data[key] = ""
-            
-            # Special handling for URLField (firm_website)
             if key == 'firm_website' and data[key] and isinstance(data[key], str):
                 url = data[key].strip().lower()
                 if url and not url.startswith(('http://', 'https://')):
                     data[key] = f"https://{url}"
-        
-        # 3. Handle logo/image fields specifically if they are strings (URLs)
+
         for key in ['logo', 'preferred_cover_image']:
             if key in data and isinstance(data[key], str):
-                # If it's a URL string, remove it from the update payload
                 data.pop(key)
-        
-        # 4. Ensure industry_specialties is a list
+
         if 'industry_specialties' in data and data['industry_specialties'] is None:
             data['industry_specialties'] = []
 
@@ -187,35 +160,45 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
         if serializer.is_valid():
             self.perform_update(serializer)
             return Response(serializer.data)
-        
-        # Log detailed errors for debugging
+
         error_msg = f"❌ FirmProfile update validation failed for user {request.user.email}: {serializer.errors}"
         logger.error(error_msg)
-        print(error_msg) # Ensure it shows up in stdout
-        
+        print(error_msg)
         return Response(
-            {
-                'error': 'Firm profile update failed',
-                'details': serializer.errors,
-            },
+            {'error': 'Firm profile update failed', 'details': serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# HELPER
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _resolve_image_url(img) -> str:
+    """Extract a usable src string from an architectural image entry."""
+    if not img:
+        return ""
+    if isinstance(img, str):
+        return img
+    if isinstance(img, dict):
+        return img.get("src") or img.get("url") or ""
+    return ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BACKGROUND JOB
+# ─────────────────────────────────────────────────────────────────────────────
+
 def _run_generation_job(job_id, body, user_id):
-    """
-    Background job to generate a PDF for a lead magnet.
-    """
     try:
         from accounts.models import User
         user = User.objects.get(id=user_id)
-        
-        # 1. Extract and Validate Inputs
-        template_id = body.get('template_id')
-        lead_magnet_id = body.get('lead_magnet_id')
-        use_ai_content = bool(body.get('use_ai_content', True))
-        user_answers = body.get('user_answers', {}) or {}
-        architectural_images = body.get('architectural_images', []) # Added image support
+
+        template_id          = body.get('template_id')
+        lead_magnet_id       = body.get('lead_magnet_id')
+        use_ai_content       = bool(body.get('use_ai_content', True))
+        user_answers         = body.get('user_answers', {}) or {}
+        architectural_images = body.get('architectural_images', [])
 
         if not template_id or not lead_magnet_id:
             _set_job(job_id, status="failed", error="template_id and lead_magnet_id are required")
@@ -229,109 +212,91 @@ def _run_generation_job(job_id, body, user_id):
             _set_job(job_id, status="failed", error="Lead magnet not found")
             return
 
-        # 3. GENERATE AI CONTENT
         gen_data = getattr(lead_magnet, 'generation_data', None)
         if not gen_data:
             _set_job(job_id, status="failed", error="Lead magnet is missing generation data")
             return
 
         ai_client = GroqClient()
-        
-        # Prepare data for AI generation
+
+        # ── FIX 1: pass document_type so the correct 15-section config is selected ──
         ai_input_data = {
-            'main_topic': gen_data.main_topic,
+            'main_topic':      gen_data.main_topic,
             'target_audience': gen_data.target_audience,
-            'pain_points': gen_data.audience_pain_points if isinstance(gen_data.audience_pain_points, list) else [gen_data.audience_pain_points],
-            'tone': "Professional and Institutional",
-            'industry': "Architecture",
-            'lead_magnet_type': gen_data.lead_magnet_type if gen_data else 'Strategic Guide'
+            'pain_points':     (
+                gen_data.audience_pain_points
+                if isinstance(gen_data.audience_pain_points, list)
+                else [gen_data.audience_pain_points]
+            ),
+            'tone':            "Professional and Institutional",
+            'industry':        "Architecture",
+            'document_type':   (
+                gen_data.lead_magnet_type.lower().replace(" ", "_")
+                if gen_data and gen_data.lead_magnet_type
+                else "guide"
+            ),
+            'lead_magnet_type': gen_data.lead_magnet_type if gen_data else 'Strategic Guide',
         }
 
-        # 4. PREPARE FIRM PROFILE
+        # Firm profile
         try:
             fp = FirmProfile.objects.get(user=user)
             firm_profile = {
-                'firm_name': fp.firm_name or user.email.split('@')[0],
-                'work_email': fp.work_email or user.email,
-                'phone_number': fp.phone_number,
-                'firm_website': fp.firm_website,
-                'primary_brand_color': fp.primary_brand_color,
+                'firm_name':             fp.firm_name or user.email.split('@')[0],
+                'work_email':            fp.work_email or user.email,
+                'phone_number':          fp.phone_number,
+                'firm_website':          fp.firm_website,
+                'primary_brand_color':   fp.primary_brand_color,
                 'secondary_brand_color': fp.secondary_brand_color,
-                'logo_url': fp.logo.url if fp.logo else '',
-                'industry': 'Architecture',
+                'logo_url':              fp.logo.url if fp.logo else '',
+                'industry':              'Architecture',
             }
         except FirmProfile.DoesNotExist:
             firm_profile = {
-                'firm_name': user.email.split('@')[0],
-                'work_email': user.email,
-                'phone_number': '',
-                'firm_website': '',
-                'primary_brand_color': '',
+                'firm_name':             user.email.split('@')[0],
+                'work_email':            user.email,
+                'phone_number':          '',
+                'firm_website':          '',
+                'primary_brand_color':   '',
                 'secondary_brand_color': '',
-                'logo_url': '',
-                'industry': 'Architecture',
+                'logo_url':              '',
+                'industry':              'Architecture',
             }
 
-        # 5. AI CALL & NORMALIZATION
+        # ── FIX 2: resolve image URLs and inject into firm_profile ──
+        img_1 = _resolve_image_url(architectural_images[0]) if len(architectural_images) > 0 else ""
+        img_2 = _resolve_image_url(architectural_images[1]) if len(architectural_images) > 1 else ""
+        img_3 = _resolve_image_url(architectural_images[2]) if len(architectural_images) > 2 else ""
+        firm_profile['image_1_url'] = img_1
+        firm_profile['image_2_url'] = img_2
+        firm_profile['image_3_url'] = img_3
+
         template_vars = {}
 
         if use_ai_content:
             try:
                 _set_job(job_id, status="processing", progress=15, message="Generating AI content via Groq... (~15s)")
                 start_ai = time.time()
-                
                 logger.info("🤖 AI Generation Start via Groq")
-                
-                # Step 1: Signals
-                signals = ai_client.get_semantic_signals(ai_input_data)
-                
-                # Step 2: AI Call (includes 15-page expansion)
+
+                signals        = ai_client.get_semantic_signals(ai_input_data)
                 raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
-                
-                # Step 3: Mandatory Normalization
-                ai_content = ai_client.normalize_ai_output(raw_ai_content)
-                
+                ai_content     = ai_client.normalize_ai_output(raw_ai_content)
+
                 ai_duration = time.time() - start_ai
-                
                 logger.info(f"📊 AI Generation Success | Duration: {ai_duration:.2f}s")
 
                 _set_job(job_id, status="processing", progress=65, message="Structuring content for PDF...")
-                
-                # Map Groq output to template variables
-                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
-                
-                # Merge expanded content keys directly into template_vars for Template.html
-                exp = ai_content.get('expansions', {})
-                template_vars.update({
-                    'executive_summary': exp.get('executive_summary', ''),
-                    'modern_landscape': exp.get('modern_landscape', ''),
-                    'tech_complexity': exp.get('tech_complexity', ''),
-                    'communication_breakdown': exp.get('communication_breakdown', ''),
-                    'competition_differentiation': exp.get('competition_differentiation', ''),
-                    'risk_management': exp.get('risk_management', ''),
-                    'real_estate_opportunities': exp.get('real_estate_opportunities', ''),
-                    'government_alignment': exp.get('government_alignment', ''),
-                    'architect_frameworks': exp.get('architect_frameworks', ''),
-                    'implementation_roadmap': exp.get('implementation_roadmap', ''),
-                    'case_studies': exp.get('case_studies', ''),
-                    'final_recommendations': exp.get('final_recommendations', ''),
-                })
-                
-                # Ensure critical cover/contact fields are never empty
-                template_vars['companyName'] = template_vars.get('companyName') or (firm_profile.get('firm_name') or 'Your Company')
-                template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
-                template_vars['phoneNumber'] = template_vars.get('phoneNumber') or firm_profile.get('phone_number', '')
-                template_vars['website'] = template_vars.get('website') or firm_profile.get('firm_website', '')
-                
-                # Image mapping for specific placeholders (3 distinct images)
-                # These variables are used in Template.html for Stage 1/2 placeholders
-                images = firm_profile.get('architectural_images', [])
-                if images:
-                    template_vars['imagePage4Url'] = images[0] if len(images) > 0 else None
-                    template_vars['imagePage5Url'] = images[1] if len(images) > 1 else (images[0] if images else None)
-                    template_vars['imagePage6Url'] = images[2] if len(images) > 2 else (images[0] if images else None)
 
-                # Add page numbers and static labels for 15-page structure
+                # ── FIX 3: map_to_template_vars builds content_sections + toc_sections ──
+                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
+
+                # Ensure critical fields are never empty
+                template_vars['companyName']  = template_vars.get('companyName')  or firm_profile.get('firm_name') or 'Your Company'
+                template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
+                template_vars['phoneNumber']  = template_vars.get('phoneNumber')  or firm_profile.get('phone_number', '')
+                template_vars['website']      = template_vars.get('website')      or firm_profile.get('firm_website', '')
+
                 template_vars.update({
                     'pageNumber2': '02', 'pageNumber3': '03', 'pageNumber4': '04',
                     'pageNumber5': '05', 'pageNumber6': '06', 'pageNumber7': '07',
@@ -339,7 +304,7 @@ def _run_generation_job(job_id, body, user_id):
                     'pageNumber11': '11', 'pageNumber12': '12', 'pageNumber13': '13',
                     'pageNumber14': '14', 'pageNumber15': '15',
                 })
-                
+
             except ValueError as ve:
                 err_msg = str(ve)
                 if "max completion tokens reached" in err_msg:
@@ -352,145 +317,108 @@ def _run_generation_job(job_id, body, user_id):
                 _set_job(job_id, status="failed", error=f"AI generation failed: {str(e)}")
                 return
         else:
-            # Basic non-AI mapping
             template_vars = {
-                'primaryColor': firm_profile.get('primary_brand_color') or '',
-                'secondaryColor': firm_profile.get('secondary_brand_color') or '',
-                'companyName': firm_profile.get('firm_name') or '',
-                'mainTitle': lead_magnet.title,
+                'primaryColor':     firm_profile.get('primary_brand_color') or '',
+                'secondaryColor':   firm_profile.get('secondary_brand_color') or '',
+                'companyName':      firm_profile.get('firm_name') or '',
+                'mainTitle':        lead_magnet.title,
                 'documentSubtitle': 'Professional Insights',
-                'emailAddress': firm_profile.get('work_email') or '',
-                'phoneNumber': firm_profile.get('phone_number') or '',
-                'website': firm_profile.get('firm_website') or '',
+                'emailAddress':     firm_profile.get('work_email') or '',
+                'phoneNumber':      firm_profile.get('phone_number') or '',
+                'website':          firm_profile.get('firm_website') or '',
+                'content_sections': [],
+                'toc_sections':     [],
             }
 
-        # 6. PDF RENDERING (Step 4 of Pipeline)
-        # Choose rendering engine: DocRaptor (HTML-based) or ReportLab (Code-based)
-        # We prefer DocRaptor for Template.html compatibility.
+        # ── PDF RENDERING ──────────────────────────────────────────────────────
         pdf_service = DocRaptorService()
         try:
             _set_job(job_id, status="processing", progress=80, message="Rendering PDF via DocRaptor...")
             start_pdf = time.time()
             logger.info("📄 PDF Generation Start (DocRaptor)")
-            
-            # Map variables for Template.html (DocRaptor)
-            # Template.html uses different variable names than ReportLab
+
+            # ── FIX 4: docraptor_vars passes the pre-built section lists ──
             docraptor_vars = {
-                'documentTitle': template_vars.get('mainTitle'),
-                'companyName': template_vars.get('companyName'),
-                'primaryColor': template_vars.get('primaryColor') or '#2a5766',
-                'secondaryColor': template_vars.get('secondaryColor') or '#B8860B',
-                'tertiaryColor': '#4F7A8B',
-                'accentColor': '#E8F1F4',
-                'creamColor': '#F7F4EF',
-                'creamDarkColor': '#EBE6DA',
-                'inkColor': '#1A1A1A',
-                'inkMidColor': '#444444',
-                'inkLightColor': '#888888',
-                'ruleColor': '#DDDDDD',
-                'ruleLightColor': '#EEEEEE',
-                'coverTextColor': '#FFFFFF',
-                'coverLogoFilter': 'brightness(0) invert(1)',
-                'footerText': f"© {template_vars.get('companyName')} Strategic Report",
-                
-                # Page 1 (Cover)
-                'coverBrand': template_vars.get('companyName'),
-                'summary': template_vars.get('summary'),
-                'mainTitle': template_vars.get('mainTitle'),
-                'documentSubtitle': template_vars.get('documentSubtitle'),
-                
-                # Global Objects for Jinja2
-                'ch1': template_vars.get('ch1', {}),
-                'ch2': template_vars.get('ch2', {}),
-                'ch3': template_vars.get('ch3', {}),
-                'ch4': template_vars.get('ch4', {}),
-                'ch5': template_vars.get('ch5', {}),
-                'solutions': template_vars.get('solutions', []),
-                'audience_analysis': template_vars.get('audience_analysis', {}),
-                'drop_caps': template_vars.get('drop_caps', ["S", "F", "C", "M", "T"]),
-                'image_labels': template_vars.get('image_labels', ["ANALYSIS", "SOLUTION", "ROADMAP"]),
-                
-                # New expanded fields
-                'executive_summary': template_vars.get('executive_summary', ''),
-                'conclusion': template_vars.get('conclusion', ''),
-                
-                # Image Placeholders
-                'imagePage4Url': template_vars.get('imagePage4Url'),
-                'imagePage5Url': template_vars.get('imagePage5Url'),
-                'imagePage6Url': template_vars.get('imagePage6Url'),
-                
-                # Page Numbers & Static Labels (Updated for 15-page structure)
+                # Colours
+                'primaryColor':        template_vars.get('primaryColor')  or '#2a5766',
+                'secondaryColor':      template_vars.get('secondaryColor') or '#FFFFFF',
+
+                # Cover / identity
+                'companyName':         template_vars.get('companyName'),
+                'mainTitle':           template_vars.get('mainTitle'),
+                'documentSubtitle':    template_vars.get('documentSubtitle'),
+                'documentTypeLabel':   template_vars.get('documentTypeLabel', 'Strategic Guide'),
+                'summary':             template_vars.get('summary'),
+                'footerText':          template_vars.get('footerText'),
+
+                # Contact
+                'emailAddress':        template_vars.get('emailAddress', ''),
+                'phoneNumber':         template_vars.get('phoneNumber',  ''),
+                'website':             template_vars.get('website',      ''),
+                'cta':                 template_vars.get('cta',          ''),
+
+                # THE KEY FIX: pre-built section lists — no more vars()[key] in template
+                'content_sections':    template_vars.get('content_sections', []),
+                'toc_sections':        template_vars.get('toc_sections',     []),
+
+                # Images
+                'image_1_url':         img_1,
+                'image_2_url':         img_2,
+                'image_3_url':         img_3,
+                'image_1_caption':     firm_profile.get('image_1_caption', 'Strategic Context'),
+                'image_2_caption':     firm_profile.get('image_2_caption', 'Technical Framework'),
+                'image_3_caption':     firm_profile.get('image_3_caption', 'Implementation Overview'),
+
+                # Legacy compat
+                'architecturalImages': architectural_images,
+
+                # Page number labels
                 'pageNumber2': '02', 'pageNumber3': '03', 'pageNumber4': '04',
                 'pageNumber5': '05', 'pageNumber6': '06', 'pageNumber7': '07',
                 'pageNumber8': '08', 'pageNumber9': '09', 'pageNumber10': '10',
                 'pageNumber11': '11', 'pageNumber12': '12', 'pageNumber13': '13',
                 'pageNumber14': '14', 'pageNumber15': '15',
-                
-                # Additional mappings for specific template needs
-                'roi_detailed': template_vars.get('roi_detailed', ''),
-                'cta': template_vars.get('cta', ''),
-                'emailAddress': template_vars.get('emailAddress', ''),
-                'phoneNumber': template_vars.get('phoneNumber', ''),
-                'website': template_vars.get('website', ''),
-                'imagePage4Url': template_vars.get('imagePage4Url'),
-                'imagePage5Url': template_vars.get('imagePage5Url'),
-                'imagePage6Url': template_vars.get('imagePage6Url'),
-                'architecturalImages': architectural_images, # Inject user images for placeholder replacement
             }
-            
-            # Use DocRaptor for high-fidelity HTML rendering
+
             logger.info(f"🚀 Submitting to DocRaptor for Lead Magnet {lead_magnet_id}")
-            result = pdf_service.generate_pdf('modern-guide', docraptor_vars)
+            result       = pdf_service.generate_pdf('modern-guide', docraptor_vars)
             pdf_duration = time.time() - start_pdf
-            
+
             if not result.get('success'):
-                err = result.get('error', 'PDF generation failed')
+                err     = result.get('error', 'PDF generation failed')
                 details = result.get('details', 'No additional details provided.')
                 logger.error(f"❌ PDF Failure: {err} | Details: {details} | Duration: {pdf_duration:.2f}s")
                 _set_job(job_id, status="failed", error=f"{err}: {details}")
                 return
-            
+
             _set_job(job_id, status="processing", progress=92, message="Saving...")
             pdf_data = result.get('pdf_data')
             filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
-            
-            # Save to model via Cloudinary with explicit resource_type="raw"
-            # We use the ContentFile to stream the PDF data directly.
+
             try:
                 import cloudinary.uploader
-                
-                # Cloudinary uploader needs the actual bytes for the 'file' parameter
-                # We also explicitly set resource_type="raw" to ensure PDF is not treated as image
                 upload_result = cloudinary.uploader.upload(
                     pdf_data,
                     resource_type="raw",
                     folder="lead_magnets",
                     public_id=f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}"
                 )
-                
-                # Save the Cloudinary reference to our model
-                # Note: CloudinaryField expects the public_id
-                public_id = upload_result.get('public_id')
+                public_id          = upload_result.get('public_id')
                 lead_magnet.pdf_file = public_id
-                lead_magnet.status = 'completed'
+                lead_magnet.status  = 'completed'
                 lead_magnet.save(update_fields=['pdf_file', 'status'])
-                
                 logger.info(f"✅ Cloudinary Raw Upload Success: {public_id}")
             except Exception as upload_err:
                 logger.error(f"⚠️ Cloudinary Raw Upload Failed, falling back to default: {upload_err}")
                 lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
                 lead_magnet.status = 'completed'
                 lead_magnet.save(update_fields=['status'])
-            
+
             logger.info(f"✅ PDF Generation Success | Duration: {pdf_duration:.2f}s")
-            
-            # Use the protected download route instead of the storage URL to ensure 
-            # consistent serving across environments and proper authentication handling.
             pdf_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
             _set_job(job_id, status="complete", progress=100, pdf_url=pdf_url, message="Success!")
 
         except Exception as e:
-            # Mandatory Logging: Traceback on failure
             logger.error(f"❌ PDF Rendering Error: {str(e)}\n{traceback.format_exc()}")
             _set_job(job_id, status="failed", error=f"PDF generation failed: {str(e)}")
             return
@@ -499,19 +427,21 @@ def _run_generation_job(job_id, body, user_id):
         logger.critical(f"❌ Critical View Error: {str(exc)}\n{traceback.format_exc()}")
         _set_job(job_id, status="failed", error=str(exc))
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ENDPOINTS
+# ─────────────────────────────────────────────────────────────────────────────
+
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_start(request):
-    body = request.data
+    body   = request.data
     job_id = str(uuid.uuid4())
     _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None)
-    
-    # Extract user ID to avoid passing request object to thread
-    user_id = request.user.id
-    
-    threading.Thread(target=_run_generation_job, args=(job_id, body, user_id), daemon=True).start()
+    threading.Thread(target=_run_generation_job, args=(job_id, body, request.user.id), daemon=True).start()
     return Response({"job_id": job_id, "status": "pending"}, status=status.HTTP_202_ACCEPTED)
+
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -528,59 +458,49 @@ def generate_pdf_status(request, job_id):
         "error":    job.get("error"),
     })
 
+
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_compat(request):
-    """
-    Compatibility endpoint for frontend expecting POST /generate-pdf/ returning 202 and polling by lead_magnet_id.
-    """
-    # Delegate to job-based start while returning 202
-    body = request.data
+    body   = request.data
     job_id = str(uuid.uuid4())
     _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None, lead_magnet_id=body.get('lead_magnet_id'))
     threading.Thread(target=_run_generation_job, args=(job_id, body, request.user.id), daemon=True).start()
-    # Provide a status_url hint while staying compatible with caller behavior
-    status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={body.get('lead_magnet_id')}&job_id={job_id}")
+    status_url = request.build_absolute_uri(
+        f"/api/generate-pdf/status/?lead_magnet_id={body.get('lead_magnet_id')}&job_id={job_id}"
+    )
     return Response({
-        'status': 'in_progress',
-        'message': 'PDF generation started',
-        'lead_magnet_id': body.get('lead_magnet_id'),
-        'status_url': status_url,
+        'status':              'in_progress',
+        'message':             'PDF generation started',
+        'lead_magnet_id':      body.get('lead_magnet_id'),
+        'status_url':          status_url,
         'retry_after_seconds': 3
     }, status=status.HTTP_202_ACCEPTED)
+
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_status_compat(request):
-    """
-    Compatibility endpoint for frontend polling GET /generate-pdf/status/?lead_magnet_id=...
-    Translates job-based state to legacy shape: {status: 'ready'|'pending'|'error', pdf_url?}
-    """
     lead_magnet_id = request.query_params.get('lead_magnet_id')
-    job_id = request.query_params.get('job_id')
+    job_id         = request.query_params.get('job_id')
     if not lead_magnet_id:
         return Response({'error': 'lead_magnet_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-    # If job_id provided, prefer job state
     job = None
     if job_id:
         job = _get_job(job_id)
     else:
-        # Find latest job matching lead_magnet_id
         with _JOBS_LOCK:
             for k, v in reversed(list(_JOBS.items())):
                 if str(v.get('lead_magnet_id')) == str(lead_magnet_id):
                     job = dict(v)
                     break
-    # Fallback to model state if job not found
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
     except LeadMagnet.DoesNotExist:
         return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
-    # If model has completed PDF, return ready with download route
     if str(lm.status) == 'completed' and lm.pdf_file:
         download_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
         return Response({'status': 'ready', 'pdf_url': download_url}, status=status.HTTP_200_OK)
-    # Otherwise use job state
     if job:
         if job.get('status') == 'complete' and lm.pdf_file:
             download_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
@@ -588,81 +508,56 @@ def generate_pdf_status_compat(request):
         if job.get('status') in ('failed', 'error'):
             return Response({'status': 'error', 'error': job.get('error', 'Generation failed')}, status=status.HTTP_200_OK)
         return Response({'status': 'pending'}, status=status.HTTP_200_OK)
-    # No job and not completed yet
     return Response({'status': 'pending'}, status=status.HTTP_200_OK)
 
+
 from cloudinary.utils import cloudinary_url as get_cloudinary_url
-import requests
+
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id: int):
-    """
-    Secure PDF download endpoint.
-    Generates a signed Cloudinary URL and streams the file via FileResponse.
-    No fallback logic, production-safe, and JWT protected.
-    """
     try:
-        # 1. Fetch LeadMagnet with strict ownership validation
         try:
             lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
         except LeadMagnet.DoesNotExist:
             logger.warning(f"Download failed: LeadMagnet {lead_magnet_id} not found or not owned by user {request.user.id}")
             return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 2. Check if file exists in the model
         if not lm.pdf_file:
-            logger.warning(f"Download failed: No PDF file assigned to LeadMagnet {lead_magnet_id}")
             return Response({'error': 'PDF not generated yet'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 3. Generate Signed Cloudinary URL
-        # We extract the public_id from the CloudinaryField/FileField
         try:
-            # For django-cloudinary-storage, the 'name' attribute usually contains the public_id
-            public_id = lm.pdf_file.name
-            
+            public_id  = lm.pdf_file.name
             signed_url, options = get_cloudinary_url(
                 public_id,
                 resource_type="raw",
                 sign_url=True,
                 secure=True
             )
-            
             logger.info(f"Generated signed URL for LeadMagnet {lead_magnet_id}")
-            
-            # 4. Stream the file via FileResponse
-            # We use a stream from requests to fetch the signed Cloudinary asset
             proxy_resp = requests.get(signed_url, stream=True, timeout=30)
             proxy_resp.raise_for_status()
-            
             filename = os.path.basename(lm.pdf_file.name) or f"lead-magnet-{lead_magnet_id}.pdf"
             if not filename.endswith('.pdf'):
                 filename += '.pdf'
-
-            response = FileResponse(
-                proxy_resp.raw, 
-                content_type="application/pdf"
-            )
+            response = FileResponse(proxy_resp.raw, content_type="application/pdf")
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            
-            # Pass through content length if available
             if 'Content-Length' in proxy_resp.headers:
                 response['Content-Length'] = proxy_resp.headers['Content-Length']
-                
             return response
-
         except Exception as e:
             logger.error(f"Failed to generate signed URL or stream file for LeadMagnet {lead_magnet_id}: {str(e)}")
             return Response({
-                'error': 'Failed to retrieve file from storage',
+                'error':   'Failed to retrieve file from storage',
                 'details': str(e) if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     except Exception as exc:
         logger.critical(f"Critical error in download view: {str(exc)}\n{traceback.format_exc()}")
-        return Response({
-            'error': 'Internal server error during download'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': 'Internal server error during download'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class CreateLeadMagnetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -673,12 +568,8 @@ class CreateLeadMagnetView(APIView):
             lead_magnet = serializer.save()
             return Response(LeadMagnetSerializer(lead_magnet).data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            import traceback
-            trace = traceback.format_exc() if settings.DEBUG else None
-            payload = {
-                'error': 'Failed to create lead magnet',
-                'details': str(e),
-            }
+            trace   = traceback.format_exc() if settings.DEBUG else None
+            payload = {'error': 'Failed to create lead magnet', 'details': str(e)}
             if trace:
                 payload['trace'] = trace
             return Response(payload, status=status.HTTP_400_BAD_REQUEST)
@@ -686,8 +577,8 @@ class CreateLeadMagnetView(APIView):
     def options(self, request, *args, **kwargs):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
+
 class ListTemplatesView(APIView):
-    """Get all available PDF templates from DocRaptor service"""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -698,13 +589,12 @@ class ListTemplatesView(APIView):
                 return Response({'success': True, 'templates': data, 'count': len(data)})
 
             template_service = DocRaptorService()
-            templates = template_service.list_templates()
+            templates        = template_service.list_templates()
 
             for template in templates:
-                template_id = template['id']
+                template_id      = template['id']
                 preview_filename = f"{template_id}.jpg"
-                preview_path = os.path.join(settings.MEDIA_ROOT, 'template_previews', preview_filename)
-
+                preview_path     = os.path.join(settings.MEDIA_ROOT, 'template_previews', preview_filename)
                 if os.path.exists(preview_path):
                     template['preview_url'] = request.build_absolute_uri(
                         f"{settings.MEDIA_URL}template_previews/{preview_filename}"
@@ -717,71 +607,62 @@ class ListTemplatesView(APIView):
             return Response({'success': True, 'templates': templates, 'count': len(templates)})
 
         except ValueError as e:
-            return Response({
-                'success': False,
-                'error': 'API configuration error',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response({'success': False, 'error': 'API configuration error', 'details': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
-            return Response({'success': False, 'error': 'Unexpected error', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'success': False, 'error': 'Unexpected error', 'details': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class SelectTemplateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @transaction.atomic
     def post(self, request):
-        lead_magnet_id = request.data.get('lead_magnet_id')
-        template_id = request.data.get('template_id')
-        template_name = request.data.get('template_name')
+        lead_magnet_id     = request.data.get('lead_magnet_id')
+        template_id        = request.data.get('template_id')
+        template_name      = request.data.get('template_name')
         template_thumbnail = request.data.get('template_thumbnail', '')
-        captured_answers = request.data.get('captured_answers', {})
-        source = request.data.get('source', 'create-lead-magnet')
-        
+        captured_answers   = request.data.get('captured_answers', {})
+        source             = request.data.get('source', 'create-lead-magnet')
+
         if not all([lead_magnet_id, template_id, template_name]):
-            return Response({
-                'error': 'lead_magnet_id, template_id, and template_name are required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Validate source is one of the permitted choices
+            return Response(
+                {'error': 'lead_magnet_id, template_id, and template_name are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         valid_sources = [choice[0] for choice in TemplateSelection.SOURCE_CHOICES]
         if source not in valid_sources:
-            return Response({
-                'error': f'Invalid source. Must be one of: {", ".join(valid_sources)}'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {'error': f'Invalid source. Must be one of: {", ".join(valid_sources)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
-            # Get the lead magnet
             lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
-            
-            # Create or update template selection
             template_selection, created = TemplateSelection.objects.update_or_create(
                 lead_magnet=lead_magnet,
                 defaults={
-                    'user': request.user,
-                    'template_id': template_id,
-                    'template_name': template_name,
-                    'template_thumbnail': template_thumbnail,
-                    'captured_answers': captured_answers,
+                    'user':                    request.user,
+                    'template_id':             template_id,
+                    'template_name':           template_name,
+                    'template_thumbnail':      template_thumbnail,
+                    'captured_answers':        captured_answers,
                     'image_upload_preference': request.data.get('image_upload_preference', 'no'),
-                    'source': source,
-                    'status': 'template-selected'
+                    'source':                  source,
+                    'status':                  'template-selected'
                 }
             )
-            
-            # Do not mark lead magnet as in-progress on template selection.
-            # Status will be set to in-progress when PDF generation starts.
-            
             return Response({
-                'success': True,
+                'success':               True,
                 'template_selection_id': template_selection.id,
-                'message': 'Template selected successfully'
+                'message':               'Template selected successfully'
             }, status=status.HTTP_201_CREATED)
-            
+
         except LeadMagnet.DoesNotExist:
-            return Response({
-                'error': 'Lead magnet not found'
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
+
 
 class GenerateSloganView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -789,46 +670,35 @@ class GenerateSloganView(APIView):
     def post(self, request):
         try:
             user_answers = request.data.get('user_answers', {}) or {}
-            fp = FirmProfile.objects.filter(user=request.user).first()
-            firm_name = (fp.firm_name if fp and fp.firm_name else request.user.email.split('@')[0])
-            topic = str(user_answers.get('main_topic', '')).strip() or 'Design'
-            slogan = f"{firm_name}: {topic}"
+            fp           = FirmProfile.objects.filter(user=request.user).first()
+            firm_name    = (fp.firm_name if fp and fp.firm_name else request.user.email.split('@')[0])
+            topic        = str(user_answers.get('main_topic', '')).strip() or 'Design'
+            slogan       = f"{firm_name}: {topic}"
             return Response({'success': True, 'slogan': slogan}, status=status.HTTP_200_OK)
         except Exception as e:
-            import traceback
-            trace = traceback.format_exc() if settings.DEBUG else None
+            trace   = traceback.format_exc() if settings.DEBUG else None
             payload = {'error': 'Slogan generation failed', 'details': str(e)}
             if trace:
                 payload['trace'] = trace
             return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class PreviewTemplateView(APIView):
-    """Preview template with custom variables"""
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def post(self, request):
         template_id = request.data.get('template_id')
-        variables = request.data.get('variables', {})
-        
+        variables   = request.data.get('variables', {})
         if not template_id:
-            return Response({
-                'error': 'template_id is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'template_id is required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             template_service = DocRaptorService()
-            preview_html = template_service.preview_template(template_id, variables)
-            
-            return Response({
-                'success': True,
-                'preview_html': preview_html
-            })
-            
+            preview_html     = template_service.preview_template(template_id, variables)
+            return Response({'success': True, 'preview_html': preview_html})
         except Exception as e:
-            return Response({
-                'error': 'Preview generation failed',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'Preview generation failed', 'details': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class HealthView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -840,121 +710,83 @@ class HealthView(APIView):
     def options(self, request, *args, **kwargs):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
+
 class FormaAIConversationView(APIView):
-    """Handle Forma AI conversations"""
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def post(self, request):
-        message = request.data.get('message')
-        files = request.data.get('files', [])
+        message         = request.data.get('message')
+        files           = request.data.get('files', [])
         conversation_id = request.data.get('conversation_id')
-        # Optional PDF generation flags
-        generate_pdf = request.data.get('generate_pdf', True)
-        template_id = request.data.get('template_id', 'modern-guide')
-        
-        # Handle architectural images from FormData
+        generate_pdf    = request.data.get('generate_pdf', True)
+        template_id     = request.data.get('template_id', 'modern-guide')
+
         architectural_images = []
-        for i in range(1, 4):  # Handle up to 3 architectural images
+        for i in range(1, 4):
             image_key = f'architectural_image_{i}'
             if image_key in request.FILES:
                 architectural_images.append(request.FILES[image_key])
-        
+
         if not message:
-            return Response({
-                'error': 'Message is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Message is required'}, status=status.HTTP_400_BAD_REQUEST)
         if generate_pdf and not template_id:
-            return Response({
-                'error': 'Template selection is required for PDF generation'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get or create conversation
+            return Response({'error': 'Template selection is required for PDF generation'}, status=status.HTTP_400_BAD_REQUEST)
+
         if conversation_id:
             try:
-                conversation = FormaAIConversation.objects.get(
-                    id=conversation_id,
-                    user=request.user
-                )
+                conversation = FormaAIConversation.objects.get(id=conversation_id, user=request.user)
             except FormaAIConversation.DoesNotExist:
-                return Response({
-                    'error': 'Conversation not found'
-                }, status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            conversation = FormaAIConversation.objects.create(
-                user=request.user,
-                messages=[]
-            )
-        
-        # Add user message to conversation
-        conversation.messages.append({
-            'role': 'user',
-            'content': message,
-            'files': files
-        })
-        
-        # Build firm profile similar to PDF generation flow
+            conversation = FormaAIConversation.objects.create(user=request.user, messages=[])
+
+        conversation.messages.append({'role': 'user', 'content': message, 'files': files})
+
         firm_profile = {}
         try:
             fp = FirmProfile.objects.get(user=request.user)
             firm_profile = {
-                'firm_name': fp.firm_name,
-                'work_email': fp.work_email,
-                'phone_number': fp.phone_number,
-                'firm_website': fp.firm_website,
-                'primary_brand_color': fp.primary_brand_color,
+                'firm_name':             fp.firm_name,
+                'work_email':            fp.work_email,
+                'phone_number':          fp.phone_number,
+                'firm_website':          fp.firm_website,
+                'primary_brand_color':   fp.primary_brand_color,
                 'secondary_brand_color': fp.secondary_brand_color,
-                'logo_url': fp.logo.url if fp.logo else '',
-                'industry': 'Architecture'
+                'logo_url':              fp.logo.url if fp.logo else '',
+                'industry':              'Architecture'
             }
         except FirmProfile.DoesNotExist:
             firm_profile = {
-                'firm_name': request.user.email.split('@')[0],
-                'work_email': request.user.email,
-                'primary_brand_color': '',
+                'firm_name':             request.user.email.split('@')[0],
+                'work_email':            request.user.email,
+                'primary_brand_color':   '',
                 'secondary_brand_color': '',
-                'logo_url': '',
-                'industry': 'Architecture'
+                'logo_url':              '',
+                'industry':              'Architecture'
             }
 
-        # Convert the chat message into minimal user_answers for AI JSON
-        def _derive_outcome_from_message(msg: str) -> str:
-            m = (msg or '').strip()
-            # Keep it concise and user-centered; avoid stock phrases
-            m = m.replace('\n', ' ')
-            m = m.strip(' .;:')
-            # If very short, add a minimal context
-            if len(m.split()) <= 3:
-                return f"{m}"
+        def _derive_outcome(msg):
+            m = (msg or '').strip().replace('\n', ' ').strip(' .;:')
             return m
 
         user_answers = {
-            'main_topic': message,
-            'lead_magnet_type': 'Custom Guide',
-            'desired_outcome': _derive_outcome_from_message(message),
-            'industry': '',
-            'brand_primary_color': firm_profile.get('primary_brand_color', ''),
-            'brand_secondary_color': firm_profile.get('secondary_brand_color', ''),
-            'brand_logo_url': firm_profile.get('logo_url', ''),
+            'main_topic':           message,
+            'lead_magnet_type':     'Custom Guide',
+            'desired_outcome':      _derive_outcome(message),
+            'industry':             '',
+            'brand_primary_color':  firm_profile.get('primary_brand_color', ''),
+            'brand_secondary_color':firm_profile.get('secondary_brand_color', ''),
+            'brand_logo_url':       firm_profile.get('logo_url', ''),
         }
 
-        ai_client = GroqClient()
+        ai_client        = GroqClient()
         template_service = ReportLabService()
 
         try:
-            # Step 1: Signals (Derived from message)
-            signals = ai_client.get_semantic_signals(user_answers)
-            
-            # Step 2: AI Call
+            signals        = ai_client.get_semantic_signals(user_answers)
             raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
-            
-            # Step 3: Mandatory Normalization
-            ai_content = ai_client.normalize_ai_output(raw_ai_content)
-            
-            # Step 4: Content Guarantee Layer
-            # Ensure no empty sections before rendering
+            ai_content     = ai_client.normalize_ai_output(raw_ai_content)
             ai_content['sections'] = ai_client.ensure_section_content(ai_content.get('sections', []), signals, firm_profile)
-            
         except Exception as e:
             ai_error = f"AI generation failed: {str(e)}"
             logger.error(f"FormaAI AI Error: {ai_error}\n{traceback.format_exc()}")
@@ -962,33 +794,26 @@ class FormaAIConversationView(APIView):
             conversation.save()
             return Response({'error': 'AI content generation failed', 'details': ai_error}, status=status.HTTP_502_BAD_GATEWAY)
 
-        # Map AI JSON to template variables (Structure Safe)
         template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
 
-        # Clean stock subtitle phrasing if the model echoed inputs
         import re
         sub = (template_vars.get('documentSubtitle') or '').strip()
         if sub:
-            # Remove leading 'Generate professional PDF content' and optional connectors
-            sub = re.sub(r"^\s*generate\s+professional\s+pdf\s+content\s*(showcasing|about|on)?\s*",
-                         "", sub, flags=re.IGNORECASE)
-            # Avoid hardcoded architecture bias tails like 'for architecture'
+            sub = re.sub(r"^\s*generate\s+professional\s+pdf\s+content\s*(showcasing|about|on)?\s*", "", sub, flags=re.IGNORECASE)
             sub = re.sub(r"\s*(for|in)\s+architecture\b.*$", "", sub, flags=re.IGNORECASE)
             sub = sub.strip(' -:;')
             template_vars['documentSubtitle'] = sub
-        # Ensure critical cover/contact fields are never empty
-        template_vars['companyName'] = template_vars.get('companyName') or (firm_profile.get('firm_name') or 'Your Company')
-        template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
-        template_vars['phoneNumber'] = template_vars.get('phoneNumber') or firm_profile.get('phone_number', '')
-        template_vars['website'] = template_vars.get('website') or firm_profile.get('firm_website', '')
 
-        # Add sections array when present
+        template_vars['companyName']  = template_vars.get('companyName')  or firm_profile.get('firm_name') or 'Your Company'
+        template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
+        template_vars['phoneNumber']  = template_vars.get('phoneNumber')  or firm_profile.get('phone_number', '')
+        template_vars['website']      = template_vars.get('website')      or firm_profile.get('firm_website', '')
+
         if 'sections' in ai_content and isinstance(ai_content['sections'], list) and ai_content['sections']:
             template_vars['sections'] = ai_content['sections']
 
-        # Professional title fallback and subtitle punctuation
         if not template_vars.get('mainTitle'):
-            topic = user_answers.get('main_topic') or ai_content.get('cover', {}).get('title') or 'Architectural Design'
+            topic   = user_answers.get('main_topic') or ai_content.get('cover', {}).get('title') or 'Architectural Design'
             lm_type = user_answers.get('lead_magnet_type') or 'Guide'
             def title_case(s):
                 return ' '.join([w.capitalize() for w in str(s).split()])
@@ -999,28 +824,28 @@ class FormaAIConversationView(APIView):
             if not sub.endswith(('.', '!', '?')):
                 sub = sub.rstrip(';,:-–—')
                 template_vars['documentSubtitle'] = sub + '.'
-        
-        # Add architectural images to template variables if provided
+
         if architectural_images:
             template_vars['architecturalImages'] = []
-            for i, image in enumerate(architectural_images[:3]):  # Limit to 3 images
-                # Convert image to base64 for embedding in template
+            for i, image in enumerate(architectural_images[:3]):
                 import base64
-                image_data = base64.b64encode(image.read()).decode('utf-8')
+                image_data      = base64.b64encode(image.read()).decode('utf-8')
                 image_extension = image.name.split('.')[-1].lower()
-                mime_type = f'image/{image_extension}' if image_extension in ['jpg', 'jpeg', 'png', 'gif'] else 'image/jpeg'
+                mime_type       = f'image/{image_extension}' if image_extension in ['jpg', 'jpeg', 'png', 'gif'] else 'image/jpeg'
                 template_vars['architecturalImages'].append({
                     'src': f'data:{mime_type};base64,{image_data}',
                     'alt': f'Architectural Image {i + 1}'
                 })
+            imgs = template_vars['architecturalImages']
+            template_vars['image_1_url'] = imgs[0]['src'] if len(imgs) > 0 else ''
+            template_vars['image_2_url'] = imgs[1]['src'] if len(imgs) > 1 else ''
+            template_vars['image_3_url'] = imgs[2]['src'] if len(imgs) > 2 else ''
 
-        # Compose assistant message summary
         summary_title = template_vars.get('mainTitle') or ai_content.get('cover', {}).get('title') or 'Generated Document'
-        ai_response = f"Generated AI content: {summary_title}."
+        ai_response   = f"Generated AI content: {summary_title}."
         conversation.messages.append({'role': 'assistant', 'content': ai_response})
         conversation.save()
 
-        # If requested, generate PDF and return as file response
         if generate_pdf:
             try:
                 result = template_service.generate_pdf(template_id, template_vars)
@@ -1031,62 +856,55 @@ class FormaAIConversationView(APIView):
                     response['Content-Disposition'] = f'attachment; filename="{filename}"'
                     return response
                 else:
-                    return Response({'error': result.get('error', 'PDF generation failed'), 'details': result.get('details', '')}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response({'error': result.get('error', 'PDF generation failed'), 'details': result.get('details', '')},
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             except Exception as e:
-                return Response({'error': 'PDF generation failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'error': 'PDF generation failed', 'details': str(e)},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Otherwise return chat response and AI mapping summary
         return Response({
-            'success': True,
+            'success':         True,
             'conversation_id': conversation.id,
-            'response': ai_response,
-            'messages': conversation.messages,
-            'template_id': template_id,
-            'template_vars': template_vars
+            'response':        ai_response,
+            'messages':        conversation.messages,
+            'template_id':     template_id,
+            'template_vars':   template_vars
         })
 
+
 class GenerateDocumentPreviewView(APIView):
-    """Generate dynamic HTML preview using AI JSON and Jinja2 without fallbacks"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         try:
             user_answers = request.data.get('user_answers')
             firm_profile = request.data.get('firm_profile')
-            template_id = request.data.get('template_id', 'modern-guide')
+            template_id  = request.data.get('template_id', 'modern-guide')
 
             if not isinstance(user_answers, dict) or not isinstance(firm_profile, dict):
-                return Response({'error': 'user_answers and firm_profile must be provided as objects'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'user_answers and firm_profile must be provided as objects'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-            ai_client = GroqClient()
-            # Structure-Safe Pipeline
-            signals = ai_client.get_semantic_signals(user_answers)
+            ai_client   = GroqClient()
+            signals     = ai_client.get_semantic_signals(user_answers)
             raw_ai_data = ai_client.generate_lead_magnet_json(signals, firm_profile)
-            ai_data = ai_client.normalize_ai_output(raw_ai_data)
-            
-            # Content Guarantee Layer
+            ai_data     = ai_client.normalize_ai_output(raw_ai_data)
             ai_data['sections'] = ai_client.ensure_section_content(ai_data.get('sections', []), signals, firm_profile)
-            
             template_vars = ai_client.map_to_template_vars(ai_data, firm_profile, signals)
 
-            # Load template HTML
             templates_dir = os.path.join(settings.BASE_DIR, 'lead_magnets', 'templates')
             template_path = os.path.join(templates_dir, 'Template.html')
             with open(template_path, 'r', encoding='utf-8') as f:
                 template_html = f.read()
 
             final_html = render_template(template_html, template_vars)
-
-            return Response({
-                'success': True,
-                'preview_html': final_html
-            }, status=status.HTTP_200_OK)
+            return Response({'success': True, 'preview_html': final_html}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"❌ GenerateDocumentPreviewView error: {e}\n{traceback.format_exc()}")
             return Response({'error': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
 
+
 class BrandAssetsPDFPreviewView(APIView):
-    """Generate a PDF preview of saved brand assets (company info, colors, logo)."""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -1095,7 +913,8 @@ class BrandAssetsPDFPreviewView(APIView):
             try:
                 fp = FirmProfile.objects.get(user=user)
             except FirmProfile.DoesNotExist:
-                return Response({'error': 'Firm profile not found. Please save brand assets first.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Firm profile not found. Please save brand assets first.'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             def abs_url(url: str) -> str:
                 try:
@@ -1104,39 +923,40 @@ class BrandAssetsPDFPreviewView(APIView):
                     return url or ''
 
             variables = {
-                'companyName': fp.firm_name or '',
-                'phone': fp.phone_number or '',
-                'email': fp.work_email or '',
-                'website': fp.firm_website or '',
-                'primaryColor': fp.primary_brand_color or '#2a5766',
-                'secondaryColor': fp.secondary_brand_color or '#FFFFFF',
-                'logoUrl': abs_url(fp.logo.url) if fp.logo else '',
+                'companyName':     fp.firm_name or '',
+                'phone':           fp.phone_number or '',
+                'email':           fp.work_email or '',
+                'website':         fp.firm_website or '',
+                'primaryColor':    fp.primary_brand_color or '#2a5766',
+                'secondaryColor':  fp.secondary_brand_color or '#FFFFFF',
+                'logoUrl':         abs_url(fp.logo.url) if fp.logo else '',
                 'brandGuidelines': fp.branding_guidelines or ''
             }
 
-            # Validate required fields
             required = ['companyName', 'phone', 'email', 'primaryColor', 'secondaryColor']
-            missing = [k for k in required if not variables.get(k)]
+            missing  = [k for k in required if not variables.get(k)]
             if missing:
-                return Response({'error': 'Missing required fields', 'missing': missing}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Missing required fields', 'missing': missing},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-            # Validate color format
             import re
-            hex_re = re.compile(r'^#([A-Fa-f0-9]{6})$')
+            hex_re         = re.compile(r'^#([A-Fa-f0-9]{6})$')
             invalid_colors = [c for c in ['primaryColor', 'secondaryColor'] if not hex_re.match(variables.get(c, ''))]
             if invalid_colors:
-                return Response({'error': 'Invalid color formats', 'invalid_colors': invalid_colors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid color formats', 'invalid_colors': invalid_colors},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-            # Generate PDF from brand-assets template
             template_service = DocRaptorService()
-            result = template_service.generate_pdf('brand-assets', variables)
+            result           = template_service.generate_pdf('brand-assets', variables)
             if result.get('success'):
                 pdf_data = result.get('pdf_data', b'')
-                resp = HttpResponse(pdf_data, content_type='application/pdf')
+                resp     = HttpResponse(pdf_data, content_type='application/pdf')
                 resp['Content-Disposition'] = 'attachment; filename="brand-assets-preview.pdf"'
                 return resp
             else:
-                return Response({'error': 'PDF generation failed', 'details': result.get('details', '')}, status=status.HTTP_502_BAD_GATEWAY)
+                return Response({'error': 'PDF generation failed', 'details': result.get('details', '')},
+                                status=status.HTTP_502_BAD_GATEWAY)
 
         except Exception as e:
-            return Response({'error': 'Unexpected error', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'Unexpected error', 'details': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)

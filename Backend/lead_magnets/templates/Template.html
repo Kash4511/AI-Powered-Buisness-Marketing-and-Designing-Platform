@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy:   {{primaryColor}};
+            --navy:   {{primaryColor | default('#2a5766')}};
             --white:  #ffffff;
             --off:    #f8f7f4;
             --off2:   #f0ede6;
@@ -16,23 +16,29 @@
             --grey:   #7a7a7a;
             --ltgrey: #aaaaaa;
             --rule:   #e0ddd6;
-            --fd: 'Playfair Display', serif;
-            --fs: 'Lato', sans-serif;
-            --fm: 'DM Mono', monospace;
+            --fd:     'Playfair Display', serif;
+            --fs:     'Lato', sans-serif;
+            --fm:     'DM Mono', monospace;
         }
+
         *, *::before, *::after {
             margin: 0; padding: 0; box-sizing: border-box;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
+
         @page { size: A4; margin: 0; }
+
         body {
             font-family: var(--fs);
-            background: #888;
+            background: #888888;
             padding: 20px 15px;
             color: var(--ink);
         }
+
         .book { width: 210mm; margin: 0 auto; }
+
+        /* ── PAGE SHELL ──────────────────────────────────────────────────── */
         .page {
             width: 210mm;
             min-height: 297mm;
@@ -47,31 +53,28 @@
         }
         .page + .page { break-before: page; page-break-before: always; }
 
-        /* ── HEADER & FOOTER ─────────────────────────────────────────── */
-        .pg-head {
-            flex-shrink: 0;
-            padding: 12px 14mm 0;
-        }
+        /* ── HEADER ──────────────────────────────────────────────────────── */
+        .pg-head { flex-shrink: 0; padding: 12px 14mm 0; }
         .pg-head-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 6px;
-            border-bottom: 0.5px solid var(--rule);
+            padding-bottom: 6px; border-bottom: 0.5px solid var(--rule);
         }
         .pg-label {
             font-family: var(--fm); font-size: 7px;
             letter-spacing: 0.24em; text-transform: uppercase; color: var(--ltgrey);
         }
         .pg-num { font-family: var(--fs); font-size: 8px; color: var(--ltgrey); }
+
+        /* ── FOOTER ──────────────────────────────────────────────────────── */
         .pg-foot {
             margin-top: auto; flex-shrink: 0;
-            padding: 10px 14mm;
-            border-top: 0.5px solid var(--rule);
+            padding: 10px 14mm; border-top: 0.5px solid var(--rule);
             display: flex; justify-content: space-between; align-items: center;
         }
         .pg-foot-l { font-family: var(--fs); font-size: 7.5px; color: var(--grey); font-style: italic; }
         .pg-foot-r { font-family: var(--fm); font-size: 7.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
 
-        /* ── BODY WRAPPER ────────────────────────────────────────────── */
+        /* ── BODY WRAPPER ────────────────────────────────────────────────── */
         .bw {
             padding: 10px 14mm 14px;
             flex: 1;
@@ -79,222 +82,114 @@
             flex-direction: column;
         }
 
-        /* ── TYPOGRAPHY ──────────────────────────────────────────────── */
-        .ch-eyebrow {
-            display: flex; align-items: center; gap: 6px;
-            margin-bottom: 6px;
-        }
+        /* ── EYEBROW + HEADING ───────────────────────────────────────────── */
+        .ch-eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
         .ch-eyebrow-label {
             font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.24em;
             text-transform: uppercase; color: var(--navy); white-space: nowrap;
         }
         .ch-eyebrow-rule { flex: 1; height: 0.75px; background: var(--rule); }
+
         .ch-h1 {
             font-family: var(--fd); font-size: 26px; font-weight: 700;
-            color: var(--navy); line-height: 1.08; letter-spacing: -0.3px;
-            margin-bottom: 10px;
+            color: var(--navy); line-height: 1.08; margin-bottom: 10px;
         }
+
+        /* ── BODY TEXT ───────────────────────────────────────────────────── */
         .body {
             font-family: var(--fs); font-size: 10.5px; line-height: 1.52;
-            color: var(--mid); font-weight: 400;
-            text-align: justify;
-            flex: 1;
+            color: var(--mid); text-align: justify; flex: 1;
         }
-        .body p { margin-bottom: 9px; }
-        .body strong { color: var(--ink); font-weight: 700; }
-        .body h3 {
-            font-family: var(--fd); font-size: 13px; font-weight: 700;
-            color: var(--navy); margin: 14px 0 5px;
-        }
-        .body h4 {
-            font-family: var(--fs); font-size: 10px; font-weight: 700;
-            letter-spacing: 0.08em; text-transform: uppercase;
-            color: var(--navy); margin: 10px 0 4px;
-        }
-        .body ul { list-style: none; padding: 0; margin: 8px 0 12px; }
-        .body ul li {
-            padding: 5px 0 5px 18px; position: relative;
-            border-bottom: 0.5px solid var(--rule);
-            font-size: 10px; color: var(--mid); line-height: 1.5;
-        }
+        .body p         { margin-bottom: 9px; }
+        .body strong    { color: var(--ink); font-weight: 700; }
+        .body h3        { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin: 14px 0 5px; }
+        .body h4        { font-family: var(--fs); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 10px 0 4px; }
+        .body ul        { list-style: none; padding: 0; margin: 8px 0 12px; }
+        .body ul li     { padding: 5px 0 5px 18px; position: relative; border-bottom: 0.5px solid var(--rule); font-size: 10px; color: var(--mid); line-height: 1.5; }
         .body ul li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
+
+        /* ── DROP CAP ────────────────────────────────────────────────────── */
         .drop-letter {
             font-family: var(--fd); font-size: 58px; font-weight: 900;
             color: var(--navy); float: left; line-height: 0.62;
-            margin: 4px 7px 0 0; padding-right: 2px;
+            margin: 4px 7px 0 0;
         }
         .cf::after { content: ""; display: table; clear: both; }
 
-        /* ── IMAGE BLOCKS ────────────────────────────────────────────── */
-        .img-block {
-            margin: 14px 0 10px;
-            break-inside: avoid;
-        }
-        .img-block.img-left {
-            float: left; width: 44%;
-            margin: 4px 18px 10px 0;
-        }
-        .img-block.img-right {
-            float: right; width: 44%;
-            margin: 4px 0 10px 18px;
-        }
-        .img-block.img-full {
-            width: 100%; clear: both;
-            margin: 16px 0;
-        }
-        .img-block img {
-            width: 100%; display: block;
-            object-fit: cover;
-            border-radius: 2px;
-        }
+        /* ── IMAGE BLOCKS ────────────────────────────────────────────────── */
+        .img-block              { margin: 14px 0 10px; break-inside: avoid; }
+        .img-block.img-left     { float: left;  width: 44%; margin: 4px 18px 10px 0; }
+        .img-block.img-right    { float: right; width: 44%; margin: 4px 0 10px 18px; }
+        .img-block.img-full     { width: 100%;  clear: both; margin: 12px 0; }
+        .img-block img          { width: 100%; display: block; object-fit: cover; border-radius: 2px; }
         .img-block.img-left img,
-        .img-block.img-right img { max-height: 180px; }
-        .img-block.img-full img   { max-height: 200px; }
+        .img-block.img-right img { max-height: 170px; }
+        .img-block.img-full img  { max-height: 190px; }
         .img-cap {
             font-family: var(--fs); font-size: 8.5px; font-style: italic;
             color: var(--grey); text-align: center; margin-top: 5px; display: block;
         }
 
-        /* ── CALLOUT BOX ─────────────────────────────────────────────── */
+        /* ── CALLOUT ─────────────────────────────────────────────────────── */
         .callout {
             background: var(--off2); border-left: 3px solid var(--navy);
             padding: 12px 16px; margin: 12px 0; break-inside: avoid;
         }
-        .callout-title {
-            font-family: var(--fd); font-size: 13px; font-weight: 700;
-            color: var(--navy); margin-bottom: 4px;
-        }
-        .callout-body {
-            font-family: var(--fs); font-size: 10px;
-            color: var(--mid); line-height: 1.5;
-        }
-        .callout.navy { background: var(--navy); border-left-color: rgba(255,255,255,0.3); }
-        .callout.navy .callout-title { color: #fff; }
-        .callout.navy .callout-body  { color: rgba(255,255,255,0.75); }
+        .callout-title { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+        .callout-body  { font-family: var(--fs); font-size: 10px; color: var(--mid); line-height: 1.5; }
 
-        /* ── COVER ───────────────────────────────────────────────────── */
+        /* ── COVER PAGE ──────────────────────────────────────────────────── */
         .cover {
             background: var(--navy);
             min-height: 297mm;
             display: flex; flex-direction: column;
             padding: 0 18mm;
         }
-        .cv-top { padding-top: 40px; text-align: center; }
-        .cv-name {
-            font-family: var(--fm); font-size: 8.5px;
-            letter-spacing: 0.32em; text-transform: uppercase;
-            color: rgba(255,255,255,0.5);
-        }
-        .cv-type-badge {
+        .cv-top         { padding-top: 40px; text-align: center; }
+        .cv-name        { font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+        .cv-type-badge  {
             display: inline-block; margin-top: 12px;
-            font-family: var(--fm); font-size: 7px;
-            letter-spacing: 0.3em; text-transform: uppercase;
-            color: rgba(255,255,255,0.35);
-            border: 0.5px solid rgba(255,255,255,0.2);
-            padding: 4px 12px; border-radius: 2px;
+            font-family: var(--fm); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase;
+            color: rgba(255,255,255,0.35); border: 0.5px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 2px;
         }
-        .cv-body {
-            flex: 1; display: flex; flex-direction: column; justify-content: center;
-        }
-        .cv-aud-text {
-            font-family: var(--fm); font-size: 7.5px;
-            letter-spacing: 0.32em; text-transform: uppercase;
-            color: rgba(255,255,255,0.38); margin-bottom: 20px;
-        }
-        .cv-title-bold {
-            font-family: var(--fd); font-size: 58px; font-weight: 900;
-            line-height: 0.92; color: var(--white); margin-bottom: 14px;
-        }
-        .cv-title-italic {
-            font-family: var(--fd); font-size: 44px; font-weight: 400;
-            font-style: italic; color: rgba(255,255,255,0.38);
-        }
-        .cv-divider {
-            width: 40px; height: 2px; background: rgba(255,255,255,0.3);
-            margin: 28px 0;
-        }
-        .cv-summary {
-            font-family: var(--fs); font-size: 12px; line-height: 1.6;
-            color: rgba(255,255,255,0.55); max-width: 420px;
-        }
-        .cv-foot {
-            padding: 20px 0;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex; justify-content: space-between;
-        }
-        .cv-foot span {
-            font-family: var(--fm); font-size: 7.5px;
-            color: rgba(255,255,255,0.28);
-        }
+        .cv-body        { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .cv-aud-text    { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 20px; }
+        .cv-title-bold  { font-family: var(--fd); font-size: 58px; font-weight: 900; line-height: 0.92; color: var(--white); margin-bottom: 14px; }
+        .cv-title-italic{ font-family: var(--fd); font-size: 44px; font-weight: 400; font-style: italic; color: rgba(255,255,255,0.38); }
+        .cv-divider     { width: 40px; height: 2px; background: rgba(255,255,255,0.3); margin: 28px 0; }
+        .cv-summary     { font-family: var(--fs); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.55); max-width: 420px; }
+        .cv-foot        { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        .cv-foot span   { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.28); }
 
-        /* ── TOC PAGE ────────────────────────────────────────────────── */
-        .toc-page .bw { padding-top: 18px; }
-        .toc-grid { margin-top: 16px; }
-        .toc-item {
-            display: flex; align-items: baseline; gap: 10px;
-            padding: 8px 0; border-bottom: 0.5px solid var(--rule);
-        }
-        .toc-num {
-            font-family: var(--fm); font-size: 9px; color: var(--navy);
-            min-width: 28px; font-weight: 700;
-        }
-        .toc-title {
-            font-family: var(--fd); font-size: 12px; font-weight: 700;
-            color: var(--ink); flex: 1;
-        }
-        .toc-label {
-            font-family: var(--fm); font-size: 7.5px;
-            color: var(--ltgrey); letter-spacing: 0.15em;
-            text-transform: uppercase;
-        }
-        .toc-pg {
-            font-family: var(--fm); font-size: 9px; color: var(--navy);
-            min-width: 22px; text-align: right;
-        }
+        /* ── TABLE OF CONTENTS ───────────────────────────────────────────── */
+        .toc-grid    { margin-top: 16px; }
+        .toc-item    { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--rule); }
+        .toc-num     { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 28px; font-weight: 700; }
+        .toc-title   { font-family: var(--fd); font-size: 12px; font-weight: 700; color: var(--ink); flex: 1; }
+        .toc-label   { font-family: var(--fm); font-size: 7.5px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
+        .toc-pg      { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 22px; text-align: right; }
 
-        /* ── CTA BLOCK ───────────────────────────────────────────────── */
-        .cta-block {
-            background: var(--navy); padding: 20px 22px; margin-top: 16px;
-            break-inside: avoid;
-        }
-        .cta-eyebrow {
-            font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.28em;
-            text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px;
-        }
-        .cta-title {
-            font-family: var(--fd); font-size: 18px; font-weight: 700;
-            color: #fff; margin-bottom: 10px; line-height: 1.2;
-        }
-        .cta-body {
-            font-family: var(--fs); font-size: 10px;
-            color: rgba(255,255,255,0.6); line-height: 1.55;
-        }
-        .contact-row {
-            display: grid; grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px; margin-top: 16px; padding-top: 16px;
-            border-top: 0.5px solid rgba(255,255,255,0.15);
-        }
-        .contact-item .lbl {
-            font-family: var(--fm); font-size: 7px;
-            letter-spacing: 0.22em; text-transform: uppercase;
-            color: rgba(255,255,255,0.35); margin-bottom: 4px;
-        }
-        .contact-item .val {
-            font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.75);
-        }
+        /* ── CTA BLOCK ───────────────────────────────────────────────────── */
+        .cta-block    { background: var(--navy); padding: 20px 22px; margin-top: 16px; break-inside: avoid; }
+        .cta-eyebrow  { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+        .cta-title    { font-family: var(--fd); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 10px; line-height: 1.2; }
+        .cta-body     { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.6); line-height: 1.55; }
+        .contact-row  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 0.5px solid rgba(255,255,255,0.15); }
+        .contact-item .lbl { font-family: var(--fm); font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+        .contact-item .val { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.75); }
 
         @media print {
-            body { background: white; padding: 0; }
-            .page { box-shadow: none; margin-bottom: 0; }
+            body   { background: white; padding: 0; }
+            .page  { box-shadow: none; margin-bottom: 0; }
         }
     </style>
 </head>
 <body>
 <div class="book">
 
-{# ═══════════════════════════════════════════════════════════════ #}
-{# PAGE 1 — COVER                                                  #}
-{# ═══════════════════════════════════════════════════════════════ #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{# PAGE 1 — COVER                                                             #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
 <div class="page cover">
     <div class="cv-top">
         <div class="cv-name">{{companyName | default('Strategic Advisory')}}</div>
@@ -309,14 +204,15 @@
     </div>
     <div class="cv-foot">
         <span>{{footerText | default('© Strategic Report')}}</span>
-        <span>{{documentTypeLabel | upper | default('STRATEGIC REPORT')}}</span>
+        <span>{{documentTypeLabel | default('STRATEGIC REPORT') | upper}}</span>
     </div>
 </div>
 
-{# ═══════════════════════════════════════════════════════════════ #}
-{# PAGE 2 — TABLE OF CONTENTS                                      #}
-{# ═══════════════════════════════════════════════════════════════ #}
-<div class="page toc-page">
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{# PAGE 2 — TABLE OF CONTENTS                                                 #}
+{# Loops over `toc_sections` — a plain list of dicts from groq_client         #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+<div class="page">
     <div class="pg-head">
         <div class="pg-head-row">
             <span class="pg-label">Contents</span>
@@ -328,14 +224,14 @@
             <span class="ch-eyebrow-label">Table of Contents</span>
             <span class="ch-eyebrow-rule"></span>
         </div>
-        <h1 class="ch-h1">What's <br>Inside</h1>
+        <h1 class="ch-h1">What's<br>Inside</h1>
         <div class="toc-grid">
-            {% for key, title, label, _ in sections_config %}
+            {% for section in toc_sections %}
             <div class="toc-item">
-                <span class="toc-num">{{"%02d"|format(loop.index + 2)}}</span>
-                <span class="toc-title">{{title | replace('{topic}', mainTitle) | replace('{audience}', summary)}}</span>
-                <span class="toc-label">{{label}}</span>
-                <span class="toc-pg">{{loop.index + 2}}</span>
+                <span class="toc-num">{{section.page_num}}</span>
+                <span class="toc-title">{{section.title}}</span>
+                <span class="toc-label">{{section.label}}</span>
+                <span class="toc-pg">{{section.page_num}}</span>
             </div>
             {% endfor %}
         </div>
@@ -346,32 +242,41 @@
     </div>
 </div>
 
-{# ═══════════════════════════════════════════════════════════════ #}
-{# PAGES 3–17 — DYNAMIC CONTENT SECTIONS (one page per section)   #}
-{# Images injected on sections 2, 5, and 9 (0-indexed)            #}
-{# ═══════════════════════════════════════════════════════════════ #}
-{% for key, title, label, _ in sections_config %}
-{% set pg = loop.index + 2 %}
-{% set section_content = vars()[key] | default('') %}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{# PAGES 3–17 — CONTENT SECTIONS                                              #}
+{#                                                                            #}
+{# Loops over `content_sections` — a plain list of dicts built by            #}
+{# groq_client.map_to_template_vars(). Each dict has:                        #}
+{#   section.key       — the section identifier                              #}
+{#   section.title     — human-readable title                                #}
+{#   section.label     — eyebrow label (e.g. ANALYSIS, RISK)                 #}
+{#   section.page_num  — formatted page number string                        #}
+{#   section.content   — HTML-safe prose from Groq                           #}
+{#   section.drop_cap  — first letter for the drop-cap                       #}
+{#                                                                            #}
+{# Images are injected at:                                                    #}
+{#   loop.index0 == 2  (page 5)  → image_1_url, floated RIGHT                #}
+{#   loop.index0 == 5  (page 8)  → image_2_url, floated LEFT                 #}
+{#   loop.index0 == 9  (page 12) → image_3_url, full-width                   #}
+{# ══════════════════════════════════════════════════════════════════════════ #}
+{% for section in content_sections %}
 <div class="page">
+
     <div class="pg-head">
         <div class="pg-head-row">
-            <span class="pg-label">{{label}}</span>
-            <span class="pg-num">{{"%02d"|format(pg)}}</span>
+            <span class="pg-label">{{section.label}}</span>
+            <span class="pg-num">{{section.page_num}}</span>
         </div>
     </div>
+
     <div class="bw">
         <div class="ch-eyebrow">
-            <span class="ch-eyebrow-label">
-                {{title | replace('{topic}', mainTitle) | replace('{audience}', summary)}}
-            </span>
+            <span class="ch-eyebrow-label">{{section.label}}</span>
             <span class="ch-eyebrow-rule"></span>
         </div>
-        <h1 class="ch-h1">
-            {{title | replace('{topic}', mainTitle) | replace('{audience}', summary) | replace(' ', '<br>', 1) | safe}}
-        </h1>
+        <h1 class="ch-h1">{{section.title | safe}}</h1>
 
-        {# ── IMAGE SLOT 1: inject on section index 2 (page 5) ── #}
+        {# ── IMAGE SLOT 1 — section index 2, image floats RIGHT ─────────── #}
         {% if loop.index0 == 2 and image_1_url %}
         <div class="cf">
             <div class="img-block img-right">
@@ -379,12 +284,12 @@
                 <span class="img-cap">{{image_1_caption | default('Strategic Context')}}</span>
             </div>
             <div class="body">
-                <span class="drop-letter">{{section_content[0] | default('S')}}</span>
-                {{section_content | safe}}
+                <span class="drop-letter">{{section.drop_cap}}</span>
+                {{section.content | safe}}
             </div>
         </div>
 
-        {# ── IMAGE SLOT 2: inject on section index 5 (page 8) ── #}
+        {# ── IMAGE SLOT 2 — section index 5, image floats LEFT ──────────── #}
         {% elif loop.index0 == 5 and image_2_url %}
         <div class="cf">
             <div class="img-block img-left">
@@ -392,32 +297,30 @@
                 <span class="img-cap">{{image_2_caption | default('Technical Framework')}}</span>
             </div>
             <div class="body">
-                <span class="drop-letter">{{section_content[0] | default('S')}}</span>
-                {{section_content | safe}}
+                <span class="drop-letter">{{section.drop_cap}}</span>
+                {{section.content | safe}}
             </div>
         </div>
 
-        {# ── IMAGE SLOT 3: inject on section index 9 (page 12) ── #}
+        {# ── IMAGE SLOT 3 — section index 9, full-width ─────────────────── #}
         {% elif loop.index0 == 9 and image_3_url %}
-        <div class="cf">
-            <div class="img-block img-full">
-                <img src="{{image_3_url}}" alt="{{image_3_caption | default('Implementation Overview')}}">
-                <span class="img-cap">{{image_3_caption | default('Implementation Overview')}}</span>
-            </div>
-            <div class="body">{{section_content | safe}}</div>
+        <div class="img-block img-full">
+            <img src="{{image_3_url}}" alt="{{image_3_caption | default('Implementation Overview')}}">
+            <span class="img-cap">{{image_3_caption | default('Implementation Overview')}}</span>
         </div>
+        <div class="body">{{section.content | safe}}</div>
 
-        {# ── STANDARD SECTION (no image) ── #}
+        {# ── STANDARD — no image ─────────────────────────────────────────── #}
         {% else %}
         <div class="body cf">
-            <span class="drop-letter">{{section_content[0] | default('S')}}</span>
-            {{section_content | safe}}
+            <span class="drop-letter">{{section.drop_cap}}</span>
+            {{section.content | safe}}
         </div>
         {% endif %}
 
-        {# ── FINAL SECTION: add CTA contact block ── #}
+        {# ── LAST SECTION — append CTA + contact block ───────────────────── #}
         {% if loop.last %}
-        <div class="cta-block" style="margin-top: 18px;">
+        <div class="cta-block">
             <div class="cta-eyebrow">Strategic Engagement</div>
             <div class="cta-title">Ready to implement this framework?</div>
             <div class="cta-body">{{cta | default('Contact us to begin your strategic engagement.')}}</div>
@@ -445,10 +348,12 @@
         {% endif %}
 
     </div>
+
     <div class="pg-foot">
         <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
-        <span class="pg-foot-r">PAGE {{"%02d"|format(pg)}}</span>
+        <span class="pg-foot-r">PAGE {{section.page_num}}</span>
     </div>
+
 </div>
 {% endfor %}
 
