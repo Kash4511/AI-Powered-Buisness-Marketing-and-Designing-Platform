@@ -232,60 +232,52 @@ class GroqClient:
 
     def _expand_to_15_pages(self, base_content: Dict[str, Any], signals: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Internal method to expand base content into a 15-page institutional report.
-        Uses granular section-by-section generation to prevent token overflow.
+        Internal method to expand base content into a specific 15-page institutional report structure:
+        - Pages 1-2: Introduction and overview
+        - Page 3: Transition page with foundational context
+        - Pages 4-14: Detailed technical analysis (Chapters 1-5, 2 parts each)
+        - Page 15: Conclusion (Minimal density)
         """
         topic = signals.get('topic')
         audience = signals.get('audience')
         pain_points = signals.get('pain_points')
         
-        # Stage 1A: Executive Summary
-        logger.info("🚀 Stage 1A: Generating Executive Summary...")
-        summary_prompt = f"""You are generating a PROFESSIONAL 15-page consulting-grade report.
-TOPIC: {topic}
-AUDIENCE: {audience}
-PAIN POINTS: {pain_points}
+        # Stage 1A: Page 1-2 Introduction & Overview
+        logger.info("🚀 Stage 1A: Generating Introduction & Overview (Pages 1-2)...")
+        intro_prompt = f"""You are generating a PROFESSIONAL 15-page consulting-grade report on {topic}.
+Requirement: Generate dense introductory content (1500 words) for Pages 1 and 2.
+Content: Executive-level overview, strategic relevance, and institutional context.
+Include 1 [IMAGE_PLACEHOLDER: strategic overview visual] tag.
 
-Requirement: Generate a dense 800-word Executive Summary.
-Return JSON: {{ "executive_summary": "800-word dense prose" }}"""
+Return JSON: {{ "executive_summary": "1500-word dense prose" }}"""
         try:
-            summary_data = self._call_ai("You are a senior strategist.", summary_prompt)
+            intro_data = self._call_ai("You are a senior strategist.", intro_prompt)
         except Exception as e:
-            logger.error(f"❌ Executive Summary failed: {e}. Using fallback.")
-            summary_data = { "executive_summary": f"Strategic analysis for {topic} targeting {audience}." }
+            logger.error(f"❌ Intro failed: {e}. Using fallback.")
+            intro_data = { "executive_summary": f"Strategic introduction for {topic} targeting {audience}." }
 
-        # Stage 1B: Audience Analysis
-        logger.info("🚀 Stage 1B: Generating Audience Analysis...")
-        audience_prompt = f"""You are generating a PROFESSIONAL 15-page consulting-grade report.
-TOPIC: {topic}
-AUDIENCE: {audience}
-
-Requirement: Generate a 1200-word Audience Analysis deep-dive.
-Audience Analysis MUST cover: Commercial, Government, Architect, and Contractor stakeholders.
+        # Stage 1B: Page 3 Transition & Foundational Context
+        logger.info("🚀 Stage 1B: Generating Transition Content (Page 3)...")
+        transition_prompt = f"""Generate Page 3: Foundational context and strategic transition.
+Requirement: 800 words of dense prose establishing the framework for the technical chapters.
+Include 1 [IMAGE_PLACEHOLDER: framework visualization] tag.
 
 Return JSON: {{
   "audience_analysis": {{
-    "commercial_label": "Commercial Stakeholders", "commercial_text": "300-word analysis",
-    "government_label": "Public Sector", "government_text": "300-word analysis",
-    "architect_label": "Design Professionals", "architect_text": "300-word analysis",
-    "contractor_label": "Execution Teams", "contractor_text": "300-word analysis"
+    "commercial_label": "Commercial Stakeholders", "commercial_text": "200-word analysis",
+    "government_label": "Public Sector", "government_text": "200-word analysis",
+    "architect_label": "Design Professionals", "architect_text": "200-word analysis",
+    "contractor_label": "Execution Teams", "contractor_text": "200-word analysis"
   }}
 }}"""
         try:
-            audience_data = self._call_ai("You are a senior strategist.", audience_prompt)
+            transition_data = self._call_ai("You are a senior strategist.", transition_prompt)
         except Exception as e:
-            logger.error(f"❌ Audience Analysis failed: {e}. Using fallback.")
-            audience_data = {
-                "audience_analysis": {
-                    "commercial_label": "Commercial Stakeholders", "commercial_text": "Technical analysis...",
-                    "government_label": "Public Sector", "government_text": "Regulatory analysis...",
-                    "architect_label": "Design Professionals", "architect_text": "Coordination analysis...",
-                    "contractor_label": "Execution Teams", "contractor_text": "Operational analysis..."
-                }
-            }
+            logger.error(f"❌ Transition failed: {e}. Using fallback.")
+            transition_data = { "audience_analysis": { "commercial_label": "Stakeholders", "commercial_text": "Technical context..." } }
 
-        # Stage 2: Chapters 1-5 (Split into 5 calls for token budget)
-        logger.info("🚀 Stage 2: Generating Chapters 1-5 individually...")
+        # Stage 2: Pages 4-14 (Detailed Technical Chapters)
+        logger.info("🚀 Stage 2: Generating Chapters 1-5 (Pages 4-14)...")
         chapters = {}
         for i in range(1, 6):
             logger.info(f"📚 Generating Chapter {i}...")
@@ -300,19 +292,24 @@ Return JSON: {{
             else:
                 structure = ""
 
-            chapter_prompt = f"""Generate Chapter {i} for a 15-page report on {topic}.
+            # Only place the third placeholder in Chapter 3 (Page 9)
+            image_placeholder = ""
+            if i == 3:
+                image_placeholder = "Include 1 [IMAGE_PLACEHOLDER: implementation flowchart] tag."
+
+            chapter_prompt = f"""Generate Chapter {i} (2 full pages) for a 15-page report on {topic}.
 STRICT REQUIREMENTS:
-- Chapter MUST be 1000+ words.
-- Chapter MUST contain 2 [IMAGE_PLACEHOLDER: detailed strategic description] tags.
+- Chapter MUST be 1200+ words across its two parts (body_a and body_b).
+- {image_placeholder}
 - Institutional, technical, data-driven prose.
 
 Return JSON ONLY for this chapter: {{
   "chapter_{i}": {{ 
     "eyebrow": "...", "section_id": "CH 0{i}", "title": "...", 
-    "intro": "150-word intro", 
+    "intro": "200-word intro", 
     {structure}
-    "body_a": "450-word technical body A", 
-    "body_b": "450-word technical body B", 
+    "body_a": "500-word technical body A", 
+    "body_b": "500-word technical body B", 
     "impact_label": "...", "impact_value": "..." 
   }}
 }}"""
@@ -320,44 +317,31 @@ Return JSON ONLY for this chapter: {{
                 chapter_data = self._call_ai("You are a technical strategist.", chapter_prompt)
                 chapters.update(chapter_data)
             except Exception as e:
-                logger.error(f"❌ Failed to generate Chapter {i}: {e}. Using fallback structure.")
-                # Fallback: create a minimal valid chapter structure
-                chapters[f"chapter_{i}"] = {
-                    "eyebrow": "Technical Analysis",
-                    "section_id": f"CH 0{i}",
-                    "title": f"Chapter {i} Insights",
-                    "intro": "Developing strategic insights...",
-                    "body_a": f"The strategic context for Chapter {i} centers on {topic} for {audience}. This analysis provides a deep-dive into the technical and operational frameworks required to address {pain_points}.",
-                    "body_b": f"Building on the initial findings, this section outlines the technical implementation steps. We focus on quantified metrics and institutional alignment to ensure long-term strategic success.",
-                    "impact_label": "Operational Efficiency",
-                    "impact_value": "Significant Improvement"
-                }
+                logger.error(f"❌ Failed Chapter {i}: {e}")
+                chapters[f"chapter_{i}"] = { "title": f"Chapter {i}", "body_a": "Technical analysis...", "body_b": "Strategic depth..." }
 
-        # Stage 3: ROI & Conclusion
-        logger.info("🚀 Stage 3: Generating ROI Analysis & Strategic Recommendations...")
-        stage3_prompt = f"""Generate the final Page 15 (ROI Analysis & Strategic Recommendations).
-Requirement: 800 words of dense prose.
+        # Stage 3: Page 15 Conclusion (Minimal Density)
+        logger.info("🚀 Stage 3: Generating Conclusion (Page 15)...")
+        stage3_prompt = f"""Generate Page 15 (Strategic Recommendations).
+Requirement: 400 words of concise strategic conclusion (low density).
 Return JSON: {{
-  "roi_detailed_analysis": "800-word ROI forecast",
-  "conclusion_strategy": "800-word dense conclusion",
+  "roi_detailed_analysis": "ROI technical forecast",
+  "conclusion_strategy": "Concise final recommendations",
   "drop_caps": ["S", "F", "C", "M", "T"],
-  "image_labels": ["CHALLENGE", "SOLUTION", "ROADMAP", "BENCHMARK", "METHODOLOGY"],
-  "cta": "Professional Call to Action"
+  "image_labels": ["OVERVIEW", "FRAMEWORK", "EXECUTION"],
+  "imagePage4Url_label": "Analysis Visual Context",
+  "imagePage5Url_label": "Solution Implementation Visual",
+  "imagePage6Url_label": "Strategic Roadmap Visualization",
+  "cta": "Call to Action"
 }}"""
         try:
-            stage3 = self._call_ai("You are a financial analyst.", stage3_prompt)
+            stage3 = self._call_ai("You are a senior analyst.", stage3_prompt)
         except Exception as e:
-            logger.error(f"❌ Stage 3 failed: {e}. Using fallback.")
-            stage3 = {
-                "roi_detailed_analysis": "ROI technical forecast...",
-                "conclusion_strategy": "Final recommendations...",
-                "drop_caps": ["S", "F", "C", "M", "T"],
-                "image_labels": ["STRATEGY", "EXECUTION", "IMPACT", "SCALE", "FUTURE"],
-                "cta": "Contact us to implement this framework."
-            }
+            logger.error(f"❌ Stage 3 failed: {e}")
+            stage3 = { "conclusion_strategy": "Final overview...", "cta": "Contact us." }
 
         # Merge all stages
-        expanded = {**summary_data, **audience_data, **chapters, **stage3}
+        expanded = {**intro_data, **transition_data, **chapters, **stage3}
         self._validate_expansion(expanded)
         
         base_content['expansions'] = expanded

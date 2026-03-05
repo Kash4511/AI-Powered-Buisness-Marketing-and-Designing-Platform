@@ -305,6 +305,14 @@ def _run_generation_job(job_id, body, user_id):
                 template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
                 template_vars['phoneNumber'] = template_vars.get('phoneNumber') or firm_profile.get('phone_number', '')
                 template_vars['website'] = template_vars.get('website') or firm_profile.get('firm_website', '')
+                
+                # Image mapping for specific placeholders (3 distinct images)
+                # These variables are used in Template.html for Stage 1/2 placeholders
+                images = firm_profile.get('architectural_images', [])
+                if images:
+                    template_vars['imagePage4Url'] = images[0] if len(images) > 0 else None
+                    template_vars['imagePage5Url'] = images[1] if len(images) > 1 else (images[0] if images else None)
+                    template_vars['imagePage6Url'] = images[2] if len(images) > 2 else (images[0] if images else None)
 
                 # Add page numbers and static labels for 15-page structure
                 template_vars.update({
@@ -388,6 +396,11 @@ def _run_generation_job(job_id, body, user_id):
                 # New expanded fields
                 'executive_summary': template_vars.get('executive_summary', ''),
                 'conclusion': template_vars.get('conclusion', ''),
+                
+                # Image Placeholders
+                'imagePage4Url': template_vars.get('imagePage4Url'),
+                'imagePage5Url': template_vars.get('imagePage5Url'),
+                'imagePage6Url': template_vars.get('imagePage6Url'),
                 
                 # Page Numbers & Static Labels (Updated for 15-page structure)
                 'pageNumber2': '02', 'pageNumber3': '03', 'pageNumber4': '04',
