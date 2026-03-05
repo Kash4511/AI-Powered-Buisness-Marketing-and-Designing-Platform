@@ -30,7 +30,7 @@ from .serializers import (
 )
 from .services import DocRaptorService, render_template
 from .reportlab_service import ReportLabService
-from .services.ai_generator import LeadMagnetAIService
+from .groq_client import GroqClient
 from .models import Template
 
 logger = logging.getLogger(__name__)
@@ -235,7 +235,7 @@ def _run_generation_job(job_id, body, user_id):
             _set_job(job_id, status="failed", error="Lead magnet is missing generation data")
             return
 
-        ai_service = LeadMagnetAIService()
+        ai_client = GroqClient()
         
         # Prepare data for AI generation
         ai_input_data = {
@@ -243,7 +243,8 @@ def _run_generation_job(job_id, body, user_id):
             'target_audience': gen_data.target_audience,
             'pain_points': gen_data.audience_pain_points if isinstance(gen_data.audience_pain_points, list) else [gen_data.audience_pain_points],
             'tone': "Professional and Institutional",
-            'color_theme': "Corporate"
+            'industry': "Architecture",
+            'lead_magnet_type': lead_magnet.lead_magnet_type or 'Strategic Guide'
         }
 
         # 4. PREPARE FIRM PROFILE
@@ -280,11 +281,15 @@ def _run_generation_job(job_id, body, user_id):
                 start_ai = time.time()
                 
                 logger.info("🤖 AI Generation Start via Groq")
-                ai_content = ai_service.generate_lead_magnet(ai_input_data)
                 
-                # Expand content for institutional depth (Prevents blank pages)
-                _set_job(job_id, status="processing", progress=40, message="Expanding content for 15-page depth...")
-                ai_content = ai_service.expand_content_sections(ai_content, ai_input_data)
+                # Step 1: Signals
+                signals = ai_client.get_semantic_signals(ai_input_data)
+                
+                # Step 2: AI Call (includes 15-page expansion)
+                raw_ai_content = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                
+                # Step 3: Mandatory Normalization
+                ai_content = ai_client.normalize_ai_output(raw_ai_content)
                 
                 ai_duration = time.time() - start_ai
                 
@@ -293,44 +298,22 @@ def _run_generation_job(job_id, body, user_id):
                 _set_job(job_id, status="processing", progress=65, message="Structuring content for PDF...")
                 
                 # Map Groq output to template variables
-                # Using the dense expansion keys provided in the replacement prompt
-                exp = ai_content.get('expansions', {})
+                template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
+                
+                # Ensure critical cover/contact fields are never empty
+                template_vars['companyName'] = template_vars.get('companyName') or (firm_profile.get('firm_name') or 'Your Company')
+                template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
+                template_vars['phoneNumber'] = template_vars.get('phoneNumber') or firm_profile.get('phone_number', '')
+                template_vars['website'] = template_vars.get('website') or firm_profile.get('firm_website', '')
 
-                template_vars = {
-                    'mainTitle': ai_content.get('title', lead_magnet.title),
-                    'documentSubtitle': ai_content.get('subtitle', ''),
-                    'companyName': firm_profile.get('firm_name', ''),
-                    'emailAddress': firm_profile.get('work_email', ''),
-                    'phoneNumber': firm_profile.get('phone_number', ''),
-                    'website': firm_profile.get('firm_website', ''),
-                    'primaryColor': firm_profile.get('primary_brand_color', '#2a5766'),
-                    'secondaryColor': firm_profile.get('secondary_brand_color', '#FFFFFF'),
-                    'summary': ai_content.get('target_audience_summary', ''),
-                    'audience_analysis': exp.get('audience_analysis', ai_content.get('audience_analysis', {})),
-                    'key_pain_points': ai_content.get('key_pain_points', []),
-                    'solutions': ai_content.get('solutions', []),
-                    'roi': ai_content.get('roi_section', {}),
-                    'cta': ai_content.get('call_to_action', ''),
-                    
-                    # Technical Expansions (Dense Prose)
-                    'ch1': exp.get('chapter_1', {}),
-                    'ch2': exp.get('chapter_2', {}),
-                    'ch3': exp.get('chapter_3', {}),
-                    'ch4': exp.get('chapter_4', {}),
-                    'ch5': exp.get('chapter_5', {}),
-                    'roi_detailed': exp.get('roi_detailed_analysis', ''),
-                    'conclusion': exp.get('conclusion_strategy', ''),
-                    'cta': exp.get('cta', ai_content.get('call_to_action', '')),
-                    'drop_caps': exp.get('drop_caps', ["S", "F", "C", "M", "T"]),
-                    'image_labels': exp.get('image_labels', [
-                        exp.get('imagePage4Url_label', 'ANALYSIS'),
-                        exp.get('imagePage5Url_label', 'SOLUTION'),
-                        exp.get('imagePage6Url_label', 'ROADMAP')
-                    ]),
-                    
-                    # New expanded fields
-                    'executive_summary': exp.get('executive_summary', ''),
-                }
+                # Add page numbers and static labels for 15-page structure
+                template_vars.update({
+                    'pageNumber2': '02', 'pageNumber3': '03', 'pageNumber4': '04',
+                    'pageNumber5': '05', 'pageNumber6': '06', 'pageNumber7': '07',
+                    'pageNumber8': '08', 'pageNumber9': '09', 'pageNumber10': '10',
+                    'pageNumber11': '11', 'pageNumber12': '12', 'pageNumber13': '13',
+                    'pageNumber14': '14', 'pageNumber15': '15',
+                })
                 
             except ValueError as ve:
                 logger.error(f"⚠️ AI Generation Failed: {str(ve)}")
@@ -922,7 +905,7 @@ class FormaAIConversationView(APIView):
             'brand_logo_url': firm_profile.get('logo_url', ''),
         }
 
-        ai_client = PerplexityClient()
+        ai_client = GroqClient()
         template_service = ReportLabService()
 
         try:
@@ -1042,7 +1025,7 @@ class GenerateDocumentPreviewView(APIView):
             if not isinstance(user_answers, dict) or not isinstance(firm_profile, dict):
                 return Response({'error': 'user_answers and firm_profile must be provided as objects'}, status=status.HTTP_400_BAD_REQUEST)
 
-            ai_client = PerplexityClient()
+            ai_client = GroqClient()
             # Structure-Safe Pipeline
             signals = ai_client.get_semantic_signals(user_answers)
             raw_ai_data = ai_client.generate_lead_magnet_json(signals, firm_profile)

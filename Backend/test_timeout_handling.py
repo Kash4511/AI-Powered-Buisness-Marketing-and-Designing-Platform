@@ -1,29 +1,32 @@
 #!/usr/bin/env python3
 """
-Test script to verify timeout handling and retry logic in PerplexityClient
+Test script to verify timeout handling and retry logic in GroqClient
 """
 
 import os
 import sys
 import django
-from pathlib import Path
+import json
+from dotenv import load_dotenv
 
-# Add the Backend directory to Python path
-backend_dir = Path(__file__).parent
-sys.path.insert(0, str(backend_dir))
+# Load environment variables
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(env_path)
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_project.settings')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 django.setup()
 
-from lead_magnets.perplexity_client import PerplexityClient
+# Import after Django setup
+from lead_magnets.groq_client import GroqClient
 
 def test_timeout_handling():
     """Test the timeout handling and retry logic"""
-    print("🧪 Testing Perplexity API timeout handling...")
+    print("🧪 Testing Groq API timeout handling...")
     
     # Initialize client
-    client = PerplexityClient()
+    client = GroqClient()
     
     # Simple test data
     user_answers = {
