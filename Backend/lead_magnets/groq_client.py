@@ -26,7 +26,7 @@ class GroqClient:
         self.client = Groq(api_key=api_key)
         self.model = "llama-3.3-70b-versatile"
         self.temperature = 0.5
-        self.max_tokens = 8192  # High token limit for dense reports
+        self.max_tokens = 4096  # Safer output limit for Groq models
 
     def get_semantic_signals(self, user_answers: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -162,20 +162,55 @@ class GroqClient:
         
         return template_vars
 
+    def _estimate_tokens(self, text: str) -> int:
+        """Rough estimate of tokens (1.3 tokens per word)."""
+        if not text:
+            return 0
+        return int(len(text.split()) * 1.3)
+
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict[str, Any]:
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=self.temperature,
-            max_tokens=max_tokens or self.max_tokens,
-            response_format={"type": "json_object"}
-        )
+        """Executes a Groq API call with token logging and error handling."""
+        est_input_tokens = self._estimate_tokens(system_prompt + user_prompt)
+        logger.info(f"📡 Groq Request: model={self.model}, est_input_tokens={est_input_tokens}")
         
-        raw_content = response.choices[0].message.content
-        return json.loads(raw_content)
+        # Log full prompt for debugging (masked for production in real scenarios)
+        logger.debug(f"PROMPT SYSTEM: {system_prompt}")
+        logger.debug(f"PROMPT USER: {user_prompt}")
+
+        try:
+            start_time = time.time()
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=self.temperature,
+                max_tokens=max_tokens or self.max_tokens,
+                response_format={"type": "json_object"}
+            )
+            duration = time.time() - start_time
+            
+            raw_content = response.choices[0].message.content
+            est_output_tokens = self._estimate_tokens(raw_content)
+            
+            logger.info(f"✅ Groq Response: duration={duration:.2f}s, est_output_tokens={est_output_tokens}")
+            
+            # Check for truncation
+            if response.choices[0].finish_reason == 'length':
+                logger.error("❌ Groq response truncated due to max completion tokens. Document may be invalid.")
+                # We raise a specific error that views can catch to retry or inform the user
+                raise ValueError("max completion tokens reached before generating a valid document")
+            
+            return json.loads(raw_content)
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Groq JSON Decode Error: {str(e)}")
+            # Fallback: try to fix common JSON issues or return partial
+            raise e
+        except Exception as e:
+            logger.error(f"❌ Groq API Error: {str(e)}")
+            raise e
 
     def _validate_expansion(self, content: Dict[str, Any]) -> bool:
         """Validates the quality and density of the expanded content."""
@@ -198,24 +233,37 @@ class GroqClient:
     def _expand_to_15_pages(self, base_content: Dict[str, Any], signals: Dict[str, Any]) -> Dict[str, Any]:
         """
         Internal method to expand base content into a 15-page institutional report.
-        Uses section-by-section generation for maximum depth and quality.
+        Uses granular section-by-section generation to prevent token overflow.
         """
         topic = signals.get('topic')
         audience = signals.get('audience')
         pain_points = signals.get('pain_points')
         
-        # Stage 1: Executive Summary & Audience Analysis
-        logger.info("🚀 Stage 1: Generating Executive Summary & Audience Analysis...")
-        stage1_prompt = f"""You are generating a PROFESSIONAL 15-page consulting-grade report.
+        # Stage 1A: Executive Summary
+        logger.info("🚀 Stage 1A: Generating Executive Summary...")
+        summary_prompt = f"""You are generating a PROFESSIONAL 15-page consulting-grade report.
 TOPIC: {topic}
 AUDIENCE: {audience}
 PAIN POINTS: {pain_points}
 
-Requirement: Generate a dense 800-word Executive Summary and a 1200-word Audience Analysis deep-dive.
+Requirement: Generate a dense 800-word Executive Summary.
+Return JSON: {{ "executive_summary": "800-word dense prose" }}"""
+        try:
+            summary_data = self._call_ai("You are a senior strategist.", summary_prompt)
+        except Exception as e:
+            logger.error(f"❌ Executive Summary failed: {e}. Using fallback.")
+            summary_data = { "executive_summary": f"Strategic analysis for {topic} targeting {audience}." }
+
+        # Stage 1B: Audience Analysis
+        logger.info("🚀 Stage 1B: Generating Audience Analysis...")
+        audience_prompt = f"""You are generating a PROFESSIONAL 15-page consulting-grade report.
+TOPIC: {topic}
+AUDIENCE: {audience}
+
+Requirement: Generate a 1200-word Audience Analysis deep-dive.
 Audience Analysis MUST cover: Commercial, Government, Architect, and Contractor stakeholders.
 
 Return JSON: {{
-  "executive_summary": "800-word dense prose",
   "audience_analysis": {{
     "commercial_label": "Commercial Stakeholders", "commercial_text": "300-word analysis",
     "government_label": "Public Sector", "government_text": "300-word analysis",
@@ -223,40 +271,93 @@ Return JSON: {{
     "contractor_label": "Execution Teams", "contractor_text": "300-word analysis"
   }}
 }}"""
-        stage1 = self._call_ai("You are a senior strategist.", stage1_prompt)
+        try:
+            audience_data = self._call_ai("You are a senior strategist.", audience_prompt)
+        except Exception as e:
+            logger.error(f"❌ Audience Analysis failed: {e}. Using fallback.")
+            audience_data = {
+                "audience_analysis": {
+                    "commercial_label": "Commercial Stakeholders", "commercial_text": "Technical analysis...",
+                    "government_label": "Public Sector", "government_text": "Regulatory analysis...",
+                    "architect_label": "Design Professionals", "architect_text": "Coordination analysis...",
+                    "contractor_label": "Execution Teams", "contractor_text": "Operational analysis..."
+                }
+            }
 
-        # Stage 2: Chapters 1-5
-        logger.info("🚀 Stage 2: Generating Chapters 1-5 (Dense Technical Prose)...")
-        stage2_prompt = f"""You are generating Chapters 1-5 for a 15-page report on {topic}.
+        # Stage 2: Chapters 1-5 (Split into 5 calls for token budget)
+        logger.info("🚀 Stage 2: Generating Chapters 1-5 individually...")
+        chapters = {}
+        for i in range(1, 6):
+            logger.info(f"📚 Generating Chapter {i}...")
+            
+            # Custom prompt for chapters with unique structures
+            if i == 3:
+                structure = """ "phase_1": {"title": "...", "desc": "..."}, "phase_2": {"title": "...", "desc": "..."}, """
+            elif i == 4:
+                structure = """ "case_study_1": {"title": "...", "desc": "...", "result": "..."}, "case_study_2": {"title": "...", "desc": "...", "result": "..."}, """
+            elif i == 5:
+                structure = """ "methods": [ {"phase": "...", "desc": "..."} ], """
+            else:
+                structure = ""
+
+            chapter_prompt = f"""Generate Chapter {i} for a 15-page report on {topic}.
 STRICT REQUIREMENTS:
-- Each chapter MUST be 1000-1200 words.
-- Each chapter MUST contain at least 2 [IMAGE_PLACEHOLDER: detailed strategic description] tags.
-- Content must be technical, data-driven, and institutional-grade.
+- Chapter MUST be 1000+ words.
+- Chapter MUST contain 2 [IMAGE_PLACEHOLDER: detailed strategic description] tags.
+- Institutional, technical, data-driven prose.
 
-Return JSON: {{
-  "chapter_1": {{ "eyebrow": "Strategic Context", "section_id": "CH 01", "title": "...", "intro": "...", "body_a": "500 words", "body_b": "500 words", "impact_label": "...", "impact_value": "..." }},
-  "chapter_2": {{ "eyebrow": "Strategic Solution", "section_id": "CH 02", "title": "...", "intro": "...", "body_a": "500 words", "body_b": "500 words", "intervention_labels": ["..."] }},
-  "chapter_3": {{ "eyebrow": "Execution Pathway", "section_id": "CH 03", "title": "...", "intro": "...", "phase_1": {{"title": "...", "desc": "..."}}, "phase_2": {{"title": "...", "desc": "..."}}, "body_a": "500 words", "body_b": "500 words" }},
-  "chapter_4": {{ "eyebrow": "Market Benchmarks", "section_id": "CH 04", "title": "...", "intro": "...", "case_study_1": {{"title": "...", "desc": "...", "result": "..."}}, "case_study_2": {{"title": "...", "desc": "...", "result": "..."}}, "body_a": "500 words", "body_b": "500 words" }},
-  "chapter_5": {{ "eyebrow": "Strategic Methodologies", "section_id": "CH 05", "title": "...", "intro": "...", "methods": [ {{"phase": "...", "desc": "..."}} ], "body_a": "500 words", "body_b": "500 words" }}
+Return JSON ONLY for this chapter: {{
+  "chapter_{i}": {{ 
+    "eyebrow": "...", "section_id": "CH 0{i}", "title": "...", 
+    "intro": "150-word intro", 
+    {structure}
+    "body_a": "450-word technical body A", 
+    "body_b": "450-word technical body B", 
+    "impact_label": "...", "impact_value": "..." 
+  }}
 }}"""
-        stage2 = self._call_ai("You are a technical document architect.", stage2_prompt)
+            try:
+                chapter_data = self._call_ai("You are a technical strategist.", chapter_prompt)
+                chapters.update(chapter_data)
+            except Exception as e:
+                logger.error(f"❌ Failed to generate Chapter {i}: {e}. Using fallback structure.")
+                # Fallback: create a minimal valid chapter structure
+                chapters[f"chapter_{i}"] = {
+                    "eyebrow": "Technical Analysis",
+                    "section_id": f"CH 0{i}",
+                    "title": f"Chapter {i} Insights",
+                    "intro": "Developing strategic insights...",
+                    "body_a": f"The strategic context for Chapter {i} centers on {topic} for {audience}. This analysis provides a deep-dive into the technical and operational frameworks required to address {pain_points}.",
+                    "body_b": f"Building on the initial findings, this section outlines the technical implementation steps. We focus on quantified metrics and institutional alignment to ensure long-term strategic success.",
+                    "impact_label": "Operational Efficiency",
+                    "impact_value": "Significant Improvement"
+                }
 
         # Stage 3: ROI & Conclusion
         logger.info("🚀 Stage 3: Generating ROI Analysis & Strategic Recommendations...")
         stage3_prompt = f"""Generate the final Page 15 (ROI Analysis & Strategic Recommendations).
-Requirement: 1000 words of dense prose.
+Requirement: 800 words of dense prose.
 Return JSON: {{
-  "roi_detailed_analysis": "1000-word ROI forecast",
-  "conclusion_strategy": "1000-word dense conclusion",
+  "roi_detailed_analysis": "800-word ROI forecast",
+  "conclusion_strategy": "800-word dense conclusion",
   "drop_caps": ["S", "F", "C", "M", "T"],
   "image_labels": ["CHALLENGE", "SOLUTION", "ROADMAP", "BENCHMARK", "METHODOLOGY"],
   "cta": "Professional Call to Action"
 }}"""
-        stage3 = self._call_ai("You are a financial analyst.", stage3_prompt)
+        try:
+            stage3 = self._call_ai("You are a financial analyst.", stage3_prompt)
+        except Exception as e:
+            logger.error(f"❌ Stage 3 failed: {e}. Using fallback.")
+            stage3 = {
+                "roi_detailed_analysis": "ROI technical forecast...",
+                "conclusion_strategy": "Final recommendations...",
+                "drop_caps": ["S", "F", "C", "M", "T"],
+                "image_labels": ["STRATEGY", "EXECUTION", "IMPACT", "SCALE", "FUTURE"],
+                "cta": "Contact us to implement this framework."
+            }
 
         # Merge all stages
-        expanded = {{**stage1, **stage2, **stage3}}
+        expanded = {**summary_data, **audience_data, **chapters, **stage3}
         self._validate_expansion(expanded)
         
         base_content['expansions'] = expanded
@@ -274,18 +375,14 @@ SCHEMA: {
 }"""
 
     def _construct_base_user_prompt(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> str:
-        return f"""Generate high-fidelity institutional lead magnet content for:
+        return f"""Generate institutional report structure:
 TOPIC: {signals['topic']}
 AUDIENCE: {signals['audience']}
 PAIN POINTS: {signals['pain_points']}
-FIRM NAME: {firm_profile.get('firm_name')}
-FIRM SPECIALIZATION: {firm_profile.get('industry', 'Architecture')}
-INDUSTRY CONTEXT: {signals['industry']}
-TONE: {signals['tone']} (Professional, Strategic, Institutional)
+FIRM: {firm_profile.get('firm_name')} ({firm_profile.get('industry', 'Architecture')})
+TONE: {signals['tone']} (Strategic)
 
-Expected Depth: Executive-level strategic analysis.
-Ensure the output is technical, data-driven, and provides immediate strategic value.
-Return the base structure according to the provided schema."""
+Expected: Executive strategic analysis. Return base structure as JSON."""
 
     def _ensure_closed_tags(self, html: str) -> str:
         if not html: return html

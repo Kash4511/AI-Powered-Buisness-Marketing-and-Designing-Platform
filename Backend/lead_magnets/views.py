@@ -316,8 +316,11 @@ def _run_generation_job(job_id, body, user_id):
                 })
                 
             except ValueError as ve:
-                logger.error(f"⚠️ AI Generation Failed: {str(ve)}")
-                _set_job(job_id, status="failed", error=f"AI Error: {str(ve)}")
+                err_msg = str(ve)
+                if "max completion tokens reached" in err_msg:
+                    err_msg = "Content is too long for the AI to complete in one pass. Try a shorter topic or contact support."
+                logger.error(f"⚠️ AI Generation Failed: {err_msg}")
+                _set_job(job_id, status="failed", error=f"AI Error: {err_msg}")
                 return
             except Exception as e:
                 logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
