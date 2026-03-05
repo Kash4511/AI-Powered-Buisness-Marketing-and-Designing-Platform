@@ -340,6 +340,10 @@ def _run_generation_job(job_id, body, user_id):
             start_pdf = time.time()
             logger.info("📄 PDF Generation Start (DocRaptor)")
 
+            img_1 = resolved_images[0] if len(resolved_images) > 0 else ""
+            img_2 = resolved_images[1] if len(resolved_images) > 1 else ""
+            img_3 = resolved_images[2] if len(resolved_images) > 2 else ""
+
             # ── FIX 4: docraptor_vars passes the pre-built section lists ──
             docraptor_vars = {
                 # Colours

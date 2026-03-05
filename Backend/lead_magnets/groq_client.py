@@ -225,6 +225,7 @@ class GroqClient:
         ).lower().strip()
 
         doc_type = _TYPE_MAP.get(raw_type, "guide")
+        doc_config = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
 
         pain_points = user_answers.get("pain_points", [])
         pain_points_str = (
@@ -232,12 +233,13 @@ class GroqClient:
         )
 
         return {
-            "topic":         user_answers.get("main_topic", "Strategic Design"),
-            "audience":      user_answers.get("target_audience", "Stakeholders"),
-            "pain_points":   pain_points_str,
-            "tone":          user_answers.get("tone", "Professional"),
-            "industry":      user_answers.get("industry", "Architecture"),
-            "document_type": doc_type,
+            "topic":               user_answers.get("main_topic", "Strategic Design"),
+            "audience":            user_answers.get("target_audience", "Stakeholders"),
+            "pain_points":         pain_points_str,
+            "tone":                user_answers.get("tone", "Professional"),
+            "industry":            user_answers.get("industry", "Architecture"),
+            "document_type":       doc_type,
+            "document_type_label": doc_config["label"],
         }
 
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
@@ -260,7 +262,8 @@ class GroqClient:
                 "title": outline.get("title", signals.get("topic", "Strategic Report")),
                 "subtitle": outline.get("subtitle", "Strategic Implementation Guide"),
                 "target_audience_summary": outline.get("target_audience_summary", ""),
-                "expansions": expanded_content
+                "expansions": expanded_content,
+                "document_type_label": signals.get("document_type_label", "Strategic Guide")
             }
             return final_data
         except Exception as e:
@@ -290,6 +293,11 @@ STRICT STRUCTURE REQUIRED:
 17. Final Recommendations & Engagement Pathway
 
 Return JSON with 'title', 'subtitle', 'target_audience_summary', and 'chapters_list' (list of 15-17 objects with 'key' and 'focus')."""
+        
+        # Add a check for the specific type to ensure alignment
+        if signals.get('document_type') == 'checklist':
+            user_prompt += "\nSince this is a CHECKLIST type, ensure pages 6-15 are formatted as actionable verification steps."
+
         return self._call_ai(system_prompt, user_prompt)
 
     def _generate_granular_content(self, outline: Dict[str, Any], signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
@@ -361,6 +369,7 @@ IMAGE PLACEHOLDER RULE:
             "subtitle":            raw.get("subtitle", "Strategic Implementation Guide"),
             "summary":             raw.get("target_audience_summary", ""),
             "sections":            exp,  # Contains all the expanded chapter keys
+            "document_type_label": raw.get("document_type_label", "Strategic Guide")
         }
 
         # HTML safety and tag closing for all prose
@@ -443,6 +452,7 @@ IMAGE PLACEHOLDER RULE:
         vars_: Dict[str, Any] = {
             "mainTitle":          ai_content.get("title"),
             "documentSubtitle":   ai_content.get("subtitle"),
+            "documentTypeLabel":  ai_content.get("document_type_label", "Strategic Guide"),
             "companyName":        firm_profile.get("firm_name", ""),
             "emailAddress":       firm_profile.get("work_email", ""),
             "phoneNumber":        firm_profile.get("phone_number", ""),
