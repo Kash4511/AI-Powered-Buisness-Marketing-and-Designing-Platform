@@ -244,7 +244,7 @@ def _run_generation_job(job_id, body, user_id):
             'pain_points': gen_data.audience_pain_points if isinstance(gen_data.audience_pain_points, list) else [gen_data.audience_pain_points],
             'tone': "Professional and Institutional",
             'industry': "Architecture",
-            'lead_magnet_type': lead_magnet.lead_magnet_type or 'Strategic Guide'
+            'lead_magnet_type': gen_data.lead_magnet_type if gen_data else 'Strategic Guide'
         }
 
         # 4. PREPARE FIRM PROFILE
