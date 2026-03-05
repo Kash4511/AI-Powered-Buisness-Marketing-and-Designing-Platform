@@ -142,17 +142,60 @@ Final document must exceed 3,500 total words.
 
 Return JSON with these exact keys: 
 { 
- "chapter_1_body": "", 
- "chapter_2_body": "", 
- "chapter_3_body": "", 
- "chapter_4_body": "", 
- "chapter_5_body": "", 
- "roi_detailed_analysis": "", 
- "case_study_1": "", 
- "case_study_2": "", 
- "implementation_framework": "", 
- "conclusion_strategy": "" 
- } 
+  "chapter_1": {
+    "eyebrow": "Analysis",
+    "section_id": "CH 01",
+    "title": "STRATEGIC CHALLENGES",
+    "intro": "Brief technical intro to the challenges",
+    "body": "Full 400-600 word technical body",
+    "impact_label": "Risk Factor",
+    "impact_value": "Quantified impact description"
+  },
+  "chapter_2": {
+    "eyebrow": "Solution",
+    "section_id": "CH 02",
+    "title": "STRATEGIC SOLUTIONS",
+    "intro": "Brief technical intro to the solutions",
+    "body": "Full 400-600 word technical body",
+    "intervention_labels": ["Label 1", "Label 2", "Label 3"]
+  },
+  "chapter_3": {
+    "eyebrow": "Execution",
+    "section_id": "CH 03",
+    "title": "EXECUTION ROADMAP",
+    "intro": "Brief technical intro to the roadmap",
+    "phase_1": {"title": "Integration", "desc": "Detailed integration step"},
+    "phase_2": {"title": "Optimization", "desc": "Detailed optimization step"},
+    "body": "Full 400-600 word technical body"
+  },
+  "chapter_4": {
+    "eyebrow": "Benchmarks",
+    "section_id": "CH 04",
+    "title": "SUCCESS BENCHMARKS",
+    "intro": "Brief technical intro to case studies",
+    "case_study_1": {"title": "Project Alpha", "desc": "250 word case study", "result": "Metric"},
+    "case_study_2": {"title": "Project Beta", "desc": "250 word case study", "result": "Metric"},
+    "body": "Full 400-600 word technical body"
+  },
+  "chapter_5": {
+    "eyebrow": "Methods",
+    "section_id": "CH 05",
+    "title": "ENGAGEMENT METHODS",
+    "intro": "Brief technical intro to methods",
+    "methods": [
+       {"phase": "Advisory", "desc": "Detailed service description"},
+       {"phase": "Design", "desc": "Detailed service description"},
+       {"phase": "Management", "desc": "Detailed service description"},
+       {"phase": "Analysis", "desc": "Detailed service description"},
+       {"phase": "Scaling", "desc": "Detailed service description"}
+    ],
+    "body": "Full 400-600 word technical body"
+  },
+  "roi_detailed_analysis": "Detailed ROI prose", 
+  "conclusion_strategy": "Dense strategic conclusion",
+  "drop_caps": ["S", "F", "C", "M", "T"],
+  "image_labels": ["CHALLENGE ANALYSIS", "SOLUTION FRAMEWORK", "EXECUTION PATHWAY"]
+} 
 
 Rules: 
 - No markdown 
@@ -181,15 +224,13 @@ Ensure all content is technical, data-driven, and provides immediate strategic v
                 
                 # Validation Layer
                 is_valid = True
-                chapters_to_check = [
-                    'chapter_1_body', 'chapter_2_body', 'chapter_3_body', 
-                    'chapter_4_body', 'chapter_5_body'
-                ]
+                chapters_to_check = ['chapter_1', 'chapter_2', 'chapter_3', 'chapter_4', 'chapter_5']
                 
                 for ch in chapters_to_check:
-                    content = expanded.get(ch, "")
+                    ch_data = expanded.get(ch, {})
+                    content = ch_data.get('body', "")
                     if not self.is_substantive(content, min_words=350):
-                        logger.warning(f"⚠️ {ch} is not substantive enough ({len(str(content).split())} words).")
+                        logger.warning(f"⚠️ {ch} body is not substantive enough ({len(str(content).split())} words).")
                         is_valid = False
                         break
                 
@@ -232,25 +273,35 @@ SCHEMA:
   "title": "Professional Document Title",
   "subtitle": "Strategic value proposition",
   "target_audience_summary": "Concise definition of the ideal reader profile",
+  "audience_analysis": {
+    "commercial_label": "Commercial Clients",
+    "commercial_text": "Regulatory alignment...",
+    "government_label": "Government Authorities",
+    "government_text": "Policy integration...",
+    "architect_label": "Architects",
+    "architect_text": "Technical coordination...",
+    "contractor_label": "Contractors",
+    "contractor_text": "Execution efficiency..."
+  },
   "key_pain_points": [
     {
       "title": "Specific problem name",
-      "description": "Technical or business impact of this problem"
+      "description": "Technical or business impact"
     }
   ],
   "solutions": [
     {
       "title": "Strategic solution name",
       "implementation_steps": [
-        "Step 1: Actionable item",
-        "Step 2: Actionable item"
+        "Step 1",
+        "Step 2"
       ],
-      "expected_outcome": "Quantifiable or strategic benefit"
+      "expected_outcome": "Quantifiable benefit"
     }
   ],
   "roi_section": {
-    "cost_savings": "Estimated financial impact or formula",
-    "time_savings": "Efficiency gains description",
+    "cost_savings": "Estimated financial impact",
+    "time_savings": "Efficiency gains",
     "competitive_advantage": "Market positioning benefit"
   },
   "call_to_action": "Clear, professional next step"
