@@ -334,6 +334,18 @@ def clean_rendered_html(html: str) -> str:
     if not html:
         return html
     cleaned = html
+    
+    # Process IMAGE_PLACEHOLDER markers
+    def _replace_placeholder(match):
+        desc = match.group(1).strip()
+        return f"""
+        <div class="img-placeholder">
+            <div class="img-placeholder-icon">📊</div>
+            <div class="img-placeholder-text">VISUAL PLACEHOLDER: {desc}</div>
+        </div>
+        """
+    cleaned = re.sub(r"\[IMAGE_PLACEHOLDER:\s*([^\]]+)\]", _replace_placeholder, cleaned)
+
     # Remove empty <li>
     cleaned = re.sub(r"<li>\s*</li>", "", cleaned)
     # Remove empty paragraphs

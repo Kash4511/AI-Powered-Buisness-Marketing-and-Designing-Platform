@@ -320,7 +320,10 @@ def _run_generation_job(job_id, body, user_id):
                     'roi_detailed': exp.get('roi_detailed_analysis', ''),
                     'conclusion': exp.get('conclusion_strategy', ''),
                     'drop_caps': exp.get('drop_caps', ["S", "F", "C", "M", "T"]),
-                    'image_labels': exp.get('image_labels', ["ANALYSIS", "SOLUTION", "ROADMAP"]),
+                    'image_labels': template_vars.get('image_labels', ["ANALYSIS", "SOLUTION", "ROADMAP"]),
+                    
+                    # New expanded fields
+                    'executive_summary': exp.get('executive_summary', ''),
                 }
                 
             except ValueError as ve:
@@ -389,6 +392,10 @@ def _run_generation_job(job_id, body, user_id):
                 'audience_analysis': template_vars.get('audience_analysis', {}),
                 'drop_caps': template_vars.get('drop_caps', ["S", "F", "C", "M", "T"]),
                 'image_labels': template_vars.get('image_labels', ["ANALYSIS", "SOLUTION", "ROADMAP"]),
+                
+                # New expanded fields
+                'executive_summary': template_vars.get('executive_summary', ''),
+                'conclusion': template_vars.get('conclusion', ''),
                 
                 # Page Numbers & Static Labels
                 'pageNumber2': '02', 'pageNumber3': '03', 'pageNumber4': '04',

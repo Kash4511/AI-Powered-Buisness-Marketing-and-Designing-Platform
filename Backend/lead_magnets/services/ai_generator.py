@@ -109,7 +109,7 @@ class LeadMagnetAIService:
             text = text[:-3]
         return text.strip()
 
-    def is_substantive(self, text, min_words=350) -> bool:
+    def is_substantive(self, text, min_words=600) -> bool:
         """Checks if the provided text meets the minimum word count requirement."""
         if not text:
             return False
@@ -122,139 +122,136 @@ class LeadMagnetAIService:
         """
         main_topic = data.get("main_topic", "Business Strategy")
         target_audience = data.get("target_audience", "Executives")
+        pain_points = data.get("pain_points", [])
         
-        expansion_system_prompt = """You are generating an 8-page institutional-grade technical strategic report. 
+        expansion_system_prompt = f"""You are generating a 20-page institutional-grade technical strategic report. 
 
-This is NOT a summary. 
+This is NOT a summary. This is a dense, fully written document suitable for executive review. 
 
-This must be a dense, fully written document suitable for executive review. 
+STRICT INPUT ALIGNMENT: 
+Every chapter MUST reference and address: 
+- MAIN TOPIC: {main_topic}
+- TARGET AUDIENCE: {target_audience}
+- PAIN POINTS: {pain_points}
 
-Strict Requirements: 
+Content Requirements: 
+- Each chapter MUST contain 1200–1500 words of continuous body text. 
+- At least 8-10 fully developed paragraphs per chapter. 
+- Professional, strategic, consulting-level insight (McKinsey/BCG style). 
+- Include technical terminology, quantified metrics, and operational depth. 
+- NO generic filler or shallow summaries. 
 
-Each chapter must contain: 
-- Minimum 400–600 words of continuous body text. 
-- At least 3 fully developed paragraphs. 
-- No bullet-only sections. 
-- No short placeholder sentences. 
-- No generic phrases like "This framework ensures success." 
-- No marketing fluff. 
+Image Placeholders: 
+- Insert at least 2 placeholders per chapter using: [IMAGE_PLACEHOLDER: description]
 
-Content must: 
-- Explain mechanisms. 
-- Explain implementation details. 
-- Provide operational depth. 
-- Include quantified metrics (percentages, cost ranges, timeframes). 
-- Include technical terminology relevant to the topic. 
-- Include realistic constraints and tradeoffs. 
-
-Case studies must: 
-- Be minimum 250 words each. 
-- Describe context, problem, action taken, measurable outcome. 
-- Include numeric performance improvements. 
-
-ROI section must: 
-- Include cost modeling explanation. 
-- Include capital expenditure vs operational savings comparison. 
-- Include 5-year projection logic. 
-- Minimum 300 words. 
-
-Final document must exceed 3,500 total words. 
+Structure: 
+- Chapter 1: Problem Landscape (Analyze pain points deeply)
+- Chapter 2: Strategic Framework (Actionable solutions)
+- Chapter 3: Implementation Roadmap (Step-by-step process)
+- Chapter 4: Realistic Case Studies (Believable examples)
+- Chapter 5: Strategic Takeaways & Recommendations
 
 Return JSON with these exact keys: 
-{ 
-  "chapter_1": {
+{{ 
+  "executive_summary": "1000-word dense executive summary",
+  "chapter_1": {{
     "eyebrow": "Analysis",
     "section_id": "CH 01",
     "title": "STRATEGIC CHALLENGES",
-    "intro": "Brief technical intro to the challenges",
-    "body": "Full 400-600 word technical body",
+    "intro": "300-word technical intro",
+    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries",
     "impact_label": "Risk Factor",
     "impact_value": "Quantified impact description"
-  },
-  "chapter_2": {
+  }},
+  "chapter_2": {{
     "eyebrow": "Solution",
     "section_id": "CH 02",
     "title": "STRATEGIC SOLUTIONS",
-    "intro": "Brief technical intro to the solutions",
-    "body": "Full 400-600 word technical body",
+    "intro": "300-word technical intro",
+    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries",
     "intervention_labels": ["Label 1", "Label 2", "Label 3"]
-  },
-  "chapter_3": {
+  }},
+  "chapter_3": {{
     "eyebrow": "Execution",
     "section_id": "CH 03",
     "title": "EXECUTION ROADMAP",
-    "intro": "Brief technical intro to the roadmap",
-    "phase_1": {"title": "Integration", "desc": "Detailed integration step"},
-    "phase_2": {"title": "Optimization", "desc": "Detailed optimization step"},
-    "body": "Full 400-600 word technical body"
-  },
-  "chapter_4": {
+    "intro": "300-word technical intro",
+    "phase_1": {{"title": "Integration", "desc": "500-word detailed integration step"}},
+    "phase_2": {{"title": "Optimization", "desc": "500-word detailed optimization step"}},
+    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries"
+  }},
+  "chapter_4": {{
     "eyebrow": "Benchmarks",
     "section_id": "CH 04",
     "title": "SUCCESS BENCHMARKS",
-    "intro": "Brief technical intro to case studies",
-    "case_study_1": {"title": "Project Alpha", "desc": "250 word case study", "result": "Metric"},
-    "case_study_2": {"title": "Project Beta", "desc": "250 word case study", "result": "Metric"},
-    "body": "Full 400-600 word technical body"
-  },
-  "chapter_5": {
+    "intro": "300-word technical intro",
+    "case_study_1": {{"title": "Project Alpha", "desc": "600-word case study", "result": "Metric"}},
+    "case_study_2": {{"title": "Project Beta", "desc": "600-word case study", "result": "Metric"}},
+    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries"
+  }},
+  "chapter_5": {{
     "eyebrow": "Methods",
     "section_id": "CH 05",
-    "title": "ENGAGEMENT METHODS",
-    "intro": "Brief technical intro to methods",
+    "title": "STRATEGIC TAKEAWAYS",
+    "intro": "300-word technical intro",
     "methods": [
-       {"phase": "Advisory", "desc": "Detailed service description"},
-       {"phase": "Design", "desc": "Detailed service description"},
-       {"phase": "Management", "desc": "Detailed service description"},
-       {"phase": "Analysis", "desc": "Detailed service description"},
-       {"phase": "Scaling", "desc": "Detailed service description"}
+       {{"phase": "Advisory", "desc": "Detailed service description"}},
+       {{"phase": "Design", "desc": "Detailed service description"}},
+       {{"phase": "Management", "desc": "Detailed service description"}},
+       {{"phase": "Analysis", "desc": "Detailed service description"}},
+       {{"phase": "Scaling", "desc": "Detailed service description"}}
     ],
-    "body": "Full 400-600 word technical body"
-  },
-  "roi_detailed_analysis": "Detailed ROI prose", 
-  "conclusion_strategy": "Dense strategic conclusion",
+    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries"
+  }},
+  "roi_detailed_analysis": "1000-word detailed ROI prose", 
+  "conclusion_strategy": "1000-word dense strategic conclusion",
   "drop_caps": ["S", "F", "C", "M", "T"],
   "image_labels": ["CHALLENGE ANALYSIS", "SOLUTION FRAMEWORK", "EXECUTION PATHWAY"]
-} 
+}} 
 
 Rules: 
-- No markdown 
-- No bullet points unless embedded within paragraphs 
-- No headings inside text 
-- No summaries 
-- No placeholders 
-- Continuous dense professional prose 
-- Return valid JSON only."""
+- Return valid JSON only. 
+- TOTAL word count MUST exceed 6000 words. 
+- If word_count < 6000, expand sections with more technical detail.
+"""
 
-        expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 8-page technical report.
+        expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 20-page technical report.
 TOPIC: {main_topic}
 AUDIENCE: {target_audience}
+PAIN POINTS: {pain_points}
 
 BASE STRUCTURE:
 {json.dumps(base_content, indent=2)}
 
-Ensure all content is technical, data-driven, and provides immediate strategic value."""
+Ensure all content is technical, data-driven, and addresses the audience's specific pain points deeply."""
 
         max_retries = 2
         for attempt in range(max_retries):
             try:
                 logger.info(f"🚀 AI Expansion Attempt {attempt + 1}")
-                # Increased max_tokens for dense content
-                expanded = self._call_ai(expansion_system_prompt, expansion_user_prompt, max_tokens=4096)
+                # Increased max_tokens significantly for dense content
+                # Groq has limits, we might need multiple calls if this is too large
+                # but let's try 8192 first (max for some llama models)
+                expanded = self._call_ai(expansion_system_prompt, expansion_user_prompt, max_tokens=8192)
                 
                 # Validation Layer
                 is_valid = True
                 chapters_to_check = ['chapter_1', 'chapter_2', 'chapter_3', 'chapter_4', 'chapter_5']
                 
+                total_words = 0
                 for ch in chapters_to_check:
                     ch_data = expanded.get(ch, {})
                     content = ch_data.get('body', "")
-                    if not self.is_substantive(content, min_words=350):
-                        logger.warning(f"⚠️ {ch} body is not substantive enough ({len(str(content).split())} words).")
+                    word_count = len(str(content).split())
+                    total_words += word_count
+                    if not self.is_substantive(content, min_words=600):
+                        logger.warning(f"⚠️ {ch} body is not substantive enough ({word_count} words).")
                         is_valid = False
                         break
                 
-                if is_valid:
+                logger.info(f"📊 Total word count across chapters: {total_words}")
+                
+                if is_valid and total_words >= 3000: # Heuristic for total depth
                     logger.info("✅ AI Expansion passed substantive validation.")
                     base_content['expansions'] = expanded
                     return base_content
