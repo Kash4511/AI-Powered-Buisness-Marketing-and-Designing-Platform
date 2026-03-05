@@ -215,6 +215,7 @@ def _run_generation_job(job_id, body, user_id):
         lead_magnet_id = body.get('lead_magnet_id')
         use_ai_content = bool(body.get('use_ai_content', True))
         user_answers = body.get('user_answers', {}) or {}
+        architectural_images = body.get('architectural_images', []) # Added image support
 
         if not template_id or not lead_magnet_id:
             _set_job(job_id, status="failed", error="template_id and lead_magnet_id are required")
@@ -411,6 +412,7 @@ def _run_generation_job(job_id, body, user_id):
                 'imagePage4Url': template_vars.get('imagePage4Url'),
                 'imagePage5Url': template_vars.get('imagePage5Url'),
                 'imagePage6Url': template_vars.get('imagePage6Url'),
+                'architecturalImages': architectural_images, # Inject user images for placeholder replacement
             }
             
             # Use DocRaptor for high-fidelity HTML rendering

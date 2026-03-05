@@ -124,7 +124,7 @@ class LeadMagnetAIService:
         target_audience = data.get("target_audience", "Executives")
         pain_points = data.get("pain_points", [])
         
-        expansion_system_prompt = f"""You are generating a 20-page institutional-grade technical strategic report. 
+        expansion_system_prompt = f"""You are generating a 15-page institutional-grade technical strategic report. 
 
 This is NOT a summary. This is a dense, fully written document suitable for executive review. 
 
@@ -135,84 +135,87 @@ Every chapter MUST reference and address:
 - PAIN POINTS: {pain_points}
 
 Content Requirements: 
-- Each chapter MUST contain 1200–1500 words of continuous body text. 
-- At least 8-10 fully developed paragraphs per chapter. 
+- Total document MUST be exactly 15 pages when rendered.
+- Each page MUST be visually full.
+- Each chapter MUST contain at least 1500 words of continuous body text.
 - Professional, strategic, consulting-level insight (McKinsey/BCG style). 
 - Include technical terminology, quantified metrics, and operational depth. 
-- NO generic filler or shallow summaries. 
+- NO generic filler, NO empty boxes, NO shallow summaries. 
 
 Image Placeholders: 
-- Insert at least 2 placeholders per chapter using: [IMAGE_PLACEHOLDER: description]
+- Insert exactly 2 placeholders per chapter using: [IMAGE_PLACEHOLDER: detailed strategic description]
+- These will be replaced by actual project images provided by the user.
 
 Structure: 
-- Chapter 1: Problem Landscape (Analyze pain points deeply)
-- Chapter 2: Strategic Framework (Actionable solutions)
+- Executive Summary: 800 words of dense strategic overview.
+- Chapter 1: Problem Landscape (Analyze pain points deeply in context of {main_topic})
+- Chapter 2: Strategic Framework (Actionable solutions for {target_audience})
 - Chapter 3: Implementation Roadmap (Step-by-step process)
-- Chapter 4: Realistic Case Studies (Believable examples)
-- Chapter 5: Strategic Takeaways & Recommendations
+- Chapter 4: Success Benchmarks & Case Studies (Realistic examples)
+- Chapter 5: Engagement Methods & Strategic Takeaways
 
 Return JSON with these exact keys: 
 {{ 
-  "executive_summary": "1000-word dense executive summary",
+  "executive_summary": "800-word dense executive summary",
   "chapter_1": {{
-    "eyebrow": "Analysis",
+    "eyebrow": "Strategic Context",
     "section_id": "CH 01",
-    "title": "STRATEGIC CHALLENGES",
-    "intro": "300-word technical intro",
-    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries",
-    "impact_label": "Risk Factor",
-    "impact_value": "Quantified impact description"
+    "title": "THE CHALLENGE LANDSCAPE",
+    "intro": "400-word technical intro",
+    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries",
+    "impact_label": "Economic Impact",
+    "impact_value": "Quantified impact analysis"
   }},
   "chapter_2": {{
-    "eyebrow": "Solution",
+    "eyebrow": "Strategic Solution",
     "section_id": "CH 02",
-    "title": "STRATEGIC SOLUTIONS",
-    "intro": "300-word technical intro",
-    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries",
-    "intervention_labels": ["Label 1", "Label 2", "Label 3"]
+    "title": "ACTIONABLE FRAMEWORKS",
+    "intro": "400-word technical intro",
+    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries",
+    "intervention_labels": ["Operational", "Financial", "Strategic"]
   }},
   "chapter_3": {{
-    "eyebrow": "Execution",
+    "eyebrow": "Execution Pathway",
     "section_id": "CH 03",
-    "title": "EXECUTION ROADMAP",
-    "intro": "300-word technical intro",
-    "phase_1": {{"title": "Integration", "desc": "500-word detailed integration step"}},
-    "phase_2": {{"title": "Optimization", "desc": "500-word detailed optimization step"}},
-    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries"
+    "title": "IMPLEMENTATION ROADMAP",
+    "intro": "400-word technical intro",
+    "phase_1": {{"title": "Phase I: Discovery", "desc": "600-word detailed integration step"}},
+    "phase_2": {{"title": "Phase II: Scale", "desc": "600-word detailed optimization step"}},
+    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries"
   }},
   "chapter_4": {{
-    "eyebrow": "Benchmarks",
+    "eyebrow": "Market Benchmarks",
     "section_id": "CH 04",
-    "title": "SUCCESS BENCHMARKS",
-    "intro": "300-word technical intro",
-    "case_study_1": {{"title": "Project Alpha", "desc": "600-word case study", "result": "Metric"}},
-    "case_study_2": {{"title": "Project Beta", "desc": "600-word case study", "result": "Metric"}},
-    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries"
+    "title": "REALISTIC CASE STUDIES",
+    "intro": "400-word technical intro",
+    "case_study_1": {{"title": "Global Implementation", "desc": "800-word case study", "result": "25% ROI Increase"}},
+    "case_study_2": {{"title": "Regional Optimization", "desc": "800-word case study", "result": "40% Risk Reduction"}},
+    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries"
   }},
   "chapter_5": {{
-    "eyebrow": "Methods",
+    "eyebrow": "Strategic Methodologies",
     "section_id": "CH 05",
-    "title": "STRATEGIC TAKEAWAYS",
-    "intro": "300-word technical intro",
+    "title": "ENGAGEMENT & TAKEAWAYS",
+    "intro": "400-word technical intro",
     "methods": [
-       {{"phase": "Advisory", "desc": "Detailed service description"}},
-       {{"phase": "Design", "desc": "Detailed service description"}},
-       {{"phase": "Management", "desc": "Detailed service description"}},
-       {{"phase": "Analysis", "desc": "Detailed service description"}},
-       {{"phase": "Scaling", "desc": "Detailed service description"}}
+       {{"phase": "Strategic Audit", "desc": "Detailed audit methodology"}},
+       {{"phase": "Framework Design", "desc": "Custom design process"}},
+       {{"phase": "Change Management", "desc": "Implementation strategy"}},
+       {{"phase": "Performance Monitoring", "desc": "KPI tracking"}},
+       {{"phase": "Continuous Improvement", "desc": "Scaling roadmap"}}
     ],
-    "body": "1200-1500 word technical body with [IMAGE_PLACEHOLDER: ...] entries"
+    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries"
   }},
   "roi_detailed_analysis": "1000-word detailed ROI prose", 
   "conclusion_strategy": "1000-word dense strategic conclusion",
   "drop_caps": ["S", "F", "C", "M", "T"],
-  "image_labels": ["CHALLENGE ANALYSIS", "SOLUTION FRAMEWORK", "EXECUTION PATHWAY"]
+  "image_labels": ["CHALLENGE ANALYSIS", "SOLUTION FRAMEWORK", "EXECUTION PATHWAY", "BENCHMARK DATA", "METHODOLOGY"]
 }} 
 
 Rules: 
 - Return valid JSON only. 
-- TOTAL word count MUST exceed 6000 words. 
-- If word_count < 6000, expand sections with more technical detail.
+- TOTAL word count MUST exceed 8000 words. 
+- Deeply align all content with {main_topic}, {target_audience}, and {pain_points}.
 """
 
         expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 20-page technical report.

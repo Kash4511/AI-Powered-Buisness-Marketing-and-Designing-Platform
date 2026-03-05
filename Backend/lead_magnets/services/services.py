@@ -127,7 +127,7 @@ class DocRaptorService:
         print(f"🔍 Missing values: {missing[:10]}")
         print(f"🧪 Rendered length: {len(rendered_html)}")
 
-        rendered_html = clean_rendered_html(rendered_html)
+        rendered_html = clean_rendered_html(rendered_html, variables)
         self._save_preview_html(template_id, rendered_html)
         try:
             debug_out = os.path.join(settings.BASE_DIR, 'debug_output.html')
@@ -329,15 +329,38 @@ class DocRaptorService:
 
 # --- Jinja2 Rendering ---
 
-def clean_rendered_html(html: str) -> str:
+def clean_rendered_html(html: str, variables: Dict[str, Any] = None) -> str:
     """Remove empty list items, content boxes without text, empty quotes, and stray empty paragraphs."""
     if not html:
         return html
     cleaned = html
     
     # Process IMAGE_PLACEHOLDER markers
+    # We try to find actual images from variables if available
+    architectural_images = []
+    if variables and 'architecturalImages' in variables:
+        architectural_images = variables['architecturalImages']
+
+    placeholder_count = 0
     def _replace_placeholder(match):
+        nonlocal placeholder_count
         desc = match.group(1).strip()
+        
+        # If we have architectural images, use one
+        if placeholder_count < len(architectural_images):
+            img = architectural_images[placeholder_count]
+            placeholder_count += 1
+            return f"""
+            <div class="img-container full-width-center">
+                <div class="img-wrapper">
+                    <img src="{img['src']}" alt="{img['alt']}">
+                </div>
+                <span class="img-cap">{desc}</span>
+            </div>
+            """
+        
+        # Fallback to visual placeholder box
+        placeholder_count += 1
         return f"""
         <div class="img-placeholder">
             <div class="img-placeholder-icon">📊</div>
@@ -371,4 +394,4 @@ def render_template(template_html: str, ai_data: Dict[str, Any]) -> str:
     """
     template = Template(template_html)
     filled_html = template.render(**ai_data)
-    return clean_rendered_html(filled_html)
+    return clean_rendered_html(filled_html, ai_data)
