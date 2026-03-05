@@ -51,6 +51,10 @@ class DocRaptorService:
         placeholders = re.findall(r'\{\{\s*(\w+)\s*\}\}', rendered_html)
         if placeholders:
             logger.warning(f"⚠️ Unpopulated Jinja2 placeholders found in {template_name}: {set(placeholders)}")
+            # Fail fast if critical placeholders are unpopulated
+            critical_missing = [p for p in placeholders if p in ('mainTitle', 'companyName')]
+            if critical_missing:
+                raise ValueError(f"Critical template placeholders missing: {critical_missing}")
         
         missing = [k for k, v in variables.items() if not v]
         sample_keys = list(variables.keys())[:10]
@@ -117,12 +121,16 @@ class DocRaptorService:
 
         try:
             rendered_html = self.render_template_with_vars(template_id, variables)
+            # Log the first 500 characters of rendered HTML for visual check
+            logger.debug(f"DocRaptorService: Rendered HTML Snippet: {rendered_html[:500]}...")
         except Exception as e:
             logger.error('DocRaptorService: template rendering failed', exc_info=True)
+            # Capture the problematic variable set for debugging
+            logger.error(f"DocRaptorService: Problematic variables: {list(variables.keys())}")
             return {
                 'success': False,
                 'error': 'Template rendering failed',
-                'details': str(e)
+                'details': f"Jinja2 Error: {str(e)}. Check Template.html for syntax errors or missing variables."
             }
 
         if not self.api_key:
@@ -153,18 +161,23 @@ class DocRaptorService:
                     'document_type': 'pdf',
                     'document_content': rendered_html,
                     'name': f'lead-magnet-{template_id}',
-                    'test': self.test_mode
+                    'test': self.test_mode,
+                    'strict': 'none', # Skip strict validation on DocRaptor's end
+                    'javascript': False, # Explicitly disable JS to avoid rendering failures
+                    'help': True # Request detailed error help from DocRaptor
                 }
             }
+            # Set higher timeout for DocRaptor API
+            timeout = 60
             response = requests.post(
                 self.base_url,
                 json=doc_data,
                 headers={'Content-Type': 'application/json'},
-                timeout=30  # Increased from 12s since this is now a background job
+                timeout=timeout
             )
             
             if response.status_code == 200:
-                logger.info('DocRaptorService: DocRaptor API success')
+                logger.info(f"DocRaptorService: PDF generated successfully ({len(response.content)} bytes)")
                 return {
                     'success': True,
                     'pdf_data': response.content,
@@ -173,11 +186,13 @@ class DocRaptorService:
                     'template_id': template_id
                 }
             else:
-                logger.error(f'DocRaptorService: DocRaptor API error {response.status_code}', extra={'response': response.text})
+                logger.error(f"❌ DocRaptor API Error {response.status_code}: {response.text}")
+                # Log full payload size and first 1k chars for debugging
+                logger.debug(f"Payload Size: {len(rendered_html)} | HTML Snippet: {rendered_html[:1000]}")
                 return {
                     'success': False,
-                    'error': f'PDF engine error ({response.status_code})',
-                    'details': response.text
+                    'error': f'PDF Engine Error ({response.status_code})',
+                    'details': f"Status {response.status_code}: {response.text[:500]}..."
                 }
         except requests.exceptions.Timeout:
             return {
