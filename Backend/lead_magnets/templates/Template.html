@@ -243,125 +243,141 @@
     </div>
 </div>
 
-<!-- PAGE 2 — EXECUTIVE SUMMARY / INTRODUCTION -->
+<!-- PAGE 2 — EXECUTIVE SUMMARY -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">SUMMARY</span><span class="pg-num">02</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">STRATEGY</span><span class="pg-num">02</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Strategic Overview</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Executive <br> Summary</h1>
-        
-        <div class="cf">
-            {% if imagePage4Url %}
-            <div class="img-left">
-                <div class="img-wrapper"><img src="{{imagePage4Url}}" alt="Overview Visual"></div>
-                <span class="img-cap">{{image_labels[0] if image_labels else 'OVERVIEW'}}</span>
-            </div>
-            {% endif %}
-            <div class="body">{{executive_summary|safe}}</div>
-        </div>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Executive Analysis</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Strategic <br> Summary</h1>
+        <div class="body">{{executive_summary|safe}}</div>
     </div>
     <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 02</span></div>
 </div>
 
-<!-- PAGE 3 — FOUNDATIONAL CONTEXT -->
+<!-- PAGE 3 — THE MODERN LANDSCAPE -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">CONTEXT</span><span class="pg-num">03</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">MARKET</span><span class="pg-num">03</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Foundational Analysis</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Strategic <br> Transition</h1>
-        
-        <div class="cf">
-            {% if imagePage5Url %}
-            <div class="img-right">
-                <div class="img-wrapper"><img src="{{imagePage5Url}}" alt="Framework Visual"></div>
-                <span class="img-cap">{{image_labels[1] if image_labels and image_labels|length > 1 else 'FRAMEWORK'}}</span>
-            </div>
-            {% endif %}
-            <div class="col2">
-                {% if audience_analysis.commercial_text %}<div><div class="sec-h2">{{audience_analysis.commercial_label}}</div><p class="body-sm">{{audience_analysis.commercial_text}}</p></div>{% endif %}
-                {% if audience_analysis.government_text %}<div><div class="sec-h2">{{audience_analysis.government_label}}</div><p class="body-sm">{{audience_analysis.government_text}}</p></div>{% endif %}
-            </div>
-            <div class="col2" style="margin-top: 20px;">
-                {% if audience_analysis.architect_text %}<div><div class="sec-h2">{{audience_analysis.architect_label}}</div><p class="body-sm">{{audience_analysis.architect_text}}</p></div>{% endif %}
-                {% if audience_analysis.contractor_text %}<div><div class="sec-h2">{{audience_analysis.contractor_label}}</div><p class="body-sm">{{audience_analysis.contractor_text}}</p></div>{% endif %}
-            </div>
-        </div>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Industry Context</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">The Modern <br> Landscape</h1>
+        <div class="body">{{modern_landscape|safe}}</div>
     </div>
     <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 03</span></div>
 </div>
 
-<!-- PAGE 4-14 — DETAILED CONTENT (CHAPTERS) -->
-{% for ch in [ch1, ch2, ch3, ch4, ch5] %}
-<!-- CHAPTER PART A -->
+<!-- PAGE 4 — TECH COMPLEXITY -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch.section_id}} A</span><span class="pg-num">{{loop.index * 2 + 2}}</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">TECH</span><span class="pg-num">04</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">{{ch.title}} — Part I</h1>
-        
-        {% if loop.index == 2 and imagePage6Url %}
-            <div class="img-container full-width-center" style="margin-bottom: 20px;">
-                <div class="img-wrapper"><img src="{{imagePage6Url}}" alt="Execution Visual"></div>
-                <span class="img-cap">{{image_labels[2] if image_labels and image_labels|length > 2 else 'EXECUTION'}}</span>
-            </div>
-        {% endif %}
-
-        <div class="body">{{ch.intro}}</div>
-        <div class="body">{{ch.body_a|safe}}</div>
-
-        {% if ch.impact_label %}
-            <div class="callout"><div class="callout-title">{{ch.impact_label}}</div><div class="callout-body">{{ch.impact_value}}</div></div>
-        {% endif %}
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Strategic Analysis</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Solving Tech <br> Complexity</h1>
+        <div class="body">{{tech_complexity|safe}}</div>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE {{loop.index * 2 + 2}}</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 04</span></div>
 </div>
 
-<!-- CHAPTER PART B -->
+<!-- PAGE 5 — COMMUNICATION BREAKDOWN -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch.section_id}} B</span><span class="pg-num">{{loop.index * 2 + 3}}</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">STAKEHOLDERS</span><span class="pg-num">05</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Technical Deep Dive</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">{{ch.title}} — Part II</h1>
-        
-        <div class="body">{{ch.body_b|safe}}</div>
-
-        {% if loop.index == 3 %}
-            <div class="col2">
-                {% if ch.phase_1 %}<div><div class="sec-h2">{{ch.phase_1.title}}</div><p class="body-sm">{{ch.phase_1.desc}}</p></div>{% endif %}
-                {% if ch.phase_2 %}<div><div class="sec-h2">{{ch.phase_2.title}}</div><p class="body-sm">{{ch.phase_2.desc}}</p></div>{% endif %}
-            </div>
-        {% endif %}
-
-        {% if loop.index == 4 %}
-            <div class="col2">
-                {% if ch.case_study_1 %}<div><div class="sec-h">{{ch.case_study_1.title}}</div><p class="body-sm">{{ch.case_study_1.desc}}</p><p class="body-sm" style="font-style:italic; font-weight: 700; color: var(--navy);">Result: {{ch.case_study_1.result}}</p></div>{% endif %}
-                {% if ch.case_study_2 %}<div><div class="sec-h">{{ch.case_study_2.title}}</div><p class="body-sm">{{ch.case_study_2.desc}}</p><p class="body-sm" style="font-style:italic; font-weight: 700; color: var(--navy);">Result: {{ch.case_study_2.result}}</p></div>{% endif %}
-            </div>
-        {% endif %}
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Strategic Communication</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Communication <br> Frameworks</h1>
+        <div class="body">{{communication_breakdown|safe}}</div>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE {{loop.index * 2 + 3}}</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 05</span></div>
 </div>
-{% endfor %}
 
-<!-- PAGE 15 — CONCLUSION (LOW DENSITY) -->
+<!-- PAGE 6 — COMPETITION & DIFFERENTIATION -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">STRATEGY</span><span class="pg-num">15</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">MARKET</span><span class="pg-num">06</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Differentiation Strategy</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Competitive <br> Advantage</h1>
+        <div class="body">{{competition_differentiation|safe}}</div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 06</span></div>
+</div>
+
+<!-- PAGE 7 — RISK MANAGEMENT -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">RISK</span><span class="pg-num">07</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Operational Risk</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Risk Management <br> Framework</h1>
+        <div class="body">{{risk_management|safe}}</div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 07</span></div>
+</div>
+
+<!-- PAGE 8 — REAL ESTATE OPPORTUNITIES -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">REAL ESTATE</span><span class="pg-num">08</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Strategic ROI</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Real Estate <br> Opportunities</h1>
+        <div class="body">{{real_estate_opportunities|safe}}</div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 08</span></div>
+</div>
+
+<!-- PAGE 9 — GOVERNMENT ALIGNMENT -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">GOV</span><span class="pg-num">09</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Public Sector</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Government <br> Alignment</h1>
+        <div class="body">{{government_alignment|safe}}</div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 09</span></div>
+</div>
+
+<!-- PAGE 10 — ARCHITECT FRAMEWORKS -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">DESIGN</span><span class="pg-num">10</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Professional Frameworks</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Architectural <br> Frameworks</h1>
+        <div class="body">{{architect_frameworks|safe}}</div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 10</span></div>
+</div>
+
+<!-- PAGE 11 — IMPLEMENTATION ROADMAP -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">ROADMAP</span><span class="pg-num">11</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Execution Strategy</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Strategic <br> Implementation</h1>
+        <div class="body">{{implementation_roadmap|safe}}</div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 11</span></div>
+</div>
+
+<!-- PAGE 12 — CASE STUDIES -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">CASE STUDIES</span><span class="pg-num">12</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Market Proof</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Strategic <br> Benchmarks</h1>
+        <div class="body">{{case_studies|safe}}</div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 12</span></div>
+</div>
+
+<!-- PAGE 13 — FINAL RECOMMENDATIONS -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">CONCLUSION</span><span class="pg-num">13</span></div></div>
     <div class="bw">
         <div class="ch-eyebrow"><span class="ch-eyebrow-label">Strategic Outlook</span><span class="ch-eyebrow-rule"></span></div>
         <h1 class="ch-h1">Final <br> Recommendations</h1>
-        <div class="body" style="font-size: 14px; line-height: 1.6;">{{conclusion|safe}}</div>
-        
-        <div class="callout navy-fill" style="margin-top: 60px;">
-            <div class="callout-title">Strategic ROI Forecast</div>
-            <div class="callout-body">{{roi_detailed}}</div>
-        </div>
+        <div class="body">{{final_recommendations|safe}}</div>
         
         <div class="cta-navy-box" style="margin-top: 40px;">
             <span class="cta-box-eyebrow">Strategic Engagement</span>
             <div class="cta-box-title">{{cta}}</div>
         </div>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 15</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 13</span></div>
 </div>
 
 </div>

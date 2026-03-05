@@ -51,58 +51,140 @@ class GroqClient:
 
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Calls Groq API to generate the initial structured JSON for the lead magnet.
+        Calls Groq API to generate a professional 15-20 page strategic guide.
+        Uses a multi-step pipeline:
+        1. Generate Strategic Outline
+        2. Generate Content Sections Individually (Strict alignment)
+        3. Merge
         """
-        system_prompt = self._get_base_system_prompt()
-        user_prompt = self._construct_base_user_prompt(signals, firm_profile)
-        
         try:
-            raw_data = self._call_ai(system_prompt, user_prompt)
-            # Automatically expand to 15 pages if base generation succeeds
-            return self._expand_to_15_pages(raw_data, signals)
+            # Step 1: Generate Strategic Outline
+            outline = self._generate_strategic_outline(signals, firm_profile)
+            
+            # Step 2: Generate Content Sections Individually
+            expanded_content = self._generate_granular_content(outline, signals, firm_profile)
+            
+            # Combine for final structure
+            final_data = {
+                "title": outline.get("title", signals["topic"]),
+                "subtitle": outline.get("subtitle", "Strategic Guide"),
+                "target_audience_summary": outline.get("target_audience_summary", ""),
+                "expansions": expanded_content
+            }
+            return final_data
         except Exception as e:
-            logger.error(f"Groq generation failed: {str(e)}")
+            logger.error(f"Groq pipeline failed: {str(e)}")
             raise e
+
+    def _generate_strategic_outline(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """Generates the high-level outline for the 15-page report."""
+        logger.info("📐 Generating Strategic Outline...")
+        system_prompt = "You are a senior document architect for a top-tier urban strategy consulting firm."
+        user_prompt = f"""Create a strategic outline for a 15-20 page consulting report.
+TOPIC: {signals['topic']}
+AUDIENCE: {signals['audience']}
+PAIN POINTS: {signals['pain_points']}
+
+STRICT STRUCTURE REQUIRED:
+1. Executive Summary
+2. Modern Landscape
+3. Technology Complexity Analysis
+4. Communication Breakdown Strategies
+5. Competitive Differentiation
+6. Risk Management Framework
+7. Real Estate Agent Opportunities
+8. Government Strategic Alignment
+9. Architect/Designer Frameworks
+10. Implementation Roadmap
+11. Case Studies
+12. Final Recommendations
+
+Return JSON with 'title', 'subtitle', 'target_audience_summary'."""
+        return self._call_ai(system_prompt, user_prompt)
+
+    def _generate_granular_content(self, outline: Dict[str, Any], signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """Generates each section of the report individually for maximum depth and alignment."""
+        logger.info("🚀 Generating Granular Content Sections...")
+        
+        sections = {}
+        topic = signals['topic']
+        audience = signals['audience']
+        pain_points = signals['pain_points']
+        
+        # Mapping of required sections to their specific focus
+        generation_tasks = [
+            ("executive_summary", "800-word dense Executive Summary. Focus on high-level ROI and strategic impact."),
+            ("modern_landscape", "800-word analysis of the current market landscape and emerging trends."),
+            ("tech_complexity", f"1200-word deep-dive on solving Tech Complexity: {pain_points}. Technical and analytical."),
+            ("communication_breakdown", f"1200-word deep-dive on Stakeholder Communication issues and solutions."),
+            ("competition_differentiation", f"1200-word deep-dive on Competitive Pressure and market differentiation."),
+            ("risk_management", f"1200-word deep-dive on Risk Management in large-scale urban projects."),
+            ("real_estate_opportunities", "800-word strategic opportunities specifically for Real Estate Agents."),
+            ("government_alignment", "800-word strategic alignment strategies for Government Officials."),
+            ("architect_frameworks", "800-word design frameworks for Architects and Urban Designers."),
+            ("implementation_roadmap", "1000-word detailed Implementation Roadmap with milestones."),
+            ("case_studies", "1200-word section with 2-3 detailed, technical case studies and measurable outcomes."),
+            ("final_recommendations", "600-word concise strategic recommendations and ROI forecast.")
+        ]
+
+        for key, focus in generation_tasks:
+            logger.info(f"📝 Generating section: {key}...")
+            system_prompt = f"""You are a senior strategist. Write a PROFESSIONAL, DENSE, and ANALYITICAL report section.
+STRICT ALIGNMENT RULE: Every paragraph must explicitly address {pain_points} for {audience}.
+CONTENT DEPTH: 400-500 words per page. Technical, not generic.
+IMAGE RULE: Include 2 [IMAGE_PLACEHOLDER: detailed strategic diagram description] tags.
+"""
+            user_prompt = f"Section Focus: {focus}. Topic: {topic}. Audience: {audience}. Format: Return JSON with key '{key}' containing the prose."
+            
+            try:
+                section_data = self._call_ai(system_prompt, user_prompt)
+                sections.update(section_data)
+            except Exception as e:
+                logger.error(f"❌ Section {key} failed: {e}")
+                sections[key] = f"Strategic analysis regarding {focus}..."
+
+        # Add image labels and drop caps for template compatibility
+        sections.update({
+            "drop_caps": ["S", "F", "C", "M", "T"],
+            "image_labels": ["STRATEGY", "FRAMEWORK", "ANALYSIS", "IMPLEMENTATION", "IMPACT"]
+        })
+        
+        return sections
 
     def normalize_ai_output(self, raw_ai_content: Dict[str, Any]) -> Dict[str, Any]:
         """
         Ensures the AI output follows a consistent structure for the template.
+        Supports the new multi-step pipeline expansions.
         """
-        # If the content was already expanded, it will have 'expansions'
         exp = raw_ai_content.get('expansions', {})
         
         normalized = {
             'title': raw_ai_content.get('title', 'Strategic Report'),
             'subtitle': raw_ai_content.get('subtitle', ''),
             'summary': raw_ai_content.get('target_audience_summary', ''),
-            'audience_analysis': exp.get('audience_analysis', raw_ai_content.get('audience_analysis', {})),
-            'key_pain_points': raw_ai_content.get('key_pain_points', []),
-            'solutions': raw_ai_content.get('solutions', []),
-            'roi_section': raw_ai_content.get('roi_section', {}),
-            'call_to_action': raw_ai_content.get('call_to_action', ''),
-            'executive_summary': exp.get('executive_summary', ''),
-            'roi_detailed': exp.get('roi_detailed_analysis', ''),
-            'conclusion': exp.get('conclusion_strategy', ''),
             'drop_caps': exp.get('drop_caps', ["S", "F", "C", "M", "T"]),
-            'image_labels': exp.get('image_labels', [
-                exp.get('imagePage4Url_label', 'ANALYSIS'),
-                exp.get('imagePage5Url_label', 'SOLUTION'),
-                exp.get('imagePage6Url_label', 'ROADMAP')
-            ]),
-            'chapters': {
-                'ch1': exp.get('chapter_1', {}),
-                'ch2': exp.get('chapter_2', {}),
-                'ch3': exp.get('chapter_3', {}),
-                'ch4': exp.get('chapter_4', {}),
-                'ch5': exp.get('chapter_5', {}),
-            }
+            'image_labels': exp.get('image_labels', ["STRATEGY", "FRAMEWORK", "ANALYSIS"]),
+            
+            # 12-Section Consulting Structure
+            'executive_summary': exp.get('executive_summary', ''),
+            'modern_landscape': exp.get('modern_landscape', ''),
+            'tech_complexity': exp.get('tech_complexity', ''),
+            'communication_breakdown': exp.get('communication_breakdown', ''),
+            'competition_differentiation': exp.get('competition_differentiation', ''),
+            'risk_management': exp.get('risk_management', ''),
+            'real_estate_opportunities': exp.get('real_estate_opportunities', ''),
+            'government_alignment': exp.get('government_alignment', ''),
+            'architect_frameworks': exp.get('architect_frameworks', ''),
+            'implementation_roadmap': exp.get('implementation_roadmap', ''),
+            'case_studies': exp.get('case_studies', ''),
+            'final_recommendations': exp.get('final_recommendations', ''),
+            'cta': exp.get('cta', 'Contact us to implement this framework.')
         }
         
-        # Ensure all chapter bodies have closed tags
-        for ch_key in normalized['chapters']:
-            ch = normalized['chapters'][ch_key]
-            if 'body_a' in ch: ch['body_a'] = self._ensure_closed_tags(ch['body_a'])
-            if 'body_b' in ch: ch['body_b'] = self._ensure_closed_tags(ch['body_b'])
+        # HTML tag safety for all prose sections
+        for key in normalized:
+            if isinstance(normalized[key], str) and '<' in normalized[key]:
+                normalized[key] = self._ensure_closed_tags(normalized[key])
             
         return normalized
 
@@ -128,8 +210,6 @@ class GroqClient:
         """
         Maps the normalized AI content to the final Jinja2 template variables.
         """
-        chapters = ai_content.get('chapters', {})
-        
         template_vars = {
             'mainTitle': ai_content.get('title'),
             'documentSubtitle': ai_content.get('subtitle'),
@@ -140,23 +220,24 @@ class GroqClient:
             'primaryColor': firm_profile.get('primary_brand_color', '#2a5766'),
             'secondaryColor': firm_profile.get('secondary_brand_color', '#FFFFFF'),
             'summary': ai_content.get('summary'),
-            'audience_analysis': ai_content.get('audience_analysis'),
-            'key_pain_points': ai_content.get('key_pain_points'),
-            'solutions': ai_content.get('solutions'),
-            'roi': ai_content.get('roi_section'),
-            'cta': ai_content.get('call_to_action'),
             
-            # Technical Expansions (15-page structure)
-            'ch1': chapters.get('ch1', {}),
-            'ch2': chapters.get('ch2', {}),
-            'ch3': chapters.get('ch3', {}),
-            'ch4': chapters.get('ch4', {}),
-            'ch5': chapters.get('ch5', {}),
-            'roi_detailed': ai_content.get('roi_detailed'),
-            'conclusion': ai_content.get('conclusion'),
+            # 12-Section Consulting Structure Mapping
+            'executive_summary': ai_content.get('executive_summary'),
+            'modern_landscape': ai_content.get('modern_landscape'),
+            'tech_complexity': ai_content.get('tech_complexity'),
+            'communication_breakdown': ai_content.get('communication_breakdown'),
+            'competition_differentiation': ai_content.get('competition_differentiation'),
+            'risk_management': ai_content.get('risk_management'),
+            'real_estate_opportunities': ai_content.get('real_estate_opportunities'),
+            'government_alignment': ai_content.get('government_alignment'),
+            'architect_frameworks': ai_content.get('architect_frameworks'),
+            'implementation_roadmap': ai_content.get('implementation_roadmap'),
+            'case_studies': ai_content.get('case_studies'),
+            'final_recommendations': ai_content.get('final_recommendations'),
+            
+            'cta': ai_content.get('cta'),
             'drop_caps': ai_content.get('drop_caps'),
             'image_labels': ai_content.get('image_labels'),
-            'executive_summary': ai_content.get('executive_summary'),
             'footerText': f"© {firm_profile.get('firm_name', 'Strategic Report')}"
         }
         

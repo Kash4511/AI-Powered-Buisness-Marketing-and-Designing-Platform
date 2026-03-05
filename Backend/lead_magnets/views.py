@@ -300,6 +300,23 @@ def _run_generation_job(job_id, body, user_id):
                 # Map Groq output to template variables
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
                 
+                # Merge expanded content keys directly into template_vars for Template.html
+                exp = ai_content.get('expansions', {})
+                template_vars.update({
+                    'executive_summary': exp.get('executive_summary', ''),
+                    'modern_landscape': exp.get('modern_landscape', ''),
+                    'tech_complexity': exp.get('tech_complexity', ''),
+                    'communication_breakdown': exp.get('communication_breakdown', ''),
+                    'competition_differentiation': exp.get('competition_differentiation', ''),
+                    'risk_management': exp.get('risk_management', ''),
+                    'real_estate_opportunities': exp.get('real_estate_opportunities', ''),
+                    'government_alignment': exp.get('government_alignment', ''),
+                    'architect_frameworks': exp.get('architect_frameworks', ''),
+                    'implementation_roadmap': exp.get('implementation_roadmap', ''),
+                    'case_studies': exp.get('case_studies', ''),
+                    'final_recommendations': exp.get('final_recommendations', ''),
+                })
+                
                 # Ensure critical cover/contact fields are never empty
                 template_vars['companyName'] = template_vars.get('companyName') or (firm_profile.get('firm_name') or 'Your Company')
                 template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
