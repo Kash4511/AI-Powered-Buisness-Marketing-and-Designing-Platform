@@ -219,9 +219,20 @@ def _run_generation_job(job_id, body, user_id):
 
         ai_client = GroqClient()
 
+        # ── DEFENSIVE CHECKS: sanitize placeholder values "h" ──
+        def sanitize_h(val, default):
+            v = str(val or "").strip()
+            if v.lower() == "h" or not v:
+                return default
+            return v
+
+        clean_topic = sanitize_h(gen_data.main_topic, "Strategic Design")
+        clean_outcome = sanitize_h(gen_data.desired_outcome, "a comprehensive strategic roadmap")
+        clean_cta = sanitize_h(gen_data.call_to_action, "Book a strategic consultation")
+
         # ── FIX 1: pass document_type so the correct 15-section config is selected ──
         ai_input_data = {
-            'main_topic':      gen_data.main_topic,
+            'main_topic':      clean_topic,
             'target_audience': gen_data.target_audience,
             'pain_points':     (
                 gen_data.audience_pain_points
@@ -236,6 +247,8 @@ def _run_generation_job(job_id, body, user_id):
                 else "guide"
             ),
             'lead_magnet_type': gen_data.lead_magnet_type if gen_data else 'Strategic Guide',
+            'desired_outcome':  clean_outcome,
+            'call_to_action':   clean_cta,
         }
 
         # Firm profile

@@ -240,6 +240,8 @@ class GroqClient:
             "industry":            user_answers.get("industry", "Architecture"),
             "document_type":       doc_type,
             "document_type_label": doc_config["label"],
+            "desired_outcome":     user_answers.get("desired_outcome", "a comprehensive strategic roadmap"),
+            "call_to_action":      user_answers.get("call_to_action", "Book a strategic consultation"),
         }
 
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
@@ -281,6 +283,8 @@ INPUTS:
 - Type: {signals.get('lead_magnet_type', 'Strategic Guide')}
 - Audience: {signals['audience']}
 - Pain Points: {signals['pain_points']}
+- Desired Outcome for Reader: {signals.get('desired_outcome')}
+- Call to Action: {signals.get('call_to_action')}
 
 STRICT STRUCTURE REQUIRED:
 1. Cover Page & Executive Summary
@@ -328,6 +332,7 @@ You are a senior consultant. Generate EXTREMELY RELEVANT, DENSE, and NON-GENERIC
 
 STRICT ALIGNMENT RULE:
 - Every paragraph must solve {signals['pain_points']} for {signals['audience']}.
+- Content must lead the reader towards: {signals.get('desired_outcome')}.
 - Format: {signals.get('lead_magnet_type', 'Strategic Guide')} style.
 - If type is 'checklist', you MUST use the following HTML structure for each item:
   <div class="checklist-item"><div class="checklist-box"></div><div class="checklist-text">Actionable step description...</div></div>
@@ -576,24 +581,50 @@ Return JSON: {{ "{key}": "full HTML-ready prose content here" }}"""
             )
 
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:
-        start    = time.time()
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": user_prompt},
-            ],
-            temperature=self.temperature,
-            max_tokens=max_tokens or self.max_tokens,
-            response_format={"type": "json_object"},
-        )
-        duration = time.time() - start
-        logger.info(f"✅ Groq | {duration:.2f}s | finish={response.choices[0].finish_reason}")
+        max_retries = 3
+        backoff_factor = 2
+        
+        for attempt in range(max_retries):
+            try:
+                start    = time.time()
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user",   "content": user_prompt},
+                    ],
+                    temperature=self.temperature,
+                    max_tokens=max_tokens or self.max_tokens,
+                    response_format={"type": "json_object"},
+                )
+                duration = time.time() - start
+                logger.info(f"✅ Groq | {duration:.2f}s | finish={response.choices[0].finish_reason}")
 
-        if response.choices[0].finish_reason == "length":
-            raise ValueError("Groq response truncated — max_tokens reached")
+                if response.choices[0].finish_reason == "length":
+                    raise ValueError("Groq response truncated — max_tokens reached")
 
-        return json.loads(response.choices[0].message.content)
+                content = response.choices[0].message.content
+                if not content:
+                    raise ValueError("Empty response from Groq")
+                    
+                return json.loads(content)
+                
+            except Exception as e:
+                # Identify if it's a rate limit or server error
+                error_msg = str(e)
+                is_retryable = any(msg in error_msg.lower() for msg in ["rate limit", "too many requests", "server error", "timeout", "500", "503", "429"])
+                
+                if is_retryable and attempt < max_retries - 1:
+                    wait_time = backoff_factor ** (attempt + 1)
+                    logger.warning(f"⚠️ Groq attempt {attempt + 1} failed: {error_msg}. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                
+                # If not retryable or last attempt, log and raise with better context
+                logger.error(f"❌ Groq API Error on attempt {attempt + 1}: {error_msg}")
+                if "0" == error_msg or not error_msg:
+                    raise Exception("Groq API connection failed or returned an empty error. Please check your API quota.")
+                raise e
 
     # ─────────────────────────────────────────────────────────────────────────
     # UTILITIES
