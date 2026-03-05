@@ -240,57 +240,133 @@ class GroqClient:
             "document_type": doc_type,
         }
 
-    def generate_lead_magnet_json(
-        self, signals: Dict[str, Any], firm_profile: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        doc_type = signals.get("document_type", "guide")
-        config   = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
+    def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MASTER PIPELINE:
+        1. Generate STRATEGIC OUTLINE (15+ pages)
+        2. Expand each section with DEEP ALIGNMENT (Pain points, Audience, Type)
+        3. Inject strategic IMAGE PLACEHOLDERS
+        4. Merge for template rendering
+        """
+        try:
+            # Step 1: Generate Strategic Outline
+            outline = self._generate_strategic_outline(signals, firm_profile)
+            
+            # Step 2: Generate Granular Content (15+ Pages)
+            expanded_content = self._generate_granular_content(outline, signals, firm_profile)
+            
+            # Combine for final structure
+            final_data = {
+                "title": outline.get("title", signals.get("topic", "Strategic Report")),
+                "subtitle": outline.get("subtitle", "Strategic Implementation Guide"),
+                "target_audience_summary": outline.get("target_audience_summary", ""),
+                "expansions": expanded_content
+            }
+            return final_data
+        except Exception as e:
+            logger.error(f"Groq pipeline failed: {str(e)}")
+            raise e
 
-        logger.info(f"📄 Generating {config['label']} | topic={signals['topic']}")
+    def _generate_strategic_outline(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """Generates a high-level 15+ page outline for the consulting report."""
+        logger.info("📐 Step 1: Generating Strategic Outline...")
+        
+        system_prompt = "You are a senior document architect for a top-tier global consulting firm (McKinsey/BCG style)."
+        user_prompt = f"""Create a strategic 15-20 page outline for a PROFESSIONAL LEAD MAGNET.
+INPUTS:
+- Topic: {signals['topic']}
+- Type: {signals.get('lead_magnet_type', 'Strategic Guide')}
+- Audience: {signals['audience']}
+- Pain Points: {signals['pain_points']}
 
-        title_data = self._generate_title(signals, config)
+STRICT STRUCTURE REQUIRED:
+1. Cover Page & Executive Summary
+2. Table of Contents & Methodology Overview
+3. The Modern Strategic Landscape (Problem Context)
+4. Audience-Specific Context: {signals['audience']}
+5. Deep-Dive: Addressing {signals['pain_points']} (Frameworks)
+6-15. Detailed Implementation Pages (Checklists, Verification Steps, Decision Gates)
+16. Technical Case Examples & ROI Analysis
+17. Final Recommendations & Engagement Pathway
 
-        sections_content: Dict[str, str] = {}
-        for idx, (key, title, label, brief) in enumerate(config["sections"], 1):
-            logger.info(f"✍️  Section {idx}/15: {key}")
-            sections_content[key] = self._generate_section(
-                key=key, title=title, label=label, brief=brief,
-                signals=signals, config=config, section_num=idx,
-            )
+Return JSON with 'title', 'subtitle', 'target_audience_summary', and 'chapters_list' (list of 15-17 objects with 'key' and 'focus')."""
+        return self._call_ai(system_prompt, user_prompt)
 
-        return {
-            "title":                   title_data.get("title", signals["topic"]),
-            "subtitle":                title_data.get("subtitle", config["label"]),
-            "target_audience_summary": title_data.get("target_audience_summary", ""),
-            "document_type":           doc_type,
-            "document_type_label":     config["label"],
-            "expansions":              sections_content,
-        }
+    def _generate_granular_content(self, outline: Dict[str, Any], signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """MASTER PROMPT IMPLEMENTATION: Generates deeply aligned content for each page."""
+        logger.info("🚀 Step 2: Generating Deeply Aligned Granular Content...")
+        
+        sections = {}
+        chapters_list = outline.get('chapters_list', [])
+        
+        # Ensure we have a default list if AI failed to provide one
+        if not chapters_list:
+            chapters_list = [
+                {"key": "executive_summary", "focus": "Dense Executive Summary with ROI focus."},
+                {"key": "audience_insights", "focus": "Dedicated insights for each stakeholder."},
+                {"key": "pain_point_analysis", "focus": f"Deep-dive into solving {signals['pain_points']}."},
+                {"key": "implementation_checklist", "focus": "Actionable steps and verification points."},
+                {"key": "technical_frameworks", "focus": "Strategic models and workflows."},
+                {"key": "case_studies", "focus": "Real-world scenarios and outcomes."}
+            ]
+
+        for chapter in chapters_list:
+            key = chapter.get('key')
+            focus = chapter.get('focus')
+            logger.info(f"📝 Expanding Section: {key}...")
+            
+            system_prompt = f"""MASTER PROMPT: PROFESSIONAL LEAD MAGNET GENERATOR
+You are a senior consultant. Generate EXTREMELY RELEVANT, DENSE, and NON-GENERIC content.
+
+STRICT ALIGNMENT RULE:
+- Every paragraph must solve {signals['pain_points']} for {signals['audience']}.
+- Format: {signals.get('lead_magnet_type', 'Strategic Guide')} style.
+- If type is 'checklist', you MUST use the following HTML structure for each item:
+  <div class="checklist-item"><div class="checklist-box"></div><div class="checklist-text">Actionable step description...</div></div>
+- Use <h3> and <h4> for sub-headers.
+
+CONTENT DEPTH:
+- Target 600-900 words for this section.
+- Include frameworks, strategies, and measurable outcomes.
+- REMOVE ALL GENERIC FILLER (No random stats or general advice).
+
+IMAGE PLACEHOLDER RULE:
+- Include at least 2 placeholders like {{{{hero_image}}}} or {{{{system_diagram}}}} with a descriptive caption.
+"""
+            user_prompt = f"Topic: {signals['topic']}. Section Key: {key}. Focus: {focus}. Return JSON with key '{key}' containing valid HTML prose."
+            
+            try:
+                section_data = self._call_ai(system_prompt, user_prompt)
+                sections.update(section_data)
+            except Exception as e:
+                logger.error(f"❌ Section {key} expansion failed: {e}")
+                sections[key] = f"Strategic analysis regarding {focus}..."
+
+        # Add image labels and drop caps
+        sections.update({
+            "drop_caps": ["S", "F", "C", "M", "T"],
+            "image_labels": ["STRATEGY", "FRAMEWORK", "ANALYSIS", "IMPLEMENTATION", "IMPACT"]
+        })
+        
+        return sections
 
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
-        exp    = raw.get("expansions", {})
-        doc_type = raw.get("document_type", "guide")
-        config = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
-
+        """
+        Normalizes the multi-step pipeline output.
+        """
+        exp = raw.get("expansions", {})
+        
         normalized: Dict[str, Any] = {
             "title":               raw.get("title", "Strategic Report"),
-            "subtitle":            raw.get("subtitle", ""),
+            "subtitle":            raw.get("subtitle", "Strategic Implementation Guide"),
             "summary":             raw.get("target_audience_summary", ""),
-            "document_type":       doc_type,
-            "document_type_label": raw.get("document_type_label", config["label"]),
-            "sections_config":     config["sections"],
+            "sections":            exp,  # Contains all the expanded chapter keys
         }
 
-        for key, _title, _label, _ in config["sections"]:
-            content = exp.get(key, "")
-            if isinstance(content, dict):
-                content = json.dumps(content)
-            normalized[key] = content if isinstance(content, str) else str(content)
-
-        # HTML safety
-        for k, v in normalized.items():
+        # HTML safety and tag closing for all prose
+        for k, v in normalized["sections"].items():
             if isinstance(v, str) and "<" in v:
-                normalized[k] = self._ensure_closed_tags(v)
+                normalized["sections"][k] = self._ensure_closed_tags(v)
 
         return normalized
 
@@ -301,40 +377,58 @@ class GroqClient:
         signals: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """
-        Builds the flat dict that Jinja2 Template.html receives.
-
-        KEY FIX: builds `content_sections` and `toc_sections` as plain Python
-        lists of dicts — Jinja2 can loop over these without needing vars().
+        Builds the flat dict for Jinja2.
+        Now dynamically maps 15+ pages based on the AI outline.
         """
-        doc_type = ai_content.get("document_type", "guide")
-        config   = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
-        sections_cfg = config["sections"]
-
-        # Build flat section lists for the template loop
+        sections_data = ai_content.get("sections", {})
         content_sections = []
         toc_sections     = []
-        drop_caps        = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        
+        # Mapping user images to placeholders
+        user_images = firm_profile.get("architectural_images", [])
+        image_map = {}
+        if user_images:
+            image_map["{{hero_image}}"] = f'<div class="img-block img-full"><img src="{user_images[0]}" alt="Strategic View"><span class="img-cap">Strategic Overview</span></div>'
+            if len(user_images) > 1:
+                image_map["{{system_diagram}}"] = f'<div class="img-block img-right"><img src="{user_images[1]}" alt="System Framework"><span class="img-cap">Technical Framework</span></div>'
+            if len(user_images) > 2:
+                image_map["{{case_study_photo}}"] = f'<div class="img-block img-left"><img src="{user_images[2]}" alt="Case Study"><span class="img-cap">Implementation Proof</span></div>'
+        
+        # Also handle standard placeholders suggested by the user
+        placeholder_list = ["{{hero_image}}", "{{urban_design_diagram}}", "{{case_study_photo}}", "{{sustainability_system_diagram}}", "{{system_diagram}}"]
+        
+        ordered_keys = []
+        if 'executive_summary' in sections_data:
+            ordered_keys.append('executive_summary')
+        
+        for k in sections_data.keys():
+            if k not in ordered_keys and k not in ['drop_caps', 'image_labels']:
+                ordered_keys.append(k)
 
-        for idx, (key, title, label, _) in enumerate(sections_cfg):
-            page_num = f"{idx + 3:02d}"   # sections start at page 3
-            content  = ai_content.get(key, "")
-
-            # First character for drop-cap (safe fallback)
-            first_alpha = next(
-                (c for c in (content or "") if c.isalpha()), drop_caps[idx % 26]
-            )
-
+        for idx, key in enumerate(ordered_keys):
+            page_num = f"{idx + 3:02d}"
+            content = sections_data.get(key, "")
+            
+            # Replace placeholders in content
+            for p in placeholder_list:
+                if p in content:
+                    # If we have a mapping, use it. Otherwise, use a caption-only placeholder
+                    replacement = image_map.get(p, f'<div class="callout"><div class="callout-title">Visual Placeholder</div><div class="callout-body">Strategic visual requested: {p[2:-2].replace("_", " ").title()}</div></div>')
+                    content = content.replace(p, replacement)
+            
+            title = key.replace('_', ' ').title()
+            
             content_sections.append({
                 "key":      key,
                 "title":    title,
-                "label":    label,
+                "label":    "STRATEGIC ANALYSIS" if idx > 0 else "EXECUTIVE OVERVIEW",
                 "page_num": page_num,
                 "content":  content,
-                "drop_cap": first_alpha.upper(),
+                "drop_cap": content[0].upper() if content and content[0].isalpha() else "S",
             })
             toc_sections.append({
                 "title":    title,
-                "label":    label,
+                "label":    "ANALYSIS" if idx > 0 else "OVERVIEW",
                 "page_num": page_num,
             })
 
@@ -347,47 +441,30 @@ class GroqClient:
             primary_color = "#" + primary_color
 
         vars_: Dict[str, Any] = {
-            # Identity
             "mainTitle":          ai_content.get("title"),
             "documentSubtitle":   ai_content.get("subtitle"),
-            "documentTypeLabel":  ai_content.get("document_type_label", config["label"]),
             "companyName":        firm_profile.get("firm_name", ""),
             "emailAddress":       firm_profile.get("work_email", ""),
             "phoneNumber":        firm_profile.get("phone_number", ""),
             "website":            firm_profile.get("firm_website", ""),
             "footerText":         f"© {firm_profile.get('firm_name', 'Strategic Report')}",
-
-            # Colours
             "primaryColor":       primary_color,
             "secondaryColor":     firm_profile.get("secondary_brand_color") or "#FFFFFF",
-
-            # Cover summary
             "summary":            ai_content.get("summary", ""),
-
-            # ── THE KEY FIX ──────────────────────────────────────────────
-            # Template loops over these instead of calling vars()[key]
             "content_sections":   content_sections,
             "toc_sections":       toc_sections,
-            # ─────────────────────────────────────────────────────────────
-
-            # Images (populated from firm_profile or views.py upload handling)
-            "image_1_url":        firm_profile.get("image_1_url", ""),
-            "image_2_url":        firm_profile.get("image_2_url", ""),
-            "image_3_url":        firm_profile.get("image_3_url", ""),
-            "image_1_caption":    firm_profile.get("image_1_caption", "Strategic Context"),
-            "image_2_caption":    firm_profile.get("image_2_caption", "Technical Framework"),
-            "image_3_caption":    firm_profile.get("image_3_caption", "Implementation Overview"),
-
-            # CTA
-            "cta":                ai_content.get(
-                "final_recommendations",
-                "Contact us to implement this framework."
-            ),
         }
+        
+        # Map user images to placeholders if present
+        user_images = firm_profile.get("architectural_images", [])
+        if user_images:
+            vars_["image_1_url"] = user_images[0]
+            if len(user_images) > 1: vars_["image_2_url"] = user_images[1]
+            if len(user_images) > 2: vars_["image_3_url"] = user_images[2]
 
         # Also expose each section key directly for any legacy template references
-        for key, _title, _label, _ in sections_cfg:
-            vars_[key] = ai_content.get(key, "")
+        for key, content in sections_data.items():
+            vars_[key] = content
 
         return vars_
 

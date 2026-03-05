@@ -263,13 +263,16 @@ def _run_generation_job(job_id, body, user_id):
                 'industry':              'Architecture',
             }
 
-        # ── FIX 2: resolve image URLs and inject into firm_profile ──
-        img_1 = _resolve_image_url(architectural_images[0]) if len(architectural_images) > 0 else ""
-        img_2 = _resolve_image_url(architectural_images[1]) if len(architectural_images) > 1 else ""
-        img_3 = _resolve_image_url(architectural_images[2]) if len(architectural_images) > 2 else ""
-        firm_profile['image_1_url'] = img_1
-        firm_profile['image_2_url'] = img_2
-        firm_profile['image_3_url'] = img_3
+        # ── FIX 2: resolve image URLs ──
+        resolved_images = []
+        for img_obj in architectural_images:
+            resolved_images.append(_resolve_image_url(img_obj))
+        
+        firm_profile['architectural_images'] = resolved_images
+        # Maintain legacy keys for compatibility
+        firm_profile['image_1_url'] = resolved_images[0] if len(resolved_images) > 0 else ""
+        firm_profile['image_2_url'] = resolved_images[1] if len(resolved_images) > 1 else ""
+        firm_profile['image_3_url'] = resolved_images[2] if len(resolved_images) > 2 else ""
 
         template_vars = {}
 

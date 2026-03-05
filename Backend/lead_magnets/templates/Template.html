@@ -106,7 +106,16 @@
         .body h4        { font-family: var(--fs); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 10px 0 4px; }
         .body ul        { list-style: none; padding: 0; margin: 8px 0 12px; }
         .body ul li     { padding: 5px 0 5px 18px; position: relative; border-bottom: 0.5px solid var(--rule); font-size: 10px; color: var(--mid); line-height: 1.5; }
-        .body ul li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
+        /* ── CHECKLIST ITEMS ────────────────────────────────────────────── */
+        .body .checklist-item {
+            display: flex; gap: 10px; align-items: flex-start;
+            margin-bottom: 8px; padding: 6px 0; border-bottom: 0.5px solid var(--rule);
+        }
+        .body .checklist-box {
+            width: 14px; height: 14px; border: 1.5px solid var(--navy);
+            border-radius: 2px; flex-shrink: 0; margin-top: 2px;
+        }
+        .body .checklist-text { font-size: 10.5px; color: var(--mid); line-height: 1.4; }
 
         /* ── DROP CAP ────────────────────────────────────────────────────── */
         .drop-letter {
@@ -276,47 +285,10 @@
         </div>
         <h1 class="ch-h1">{{section.title | safe}}</h1>
 
-        {# ── IMAGE SLOT 1 — section index 2, image floats RIGHT ─────────── #}
-        {% if loop.index0 == 2 and image_1_url %}
-        <div class="cf">
-            <div class="img-block img-right">
-                <img src="{{image_1_url}}" alt="{{image_1_caption | default('Strategic Context')}}">
-                <span class="img-cap">{{image_1_caption | default('Strategic Context')}}</span>
-            </div>
-            <div class="body">
-                <span class="drop-letter">{{section.drop_cap}}</span>
-                {{section.content | safe}}
-            </div>
-        </div>
-
-        {# ── IMAGE SLOT 2 — section index 5, image floats LEFT ──────────── #}
-        {% elif loop.index0 == 5 and image_2_url %}
-        <div class="cf">
-            <div class="img-block img-left">
-                <img src="{{image_2_url}}" alt="{{image_2_caption | default('Technical Framework')}}">
-                <span class="img-cap">{{image_2_caption | default('Technical Framework')}}</span>
-            </div>
-            <div class="body">
-                <span class="drop-letter">{{section.drop_cap}}</span>
-                {{section.content | safe}}
-            </div>
-        </div>
-
-        {# ── IMAGE SLOT 3 — section index 9, full-width ─────────────────── #}
-        {% elif loop.index0 == 9 and image_3_url %}
-        <div class="img-block img-full">
-            <img src="{{image_3_url}}" alt="{{image_3_caption | default('Implementation Overview')}}">
-            <span class="img-cap">{{image_3_caption | default('Implementation Overview')}}</span>
-        </div>
-        <div class="body">{{section.content | safe}}</div>
-
-        {# ── STANDARD — no image ─────────────────────────────────────────── #}
-        {% else %}
         <div class="body cf">
             <span class="drop-letter">{{section.drop_cap}}</span>
             {{section.content | safe}}
         </div>
-        {% endif %}
 
         {# ── LAST SECTION — append CTA + contact block ───────────────────── #}
         {% if loop.last %}
