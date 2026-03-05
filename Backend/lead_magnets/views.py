@@ -329,8 +329,13 @@ def _run_generation_job(job_id, body, user_id):
                 _set_job(job_id, status="failed", error=f"AI Error: {err_msg}")
                 return
             except Exception as e:
-                logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
-                _set_job(job_id, status="failed", error=f"AI generation failed: {str(e)}")
+                # Provide a more descriptive error than just "0"
+                err_msg = str(e)
+                if err_msg == "0" or not err_msg:
+                    err_msg = f"Silent error ({type(e).__name__}). Check API keys or network connection."
+                
+                logger.error(f"❌ AI Pipeline Error: {err_msg}\n{traceback.format_exc()}")
+                _set_job(job_id, status="failed", error=f"AI generation failed: {err_msg}")
                 return
         else:
             template_vars = {

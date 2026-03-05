@@ -255,9 +255,13 @@ class GroqClient:
         try:
             # Step 1: Generate Strategic Outline
             outline = self._generate_strategic_outline(signals, firm_profile)
+            if not isinstance(outline, dict):
+                raise ValueError(f"AI returned invalid outline type: {type(outline).__name__}")
             
             # Step 2: Generate Granular Content (15+ Pages)
             expanded_content = self._generate_granular_content(outline, signals, firm_profile)
+            if not isinstance(expanded_content, dict):
+                raise ValueError(f"AI returned invalid content type: {type(expanded_content).__name__}")
             
             # Combine for final structure
             final_data = {
@@ -269,7 +273,11 @@ class GroqClient:
             }
             return final_data
         except Exception as e:
-            logger.error(f"Groq pipeline failed: {str(e)}")
+            err_msg = f"{type(e).__name__}: {str(e)}"
+            logger.error(f"Groq pipeline failed: {err_msg}")
+            # Ensure the error message is descriptive, not just "0"
+            if str(e) == "0" or not str(e):
+                raise Exception(f"AI generation failed due to a silent API error ({type(e).__name__}). Please check your API key and quota.") from e
             raise e
 
     def _generate_strategic_outline(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
@@ -421,7 +429,14 @@ IMAGE PLACEHOLDER RULE:
 
         for idx, key in enumerate(ordered_keys):
             page_num = f"{idx + 3:02d}"
-            content = sections_data.get(key, "")
+            raw_content = sections_data.get(key, "")
+            
+            # Ensure content is a string
+            if not isinstance(raw_content, str):
+                logger.warning(f"⚠️ Section {key} content is not a string (type: {type(raw_content).__name__}). Converting.")
+                content = str(raw_content)
+            else:
+                content = raw_content
             
             # Replace placeholders in content
             for p in placeholder_list:
@@ -430,7 +445,7 @@ IMAGE PLACEHOLDER RULE:
                     replacement = image_map.get(p, f'<div class="callout"><div class="callout-title">Visual Placeholder</div><div class="callout-body">Strategic visual requested: {p[2:-2].replace("_", " ").title()}</div></div>')
                     content = content.replace(p, replacement)
             
-            title = key.replace('_', ' ').title()
+            title = str(key).replace('_', ' ').title()
             
             content_sections.append({
                 "key":      key,
@@ -438,7 +453,7 @@ IMAGE PLACEHOLDER RULE:
                 "label":    "STRATEGIC ANALYSIS" if idx > 0 else "EXECUTIVE OVERVIEW",
                 "page_num": page_num,
                 "content":  content,
-                "drop_cap": content[0].upper() if content and content[0].isalpha() else "S",
+                "drop_cap": content[0].upper() if content and content[0][0].isalpha() else "S",
             })
             toc_sections.append({
                 "title":    title,
