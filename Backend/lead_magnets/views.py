@@ -283,7 +283,7 @@ def _run_generation_job(job_id, body, user_id):
                 ai_content = ai_service.generate_lead_magnet(ai_input_data)
                 
                 # Expand content for institutional depth (Prevents blank pages)
-                _set_job(job_id, status="processing", progress=40, message="Expanding content for 8-page depth...")
+                _set_job(job_id, status="processing", progress=40, message="Expanding content for 10-page depth...")
                 ai_content = ai_service.expand_content_sections(ai_content, ai_input_data)
                 
                 ai_duration = time.time() - start_ai
@@ -416,13 +416,15 @@ def _run_generation_job(job_id, body, user_id):
             }
             
             # Use DocRaptor for high-fidelity HTML rendering
+            logger.info(f"🚀 Submitting to DocRaptor for Lead Magnet {lead_magnet_id}")
             result = pdf_service.generate_pdf('modern-guide', docraptor_vars)
             pdf_duration = time.time() - start_pdf
             
             if not result.get('success'):
                 err = result.get('error', 'PDF generation failed')
-                logger.error(f"❌ PDF Failure: {err} | Duration: {pdf_duration:.2f}s")
-                _set_job(job_id, status="failed", error=err)
+                details = result.get('details', 'No additional details provided.')
+                logger.error(f"❌ PDF Failure: {err} | Details: {details} | Duration: {pdf_duration:.2f}s")
+                _set_job(job_id, status="failed", error=f"{err}: {details}")
                 return
             
             _set_job(job_id, status="processing", progress=92, message="Saving...")

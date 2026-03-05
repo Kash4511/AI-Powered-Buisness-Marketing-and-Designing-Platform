@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import time
+import re
 from pathlib import Path
 from groq import Groq
 
@@ -109,6 +110,39 @@ class LeadMagnetAIService:
             text = text[:-3]
         return text.strip()
 
+    def _ensure_closed_tags(self, html: str) -> str:
+        """
+        Simple utility to close dangling HTML tags in AI-generated strings.
+        This prevents 'validate_rendered_html' from failing on truncated AI output.
+        """
+        if not html:
+            return html
+            
+        # Find all tags
+        tags = re.findall(r'<(/?)([a-zA-Z1-6]+)', html)
+        stack = []
+        void_tags = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
+        
+        for is_closing, tag in tags:
+            tag = tag.lower()
+            if tag in void_tags:
+                continue
+            if is_closing:
+                if tag in stack:
+                    # Pop until we find the matching opening tag
+                    while stack:
+                        top = stack.pop()
+                        if top == tag:
+                            break
+            else:
+                stack.append(tag)
+        
+        # Close remaining tags in reverse order
+        for tag in reversed(stack):
+            html += f"</{tag}>"
+            
+        return html
+
     def is_substantive(self, text, min_words=600) -> bool:
         """Checks if the provided text meets the minimum word count requirement."""
         if not text:
@@ -124,7 +158,7 @@ class LeadMagnetAIService:
         target_audience = data.get("target_audience", "Executives")
         pain_points = data.get("pain_points", [])
         
-        expansion_system_prompt = f"""You are generating a 15-page institutional-grade technical strategic report. 
+        expansion_system_prompt = f"""You are generating a 10-page institutional-grade technical strategic report. 
 
 This is NOT a summary. This is a dense, fully written document suitable for executive review. 
 
@@ -135,7 +169,7 @@ Every chapter MUST reference and address:
 - PAIN POINTS: {pain_points}
 
 Content Requirements: 
-- Total document MUST be exactly 15 pages when rendered.
+- Total document MUST be exactly 10 pages when rendered.
 - Each page MUST be visually full.
 - Each chapter MUST contain at least 1500 words of continuous body text.
 - Professional, strategic, consulting-level insight (McKinsey/BCG style). 
@@ -218,7 +252,7 @@ Rules:
 - Deeply align all content with {main_topic}, {target_audience}, and {pain_points}.
 """
 
-        expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 20-page technical report.
+        expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 10-page technical report.
 TOPIC: {main_topic}
 AUDIENCE: {target_audience}
 PAIN POINTS: {pain_points}
@@ -236,6 +270,15 @@ Ensure all content is technical, data-driven, and addresses the audience's speci
                 # Groq has limits, we might need multiple calls if this is too large
                 # but let's try 8192 first (max for some llama models)
                 expanded = self._call_ai(expansion_system_prompt, expansion_user_prompt, max_tokens=8192)
+
+                # Ensure markup safety for all AI fields
+                for key in expanded:
+                    if isinstance(expanded[key], str):
+                        expanded[key] = self._ensure_closed_tags(expanded[key])
+                    elif isinstance(expanded[key], dict):
+                        for subkey in expanded[key]:
+                            if isinstance(expanded[key][subkey], str):
+                                expanded[key][subkey] = self._ensure_closed_tags(expanded[key][subkey])
                 
                 # Validation Layer
                 is_valid = True

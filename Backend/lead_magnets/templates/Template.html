@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{documentTitle}} – {{companyName}}</title>
+    <title>{{documentTitle | default('Strategic Report')}} – {{companyName | default('Architecture Firm')}}</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy:   {{primaryColor}};
-            --navy2:  {{secondaryColor}};
-            --navy3:  {{tertiaryColor}};
-            --navylt: {{accentColor}};
+            --navy:   {{primaryColor | default('#2a5766')}};
+            --navy2:  {{secondaryColor | default('#B8860B')}};
+            --navy3:  {{tertiaryColor | default('#4F7A8B')}};
+            --navylt: {{accentColor | default('#E8F1F4')}};
             --white:  #ffffff;
-            --off:    {{creamColor}};
-            --off2:   {{creamDarkColor}};
-            --ink:    {{inkColor}};
-            --mid:    {{inkMidColor}};
-            --grey:   {{inkLightColor}};
-            --ltgrey: {{ruleColor}};
-            --rule:   {{ruleLightColor}};
-            --cover-text: {{coverTextColor}};
-            --cover-filter: {{coverLogoFilter}};
+            --off:    {{creamColor | default('#F7F4EF')}};
+            --off2:   {{creamDarkColor | default('#EBE6DA')}};
+            --ink:    {{inkColor | default('#1A1A1A')}};
+            --mid:    {{inkMidColor | default('#444444')}};
+            --grey:   {{inkLightColor | default('#888888')}};
+            --ltgrey: {{ruleColor | default('#DDDDDD')}};
+            --rule:   {{ruleLightColor | default('#EEEEEE')}};
+            --cover-text: {{coverTextColor | default('#FFFFFF')}};
+            --cover-filter: {{coverLogoFilter | default('brightness(0) invert(1)')}};
 
             --fd: 'Playfair Display', serif;
             --fs: 'Lato', sans-serif;
@@ -252,14 +252,14 @@
 
 <!-- PAGE 1 — COVER -->
 <div class="page cover">
-    <div class="cv-top"><div class="cv-name">{{companyName}}</div></div>
+    <div class="cv-top"><div class="cv-name">{{companyName | default('Architecture Firm')}}</div></div>
     <div class="cv-body">
-        <div class="cv-aud-text">{{summary}}</div>
-        <div class="cv-title-bold">{{mainTitle}}</div>
-        <div class="cv-title-italic">{{documentSubtitle}}</div>
+        <div class="cv-aud-text">{{summary | default('Strategic Insights & Implementation Framework')}}</div>
+        <div class="cv-title-bold">{{mainTitle | default('Architectural Guide')}}</div>
+        <div class="cv-title-italic">{{documentSubtitle | default('Institutional Perspective')}}</div>
     </div>
     <div class="cv-foot">
-        <span>{{footerText}}</span>
+        <span>{{footerText | default('© Strategic Report')}}</span>
         <span>STRATEGIC REPORT</span>
     </div>
 </div>
