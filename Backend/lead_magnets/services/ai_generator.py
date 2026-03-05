@@ -158,7 +158,7 @@ class LeadMagnetAIService:
         target_audience = data.get("target_audience", "Executives")
         pain_points = data.get("pain_points", [])
         
-        expansion_system_prompt = f"""You are generating a 10-page institutional-grade technical strategic report. 
+        expansion_system_prompt = f"""You are generating a 15-page institutional-grade technical strategic report. 
 
 This is NOT a summary. This is a dense, fully written document suitable for executive review. 
 
@@ -169,7 +169,7 @@ Every chapter MUST reference and address:
 - PAIN POINTS: {pain_points}
 
 Content Requirements: 
-- Total document MUST be exactly 10 pages when rendered.
+- Total document MUST be exactly 15 pages when rendered.
 - Each page MUST be visually full.
 - Each chapter MUST contain at least 1500 words of continuous body text.
 - Professional, strategic, consulting-level insight (McKinsey/BCG style). 
@@ -196,7 +196,8 @@ Return JSON with these exact keys:
     "section_id": "CH 01",
     "title": "THE CHALLENGE LANDSCAPE",
     "intro": "400-word technical intro",
-    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries",
+    "body_a": "800-word technical body part A with 1 [IMAGE_PLACEHOLDER: ...]",
+    "body_b": "800-word technical body part B with 1 [IMAGE_PLACEHOLDER: ...]",
     "impact_label": "Economic Impact",
     "impact_value": "Quantified impact analysis"
   }},
@@ -205,7 +206,8 @@ Return JSON with these exact keys:
     "section_id": "CH 02",
     "title": "ACTIONABLE FRAMEWORKS",
     "intro": "400-word technical intro",
-    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries",
+    "body_a": "800-word technical body part A with 1 [IMAGE_PLACEHOLDER: ...]",
+    "body_b": "800-word technical body part B with 1 [IMAGE_PLACEHOLDER: ...]",
     "intervention_labels": ["Operational", "Financial", "Strategic"]
   }},
   "chapter_3": {{
@@ -215,7 +217,8 @@ Return JSON with these exact keys:
     "intro": "400-word technical intro",
     "phase_1": {{"title": "Phase I: Discovery", "desc": "600-word detailed integration step"}},
     "phase_2": {{"title": "Phase II: Scale", "desc": "600-word detailed optimization step"}},
-    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries"
+    "body_a": "800-word technical body part A with 1 [IMAGE_PLACEHOLDER: ...]",
+    "body_b": "800-word technical body part B with 1 [IMAGE_PLACEHOLDER: ...]"
   }},
   "chapter_4": {{
     "eyebrow": "Market Benchmarks",
@@ -224,7 +227,8 @@ Return JSON with these exact keys:
     "intro": "400-word technical intro",
     "case_study_1": {{"title": "Global Implementation", "desc": "800-word case study", "result": "25% ROI Increase"}},
     "case_study_2": {{"title": "Regional Optimization", "desc": "800-word case study", "result": "40% Risk Reduction"}},
-    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries"
+    "body_a": "800-word technical body part A with 1 [IMAGE_PLACEHOLDER: ...]",
+    "body_b": "800-word technical body part B with 1 [IMAGE_PLACEHOLDER: ...]"
   }},
   "chapter_5": {{
     "eyebrow": "Strategic Methodologies",
@@ -238,7 +242,8 @@ Return JSON with these exact keys:
        {{"phase": "Performance Monitoring", "desc": "KPI tracking"}},
        {{"phase": "Continuous Improvement", "desc": "Scaling roadmap"}}
     ],
-    "body": "1500-word technical body with exactly 2 [IMAGE_PLACEHOLDER: ...] entries"
+    "body_a": "800-word technical body part A with 1 [IMAGE_PLACEHOLDER: ...]",
+    "body_b": "800-word technical body part B with 1 [IMAGE_PLACEHOLDER: ...]"
   }},
   "roi_detailed_analysis": "1000-word detailed ROI prose", 
   "conclusion_strategy": "1000-word dense strategic conclusion",
@@ -252,7 +257,7 @@ Rules:
 - Deeply align all content with {main_topic}, {target_audience}, and {pain_points}.
 """
 
-        expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 10-page technical report.
+        expansion_user_prompt = f"""Expand the following lead magnet structure into a detailed 15-page technical report.
 TOPIC: {main_topic}
 AUDIENCE: {target_audience}
 PAIN POINTS: {pain_points}
@@ -287,17 +292,18 @@ Ensure all content is technical, data-driven, and addresses the audience's speci
                 total_words = 0
                 for ch in chapters_to_check:
                     ch_data = expanded.get(ch, {})
-                    content = ch_data.get('body', "")
-                    word_count = len(str(content).split())
+                    content_a = ch_data.get('body_a', "")
+                    content_b = ch_data.get('body_b', "")
+                    word_count = len(str(content_a).split()) + len(str(content_b).split())
                     total_words += word_count
-                    if not self.is_substantive(content, min_words=600):
-                        logger.warning(f"⚠️ {ch} body is not substantive enough ({word_count} words).")
+                    if not self.is_substantive(content_a, min_words=500) or not self.is_substantive(content_b, min_words=500):
                         is_valid = False
+                        logger.warning(f"⚠️ Chapter {ch} is not substantive enough ({word_count} words)")
                         break
                 
                 logger.info(f"📊 Total word count across chapters: {total_words}")
                 
-                if is_valid and total_words >= 3000: # Heuristic for total depth
+                if is_valid and total_words >= 4000: # Increased heuristic for 15-page depth
                     logger.info("✅ AI Expansion passed substantive validation.")
                     base_content['expansions'] = expanded
                     return base_content

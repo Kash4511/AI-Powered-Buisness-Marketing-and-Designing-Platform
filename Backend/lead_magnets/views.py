@@ -283,7 +283,7 @@ def _run_generation_job(job_id, body, user_id):
                 ai_content = ai_service.generate_lead_magnet(ai_input_data)
                 
                 # Expand content for institutional depth (Prevents blank pages)
-                _set_job(job_id, status="processing", progress=40, message="Expanding content for 10-page depth...")
+                _set_job(job_id, status="processing", progress=40, message="Expanding content for 15-page depth...")
                 ai_content = ai_service.expand_content_sections(ai_content, ai_input_data)
                 
                 ai_duration = time.time() - start_ai
@@ -321,7 +321,7 @@ def _run_generation_job(job_id, body, user_id):
                     'roi_detailed': exp.get('roi_detailed_analysis', ''),
                     'conclusion': exp.get('conclusion_strategy', ''),
                     'drop_caps': exp.get('drop_caps', ["S", "F", "C", "M", "T"]),
-                    'image_labels': template_vars.get('image_labels', ["ANALYSIS", "SOLUTION", "ROADMAP"]),
+                    'image_labels': exp.get('image_labels', ["ANALYSIS", "SOLUTION", "ROADMAP"]),
                     
                     # New expanded fields
                     'executive_summary': exp.get('executive_summary', ''),
@@ -398,10 +398,12 @@ def _run_generation_job(job_id, body, user_id):
                 'executive_summary': template_vars.get('executive_summary', ''),
                 'conclusion': template_vars.get('conclusion', ''),
                 
-                # Page Numbers & Static Labels
+                # Page Numbers & Static Labels (Updated for 15-page structure)
                 'pageNumber2': '02', 'pageNumber3': '03', 'pageNumber4': '04',
                 'pageNumber5': '05', 'pageNumber6': '06', 'pageNumber7': '07',
-                'pageNumber8': '08',
+                'pageNumber8': '08', 'pageNumber9': '09', 'pageNumber10': '10',
+                'pageNumber11': '11', 'pageNumber12': '12', 'pageNumber13': '13',
+                'pageNumber14': '14', 'pageNumber15': '15',
                 
                 # Additional mappings for specific template needs
                 'roi_detailed': template_vars.get('roi_detailed', ''),

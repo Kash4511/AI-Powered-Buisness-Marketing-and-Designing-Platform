@@ -51,11 +51,11 @@ def test_full_pdf_generation_flow(mock_groq_client, mock_requests):
     
     # Mock expansion generation
     mock_expansion = {
-        "chapter_1": {"title": "CH1", "intro": "Intro 1", "body": "Body text " * 400},
-        "chapter_2": {"title": "CH2", "intro": "Intro 2", "body": "Body text " * 400},
-        "chapter_3": {"title": "CH3", "intro": "Intro 3", "body": "Body text " * 400},
-        "chapter_4": {"title": "CH4", "intro": "Intro 4", "body": "Body text " * 400},
-        "chapter_5": {"title": "CH5", "intro": "Intro 5", "body": "Body text " * 400},
+        "chapter_1": {"title": "CH1", "intro": "Intro 1", "body_a": "Body text " * 600, "body_b": "Body text " * 600},
+        "chapter_2": {"title": "CH2", "intro": "Intro 2", "body_a": "Body text " * 600, "body_b": "Body text " * 600},
+        "chapter_3": {"title": "CH3", "intro": "Intro 3", "body_a": "Body text " * 600, "body_b": "Body text " * 600},
+        "chapter_4": {"title": "CH4", "intro": "Intro 4", "body_a": "Body text " * 600, "body_b": "Body text " * 600},
+        "chapter_5": {"title": "CH5", "intro": "Intro 5", "body_a": "Body text " * 600, "body_b": "Body text " * 600},
         "roi_detailed_analysis": "ROI detailed analysis text.",
         "conclusion_strategy": "Conclusion strategy text.",
         "drop_caps": ["S", "F", "C", "M", "T"],
@@ -89,7 +89,8 @@ def test_full_pdf_generation_flow(mock_groq_client, mock_requests):
     # Variables mapping (simplified for test)
     variables = {
         'mainTitle': ai_result['title'],
-        'companyName': 'Test Firm'
+        'companyName': 'Test Firm',
+        'architecturalImages': ["data:image/png;base64,mock_data"]
     }
 
     pdf_result = docraptor_service.generate_pdf('modern-guide', variables)

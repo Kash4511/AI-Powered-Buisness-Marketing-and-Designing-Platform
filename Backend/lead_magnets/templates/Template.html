@@ -169,10 +169,12 @@
             font-family: var(--fs); font-size: 10.5px; line-height: 1.45;
             color: var(--mid); font-weight: 400; margin-bottom: 10px;
             text-align: justify;
+            white-space: pre-line;
         }
         .body-sm {
             font-family: var(--fs); font-size: 9.5px; line-height: 1.4;
             color: var(--mid); font-weight: 400; margin-bottom: 6px;
+            white-space: pre-line;
         }
 
         .drop-letter {
@@ -282,23 +284,23 @@
         <h1 class="ch-h1" style="font-size: 48px; margin-top: 40px;">Table of <br> Contents</h1>
         <div class="content-list">
             <div class="content-item">
-                <div class="content-num">01</div>
+                <div class="content-num">05</div>
                 <div class="content-info"><div class="content-title">{{ch1.title}}</div><div class="content-desc">{{ch1.intro[:150]}}...</div></div>
             </div>
             <div class="content-item">
-                <div class="content-num">02</div>
+                <div class="content-num">07</div>
                 <div class="content-info"><div class="content-title">{{ch2.title}}</div><div class="content-desc">{{ch2.intro[:150]}}...</div></div>
             </div>
             <div class="content-item">
-                <div class="content-num">03</div>
+                <div class="content-num">09</div>
                 <div class="content-info"><div class="content-title">{{ch3.title}}</div><div class="content-desc">{{ch3.intro[:150]}}...</div></div>
             </div>
             <div class="content-item">
-                <div class="content-num">04</div>
+                <div class="content-num">11</div>
                 <div class="content-info"><div class="content-title">{{ch4.title}}</div><div class="content-desc">{{ch4.intro[:150]}}...</div></div>
             </div>
             <div class="content-item">
-                <div class="content-num">05</div>
+                <div class="content-num">13</div>
                 <div class="content-info"><div class="content-title">{{ch5.title}}</div><div class="content-desc">{{ch5.intro[:150]}}...</div></div>
             </div>
         </div>
@@ -343,11 +345,12 @@
 </div>
 
 {% for ch in [ch1, ch2, ch3, ch4, ch5] %}
+<!-- CHAPTER PART A -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch.section_id}}</span><span class="pg-num">{{loop.index + 4}}</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch.section_id}} A</span><span class="pg-num">{{loop.index * 2 + 3}}</span></div></div>
     <div class="bw">
         <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">{{ch.title}}</h1>
+        <h1 class="ch-h1">{{ch.title}} — Part I</h1>
         
         {% if loop.index == 1 %}
             <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[0] if drop_caps else 'S'}}</span><div class="body">{{ch.intro}}</div></div>
@@ -355,7 +358,7 @@
             <div class="body">{{ch.intro}}</div>
         {% endif %}
 
-        <div class="body">{{ch.body|safe}}</div>
+        <div class="body">{{ch.body_a|safe}}</div>
 
         {% if ch.impact_label %}
             <div class="callout"><div class="callout-title">{{ch.impact_label}}</div><div class="callout-body">{{ch.impact_value}}</div></div>
@@ -369,6 +372,18 @@
                 {% endfor %}
             </ul>
         {% endif %}
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE {{loop.index * 2 + 3}}</span></div>
+</div>
+
+<!-- CHAPTER PART B -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch.section_id}} B</span><span class="pg-num">{{loop.index * 2 + 4}}</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Technical Deep Dive</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch.title}} — Part II</h1>
+        
+        <div class="body">{{ch.body_b|safe}}</div>
 
         {% if loop.index == 3 %}
             <div class="col2">
@@ -393,13 +408,13 @@
             </ul>
         {% endif %}
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE {{loop.index + 4}}</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE {{loop.index * 2 + 4}}</span></div>
 </div>
 {% endfor %}
 
-<!-- PAGE 10 — CONCLUSION -->
+<!-- PAGE 15 — CONCLUSION -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">STRATEGY</span><span class="pg-num">10</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">STRATEGY</span><span class="pg-num">15</span></div></div>
     <div class="bw">
         <div class="ch-eyebrow"><span class="ch-eyebrow-label">Strategic Outlook</span><span class="ch-eyebrow-rule"></span></div>
         <h1 class="ch-h1">Final <br> Recommendations</h1>
@@ -410,7 +425,7 @@
             <div class="callout-body">{{roi_detailed}}</div>
         </div>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 10</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 15</span></div>
 </div>
 
 </div>

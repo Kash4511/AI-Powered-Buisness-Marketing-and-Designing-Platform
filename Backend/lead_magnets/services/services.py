@@ -369,27 +369,29 @@ def clean_rendered_html(html: str, variables: Dict[str, Any] = None) -> str:
         nonlocal placeholder_count
         desc = match.group(1).strip()
         
-        # If we have architectural images, use one
-        if placeholder_count < len(architectural_images):
-            img = architectural_images[placeholder_count]
+        # Cycle through architectural images if we run out
+        if architectural_images:
+            # Use modulo to cycle through available images
+            img_index = placeholder_count % len(architectural_images)
+            img = architectural_images[img_index]
             placeholder_count += 1
+            
+            # Handle both string (data URL) and dict formats
+            src = img if isinstance(img, str) else img.get('src', '')
+            alt = desc if isinstance(img, str) else img.get('alt', desc)
+            
             return f"""
             <div class="img-container full-width-center">
                 <div class="img-wrapper">
-                    <img src="{img['src']}" alt="{img['alt']}">
+                    <img src="{src}" alt="{alt}">
                 </div>
                 <span class="img-cap">{desc}</span>
             </div>
             """
         
-        # Fallback to visual placeholder box
-        placeholder_count += 1
-        return f"""
-        <div class="img-placeholder">
-            <div class="img-placeholder-icon">📊</div>
-            <div class="img-placeholder-text">VISUAL PLACEHOLDER: {desc}</div>
-        </div>
-        """
+        # No fallback box - return empty or a small debug marker
+        logger.warning(f"⚠️ Placeholder '{desc}' has no images available to display.")
+        return ""
     cleaned = re.sub(r"\[IMAGE_PLACEHOLDER:\s*([^\]]+)\]", _replace_placeholder, cleaned)
 
     # Remove empty <li>
