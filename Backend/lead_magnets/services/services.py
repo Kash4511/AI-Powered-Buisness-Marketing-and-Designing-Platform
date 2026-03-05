@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+import time
 from typing import Dict, Any, List
 from django.conf import settings
 from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
@@ -8,6 +9,70 @@ import logging
 
 
 logger = logging.getLogger(__name__)
+
+
+def validate_rendered_html(html: str) -> Dict[str, Any]:
+    """
+    Strict validation of rendered HTML before sending to DocRaptor.
+    Returns a report with 'is_valid' and 'errors' list.
+    """
+    errors = []
+    
+    # 1. Check for unreplaced Jinja2 placeholders
+    placeholders = re.findall(r'\{\{\s*(\w+)\s*\}\}', html)
+    if placeholders:
+        errors.append(f"Unreplaced placeholders found: {set(placeholders)}")
+    
+    # 2. Check for unclosed tags (basic balance check)
+    # This is a simple heuristic, not a full HTML parser check
+    tags = re.findall(r'<(/?)([a-zA-Z1-6]+)', html)
+    stack = []
+    void_tags = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
+    
+    for is_closing, tag in tags:
+        tag = tag.lower()
+        if tag in void_tags:
+            continue
+        if is_closing:
+            if not stack:
+                errors.append(f"Unexpected closing tag: </{tag}>")
+            else:
+                top = stack.pop()
+                if top != tag:
+                    errors.append(f"Tag mismatch: expected </{top}>, found </{tag}>")
+        else:
+            stack.append(tag)
+    
+    if stack:
+        errors.append(f"Unclosed tags found: {', '.join(stack)}")
+    
+    # 3. Check for external CSS/JS links
+    links = re.findall(r'href="(http[^"]+)"|src="(http[^"]+)"', html)
+    for href, src in links:
+        url = href or src
+        try:
+            # Quick HEAD request to verify reachability
+            # Use short timeout to avoid blocking
+            resp = requests.head(url, timeout=3, allow_redirects=True)
+            if resp.status_code >= 400:
+                errors.append(f"Asset unreachable (HTTP {resp.status_code}): {url}")
+        except Exception as e:
+            errors.append(f"Asset check failed ({type(e).__name__}): {url}")
+            
+    # 4. Check for base64 images size
+    # DocRaptor recommends keeping base64 images small to avoid massive payloads
+    base64_images = re.findall(r'src="data:image/[^;]+;base64,([^"]+)"', html)
+    for i, b64 in enumerate(base64_images):
+        size_kb = len(b64) * 0.75 / 1024 # Approx size in KB
+        if size_kb > 500: # Warn if over 500KB
+            logger.warning(f"⚠️ Large base64 image found ({size_kb:.1f} KB) at index {i}")
+            if size_kb > 2000: # Error if over 2MB
+                errors.append(f"Base64 image too large ({size_kb:.1f} KB). Use smaller images.")
+
+    return {
+        'is_valid': len(errors) == 0,
+        'errors': errors
+    }
 
 
 class DocRaptorService:
@@ -51,10 +116,8 @@ class DocRaptorService:
         placeholders = re.findall(r'\{\{\s*(\w+)\s*\}\}', rendered_html)
         if placeholders:
             logger.warning(f"⚠️ Unpopulated Jinja2 placeholders found in {template_name}: {set(placeholders)}")
-            # Fail fast if critical placeholders are unpopulated
-            critical_missing = [p for p in placeholders if p in ('mainTitle', 'companyName')]
-            if critical_missing:
-                raise ValueError(f"Critical template placeholders missing: {critical_missing}")
+            # Log missing keys for debugging but don't fail rendering
+            logger.debug(f"DocRaptorService: Missing keys in HTML: {set(placeholders)}")
         
         missing = [k for k, v in variables.items() if not v]
         sample_keys = list(variables.keys())[:10]
@@ -121,11 +184,23 @@ class DocRaptorService:
 
         try:
             rendered_html = self.render_template_with_vars(template_id, variables)
-            # Log the first 500 characters of rendered HTML for visual check
-            logger.debug(f"DocRaptorService: Rendered HTML Snippet: {rendered_html[:500]}...")
+            # Log the first 1000 characters of rendered HTML for visual check
+            logger.info(f"DocRaptorService: Rendered HTML Snippet: {rendered_html[:1000]}...")
+            
+            # Strict HTML Validation
+            validation_report = validate_rendered_html(rendered_html)
+            if not validation_report['is_valid']:
+                logger.error(f"❌ HTML Validation failed: {validation_report['errors']}")
+                return {
+                    'success': False,
+                    'error': 'Template rendering failed',
+                    'details': f"HTML Validation Errors: {'; '.join(validation_report['errors'])}"
+                }
+            
+            logger.info("✅ HTML Validation passed.")
+
         except Exception as e:
             logger.error('DocRaptorService: template rendering failed', exc_info=True)
-            # Capture the problematic variable set for debugging
             logger.error(f"DocRaptorService: Problematic variables: {list(variables.keys())}")
             return {
                 'success': False,
@@ -141,84 +216,108 @@ class DocRaptorService:
                 'details': 'PDF generation is disabled because the API key is not configured.'
             }
 
-        try:
-            logger.info('DocRaptorService: posting to DocRaptor API', extra={
-                'template_id': template_id,
-                'html_size': len(rendered_html)
-            })
-            
-            # Guard: HTML size limit (approx 1.5MB) to prevent memory spikes
-            if len(rendered_html) > 1.5 * 1024 * 1024:
-                return {
-                    'success': False,
-                    'error': 'Content too large',
-                    'details': 'The generated content exceeds the memory safety limit for PDF rendering.'
+        # Exponential Backoff Retry Logic
+        max_retries = 3
+        base_delay = 2 # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"DocRaptorService: Posting to DocRaptor API (Attempt {attempt + 1})", extra={
+                    'template_id': template_id,
+                    'html_size': len(rendered_html)
+                })
+                
+                doc_data = {
+                    'user_credentials': self.api_key,
+                    'doc': {
+                        'document_type': 'pdf',
+                        'document_content': rendered_html,
+                        'name': f'lead-magnet-{template_id}',
+                        'test': self.test_mode,
+                        'strict': 'none',
+                        'javascript': False,
+                        'help': True
+                    }
                 }
+                
+                # Log full request headers and partially redacted body
+                logger.debug(f"DocRaptor Request Headers: {{'Content-Type': 'application/json'}}")
+                logger.debug(f"DocRaptor Request Body (redacted): {{'user_credentials': '...', 'doc': {{...}}}}")
 
-            doc_data = {
-                'user_credentials': self.api_key,
-                'doc': {
-                    'document_type': 'pdf',
-                    'document_content': rendered_html,
-                    'name': f'lead-magnet-{template_id}',
-                    'test': self.test_mode,
-                    'strict': 'none', # Skip strict validation on DocRaptor's end
-                    'javascript': False, # Explicitly disable JS to avoid rendering failures
-                    'help': True # Request detailed error help from DocRaptor
-                }
-            }
-            # Set higher timeout for DocRaptor API
-            timeout = 60
-            response = requests.post(
-                self.base_url,
-                json=doc_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=timeout
-            )
-            
-            if response.status_code == 200:
-                logger.info(f"DocRaptorService: PDF generated successfully ({len(response.content)} bytes)")
-                return {
-                    'success': True,
-                    'pdf_data': response.content,
-                    'content_type': 'application/pdf',
-                    'filename': f'lead-magnet-{template_id}.pdf',
-                    'template_id': template_id
-                }
-            else:
-                logger.error(f"❌ DocRaptor API Error {response.status_code}: {response.text}")
-                # Log full payload size and first 1k chars for debugging
-                logger.debug(f"Payload Size: {len(rendered_html)} | HTML Snippet: {rendered_html[:1000]}")
+                # DocRaptor supports both user_credentials in body and Basic Auth
+                # We provide both for maximum compatibility and to satisfy header requirements
+                auth = (self.api_key, '') # Basic Auth uses API key as username, empty password
+                
+                timeout = 90 # Increased timeout for dense documents
+                response = requests.post(
+                    self.base_url,
+                    json=doc_data,
+                    auth=auth,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=timeout
+                )
+                
+                # Log full response details
+                logger.info(f"DocRaptor Response Status: {response.status_code}")
+                logger.debug(f"DocRaptor Response Headers: {dict(response.headers)}")
+                
+                if response.status_code == 200:
+                    logger.info(f"DocRaptorService: PDF generated successfully ({len(response.content)} bytes)")
+                    return {
+                        'success': True,
+                        'pdf_data': response.content,
+                        'content_type': 'application/pdf',
+                        'filename': f'lead-magnet-{template_id}.pdf',
+                        'template_id': template_id
+                    }
+                elif response.status_code == 401:
+                    logger.error("❌ DocRaptor Authentication Failed (401). Check API Key.")
+                    return {
+                        'success': False,
+                        'error': 'DocRaptor Authentication Failed',
+                        'details': 'The DocRaptor API key is invalid or has expired.'
+                    }
+                elif response.status_code in (429, 500, 502, 503, 504):
+                    # Transient errors - retry
+                    wait_time = base_delay * (2 ** attempt)
+                    logger.warning(f"⚠️ DocRaptor transient error {response.status_code}. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    # Permanent error
+                    logger.error(f"❌ DocRaptor API Error {response.status_code}: {response.text}")
+                    return {
+                        'success': False,
+                        'error': f'PDF Engine Error ({response.status_code})',
+                        'details': f"Status {response.status_code}: {response.text[:1000]}..."
+                    }
+
+            except requests.exceptions.Timeout:
+                wait_time = base_delay * (2 ** attempt)
+                logger.warning(f"⚠️ DocRaptor timeout. Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            except requests.exceptions.RequestException as e:
+                logger.error(f"❌ DocRaptor RequestException: {str(e)}")
                 return {
                     'success': False,
-                    'error': f'PDF Engine Error ({response.status_code})',
-                    'details': f"Status {response.status_code}: {response.text[:500]}..."
+                    'error': 'PDF generation service unreachable',
+                    'details': str(e)
                 }
-        except requests.exceptions.Timeout:
-            return {
-                'success': False,
-                'error': 'PDF generation timed out',
-                'details': 'The request to the PDF generation service timed out. Please try with less content.'
-            }
-        except requests.exceptions.RequestException as e:
-            return {
-                'success': False,
-                'error': 'PDF generation service unreachable',
-                'details': str(e)
-            }
-        except MemoryError:
-            return {
-                'success': False,
-                'error': 'Memory limit exceeded',
-                'details': 'The server ran out of memory while generating the PDF.'
-            }
-        except Exception as e:
-            logger.error('DocRaptorService: unexpected error during PDF generation', exc_info=True)
-            return {
-                'success': False,
-                'error': 'Unexpected PDF generation error',
-                'details': str(e)
-            }
+            except Exception as e:
+                logger.error('DocRaptorService: unexpected error during PDF generation', exc_info=True)
+                return {
+                    'success': False,
+                    'error': 'Unexpected PDF generation error',
+                    'details': str(e)
+                }
+        
+        # If we reach here, all retries failed
+        return {
+            'success': False,
+            'error': 'PDF generation failed after multiple attempts',
+            'details': 'The PDF engine is currently unavailable or timing out. Please try again later.'
+        }
 
     def generate_pdf_with_ai_content(self, template_id: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self.generate_pdf(template_id, variables)

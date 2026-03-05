@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import time
 from pathlib import Path
 from groq import Groq
 
@@ -62,6 +63,11 @@ class LeadMagnetAIService:
                 raise ValueError(f"AI content generation failed: {str(retry_err)}")
 
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> dict:
+        logger.info(f"Groq API Call: model={self.model}, max_tokens={max_tokens or self.max_tokens}")
+        logger.debug(f"Groq System Prompt: {system_prompt[:500]}...")
+        logger.debug(f"Groq User Prompt: {user_prompt[:500]}...")
+        
+        start_time = time.time()
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -72,14 +78,28 @@ class LeadMagnetAIService:
             max_tokens=max_tokens or self.max_tokens,
             response_format={"type": "json_object"}
         )
+        duration = time.time() - start_time
+        logger.info(f"Groq API Response received in {duration:.2f}s")
 
         raw_content = response.choices[0].message.content
         if not raw_content:
+            logger.error("❌ Groq API returned an empty response")
             raise ValueError("Empty response from Groq API")
+
+        logger.info(f"Groq Raw Content Length: {len(raw_content)} characters")
+        logger.debug(f"Groq Raw Content Snippet: {raw_content[:1000]}...")
 
         # Basic cleanup in case AI adds markdown fences despite response_format
         cleaned_content = self._clean_json_string(raw_content)
-        return json.loads(cleaned_content)
+        
+        try:
+            parsed_json = json.loads(cleaned_content)
+            logger.info("✅ Groq JSON parsed successfully")
+            return parsed_json
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Groq JSON Decode Error: {str(e)}")
+            logger.error(f"Problematic JSON string: {cleaned_content[:2000]}...")
+            raise e
 
     def _clean_json_string(self, text: str) -> str:
         text = text.strip()

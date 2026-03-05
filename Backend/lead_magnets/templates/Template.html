@@ -320,10 +320,10 @@
             {% if imagePage4Url %}
             <div class="img-left">
                 <div class="img-wrapper"><img src="{{imagePage4Url}}" alt="Analysis Visual"></div>
-                <span class="img-cap">{{image_labels[0]}}</span>
+                <span class="img-cap">{{image_labels[0] if image_labels else 'ANALYSIS'}}</span>
             </div>
             {% endif %}
-            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[0]}}</span><p class="body">{{ch1.intro}}</p></div>
+            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[0] if drop_caps else 'S'}}</span><p class="body">{{ch1.intro}}</p></div>
         </div>
         <p class="body">{{ch1.body}}</p>
         <div class="callout"><div class="callout-title">{{ch1.impact_label}}</div><div class="callout-body">{{ch1.impact_value}}</div></div>
@@ -341,10 +341,10 @@
             {% if imagePage5Url %}
             <div class="img-right">
                 <div class="img-wrapper"><img src="{{imagePage5Url}}" alt="Solution Visual"></div>
-                <span class="img-cap">{{image_labels[1]}}</span>
+                <span class="img-cap">{{image_labels[1] if image_labels and image_labels|length > 1 else 'SOLUTION'}}</span>
             </div>
             {% endif %}
-            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[1]}}</span><p class="body">{{ch2.intro}}</p></div>
+            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[1] if drop_caps and drop_caps|length > 1 else 'F'}}</span><p class="body">{{ch2.intro}}</p></div>
         </div>
         <p class="body">{{ch2.body}}</p>
         <div class="sec-h2">Core Interventions</div>
@@ -367,7 +367,7 @@
         {% if imagePage6Url %}
         <div class="img-container full-width-center">
             <div class="img-wrapper"><img src="{{imagePage6Url}}" alt="Roadmap Visual"></div>
-            <span class="img-cap">{{image_labels[2]}}</span>
+            <span class="img-cap">{{image_labels[2] if image_labels and image_labels|length > 2 else 'ROADMAP'}}</span>
         </div>
         {% endif %}
         <div class="col2">
@@ -385,7 +385,7 @@
     <div class="bw">
         <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch4.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
         <h1 class="ch-h1">{{ch4.title}}</h1>
-        <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[2]}}</span><p class="body">{{ch4.intro}}</p></div>
+        <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[2] if drop_caps and drop_caps|length > 2 else 'C'}}</span><p class="body">{{ch4.intro}}</p></div>
         <div class="col2" style="margin-top: 20px;">
             <div><div class="sec-h">{{ch4.case_study_1.title}}</div><p class="body-sm">{{ch4.case_study_1.desc}}</p><p class="body-sm" style="font-style:italic;">Result: {{ch4.case_study_1.result}}</p></div>
             <div><div class="sec-h">{{ch4.case_study_2.title}}</div><p class="body-sm">{{ch4.case_study_2.desc}}</p><p class="body-sm" style="font-style:italic;">Result: {{ch4.case_study_2.result}}</p></div>
