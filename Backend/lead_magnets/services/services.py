@@ -136,7 +136,8 @@ class DocRaptorService:
         })
         
         # Check for unpopulated placeholders in the rendered HTML
-        placeholders = re.findall(r'\{\{\s*(\w+)\s*\}\}', rendered_html)
+        # Updated regex to handle filters like | length and | default
+        placeholders = re.findall(r'\{\{\s*([\w\s|]+)\s*\}\}', rendered_html)
         if placeholders:
             logger.warning(f"⚠️ Unpopulated Jinja2 placeholders found in {template_name}: {set(placeholders)}")
             # Log missing keys for debugging but don't fail rendering

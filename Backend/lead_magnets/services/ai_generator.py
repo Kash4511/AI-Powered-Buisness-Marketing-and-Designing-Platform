@@ -191,6 +191,16 @@ Structure:
 Return JSON with these exact keys: 
 {{ 
   "executive_summary": "800-word dense executive summary",
+  "audience_analysis": {{
+    "commercial_label": "Commercial Clients",
+    "commercial_text": "800-word dense regulatory and business alignment strategy",
+    "government_label": "Government Authorities",
+    "government_text": "800-word dense policy and public sector integration analysis",
+    "architect_label": "Architects",
+    "architect_text": "800-word dense technical and design coordination framework",
+    "contractor_label": "Contractors",
+    "contractor_text": "800-word dense execution and operational efficiency deep-dive"
+  }},
   "chapter_1": {{
     "eyebrow": "Strategic Context",
     "section_id": "CH 01",
@@ -248,7 +258,11 @@ Return JSON with these exact keys:
   "roi_detailed_analysis": "1000-word detailed ROI prose", 
   "conclusion_strategy": "1000-word dense strategic conclusion",
   "drop_caps": ["S", "F", "C", "M", "T"],
-  "image_labels": ["CHALLENGE ANALYSIS", "SOLUTION FRAMEWORK", "EXECUTION PATHWAY", "BENCHMARK DATA", "METHODOLOGY"]
+  "image_labels": ["CHALLENGE ANALYSIS", "SOLUTION FRAMEWORK", "EXECUTION PATHWAY", "BENCHMARK DATA", "METHODOLOGY"],
+  "imagePage4Url_label": "Analysis Visual Context",
+  "imagePage5Url_label": "Solution Implementation Visual",
+  "imagePage6Url_label": "Strategic Roadmap Visualization",
+  "cta": "Professional Call to Action"
 }} 
 
 Rules: 

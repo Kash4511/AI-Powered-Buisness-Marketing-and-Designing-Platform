@@ -306,7 +306,7 @@ def _run_generation_job(job_id, body, user_id):
                     'primaryColor': firm_profile.get('primary_brand_color', '#2a5766'),
                     'secondaryColor': firm_profile.get('secondary_brand_color', '#FFFFFF'),
                     'summary': ai_content.get('target_audience_summary', ''),
-                    'audience_analysis': ai_content.get('audience_analysis', {}),
+                    'audience_analysis': exp.get('audience_analysis', ai_content.get('audience_analysis', {})),
                     'key_pain_points': ai_content.get('key_pain_points', []),
                     'solutions': ai_content.get('solutions', []),
                     'roi': ai_content.get('roi_section', {}),
@@ -320,8 +320,13 @@ def _run_generation_job(job_id, body, user_id):
                     'ch5': exp.get('chapter_5', {}),
                     'roi_detailed': exp.get('roi_detailed_analysis', ''),
                     'conclusion': exp.get('conclusion_strategy', ''),
+                    'cta': exp.get('cta', ai_content.get('call_to_action', '')),
                     'drop_caps': exp.get('drop_caps', ["S", "F", "C", "M", "T"]),
-                    'image_labels': exp.get('image_labels', ["ANALYSIS", "SOLUTION", "ROADMAP"]),
+                    'image_labels': exp.get('image_labels', [
+                        exp.get('imagePage4Url_label', 'ANALYSIS'),
+                        exp.get('imagePage5Url_label', 'SOLUTION'),
+                        exp.get('imagePage6Url_label', 'ROADMAP')
+                    ]),
                     
                     # New expanded fields
                     'executive_summary': exp.get('executive_summary', ''),

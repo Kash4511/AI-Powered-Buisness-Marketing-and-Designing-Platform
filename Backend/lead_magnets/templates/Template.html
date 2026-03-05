@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{documentTitle | default('Strategic Report')}} – {{companyName | default('Architecture Firm')}}</title>
+    <title>{{documentTitle}} – {{companyName}}</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy:   {{primaryColor | default('#2a5766')}};
-            --navy2:  {{secondaryColor | default('#B8860B')}};
-            --navy3:  {{tertiaryColor | default('#4F7A8B')}};
-            --navylt: {{accentColor | default('#E8F1F4')}};
+            --navy:   {{primaryColor}};
+            --navy2:  {{secondaryColor}};
+            --navy3:  {{tertiaryColor}};
+            --navylt: {{accentColor}};
             --white:  #ffffff;
-            --off:    {{creamColor | default('#F7F4EF')}};
-            --off2:   {{creamDarkColor | default('#EBE6DA')}};
-            --ink:    {{inkColor | default('#1A1A1A')}};
-            --mid:    {{inkMidColor | default('#444444')}};
-            --grey:   {{inkLightColor | default('#888888')}};
-            --ltgrey: {{ruleColor | default('#DDDDDD')}};
-            --rule:   {{ruleLightColor | default('#EEEEEE')}};
-            --cover-text: {{coverTextColor | default('#FFFFFF')}};
-            --cover-filter: {{coverLogoFilter | default('brightness(0) invert(1)')}};
+            --off:    {{creamColor}};
+            --off2:   {{creamDarkColor}};
+            --ink:    {{inkColor}};
+            --mid:    {{inkMidColor}};
+            --grey:   {{inkLightColor}};
+            --ltgrey: {{ruleColor}};
+            --rule:   {{ruleLightColor}};
+            --cover-text: {{coverTextColor}};
+            --cover-filter: {{coverLogoFilter}};
 
             --fd: 'Playfair Display', serif;
             --fs: 'Lato', sans-serif;
@@ -48,9 +48,9 @@
 
         .page {
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
             background: var(--white);
-            overflow: visible;
+            overflow: hidden;
             break-inside: avoid;
             page-break-inside: avoid;
             margin-bottom: 20px;
@@ -61,30 +61,9 @@
         }
         .page + .page { break-before: page; page-break-before: always; }
         
-        .cta-navy-box, .contact-grid, .ch-insight-box, .ch-list-grid, .trade-grid, .phase-row, .case-grid, .method-grid, .img-placeholder {
+        .cta-navy-box, .contact-grid, .ch-insight-box, .ch-list-grid, .trade-grid, .phase-row, .case-grid, .method-grid {
             page-break-inside: avoid;
             break-inside: avoid;
-        }
-
-        .img-placeholder {
-            background: var(--off2);
-            border: 1px dashed var(--ltgrey);
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-            border-radius: 4px;
-        }
-        .img-placeholder-icon {
-            font-size: 24px;
-            color: var(--navy);
-            margin-bottom: 8px;
-        }
-        .img-placeholder-text {
-            font-family: var(--fm);
-            font-size: 10px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--grey);
         }
 
         .pg-head {
@@ -169,12 +148,10 @@
             font-family: var(--fs); font-size: 10.5px; line-height: 1.45;
             color: var(--mid); font-weight: 400; margin-bottom: 10px;
             text-align: justify;
-            white-space: pre-line;
         }
         .body-sm {
             font-family: var(--fs); font-size: 9.5px; line-height: 1.4;
             color: var(--mid); font-weight: 400; margin-bottom: 6px;
-            white-space: pre-line;
         }
 
         .drop-letter {
@@ -254,63 +231,52 @@
 
 <!-- PAGE 1 — COVER -->
 <div class="page cover">
-    <div class="cv-top"><div class="cv-name">{{companyName | default('Architecture Firm')}}</div></div>
+    <div class="cv-top"><div class="cv-name">{{companyName}}</div></div>
     <div class="cv-body">
-        <div class="cv-aud-text">{{summary | default('Strategic Insights & Implementation Framework')}}</div>
-        <div class="cv-title-bold">{{mainTitle | default('Architectural Guide')}}</div>
-        <div class="cv-title-italic">{{documentSubtitle | default('Institutional Perspective')}}</div>
+        <div class="cv-aud-text">{{summary}}</div>
+        <div class="cv-title-bold">{{mainTitle}}</div>
+        <div class="cv-title-italic">{{documentSubtitle}}</div>
     </div>
     <div class="cv-foot">
-        <span>{{footerText | default('© Strategic Report')}}</span>
+        <span>{{footerText}}</span>
         <span>STRATEGIC REPORT</span>
     </div>
 </div>
 
-<!-- PAGE 2 — EXECUTIVE SUMMARY -->
+<!-- PAGE 2 — TOC -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">SUMMARY</span><span class="pg-num">02</span></div></div>
-    <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Executive Perspective</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Executive Summary</h1>
-        <div class="body" style="font-weight: 500; font-size: 12px; line-height: 1.8;">{{executive_summary}}</div>
-    </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 02</span></div>
-</div>
-
-<!-- PAGE 3 — TOC -->
-<div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">CONTENT</span><span class="pg-num">03</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">CONTENT</span><span class="pg-num">02</span></div></div>
     <div class="bw">
         <h1 class="ch-h1" style="font-size: 48px; margin-top: 40px;">Table of <br> Contents</h1>
         <div class="content-list">
             <div class="content-item">
+                <div class="content-num">01</div>
+                <div class="content-info"><div class="content-title">{{ch1.title}}</div><div class="content-desc">{{ch1.intro}}</div></div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">02</div>
+                <div class="content-info"><div class="content-title">{{ch2.title}}</div><div class="content-desc">{{ch2.intro}}</div></div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">03</div>
+                <div class="content-info"><div class="content-title">{{ch3.title}}</div><div class="content-desc">{{ch3.intro}}</div></div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">04</div>
+                <div class="content-info"><div class="content-title">{{ch4.title}}</div><div class="content-desc">{{ch4.intro}}</div></div>
+            </div>
+            <div class="content-item">
                 <div class="content-num">05</div>
-                <div class="content-info"><div class="content-title">{{ch1.title}}</div><div class="content-desc">{{ch1.intro[:150]}}...</div></div>
-            </div>
-            <div class="content-item">
-                <div class="content-num">07</div>
-                <div class="content-info"><div class="content-title">{{ch2.title}}</div><div class="content-desc">{{ch2.intro[:150]}}...</div></div>
-            </div>
-            <div class="content-item">
-                <div class="content-num">09</div>
-                <div class="content-info"><div class="content-title">{{ch3.title}}</div><div class="content-desc">{{ch3.intro[:150]}}...</div></div>
-            </div>
-            <div class="content-item">
-                <div class="content-num">11</div>
-                <div class="content-info"><div class="content-title">{{ch4.title}}</div><div class="content-desc">{{ch4.intro[:150]}}...</div></div>
-            </div>
-            <div class="content-item">
-                <div class="content-num">13</div>
-                <div class="content-info"><div class="content-title">{{ch5.title}}</div><div class="content-desc">{{ch5.intro[:150]}}...</div></div>
+                <div class="content-info"><div class="content-title">{{ch5.title}}</div><div class="content-desc">{{ch5.intro}}</div></div>
             </div>
         </div>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 03</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 02</span></div>
 </div>
 
-<!-- PAGE 4 — AUDIENCE ANALYSIS -->
+<!-- PAGE 3 — AUDIENCE ANALYSIS -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">ANALYSIS</span><span class="pg-num">04</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">ANALYSIS</span><span class="pg-num">03</span></div></div>
     <div class="bw">
         <div class="ch-eyebrow"><span class="ch-eyebrow-label">Target Market Analysis</span><span class="ch-eyebrow-rule"></span></div>
         <h1 class="ch-h1">Strategic <br> Stakeholders</h1>
@@ -341,91 +307,114 @@
             {% endif %}
         </div>
     </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 03</span></div>
+</div>
+
+<!-- PAGE 4 — CHAPTER 1 -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch1.section_id}}</span><span class="pg-num">04</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch1.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch1.title}}</h1>
+        <div class="cf">
+            {% if imagePage4Url %}
+            <div class="img-left">
+                <div class="img-wrapper"><img src="{{imagePage4Url}}" alt="Analysis Visual"></div>
+                <span class="img-cap">{{image_labels[0] if image_labels else 'ANALYSIS'}}</span>
+            </div>
+            {% endif %}
+            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[0] if drop_caps else 'S'}}</span><p class="body">{{ch1.intro}}</p></div>
+        </div>
+        <p class="body">{{ch1.body}}</p>
+        <div class="callout"><div class="callout-title">{{ch1.impact_label}}</div><div class="callout-body">{{ch1.impact_value}}</div></div>
+    </div>
     <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 04</span></div>
 </div>
 
-{% for ch in [ch1, ch2, ch3, ch4, ch5] %}
-<!-- CHAPTER PART A -->
+<!-- PAGE 5 — CHAPTER 2 -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch.section_id}} A</span><span class="pg-num">{{loop.index * 2 + 3}}</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch2.section_id}}</span><span class="pg-num">05</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">{{ch.title}} — Part I</h1>
-        
-        {% if loop.index == 1 %}
-            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[0] if drop_caps else 'S'}}</span><div class="body">{{ch.intro}}</div></div>
-        {% else %}
-            <div class="body">{{ch.intro}}</div>
-        {% endif %}
-
-        <div class="body">{{ch.body_a|safe}}</div>
-
-        {% if ch.impact_label %}
-            <div class="callout"><div class="callout-title">{{ch.impact_label}}</div><div class="callout-body">{{ch.impact_value}}</div></div>
-        {% endif %}
-
-        {% if loop.index == 2 and solutions %}
-            <div class="sec-h2">Strategic Interventions</div>
-            <ul class="b-list">
-                {% for solution in solutions %}
-                <li><strong style="color:var(--navy);">{{solution.title}}</strong> — {{solution.expected_outcome}}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch2.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch2.title}}</h1>
+        <div class="cf">
+            {% if imagePage5Url %}
+            <div class="img-right">
+                <div class="img-wrapper"><img src="{{imagePage5Url}}" alt="Solution Visual"></div>
+                <span class="img-cap">{{image_labels[1] if image_labels and image_labels|length > 1 else 'SOLUTION'}}</span>
+            </div>
+            {% endif %}
+            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[1] if drop_caps and drop_caps|length > 1 else 'F'}}</span><p class="body">{{ch2.intro}}</p></div>
+        </div>
+        <p class="body">{{ch2.body}}</p>
+        <div class="sec-h2">Core Interventions</div>
+        <ul class="b-list">
+            {% for solution in solutions %}
+            <li><strong style="color:var(--navy);">{{solution.title}}</strong> — {{solution.expected_outcome}}</li>
+            {% endfor %}
+        </ul>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE {{loop.index * 2 + 3}}</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 05</span></div>
 </div>
 
-<!-- CHAPTER PART B -->
+<!-- PAGE 6 — CHAPTER 3 -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch.section_id}} B</span><span class="pg-num">{{loop.index * 2 + 4}}</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch3.section_id}}</span><span class="pg-num">06</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Technical Deep Dive</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">{{ch.title}} — Part II</h1>
-        
-        <div class="body">{{ch.body_b|safe}}</div>
-
-        {% if loop.index == 3 %}
-            <div class="col2">
-                {% if ch.phase_1 %}<div><div class="sec-h2">{{ch.phase_1.title}}</div><p class="body-sm">{{ch.phase_1.desc}}</p></div>{% endif %}
-                {% if ch.phase_2 %}<div><div class="sec-h2">{{ch.phase_2.title}}</div><p class="body-sm">{{ch.phase_2.desc}}</p></div>{% endif %}
-            </div>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch3.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch3.title}}</h1>
+        <p class="body">{{ch3.intro}}</p>
+        {% if imagePage6Url %}
+        <div class="img-container full-width-center">
+            <div class="img-wrapper"><img src="{{imagePage6Url}}" alt="Roadmap Visual"></div>
+            <span class="img-cap">{{image_labels[2] if image_labels and image_labels|length > 2 else 'ROADMAP'}}</span>
+        </div>
         {% endif %}
-
-        {% if loop.index == 4 %}
-            <div class="col2">
-                {% if ch.case_study_1 %}<div><div class="sec-h">{{ch.case_study_1.title}}</div><p class="body-sm">{{ch.case_study_1.desc}}</p><p class="body-sm" style="font-style:italic; font-weight: 700; color: var(--navy);">Result: {{ch.case_study_1.result}}</p></div>{% endif %}
-                {% if ch.case_study_2 %}<div><div class="sec-h">{{ch.case_study_2.title}}</div><p class="body-sm">{{ch.case_study_2.desc}}</p><p class="body-sm" style="font-style:italic; font-weight: 700; color: var(--navy);">Result: {{ch.case_study_2.result}}</p></div>{% endif %}
-            </div>
-        {% endif %}
-
-        {% if loop.index == 5 and ch.methods %}
-            <div class="sec-h2">Engagement Pathway</div>
-            <ul class="b-list">
-                {% for method in ch.methods %}
-                <li><strong style="color:var(--navy);">{{method.phase}}</strong> — {{method.desc}}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+        <div class="col2">
+            <div><div class="sec-h2">{{ch3.phase_1.title}}</div><p class="body-sm">{{ch3.phase_1.desc}}</p></div>
+            <div><div class="sec-h2">{{ch3.phase_2.title}}</div><p class="body-sm">{{ch3.phase_2.desc}}</p></div>
+        </div>
+        <p class="body" style="margin-top: 20px;">{{ch3.body}}</p>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE {{loop.index * 2 + 4}}</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 06</span></div>
 </div>
-{% endfor %}
 
-<!-- PAGE 15 — CONCLUSION -->
+<!-- PAGE 7 — CHAPTER 4 -->
 <div class="page">
-    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">STRATEGY</span><span class="pg-num">15</span></div></div>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch4.section_id}}</span><span class="pg-num">07</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Strategic Outlook</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Final <br> Recommendations</h1>
-        <div class="body">{{conclusion|safe}}</div>
-        
-        <div class="callout navy-fill" style="margin-top: 40px;">
-            <div class="callout-title">Strategic ROI Forecast</div>
-            <div class="callout-body">{{roi_detailed}}</div>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch4.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch4.title}}</h1>
+        <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[2] if drop_caps and drop_caps|length > 2 else 'C'}}</span><p class="body">{{ch4.intro}}</p></div>
+        <div class="col2" style="margin-top: 20px;">
+            <div><div class="sec-h">{{ch4.case_study_1.title}}</div><p class="body-sm">{{ch4.case_study_1.desc}}</p><p class="body-sm" style="font-style:italic;">Result: {{ch4.case_study_1.result}}</p></div>
+            <div><div class="sec-h">{{ch4.case_study_2.title}}</div><p class="body-sm">{{ch4.case_study_2.desc}}</p><p class="body-sm" style="font-style:italic;">Result: {{ch4.case_study_2.result}}</p></div>
+        </div>
+        <p class="body" style="margin-top: 20px;">{{ch4.body}}</p>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 07</span></div>
+</div>
+
+<!-- PAGE 8 — CHAPTER 5 & CTA -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch5.section_id}}</span><span class="pg-num">08</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch5.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch5.title}}</h1>
+        <p class="body">{{ch5.intro}}</p>
+        <p class="body">{{ch5.body}}</p>
+        <div class="cta-navy-box">
+            <span class="cta-box-eyebrow">Strategic Engagement</span>
+            <div class="cta-box-title">{{cta}}</div>
+            <p class="cta-box-body">{{roi_detailed}}</p>
+        </div>
+        <div class="contact-grid">
+            <div><span class="contact-lbl">EMAIL</span><div class="contact-val">{{emailAddress}}</div></div>
+            <div><span class="contact-lbl">PHONE</span><div class="contact-val">{{phoneNumber}}</div></div>
+            <div><span class="contact-lbl">WEBSITE</span><div class="contact-val">{{website}}</div></div>
         </div>
     </div>
-    <div class="pg-foot"><span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span><span class="pg-foot-r">PAGE 15</span></div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 08</span></div>
 </div>
 
 </div>
