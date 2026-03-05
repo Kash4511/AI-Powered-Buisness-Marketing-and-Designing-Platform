@@ -3,22 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{mainTitle}} – {{companyName}}</title>
+    <title>{{documentTitle}} – {{companyName}}</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy:   {{primaryColor | default('#2a5766')}};
+            --navy:   {{primaryColor}};
+            --navy2:  {{secondaryColor}};
+            --navy3:  {{tertiaryColor}};
+            --navylt: {{accentColor}};
             --white:  #ffffff;
-            --off:    #f8f7f4;
-            --off2:   #f0ede6;
-            --ink:    #1a1a1a;
-            --mid:    #3d3d3d;
-            --grey:   #7a7a7a;
-            --ltgrey: #aaaaaa;
-            --rule:   #e0ddd6;
-            --fd:     'Playfair Display', serif;
-            --fs:     'Lato', sans-serif;
-            --fm:     'DM Mono', monospace;
+            --off:    {{creamColor}};
+            --off2:   {{creamDarkColor}};
+            --ink:    {{inkColor}};
+            --mid:    {{inkMidColor}};
+            --grey:   {{inkLightColor}};
+            --ltgrey: {{ruleColor}};
+            --rule:   {{ruleLightColor}};
+            --cover-text: {{coverTextColor}};
+            --cover-filter: {{coverLogoFilter}};
+
+            --fd: 'Playfair Display', serif;
+            --fs: 'Lato', sans-serif;
+            --fm: 'DM Mono', monospace;
         }
 
         *, *::before, *::after {
@@ -31,18 +37,20 @@
 
         body {
             font-family: var(--fs);
-            background: #888888;
+            background: #a0a0a8;
             padding: 20px 15px;
             color: var(--ink);
+            font-size: 1rem;
+            line-height: 1.35;
         }
 
         .book { width: 210mm; margin: 0 auto; }
 
-        /* ── PAGE SHELL ──────────────────────────────────────────────────── */
         .page {
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
             background: var(--white);
+            overflow: hidden;
             break-inside: avoid;
             page-break-inside: avoid;
             margin-bottom: 20px;
@@ -52,283 +60,363 @@
             position: relative;
         }
         .page + .page { break-before: page; page-break-before: always; }
+        
+        .cta-navy-box, .contact-grid, .ch-insight-box, .ch-list-grid, .trade-grid, .phase-row, .case-grid, .method-grid {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
 
-        /* ── HEADER ──────────────────────────────────────────────────────── */
-        .pg-head { flex-shrink: 0; padding: 12px 14mm 0; }
+        .pg-head {
+            flex-shrink: 0; break-after: avoid;
+            padding: 12px 14mm 0;
+            display: flex; flex-direction: column; gap: 3px;
+        }
         .pg-head-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 6px; border-bottom: 0.5px solid var(--rule);
+            padding-bottom: 6px;
+            border-bottom: 0.5px solid var(--rule);
         }
         .pg-label {
-            font-family: var(--fm); font-size: 7px;
-            letter-spacing: 0.24em; text-transform: uppercase; color: var(--ltgrey);
+            font-family: var(--fm);
+            font-size: 7px; letter-spacing: 0.24em; text-transform: uppercase;
+            color: var(--ltgrey);
         }
         .pg-num { font-family: var(--fs); font-size: 8px; color: var(--ltgrey); }
 
-        /* ── FOOTER ──────────────────────────────────────────────────────── */
         .pg-foot {
             margin-top: auto; flex-shrink: 0;
-            padding: 10px 14mm; border-top: 0.5px solid var(--rule);
+            padding: 10px 14mm;
+            border-top: 0.5px solid var(--rule);
             display: flex; justify-content: space-between; align-items: center;
         }
         .pg-foot-l { font-family: var(--fs); font-size: 7.5px; color: var(--grey); font-style: italic; }
         .pg-foot-r { font-family: var(--fm); font-size: 7.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
 
-        /* ── BODY WRAPPER ────────────────────────────────────────────────── */
-        .bw {
-            padding: 10px 14mm 14px;
-            flex: 1;
+        .bw { 
+            padding: 4px 14mm 8px;
+            flex: 1; 
+            overflow: hidden; 
             display: flex;
             flex-direction: column;
         }
 
-        /* ── EYEBROW + HEADING ───────────────────────────────────────────── */
-        .ch-eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .img-wrapper { max-height: 220px; overflow: hidden; }
+        .img-ph-single { max-height: 200px; width: 100%; border-radius: 0; }
+        .img-ph-single img { width: 100%; height: 100%; object-fit: cover; }
+        .img-cap {
+            font-family: var(--fs); font-size: 9px; font-style: italic;
+            color: var(--grey); text-align: center; margin-top: 6px; line-height: 1.5; display: block;
+        }
+
+        .img-left  { float: left;  width: 46%; margin: 4px 20px 12px 0; }
+        .img-right { float: right; width: 46%; margin: 4px 0 12px 20px; }
+        .cf::after { content: ""; display: table; clear: both; }
+
+        .img-container.full-width-center {
+            margin-left: -16mm; margin-right: -16mm;
+            width: calc(100% + 32mm); text-align: center;
+            padding: 0 16mm; margin-top: 30px; margin-bottom: 30px;
+        }
+
+        .ch-eyebrow {
+            display: flex; align-items: center; gap: 6px;
+            margin-bottom: 6px; break-after: avoid;
+        }
         .ch-eyebrow-label {
-            font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.24em;
+            font-family: var(--fm); font-size: 8px; letter-spacing: 0.24em;
             text-transform: uppercase; color: var(--navy); white-space: nowrap;
         }
         .ch-eyebrow-rule { flex: 1; height: 0.75px; background: var(--rule); }
 
         .ch-h1 {
-            font-family: var(--fd); font-size: 26px; font-weight: 700;
-            color: var(--navy); line-height: 1.08; margin-bottom: 10px;
+            font-family: var(--fd); font-size: 28px; font-weight: 700;
+            color: var(--navy); line-height: 1.05; letter-spacing: -0.3px;
+            margin-bottom: 12px;
         }
 
-        /* ── BODY TEXT ───────────────────────────────────────────────────── */
+        .sec-h {
+            font-family: var(--fd); font-size: 16px; font-weight: 700;
+            color: var(--navy); margin: 14px 0 6px;
+        }
+        .sec-h2 {
+            font-family: var(--fs); font-size: 12px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--navy); margin: 10px 0 4px;
+        }
+
         .body {
-            font-family: var(--fs); font-size: 10.5px; line-height: 1.52;
-            color: var(--mid); text-align: justify; flex: 1;
+            font-family: var(--fs); font-size: 10.5px; line-height: 1.45;
+            color: var(--mid); font-weight: 400; margin-bottom: 10px;
+            text-align: justify;
         }
-        .body p         { margin-bottom: 9px; }
-        .body strong    { color: var(--ink); font-weight: 700; }
-        .body h3        { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin: 14px 0 5px; }
-        .body h4        { font-family: var(--fs); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 10px 0 4px; }
-        .body ul        { list-style: none; padding: 0; margin: 8px 0 12px; }
-        .body ul li     { padding: 5px 0 5px 18px; position: relative; border-bottom: 0.5px solid var(--rule); font-size: 10px; color: var(--mid); line-height: 1.5; }
-        /* ── CHECKLIST ITEMS ────────────────────────────────────────────── */
-        .body .checklist-item {
-            display: flex; gap: 10px; align-items: flex-start;
-            margin-bottom: 8px; padding: 6px 0; border-bottom: 0.5px solid var(--rule);
+        .body-sm {
+            font-family: var(--fs); font-size: 9.5px; line-height: 1.4;
+            color: var(--mid); font-weight: 400; margin-bottom: 6px;
         }
-        .body .checklist-box {
-            width: 14px; height: 14px; border: 1.5px solid var(--navy);
-            border-radius: 2px; flex-shrink: 0; margin-top: 2px;
-        }
-        .body .checklist-text { font-size: 10.5px; color: var(--mid); line-height: 1.4; }
 
-        /* ── DROP CAP ────────────────────────────────────────────────────── */
         .drop-letter {
-            font-family: var(--fd); font-size: 58px; font-weight: 900;
-            color: var(--navy); float: left; line-height: 0.62;
-            margin: 4px 7px 0 0;
-        }
-        .cf::after { content: ""; display: table; clear: both; }
-
-        /* ── IMAGE BLOCKS ────────────────────────────────────────────────── */
-        .img-block              { margin: 14px 0 10px; break-inside: avoid; }
-        .img-block.img-left     { float: left;  width: 44%; margin: 4px 18px 10px 0; }
-        .img-block.img-right    { float: right; width: 44%; margin: 4px 0 10px 18px; }
-        .img-block.img-full     { width: 100%;  clear: both; margin: 12px 0; }
-        .img-block img          { width: 100%; display: block; object-fit: cover; border-radius: 2px; }
-        .img-block.img-left img,
-        .img-block.img-right img { max-height: 170px; }
-        .img-block.img-full img  { max-height: 190px; }
-        .img-cap {
-            font-family: var(--fs); font-size: 8.5px; font-style: italic;
-            color: var(--grey); text-align: center; margin-top: 5px; display: block;
+            font-family: var(--fd); font-size: 60px; font-weight: 900;
+            color: var(--navy); float: left; line-height: 0.6;
+            margin: 6px 6px 0 0; padding-right: 2px;
         }
 
-        /* ── CALLOUT ─────────────────────────────────────────────────────── */
         .callout {
             background: var(--off2); border-left: 3px solid var(--navy);
-            padding: 12px 16px; margin: 12px 0; break-inside: avoid;
+            padding: 14px 18px; margin: 12px 0;
         }
-        .callout-title { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
-        .callout-body  { font-family: var(--fs); font-size: 10px; color: var(--mid); line-height: 1.5; }
+        .callout-title {
+            font-family: var(--fd); font-size: 14px; font-weight: 700;
+            color: var(--navy); margin-bottom: 4px;
+        }
+        .callout-body {
+            font-family: var(--fs); font-size: 11px; font-weight: 400;
+            color: var(--mid); line-height: 1.5;
+        }
 
-        /* ── COVER PAGE ──────────────────────────────────────────────────── */
+        .callout.navy-fill { background: var(--navy); }
+        .callout.navy-fill .callout-title { color: var(--white); }
+        .callout.navy-fill .callout-body { color: rgba(255,255,255,0.75); }
+
+        .b-list { list-style: none; margin: 12px 0 18px; padding: 0; }
+        .b-list li {
+            font-family: var(--fs); font-size: 11px; font-weight: 400;
+            color: var(--mid); line-height: 1.6; padding: 6px 0 6px 20px;
+            border-bottom: 1px solid var(--rule); position: relative;
+        }
+        .b-list li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
+
+        .col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
         .cover {
-            background: var(--navy);
-            min-height: 297mm;
-            display: flex; flex-direction: column;
-            padding: 0 18mm;
+            background: var(--navy); min-height: 297mm;
+            display: flex; flex-direction: column; padding: 0 18mm;
         }
-        .cv-top         { padding-top: 40px; text-align: center; }
-        .cv-name        { font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
-        .cv-type-badge  {
-            display: inline-block; margin-top: 12px;
-            font-family: var(--fm); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase;
-            color: rgba(255,255,255,0.35); border: 0.5px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 2px;
-        }
-        .cv-body        { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .cv-aud-text    { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 20px; }
-        .cv-title-bold  { font-family: var(--fd); font-size: 58px; font-weight: 900; line-height: 0.92; color: var(--white); margin-bottom: 14px; }
-        .cv-title-italic{ font-family: var(--fd); font-size: 44px; font-weight: 400; font-style: italic; color: rgba(255,255,255,0.38); }
-        .cv-divider     { width: 40px; height: 2px; background: rgba(255,255,255,0.3); margin: 28px 0; }
-        .cv-summary     { font-family: var(--fs); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.55); max-width: 420px; }
-        .cv-foot        { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
-        .cv-foot span   { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.28); }
+        .cv-top { padding-top: 40px; text-align: center; }
+        .cv-name { font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+        .cv-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .cv-aud-text { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.42); margin-bottom: 20px; }
+        .cv-title-bold { font-family: var(--fd); font-size: 64px; font-weight: 900; line-height: 0.9; color: var(--white); }
+        .cv-title-italic { font-family: var(--fd); font-size: 50px; font-weight: 400; font-style: italic; color: rgba(255,255,255,0.42); }
+        .cv-foot { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        .cv-foot span { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.32); }
 
-        /* ── TABLE OF CONTENTS ───────────────────────────────────────────── */
-        .toc-grid    { margin-top: 16px; }
-        .toc-item    { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--rule); }
-        .toc-num     { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 28px; font-weight: 700; }
-        .toc-title   { font-family: var(--fd); font-size: 12px; font-weight: 700; color: var(--ink); flex: 1; }
-        .toc-label   { font-family: var(--fm); font-size: 7.5px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
-        .toc-pg      { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 22px; text-align: right; }
+        .content-list { margin-top: 40px; padding-left: 20px; border-left: 1px solid var(--rule); }
+        .content-item { display: flex; gap: 40px; margin-bottom: 30px; }
+        .content-num { font-family: var(--fm); font-size: 16px; font-weight: 700; color: var(--navy); width: 30px; }
+        .content-title { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--ink); }
+        .content-desc { font-family: var(--fs); font-size: 12px; color: var(--grey); }
 
-        /* ── CTA BLOCK ───────────────────────────────────────────────────── */
-        .cta-block    { background: var(--navy); padding: 20px 22px; margin-top: 16px; break-inside: avoid; }
-        .cta-eyebrow  { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
-        .cta-title    { font-family: var(--fd); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 10px; line-height: 1.2; }
-        .cta-body     { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.6); line-height: 1.55; }
-        .contact-row  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 0.5px solid rgba(255,255,255,0.15); }
-        .contact-item .lbl { font-family: var(--fm); font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
-        .contact-item .val { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.75); }
+        .cta-navy-box { background: var(--navy); padding: 20px 24px; margin: 16px 0; }
+        .cta-box-eyebrow { font-family: var(--fm); font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+        .cta-box-title { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+        .cta-box-body { font-family: var(--fs); font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+        .contact-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 18px; padding-top: 18px; border-top: 0.75px solid var(--rule); }
+        .contact-lbl { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--navy); }
+        .contact-val { font-family: var(--fs); font-size: 11px; color: var(--ink); }
+
+        .audience-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .audience-card { background: var(--off2); padding: 20px; border-top: 2px solid var(--navy); }
+        .audience-card-title { font-family: var(--fd); font-size: 16px; color: var(--navy); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+        .audience-card-body { font-family: var(--fs); font-size: 11px; line-height: 1.5; color: var(--mid); }
 
         @media print {
-            body   { background: white; padding: 0; }
-            .page  { box-shadow: none; margin-bottom: 0; }
+            body { background: white; padding: 0; }
+            .page { box-shadow: none; margin-bottom: 0; }
         }
     </style>
 </head>
 <body>
+
 <div class="book">
 
-{# ══════════════════════════════════════════════════════════════════════════ #}
-{# PAGE 1 — COVER                                                             #}
-{# ══════════════════════════════════════════════════════════════════════════ #}
+<!-- PAGE 1 — COVER -->
 <div class="page cover">
-    <div class="cv-top">
-        <div class="cv-name">{{companyName | default('Strategic Advisory')}}</div>
-        <div class="cv-type-badge">{{documentTypeLabel | default('Strategic Guide')}}</div>
-    </div>
+    <div class="cv-top"><div class="cv-name">{{companyName}}</div></div>
     <div class="cv-body">
-        <div class="cv-aud-text">{{summary | default('Institutional Advisory Report')}}</div>
-        <div class="cv-title-bold">{{mainTitle | default('Strategic Report')}}</div>
-        <div class="cv-title-italic">{{documentSubtitle | default('')}}</div>
-        <div class="cv-divider"></div>
-        <div class="cv-summary">{{summary | default('')}}</div>
+        <div class="cv-aud-text">{{summary}}</div>
+        <div class="cv-title-bold">{{mainTitle}}</div>
+        <div class="cv-title-italic">{{documentSubtitle}}</div>
     </div>
     <div class="cv-foot">
-        <span>{{footerText | default('© Strategic Report')}}</span>
-        <span>{{documentTypeLabel | default('STRATEGIC REPORT') | upper}}</span>
+        <span>{{footerText}}</span>
+        <span>STRATEGIC REPORT</span>
     </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════════════════ #}
-{# PAGE 2 — TABLE OF CONTENTS                                                 #}
-{# Loops over `toc_sections` — a plain list of dicts from groq_client         #}
-{# ══════════════════════════════════════════════════════════════════════════ #}
+<!-- PAGE 2 — TOC -->
 <div class="page">
-    <div class="pg-head">
-        <div class="pg-head-row">
-            <span class="pg-label">Contents</span>
-            <span class="pg-num">02</span>
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">CONTENT</span><span class="pg-num">02</span></div></div>
+    <div class="bw">
+        <h1 class="ch-h1" style="font-size: 48px; margin-top: 40px;">Table of <br> Contents</h1>
+        <div class="content-list">
+            <div class="content-item">
+                <div class="content-num">01</div>
+                <div class="content-info"><div class="content-title">{{ch1.title}}</div><div class="content-desc">{{ch1.intro}}</div></div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">02</div>
+                <div class="content-info"><div class="content-title">{{ch2.title}}</div><div class="content-desc">{{ch2.intro}}</div></div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">03</div>
+                <div class="content-info"><div class="content-title">{{ch3.title}}</div><div class="content-desc">{{ch3.intro}}</div></div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">04</div>
+                <div class="content-info"><div class="content-title">{{ch4.title}}</div><div class="content-desc">{{ch4.intro}}</div></div>
+            </div>
+            <div class="content-item">
+                <div class="content-num">05</div>
+                <div class="content-info"><div class="content-title">{{ch5.title}}</div><div class="content-desc">{{ch5.intro}}</div></div>
+            </div>
         </div>
     </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 02</span></div>
+</div>
+
+<!-- PAGE 3 — AUDIENCE ANALYSIS -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">ANALYSIS</span><span class="pg-num">03</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow">
-            <span class="ch-eyebrow-label">Table of Contents</span>
-            <span class="ch-eyebrow-rule"></span>
-        </div>
-        <h1 class="ch-h1">What's<br>Inside</h1>
-        <div class="toc-grid">
-            {% for section in toc_sections %}
-            <div class="toc-item">
-                <span class="toc-num">{{section.page_num}}</span>
-                <span class="toc-title">{{section.title}}</span>
-                <span class="toc-label">{{section.label}}</span>
-                <span class="toc-pg">{{section.page_num}}</span>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">Target Market Analysis</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">Strategic <br> Stakeholders</h1>
+        <div class="audience-grid">
+            {% if audience_analysis.commercial_text %}
+            <div class="audience-card">
+                <div class="audience-card-title">{{audience_analysis.commercial_label}}</div>
+                <div class="audience-card-body">{{audience_analysis.commercial_text}}</div>
             </div>
+            {% endif %}
+            {% if audience_analysis.government_text %}
+            <div class="audience-card">
+                <div class="audience-card-title">{{audience_analysis.government_label}}</div>
+                <div class="audience-card-body">{{audience_analysis.government_text}}</div>
+            </div>
+            {% endif %}
+            {% if audience_analysis.architect_text %}
+            <div class="audience-card">
+                <div class="audience-card-title">{{audience_analysis.architect_label}}</div>
+                <div class="audience-card-body">{{audience_analysis.architect_text}}</div>
+            </div>
+            {% endif %}
+            {% if audience_analysis.contractor_text %}
+            <div class="audience-card">
+                <div class="audience-card-title">{{audience_analysis.contractor_label}}</div>
+                <div class="audience-card-body">{{audience_analysis.contractor_text}}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 03</span></div>
+</div>
+
+<!-- PAGE 4 — CHAPTER 1 -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch1.section_id}}</span><span class="pg-num">04</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch1.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch1.title}}</h1>
+        <div class="cf">
+            {% if imagePage4Url %}
+            <div class="img-left">
+                <div class="img-wrapper"><img src="{{imagePage4Url}}" alt="Analysis Visual"></div>
+                <span class="img-cap">{{image_labels[0] if image_labels else 'ANALYSIS'}}</span>
+            </div>
+            {% endif %}
+            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[0] if drop_caps else 'S'}}</span><p class="body">{{ch1.intro}}</p></div>
+        </div>
+        <p class="body">{{ch1.body}}</p>
+        <div class="callout"><div class="callout-title">{{ch1.impact_label}}</div><div class="callout-body">{{ch1.impact_value}}</div></div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 04</span></div>
+</div>
+
+<!-- PAGE 5 — CHAPTER 2 -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch2.section_id}}</span><span class="pg-num">05</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch2.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch2.title}}</h1>
+        <div class="cf">
+            {% if imagePage5Url %}
+            <div class="img-right">
+                <div class="img-wrapper"><img src="{{imagePage5Url}}" alt="Solution Visual"></div>
+                <span class="img-cap">{{image_labels[1] if image_labels and image_labels|length > 1 else 'SOLUTION'}}</span>
+            </div>
+            {% endif %}
+            <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[1] if drop_caps and drop_caps|length > 1 else 'F'}}</span><p class="body">{{ch2.intro}}</p></div>
+        </div>
+        <p class="body">{{ch2.body}}</p>
+        <div class="sec-h2">Core Interventions</div>
+        <ul class="b-list">
+            {% for solution in solutions %}
+            <li><strong style="color:var(--navy);">{{solution.title}}</strong> — {{solution.expected_outcome}}</li>
             {% endfor %}
-        </div>
+        </ul>
     </div>
-    <div class="pg-foot">
-        <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
-        <span class="pg-foot-r">{{documentTypeLabel | default('GUIDE')}}</span>
-    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 05</span></div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════════════════ #}
-{# PAGES 3–17 — CONTENT SECTIONS                                              #}
-{#                                                                            #}
-{# Loops over `content_sections` — a plain list of dicts built by            #}
-{# groq_client.map_to_template_vars(). Each dict has:                        #}
-{#   section.key       — the section identifier                              #}
-{#   section.title     — human-readable title                                #}
-{#   section.label     — eyebrow label (e.g. ANALYSIS, RISK)                 #}
-{#   section.page_num  — formatted page number string                        #}
-{#   section.content   — HTML-safe prose from Groq                           #}
-{#   section.drop_cap  — first letter for the drop-cap                       #}
-{#                                                                            #}
-{# Images are injected at:                                                    #}
-{#   loop.index0 == 2  (page 5)  → image_1_url, floated RIGHT                #}
-{#   loop.index0 == 5  (page 8)  → image_2_url, floated LEFT                 #}
-{#   loop.index0 == 9  (page 12) → image_3_url, full-width                   #}
-{# ══════════════════════════════════════════════════════════════════════════ #}
-{% for section in content_sections %}
+<!-- PAGE 6 — CHAPTER 3 -->
 <div class="page">
-
-    <div class="pg-head">
-        <div class="pg-head-row">
-            <span class="pg-label">{{section.label}}</span>
-            <span class="pg-num">{{section.page_num}}</span>
-        </div>
-    </div>
-
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch3.section_id}}</span><span class="pg-num">06</span></div></div>
     <div class="bw">
-        <div class="ch-eyebrow">
-            <span class="ch-eyebrow-label">{{section.label}}</span>
-            <span class="ch-eyebrow-rule"></span>
-        </div>
-        <h1 class="ch-h1">{{section.title | safe}}</h1>
-
-        <div class="body cf">
-            <span class="drop-letter">{{section.drop_cap}}</span>
-            {{section.content | safe}}
-        </div>
-
-        {# ── LAST SECTION — append CTA + contact block ───────────────────── #}
-        {% if loop.last %}
-        <div class="cta-block">
-            <div class="cta-eyebrow">Strategic Engagement</div>
-            <div class="cta-title">Ready to implement this framework?</div>
-            <div class="cta-body">{{cta | default('Contact us to begin your strategic engagement.')}}</div>
-            <div class="contact-row">
-                {% if emailAddress %}
-                <div class="contact-item">
-                    <div class="lbl">Email</div>
-                    <div class="val">{{emailAddress}}</div>
-                </div>
-                {% endif %}
-                {% if phoneNumber %}
-                <div class="contact-item">
-                    <div class="lbl">Phone</div>
-                    <div class="val">{{phoneNumber}}</div>
-                </div>
-                {% endif %}
-                {% if website %}
-                <div class="contact-item">
-                    <div class="lbl">Website</div>
-                    <div class="val">{{website}}</div>
-                </div>
-                {% endif %}
-            </div>
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch3.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch3.title}}</h1>
+        <p class="body">{{ch3.intro}}</p>
+        {% if imagePage6Url %}
+        <div class="img-container full-width-center">
+            <div class="img-wrapper"><img src="{{imagePage6Url}}" alt="Roadmap Visual"></div>
+            <span class="img-cap">{{image_labels[2] if image_labels and image_labels|length > 2 else 'ROADMAP'}}</span>
         </div>
         {% endif %}
-
+        <div class="col2">
+            <div><div class="sec-h2">{{ch3.phase_1.title}}</div><p class="body-sm">{{ch3.phase_1.desc}}</p></div>
+            <div><div class="sec-h2">{{ch3.phase_2.title}}</div><p class="body-sm">{{ch3.phase_2.desc}}</p></div>
+        </div>
+        <p class="body" style="margin-top: 20px;">{{ch3.body}}</p>
     </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 06</span></div>
+</div>
 
-    <div class="pg-foot">
-        <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
-        <span class="pg-foot-r">PAGE {{section.page_num}}</span>
+<!-- PAGE 7 — CHAPTER 4 -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch4.section_id}}</span><span class="pg-num">07</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch4.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch4.title}}</h1>
+        <div class="drop-cap-wrap"><span class="drop-letter">{{drop_caps[2] if drop_caps and drop_caps|length > 2 else 'C'}}</span><p class="body">{{ch4.intro}}</p></div>
+        <div class="col2" style="margin-top: 20px;">
+            <div><div class="sec-h">{{ch4.case_study_1.title}}</div><p class="body-sm">{{ch4.case_study_1.desc}}</p><p class="body-sm" style="font-style:italic;">Result: {{ch4.case_study_1.result}}</p></div>
+            <div><div class="sec-h">{{ch4.case_study_2.title}}</div><p class="body-sm">{{ch4.case_study_2.desc}}</p><p class="body-sm" style="font-style:italic;">Result: {{ch4.case_study_2.result}}</p></div>
+        </div>
+        <p class="body" style="margin-top: 20px;">{{ch4.body}}</p>
     </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 07</span></div>
+</div>
+
+<!-- PAGE 8 — CHAPTER 5 & CTA -->
+<div class="page">
+    <div class="pg-head"><div class="pg-head-row"><span class="pg-label">{{ch5.section_id}}</span><span class="pg-num">08</span></div></div>
+    <div class="bw">
+        <div class="ch-eyebrow"><span class="ch-eyebrow-label">{{ch5.eyebrow}}</span><span class="ch-eyebrow-rule"></span></div>
+        <h1 class="ch-h1">{{ch5.title}}</h1>
+        <p class="body">{{ch5.intro}}</p>
+        <p class="body">{{ch5.body}}</p>
+        <div class="cta-navy-box">
+            <span class="cta-box-eyebrow">Strategic Engagement</span>
+            <div class="cta-box-title">{{cta}}</div>
+            <p class="cta-box-body">{{roi_detailed}}</p>
+        </div>
+        <div class="contact-grid">
+            <div><span class="contact-lbl">EMAIL</span><div class="contact-val">{{emailAddress}}</div></div>
+            <div><span class="contact-lbl">PHONE</span><div class="contact-val">{{phoneNumber}}</div></div>
+            <div><span class="contact-lbl">WEBSITE</span><div class="contact-val">{{website}}</div></div>
+        </div>
+    </div>
+    <div class="pg-foot"><span class="pg-foot-l">{{footerText}}</span><span class="pg-foot-r">PAGE 08</span></div>
+</div>
 
 </div>
-{% endfor %}
-
-</div>{# .book #}
 </body>
 </html>
