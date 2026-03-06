@@ -264,9 +264,17 @@ class GroqClient:
         toc_sections:     List[Dict] = []
         for idx, (key, title, label, _) in enumerate(SECTIONS):
             page_num = f"{idx + 3:02d}"
+            raw_content = ai_content.get(key, "")
+            # Post-process checklist section to wrap <li> items in styled boxes
+            if key == "action_checklist":
+                raw_content = self._enrich_checklist(raw_content)
             content_sections.append({
                 "key": key, "title": title, "label": label,
-                "page_num": page_num, "content": ai_content.get(key, ""),
+                "page_num": page_num, "content": raw_content,
+                "is_checklist": key == "action_checklist",
+                "is_framework": key == "strategic_framework",
+                "is_risk":      key == "risk_management",
+                "is_conclusion": key == "conclusion",
             })
             toc_sections.append({"title": title, "label": label, "page_num": page_num})
 
@@ -308,7 +316,8 @@ class GroqClient:
             "image_1_caption":   firm_profile.get("image_1_caption", "Field Context"),
             "image_2_caption":   firm_profile.get("image_2_caption", "Implementation"),
             "image_3_caption":   firm_profile.get("image_3_caption", "Outcomes"),
-            "cta":               ai_content.get("conclusion", "Contact us to begin."),
+            # CTA: strip all HTML tags so it renders as plain text in the CTA box
+            "cta": re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion", "Contact us to begin your strategic engagement.")).strip(),
         }
 
     def ensure_section_content(self, sections, signals, firm_profile):
@@ -390,15 +399,59 @@ class GroqClient:
         logger.error(f"❌ extract FAILED '{key}' | keys={list(result.keys())}")
         return ""
 
+    def _enrich_checklist(self, html: str) -> str:
+        """
+        Wraps <li> items from checklist section in styled checkbox divs
+        and keeps <h3> group headers. Makes the checklist page visually rich.
+        """
+        import re as _re
+        result = []
+        current_group = None
+        # Extract h3 group titles and li items
+        parts = _re.split(r'(<h3>[^<]*</h3>|<li>[\s\S]*?</li>)', html)
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            if part.startswith('<h3>'):
+                title_text = _re.sub(r'<[^>]+>', '', part)
+                result.append(f'<div class="ck-group"><div class="ck-title">{title_text}</div>')
+                current_group = True
+            elif part.startswith('<li>'):
+                inner = _re.sub(r'</?li>', '', part).strip()
+                result.append(
+                    f'<div class="ck-item">'
+                    f'<div class="ck-box"></div>'
+                    f'<div class="ck-text">{inner}</div>'
+                    f'</div>'
+                )
+            elif part.startswith('<p>'):
+                if current_group:
+                    result.append('</div>')
+                    current_group = False
+                result.append(part)
+        if current_group:
+            result.append('</div>')
+        return ''.join(result) if result else html
+
     def _sanitize_html(self, html: str) -> str:
         if not html:
             return html
+        # Strip stray leading/trailing quote chars Groq sometimes wraps content in
+        html = html.strip()
+        if html.startswith('"') and html.endswith('"'):
+            html = html[1:-1].strip()
+        # Remove image placeholders
         html = re.sub(r'\[IMAGE_PLACEHOLDER:[^\]]*\]', '', html)
+        # Strip disallowed HTML tags (keep inner text)
         html = re.sub(
             r'<(/?)(\w+)([^>]*)>',
             lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "",
             html
         )
+        # Strip any remaining raw visible quote artifacts at start/end of paragraphs
+        html = re.sub(r'(?<=^)"(?=<)', '', html)
+        html = re.sub(r'(?<=>)"(?=$)', '', html)
         return self._ensure_closed_tags(html).strip()
 
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:

@@ -379,6 +379,45 @@ body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(-
 }
 .contact-val { font-size:9px; color:var(--I2); }
 
+/* ── PER-PAGE TOP ACCENT STRIPE ────────────────────────────────── */
+.pg-accent-stripe {
+  height:4px; width:100%;
+  background:linear-gradient(90deg, var(--P) 0%, var(--P3) 60%, transparent 100%);
+  flex-shrink:0;
+}
+
+/* ── FRAMEWORK PAGE — slightly warm background ──────────────────── */
+.pg-framework .bw { background:var(--CR); }
+
+/* ── CHECKLIST WRAP ─────────────────────────────────────────────── */
+.checklist-wrap { flex:1; }
+.checklist-wrap .ck-group { margin-bottom:12px; }
+.checklist-wrap .ck-title {
+  font-family:var(--fm); font-size:7px; font-weight:500;
+  text-transform:uppercase; letter-spacing:.22em;
+  color:#fff; background:var(--P);
+  padding:5px 10px; margin-bottom:4px; border-radius:2px;
+}
+.checklist-wrap .ck-item {
+  display:flex; align-items:flex-start; gap:9px;
+  padding:5px 8px; background:#fff; margin-bottom:3px;
+  border:1px solid var(--R2); border-radius:2px;
+  border-left:3px solid var(--P);
+}
+.checklist-wrap .ck-box {
+  width:13px; height:13px; border:1.5px solid var(--P);
+  border-radius:2px; flex-shrink:0; margin-top:1px; background:#fff;
+}
+.checklist-wrap .ck-text {
+  font-size:9px; line-height:1.45; color:var(--I2);
+}
+/* Also style body ul/li inside checklist page */
+.pg-checklist .body ul li {
+  background:#fff; border:1px solid var(--R2);
+  border-left:3px solid var(--P); border-radius:2px;
+  padding:5px 8px 5px 28px; margin-bottom:3px;
+}
+
 @media print {
   body { background:#fff; padding:0; }
   .page { box-shadow:none; margin-bottom:0; }
@@ -433,7 +472,10 @@ body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(-
 
 {# ══ PAGES 3+ — CONTENT SECTIONS ══════════════════════════════════════════ #}
 {% for section in content_sections %}
-<div class="page">
+<div class="page {% if section.is_framework %}pg-framework{% elif section.is_risk %}pg-risk{% elif section.is_checklist %}pg-checklist{% endif %}">
+
+  {# Per-section top accent stripe #}
+  <div class="pg-accent-stripe"></div>
 
   <div class="pg-head">
     <div class="pg-head-row">
@@ -449,50 +491,58 @@ body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(-
     </div>
     <h1 class="ch-h1">{{section.title}}</h1>
 
-    {# ── EXECUTIVE SUMMARY — stat cards + image right ───────────── #}
+    {# ── EXECUTIVE SUMMARY (index 0) ─────────────────────────────── #}
     {% if loop.index0 == 0 %}
     <div class="body">{{section.content | safe}}</div>
 
-    {# ── KEY CHALLENGES — image right ───────────────────────────── #}
-    {% elif loop.index0 == 1 and image_1_url %}
+    {# ── KEY CHALLENGES (index 1) — image floated right ──────────── #}
+    {% elif loop.index0 == 1 %}
+    {% if image_1_url %}
     <div class="cf">
       <div class="img-wrap img-right">
-        <div class="img-inner">
-          <img src="{{image_1_url}}" alt="{{image_1_caption}}">
-        </div>
+        <div class="img-inner"><img src="{{image_1_url}}" alt="{{image_1_caption}}"></div>
         <span class="img-cap">{{image_1_caption}}</span>
       </div>
       <div class="body">{{section.content | safe}}</div>
     </div>
+    {% else %}
+    <div class="body">{{section.content | safe}}</div>
+    {% endif %}
 
-    {# ── STRATEGIC FRAMEWORK — image left ────────────────────────── #}
-    {% elif loop.index0 == 2 and image_2_url %}
+    {# ── STRATEGIC FRAMEWORK (index 2) — image floated left ──────── #}
+    {% elif loop.index0 == 2 %}
+    {% if image_2_url %}
     <div class="cf">
       <div class="img-wrap img-left">
-        <div class="img-inner">
-          <img src="{{image_2_url}}" alt="{{image_2_caption}}">
-        </div>
+        <div class="img-inner"><img src="{{image_2_url}}" alt="{{image_2_caption}}"></div>
         <span class="img-cap">{{image_2_caption}}</span>
       </div>
       <div class="body">{{section.content | safe}}</div>
     </div>
+    {% else %}
+    <div class="body">{{section.content | safe}}</div>
+    {% endif %}
 
-    {# ── RISK MANAGEMENT — full-width image above content ────────── #}
-    {% elif loop.index0 == 4 and image_3_url %}
+    {# ── RISK MANAGEMENT (index 4) — full-width image then content ── #}
+    {% elif loop.index0 == 4 %}
+    {% if image_3_url %}
     <div class="img-wrap img-full">
-      <div class="img-inner">
-        <img src="{{image_3_url}}" alt="{{image_3_caption}}">
-      </div>
+      <div class="img-inner"><img src="{{image_3_url}}" alt="{{image_3_caption}}"></div>
       <span class="img-cap">{{image_3_caption}}</span>
     </div>
+    {% endif %}
     <div class="body">{{section.content | safe}}</div>
+
+    {# ── ACTION CHECKLIST (index 6) — styled check boxes ─────────── #}
+    {% elif section.is_checklist %}
+    <div class="checklist-wrap">{{section.content | safe}}</div>
 
     {# ── ALL OTHER SECTIONS ──────────────────────────────────────── #}
     {% else %}
     <div class="body">{{section.content | safe}}</div>
     {% endif %}
 
-    {# ── CONCLUSION — CTA block + contacts ──────────────────────── #}
+    {# ── CONCLUSION — CTA + contacts ─────────────────────────────── #}
     {% if loop.last %}
     <div class="cta-block">
       <div class="cta-eyebrow">Strategic Engagement</div>
@@ -501,22 +551,13 @@ body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(-
     </div>
     <div class="contact-row">
       {% if emailAddress %}
-      <div>
-        <span class="contact-lbl">Email</span>
-        <div class="contact-val">{{emailAddress}}</div>
-      </div>
+      <div><span class="contact-lbl">Email</span><div class="contact-val">{{emailAddress}}</div></div>
       {% endif %}
       {% if phoneNumber %}
-      <div>
-        <span class="contact-lbl">Phone</span>
-        <div class="contact-val">{{phoneNumber}}</div>
-      </div>
+      <div><span class="contact-lbl">Phone</span><div class="contact-val">{{phoneNumber}}</div></div>
       {% endif %}
       {% if website %}
-      <div>
-        <span class="contact-lbl">Website</span>
-        <div class="contact-val">{{website}}</div>
-      </div>
+      <div><span class="contact-lbl">Website</span><div class="contact-val">{{website}}</div></div>
       {% endif %}
     </div>
     {% endif %}
