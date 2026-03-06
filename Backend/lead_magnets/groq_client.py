@@ -237,22 +237,10 @@ class GroqClient:
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         doc_type = signals.get("document_type", "guide")
         config   = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
-
         logger.info(f"📄 Generating {config['label']} | topic={signals['topic']}")
 
         title_data = self._generate_title(signals, config)
-
-        # Generate all 15 sections in 3 batches of 5 to avoid rate limits
-        sections      = config["sections"]
-        batch_size    = 2
-        sections_content: Dict[str, str] = {}
-
-        for batch_start in range(0, len(sections), batch_size):
-            batch = sections[batch_start: batch_start + batch_size]
-            batch_num = batch_start // batch_size + 1
-            logger.info(f"✍️  Batch {batch_num}: sections {batch_start+1}-{batch_start+len(batch)}")
-            batch_result = self._generate_section_batch(batch, signals, config)
-            sections_content.update(batch_result)
+        sections   = self._generate_all_sections(signals, config)
 
         return {
             "title":                   title_data.get("title", signals["topic"]),
@@ -260,7 +248,7 @@ class GroqClient:
             "target_audience_summary": title_data.get("target_audience_summary", ""),
             "document_type":           doc_type,
             "document_type_label":     config["label"],
-            "expansions":              sections_content,
+            "expansions":              sections,
         }
 
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
@@ -295,34 +283,22 @@ class GroqClient:
         firm_profile: Dict[str, Any],
         signals: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        """
-        Builds the flat dict Jinja2 Template.html receives.
-        KEY FIX: `content_sections` and `toc_sections` are plain Python lists
-        of dicts so the template can loop with {% for section in content_sections %}
-        without needing vars() or any Python introspection.
-        """
         doc_type     = ai_content.get("document_type", "guide")
         config       = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
         sections_cfg = config["sections"]
 
         content_sections: List[Dict] = []
         toc_sections:     List[Dict] = []
-        fallback_caps     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
         for idx, (key, title, label, _) in enumerate(sections_cfg):
             page_num = f"{idx + 3:02d}"
             content  = ai_content.get(key, "")
-            first_alpha = next(
-                (c for c in (content or "") if c.isalpha()),
-                fallback_caps[idx % 26],
-            )
             content_sections.append({
                 "key":      key,
                 "title":    title,
                 "label":    label,
                 "page_num": page_num,
                 "content":  content,
-                "drop_cap": first_alpha.upper(),
             })
             toc_sections.append({
                 "title":    title,
@@ -350,23 +326,17 @@ class GroqClient:
             "primaryColor":      primary_color,
             "secondaryColor":    firm_profile.get("secondary_brand_color") or "#FFFFFF",
             "summary":           ai_content.get("summary", ""),
-
-            # THE KEY FIX — template loops over these directly
             "content_sections":  content_sections,
             "toc_sections":      toc_sections,
-
-            # Images
             "image_1_url":       firm_profile.get("image_1_url", ""),
             "image_2_url":       firm_profile.get("image_2_url", ""),
             "image_3_url":       firm_profile.get("image_3_url", ""),
             "image_1_caption":   firm_profile.get("image_1_caption", "Strategic Context"),
             "image_2_caption":   firm_profile.get("image_2_caption", "Technical Framework"),
             "image_3_caption":   firm_profile.get("image_3_caption", "Implementation Overview"),
-
             "cta": ai_content.get("final_recommendations", "Contact us to implement this framework."),
         }
 
-        # Also expose flat keys for any legacy template references
         for key, _title, _label, _ in sections_cfg:
             vars_[key] = ai_content.get(key, "")
 
@@ -376,122 +346,133 @@ class GroqClient:
         """Legacy compatibility."""
         return sections or []
 
+
     # ── PRIVATE GENERATION ────────────────────────────────────────────────────
 
     def _generate_title(self, signals: Dict, config: Dict) -> Dict:
         system = "You are a senior document architect. Return valid JSON only. No markdown."
-        prompt = f"""Generate a professional title package for this {config['label']}.
-
-TOPIC: {signals['topic']}
-AUDIENCE: {signals['audience']}
-INDUSTRY: {signals['industry']}
-PAIN POINTS: {signals['pain_points']}
-DOCUMENT TYPE: {config['label']}
-TONE: {config['tone']}
-
-Return JSON:
-{{
-  "title": "3-6 word institutional title. No generic words like Ultimate or Complete.",
-  "subtitle": "12-15 word subtitle naming the specific value delivered.",
-  "target_audience_summary": "One sentence: who this is for and what specific outcome they get."
-}}"""
-        logger.info(f"🔵 Generating title for topic='{signals['topic']}'")
-        return self._call_ai(system, prompt)
-
-    def _generate_section_batch(self, batch: list, signals: Dict, config: Dict) -> Dict[str, str]:
-        """
-        Generate up to 5 sections in a single Groq call.
-        Raises immediately on any failure — no fallbacks, no silent swallowing.
-        """
-        import traceback as _tb
-
-        section_specs = []
-        for key, title, label, brief in batch:
-            brief_filled = brief.format(
-                topic       = signals["topic"],
-                audience    = signals["audience"],
-                pain_points = signals["pain_points"],
-                industry    = signals["industry"],
-            )
-            section_specs.append(f'- "{key}": {title} — {brief_filled[:200]}')
-
-        keys_list = [k for k, *_ in batch]
-        keys_json = ", ".join(f'"{k}": "prose"' for k in keys_list)
-
-        system = (
-            f"You are a senior {signals['industry']} consultant writing sections of a {config['label']}. "
-            f"Tone: {config['tone']}. Write ONLY about {signals['topic']} for {signals['audience']}. "
-            f"Every section must reference: {signals['pain_points']}. "
-            f"Use specific metrics. No filler. Return valid JSON only."
-        )
         prompt = (
-            f"Write {len(batch)} sections of a {config['label']} about {signals['topic']}.\n\n"
-            f"SECTIONS TO WRITE:\n" + "\n".join(section_specs) + "\n\n"
-            f"REQUIREMENTS per section:\n"
-            f"- 200-300 words of focused prose\n"
-            f"- At least 2 specific metrics or percentages\n"
-            f"- Wrap paragraphs in <p> tags, key terms in <strong>, subheadings in <h3>\n"f"- DO NOT start with the section title — the title is already rendered above the content\n"f"- DO NOT use an <h3> as the first element — start directly with a <p> tag\n\n"
-            f"Return ONLY this JSON with EXACTLY these keys:\n"
-            f"{{{keys_json}}}"
+            f"Generate a professional title package for this {config['label']}.\n\n"
+            f"TOPIC: {signals['topic']}\n"
+            f"AUDIENCE: {signals['audience']}\n"
+            f"PAIN POINTS: {signals['pain_points']}\n\n"
+            f"Return ONLY this JSON:\n"
+            f"{{\n"
+            f'  "title": "3-6 word specific title. No generic words like Ultimate or Complete.",\n'
+            f'  "subtitle": "10-14 word subtitle naming the exact value delivered.",\n'
+            f'  "target_audience_summary": "One sentence: who this is for and what outcome they get."\n'
+            f"}}\n"
         )
+        logger.info(f"🔵 Generating title | topic={signals['topic']}")
+        return self._call_ai(system, prompt, max_tokens=400)
 
-        logger.info(f"🚀 Groq batch call | keys={keys_list} | topic={signals['topic']}")
+    def _generate_all_sections(self, signals: Dict, config: Dict) -> Dict[str, str]:
+        """
+        Generates all 15 sections in two API calls:
+          Call 1 — sections 1-8  (the main analytical content)
+          Call 2 — sections 9-15 (playbooks, financials, roadmap, conclusion)
 
-        raw = self._call_ai(system, prompt, max_tokens=4000)
+        Uses a structured expert-consultant prompt that forces:
+          - frameworks, checklists, real examples
+          - audience-specific content
+          - pain-point-tied paragraphs
+          - NO filler or generic consulting language
+        """
+        sections_cfg = config["sections"]
+        result: Dict[str, str] = {}
 
-        logger.info(f"📦 Groq batch response keys: {list(raw.keys())}")
-        logger.debug(f"📄 Groq batch raw (first 500 chars): {str(raw)[:500]}")
+        # Split into two halves
+        half = len(sections_cfg) // 2
+        batches = [sections_cfg[:half], sections_cfg[half:]]
 
-        results: Dict[str, str] = {}
-        missing = []
-        for key, title, *_ in batch:
-            content = self._extract_content(raw, key)
-            word_count = len(content.split()) if content else 0
-            if content and word_count >= 15:
-                results[key] = content
-                logger.info(f"✅ Section '{key}': {word_count} words")
-            else:
-                missing.append(key)
-                logger.error(
-                    f"❌ SECTION EMPTY: key='{key}' | word_count={word_count} | "
-                    f"raw_keys={list(raw.keys())} | "
-                    f"raw_snippet={str(raw.get(key, raw))[:300]}"
+        for batch_idx, batch in enumerate(batches):
+            keys_needed = {key: title for key, title, *_ in batch}
+            logger.info(f"✍️  Generating sections batch {batch_idx+1}/2: {list(keys_needed.keys())}")
+
+            # Build the section list for the prompt
+            section_list = "\n".join(
+                f'  "{key}": "{title}"' for key, title, *_ in batch
+            )
+            keys_json = ", ".join(f'"{k}": "content here"' for k in keys_needed)
+
+            system = (
+                f"You are an expert {signals['industry']} strategy consultant.\n"
+                f"You write high-value professional lead-magnet guides — insightful, practical, audience-specific.\n"
+                f"Your writing contains frameworks, checklists, real examples, and specific data.\n"
+                f"You NEVER use vague consulting filler like 'leverage synergies', 'unlock value', 'optimize solutions'.\n"
+                f"Return valid JSON only. No markdown fences."
+            )
+
+            prompt = (
+                f"Generate {len(batch)} sections of a professional {config['label']} guide.\n\n"
+                f"USER INPUT:\n"
+                f"- Main Topic: {signals['topic']}\n"
+                f"- Target Audience: {signals['audience']}\n"
+                f"- Audience Pain Points: {signals['pain_points']}\n"
+                f"- Industry: {signals['industry']}\n\n"
+                f"SECTIONS TO GENERATE:\n{section_list}\n\n"
+                f"WRITING REQUIREMENTS for EVERY section:\n"
+                f"1. Insightful and educational — not promotional\n"
+                f"2. Include specific examples, frameworks, checklists, or real-world scenarios\n"
+                f"3. Tie every paragraph back to the audience pain points: {signals['pain_points']}\n"
+                f"4. Use practical tools: step-by-step frameworks, bullet checklists, stakeholder strategies\n"
+                f"5. Write 250-400 words per section\n"
+                f"6. Use HTML: <p> for paragraphs, <strong> for key terms, <h3> for subheadings\n"
+                f"7. DO NOT repeat the section title — it is already shown above the content\n"
+                f"8. Start each section directly with a <p> tag, not an <h3>\n\n"
+                f"Return ONLY this JSON with EXACTLY these keys:\n"
+                f"{{{keys_json}}}"
+            )
+
+            raw = self._call_ai(system, prompt, max_tokens=6000)
+            logger.info(f"📦 Batch {batch_idx+1} response keys: {list(raw.keys())}")
+
+            missing = []
+            for key, title, *_ in batch:
+                content = self._extract_content(raw, key)
+                word_count = len(content.split()) if content else 0
+                if content and word_count >= 20:
+                    result[key] = content
+                    logger.info(f"✅ '{key}': {word_count} words")
+                else:
+                    missing.append(key)
+                    logger.error(
+                        f"❌ EMPTY SECTION: key='{key}' | words={word_count} | "
+                        f"raw_keys={list(raw.keys())} | snippet={str(raw.get(key, ''))[:200]}"
+                    )
+
+            if missing:
+                raise ValueError(
+                    f"Batch {batch_idx+1} missing sections: {missing}. "
+                    f"Groq returned keys: {list(raw.keys())}. "
+                    f"Raw (first 600 chars): {str(raw)[:600]}"
                 )
 
-        if missing:
-            raise ValueError(
-                f"Groq returned empty/missing content for sections: {missing}. "
-                f"Groq response keys were: {list(raw.keys())}. "
-                f"Full raw response: {str(raw)[:800]}"
-            )
+        return result
 
-        return results
 
     def _extract_content(self, result: Dict, key: str) -> str:
         """
-        Extract section content from Groq's response.
-        Tries the exact key first, then 'content', then any long string value.
-        Logs exactly what it finds so failures are visible in the debugger.
+        Robustly extract section content from Groq response.
+        Tries: exact key → 'content' key → any long string value.
+        Logs exactly what it found so failures are visible in the debugger.
         """
         if not result:
-            logger.error(f"❌ _extract_content: result is empty for key='{key}'")
+            logger.error(f"❌ _extract_content: empty result for key='{key}'")
             return ""
-        # 1. Exact key match
-        if key in result and isinstance(result[key], str) and len(result[key]) > 50:
+        if key in result and isinstance(result[key], str) and len(result[key]) > 30:
             return result[key]
-        # 2. Generic 'content' key
-        if "content" in result and isinstance(result["content"], str) and len(result["content"]) > 50:
-            logger.warning(f"⚠️ Key '{key}' not found — fell back to 'content' key")
+        if "content" in result and isinstance(result["content"], str) and len(result["content"]) > 30:
+            logger.warning(f"⚠️ key='{key}' not found — used 'content' key instead")
             return result["content"]
-        # 3. First long string value in the dict
         for k, v in result.items():
-            if isinstance(v, str) and len(v) > 100:
-                logger.warning(f"⚠️ Key '{key}' not found — fell back to key '{k}'")
+            if isinstance(v, str) and len(v) > 80:
+                logger.warning(f"⚠️ key='{key}' not found — used first long string under key='{k}'")
                 return v
         logger.error(
             f"❌ _extract_content FAILED for key='{key}'. "
             f"Available keys: {list(result.keys())}. "
-            f"Values preview: { {k: str(v)[:80] for k, v in result.items()} }"
+            f"Preview: { {k: str(v)[:60] for k, v in result.items()} }"
         )
         return ""
 
