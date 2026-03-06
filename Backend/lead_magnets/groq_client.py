@@ -209,7 +209,7 @@ class GroqClient:
         if not api_key:
             raise ValueError("GROQ_API_KEY is required.")
         self.client      = Groq(api_key=api_key)
-        self.model       = "llama-3.1-8b-instant"
+        self.model       = "llama-3.1-8b-instant"  # swap to llama-3.3-70b-versatile for production
         self.temperature = 0.4
         self.max_tokens  = 4096
 
@@ -242,7 +242,7 @@ class GroqClient:
 
         title_data = self._generate_title(signals, config)
 
-        # Generate all sections in small batches to avoid rate limits
+        # Generate all 15 sections in 3 batches of 5 to avoid rate limits
         sections      = config["sections"]
         batch_size    = 2
         sections_content: Dict[str, str] = {}
@@ -416,7 +416,7 @@ Return JSON:
             section_specs.append(f'- "{key}": {title} — {brief_filled[:200]}')
 
         keys_list = [k for k, *_ in batch]
-        keys_json = ", ".join(f'"{k}": "PROSE_HERE"' for k in keys_list)
+        keys_json = ", ".join(f'"{k}": "prose"' for k in keys_list)
 
         system = (
             f"You are a senior {signals['industry']} consultant writing sections of a {config['label']}. "
@@ -430,9 +430,8 @@ Return JSON:
             f"REQUIREMENTS per section:\n"
             f"- 200-300 words of focused prose\n"
             f"- At least 2 specific metrics or percentages\n"
-            f"- Wrap paragraphs in <p> tags, key terms in <strong>, subheadings in <h3>\n\n"
-            f"Return ONLY a FLAT JSON object where each key is a section name and each value is a single string containing the HTML-formatted content.\n\n"
-            f"SCHEMA:\n"
+            f"- Wrap paragraphs in <p> tags, key terms in <strong>, subheadings in <h3>\n"f"- DO NOT start with the section title — the title is already rendered above the content\n"f"- DO NOT use an <h3> as the first element — start directly with a <p> tag\n\n"
+            f"Return ONLY this JSON with EXACTLY these keys:\n"
             f"{{{keys_json}}}"
         )
 
@@ -471,42 +470,24 @@ Return JSON:
     def _extract_content(self, result: Dict, key: str) -> str:
         """
         Extract section content from Groq's response.
-        Tries the exact key first (handling nested dicts), then 'content', then any long string value.
+        Tries the exact key first, then 'content', then any long string value.
         Logs exactly what it finds so failures are visible in the debugger.
         """
         if not result:
             logger.error(f"❌ _extract_content: result is empty for key='{key}'")
             return ""
-
         # 1. Exact key match
-        if key in result:
-            val = result[key]
-            # If it's a string, return it
-            if isinstance(val, str) and len(val) > 50:
-                return val
-            # If it's a dict, look for content-like keys inside
-            if isinstance(val, dict):
-                for subkey in ["prose", "content", "text", "body", "value"]:
-                    if subkey in val and isinstance(val[subkey], str) and len(val[subkey]) > 50:
-                        logger.info(f"✅ Found content for '{key}' in nested key '{subkey}'")
-                        return val[subkey]
-                # Fallback: first long string in the sub-dict
-                for sk, sv in val.items():
-                    if isinstance(sv, str) and len(sv) > 50:
-                        logger.warning(f"⚠️ Fell back to first string in nested dict for '{key}' (key: '{sk}')")
-                        return sv
-
-        # 2. Generic 'content' key in root
+        if key in result and isinstance(result[key], str) and len(result[key]) > 50:
+            return result[key]
+        # 2. Generic 'content' key
         if "content" in result and isinstance(result["content"], str) and len(result["content"]) > 50:
             logger.warning(f"⚠️ Key '{key}' not found — fell back to 'content' key")
             return result["content"]
-
-        # 3. First long string value in the root dict
+        # 3. First long string value in the dict
         for k, v in result.items():
             if isinstance(v, str) and len(v) > 100:
-                logger.warning(f"⚠️ Key '{key}' not found — fell back to root key '{k}'")
+                logger.warning(f"⚠️ Key '{key}' not found — fell back to key '{k}'")
                 return v
-
         logger.error(
             f"❌ _extract_content FAILED for key='{key}'. "
             f"Available keys: {list(result.keys())}. "

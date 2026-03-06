@@ -21,7 +21,6 @@
             --rule:   {{ruleLightColor | default('#EEEEEE')}};
             --cover-text:   {{coverTextColor | default('#FFFFFF')}};
             --cover-filter: {{coverLogoFilter | default('brightness(0) invert(1)')}};
-
             --fd: 'Playfair Display', serif;
             --fs: 'Lato', sans-serif;
             --fm: 'DM Mono', monospace;
@@ -40,8 +39,6 @@
             background: #a0a0a8;
             padding: 20px 15px;
             color: var(--ink);
-            font-size: 1rem;
-            line-height: 1.35;
         }
 
         .book { width: 210mm; margin: 0 auto; }
@@ -62,122 +59,119 @@
         .page + .page { break-before: page; page-break-before: always; }
 
         /* ── HEADER ──────────────────────────────────────────────────── */
-        .pg-head {
-            flex-shrink: 0; break-after: avoid;
-            padding: 12px 14mm 0;
-            display: flex; flex-direction: column; gap: 3px;
-        }
+        .pg-head { flex-shrink: 0; padding: 12px 14mm 0; }
         .pg-head-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 6px;
-            border-bottom: 0.5px solid var(--rule);
+            padding-bottom: 6px; border-bottom: 0.5px solid var(--rule);
         }
-        .pg-label {
-            font-family: var(--fm); font-size: 9px;
-            letter-spacing: 0.24em; text-transform: uppercase; color: var(--ltgrey);
-        }
-        .pg-num { font-family: var(--fs); font-size: 10px; color: var(--ltgrey); }
+        .pg-label { font-family: var(--fm); font-size: 7px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ltgrey); }
+        .pg-num   { font-family: var(--fs); font-size: 8px; color: var(--ltgrey); }
 
         /* ── FOOTER ──────────────────────────────────────────────────── */
         .pg-foot {
             margin-top: auto; flex-shrink: 0;
-            padding: 10px 14mm;
-            border-top: 0.5px solid var(--rule);
+            padding: 10px 14mm; border-top: 0.5px solid var(--rule);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .pg-foot-l { font-family: var(--fs); font-size: 9.5px; color: var(--grey); font-style: italic; }
-        .pg-foot-r { font-family: var(--fm); font-size: 9.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
+        .pg-foot-l { font-family: var(--fs); font-size: 7.5px; color: var(--grey); font-style: italic; }
+        .pg-foot-r { font-family: var(--fm); font-size: 7.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
 
         /* ── BODY WRAPPER ────────────────────────────────────────────── */
-        .bw {
-            padding: 4px 14mm 8px;
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        .bw { padding: 8px 14mm 12px; flex: 1; display: flex; flex-direction: column; }
 
         /* ── EYEBROW ─────────────────────────────────────────────────── */
-        .ch-eyebrow {
-            display: flex; align-items: center; gap: 6px;
-            margin-bottom: 6px; break-after: avoid;
-        }
+        .ch-eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
         .ch-eyebrow-label {
-            font-family: var(--fm); font-size: 8px; letter-spacing: 0.24em;
+            font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.24em;
             text-transform: uppercase; color: var(--navy); white-space: nowrap;
         }
         .ch-eyebrow-rule { flex: 1; height: 0.75px; background: var(--rule); }
 
-        /* ── HEADINGS ────────────────────────────────────────────────── */
+        /* ── SECTION TITLE ───────────────────────────────────────────── */
         .ch-h1 {
-            font-family: var(--fd); font-size: 28px; font-weight: 700;
-            color: var(--navy); line-height: 1.05; letter-spacing: -0.3px;
-            margin-bottom: 12px;
+            font-family: var(--fd); font-size: 30px; font-weight: 700;
+            color: var(--navy); line-height: 1.05; letter-spacing: -0.5px;
+            margin-bottom: 14px; padding-bottom: 10px;
+            border-bottom: 2px solid var(--navy);
         }
-        .sec-h  { font-family: var(--fd); font-size: 16px; font-weight: 700; color: var(--navy); margin: 14px 0 6px; }
-        .sec-h2 { font-family: var(--fs); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 10px 0 4px; }
 
         /* ── BODY TEXT ───────────────────────────────────────────────── */
         .body {
-            font-family: var(--fs); font-size: 13.5px; line-height: 1.55;
-            color: var(--mid); font-weight: 400;
-            text-align: justify;
-            flex: 1;
+            font-family: var(--fs); font-size: 10.5px; line-height: 1.55;
+            color: var(--mid); text-align: justify; flex: 1;
         }
-        .body p         { margin-bottom: 12px; }
-        .body strong    { color: var(--ink); font-weight: 700; }
-        .body h3        { font-family: var(--fd); font-size: 17px; font-weight: 700; color: var(--navy); margin: 18px 0 8px; }
-        .body h4        { font-family: var(--fs); font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 14px 0 6px; }
-        .body ul        { list-style: none; padding: 0; margin: 10px 0 16px; }
-        .body ul li     { padding: 7px 0 7px 22px; position: relative; border-bottom: 0.5px solid var(--rule); font-size: 12.5px; color: var(--mid); line-height: 1.6; }
+        .body p      { margin-bottom: 10px; }
+        .body strong { color: var(--ink); font-weight: 700; }
+        .body h3     {
+            font-family: var(--fd); font-size: 14px; font-weight: 700;
+            color: var(--navy); margin: 16px 0 6px;
+            padding-left: 10px; border-left: 3px solid var(--navy);
+        }
+        .body h4     {
+            font-family: var(--fs); font-size: 10px; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--navy); margin: 12px 0 4px;
+        }
+        .body ul     { list-style: none; padding: 0; margin: 8px 0 12px; }
+        .body ul li  {
+            padding: 5px 0 5px 18px; position: relative;
+            border-bottom: 0.5px solid var(--rule);
+            font-size: 10px; color: var(--mid); line-height: 1.5;
+        }
         .body ul li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
-        .body-sm { font-family: var(--fs); font-size: 11.5px; line-height: 1.5; color: var(--mid); font-weight: 400; margin-bottom: 8px; }
 
-        /* ── DROP CAP ────────────────────────────────────────────────── */
-        .drop-letter {
-            font-family: var(--fd); font-size: 60px; font-weight: 900;
-            color: var(--navy); float: left; line-height: 0.6;
-            margin: 6px 6px 0 0; padding-right: 2px;
+        /* ── IMAGE BLOCKS ─────────────────────────────────────────────
+           Much larger, with navy accent bar, full-bleed feel
+        ──────────────────────────────────────────────────────────────── */
+        .img-wrap { margin: 14px 0; break-inside: avoid; }
+
+        /* Right-floated (page 5) */
+        .img-wrap.img-right {
+            float: right; width: 48%;
+            margin: 0 0 14px 20px;
         }
-        .cf::after { content: ""; display: table; clear: both; }
+        /* Left-floated (page 8) */
+        .img-wrap.img-left {
+            float: left; width: 48%;
+            margin: 0 20px 14px 0;
+        }
+        /* Full-width (page 12) */
+        .img-wrap.img-full { width: 100%; clear: both; margin: 16px 0; }
 
-        /* ── IMAGE BLOCKS ────────────────────────────────────────────── */
-        .img-block              { margin: 14px 0 10px; break-inside: avoid; }
-        .img-block.img-left     { float: left;  width: 46%; margin: 4px 20px 12px 0; }
-        .img-block.img-right    { float: right; width: 46%; margin: 4px 0 12px 20px; }
-        .img-block.img-full     { width: 100%;  clear: both; margin: 14px 0; }
-        .img-block img          { width: 100%; display: block; object-fit: cover; border-radius: 0; }
-        .img-block.img-left img,
-        .img-block.img-right img { max-height: 200px; }
-        .img-block.img-full img  { max-height: 220px; }
+        .img-wrap .img-inner {
+            position: relative; overflow: hidden;
+            border-radius: 3px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .img-wrap img {
+            width: 100%; display: block; object-fit: cover;
+        }
+        .img-wrap.img-right img,
+        .img-wrap.img-left  img { height: 220px; }
+        .img-wrap.img-full  img { height: 200px; }
+
+        /* Navy accent bar at bottom of image */
+        .img-wrap .img-inner::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 4px; background: var(--navy);
+        }
+
         .img-cap {
-            font-family: var(--fs); font-size: 9px; font-style: italic;
-            color: var(--grey); text-align: center; margin-top: 6px;
-            line-height: 1.5; display: block;
+            font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--navy);
+            margin-top: 6px; display: block; text-align: right;
         }
+
+        .cf::after { content: ""; display: table; clear: both; }
 
         /* ── CALLOUT ─────────────────────────────────────────────────── */
         .callout {
             background: var(--off2); border-left: 3px solid var(--navy);
-            padding: 14px 18px; margin: 12px 0; break-inside: avoid;
+            padding: 12px 16px; margin: 12px 0; break-inside: avoid;
         }
-        .callout-title { font-family: var(--fd); font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
-        .callout-body  { font-family: var(--fs); font-size: 13.5px; color: var(--mid); line-height: 1.55; }
-        .callout.navy-fill { background: var(--navy); border-left-color: rgba(255,255,255,0.3); }
-        .callout.navy-fill .callout-title { color: var(--white); }
-        .callout.navy-fill .callout-body  { color: rgba(255,255,255,0.75); }
-
-        /* ── LISTS ───────────────────────────────────────────────────── */
-        .b-list { list-style: none; margin: 16px 0 24px; padding: 0; }
-        .b-list li {
-            font-family: var(--fs); font-size: 13.5px; color: var(--mid);
-            line-height: 1.65; padding: 8px 0 8px 24px;
-            border-bottom: 1px solid var(--rule); position: relative;
-        }
-        .b-list li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
-
-        /* ── GRID ────────────────────────────────────────────────────── */
-        .col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .callout-title { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+        .callout-body  { font-family: var(--fs); font-size: 10px; color: var(--mid); line-height: 1.5; }
 
         /* ── COVER PAGE ──────────────────────────────────────────────── */
         .cover {
@@ -186,62 +180,42 @@
             display: flex; flex-direction: column;
             padding: 0 18mm;
         }
-        .cv-top         { padding-top: 40px; text-align: center; }
-        .cv-name        { font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
-        .cv-type-badge  {
+        .cv-top        { padding-top: 40px; text-align: center; }
+        .cv-name       { font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+        .cv-type-badge {
             display: inline-block; margin-top: 12px;
             font-family: var(--fm); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase;
-            color: rgba(255,255,255,0.35); border: 0.5px solid rgba(255,255,255,0.2);
-            padding: 4px 12px; border-radius: 2px;
+            color: rgba(255,255,255,0.35); border: 0.5px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 2px;
         }
-        .cv-body        { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .cv-aud-text    { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.42); margin-bottom: 20px; }
-        .cv-title-bold  { font-family: var(--fd); font-size: 64px; font-weight: 900; line-height: 0.9; color: var(--cover-text); }
+        .cv-body       { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .cv-aud-text   { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.42); margin-bottom: 20px; }
+        .cv-title-bold { font-family: var(--fd); font-size: 64px; font-weight: 900; line-height: 0.9; color: var(--cover-text); }
         .cv-title-italic{ font-family: var(--fd); font-size: 50px; font-weight: 400; font-style: italic; color: rgba(255,255,255,0.42); }
-        .cv-divider     { width: 40px; height: 2px; background: rgba(255,255,255,0.3); margin: 28px 0; }
-        .cv-summary     { font-family: var(--fs); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.55); max-width: 420px; }
-        .cv-foot        { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
-        .cv-foot span   { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.32); }
+        .cv-divider    { width: 40px; height: 2px; background: rgba(255,255,255,0.3); margin: 28px 0; }
+        .cv-summary    { font-family: var(--fs); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.55); max-width: 420px; }
+        .cv-foot       { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        .cv-foot span  { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.32); }
 
         /* ── TABLE OF CONTENTS ───────────────────────────────────────── */
-        .toc-grid    { margin-top: 16px; }
-        .toc-item    { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--rule); }
-        .toc-num     { font-family: var(--fm); font-size: 11px; color: var(--navy); min-width: 28px; font-weight: 700; }
-        .toc-title   { font-family: var(--fd); font-size: 15px; font-weight: 700; color: var(--ink); flex: 1; }
-        .toc-label   { font-family: var(--fm); font-size: 9px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
-        .toc-pg      { font-family: var(--fm); font-size: 11px; color: var(--navy); min-width: 22px; text-align: right; }
+        .toc-grid  { margin-top: 16px; }
+        .toc-item  { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--rule); }
+        .toc-num   { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 28px; font-weight: 700; }
+        .toc-title { font-family: var(--fd); font-size: 12px; font-weight: 700; color: var(--ink); flex: 1; }
+        .toc-label { font-family: var(--fm); font-size: 7.5px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
+        .toc-pg    { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 22px; text-align: right; }
 
         /* ── CTA BLOCK ───────────────────────────────────────────────── */
-        .cta-navy-box    { background: var(--navy); padding: 20px 24px; margin: 16px 0; break-inside: avoid; }
-        .cta-box-eyebrow { font-family: var(--fm); font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
-        .cta-box-title   { font-family: var(--fd); font-size: 24px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; }
-        .cta-box-body    { font-family: var(--fs); font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.6; }
-
-        .cta-block    { background: var(--navy); padding: 20px 22px; margin-top: 16px; break-inside: avoid; }
-        .cta-eyebrow  { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
-        .cta-title    { font-family: var(--fd); font-size: 18px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; line-height: 1.2; }
-        .cta-body     { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.6); line-height: 1.55; }
-        .contact-row  {
-            display: grid; grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px; margin-top: 16px; padding-top: 16px;
-            border-top: 0.5px solid rgba(255,255,255,0.15);
-        }
+        .cta-navy-box    { background: var(--navy); padding: 22px 26px; margin: 18px 0 0; break-inside: avoid; }
+        .cta-box-eyebrow { font-family: var(--fm); font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+        .cta-box-title   { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; }
+        .cta-box-body    { font-family: var(--fs); font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.6; }
         .contact-grid {
             display: grid; grid-template-columns: 1fr 1fr 1fr;
-            gap: 18px; margin-top: 18px; padding-top: 18px;
-            border-top: 0.75px solid var(--rule);
-            break-inside: avoid;
+            gap: 18px; margin-top: 16px; padding-top: 16px;
+            border-top: 0.5px solid var(--rule); break-inside: avoid;
         }
-        .contact-item .lbl,
-        .contact-lbl { font-family: var(--fm); font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
-        .contact-item .val,
-        .contact-val { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.75); }
-
-        /* ── AUDIENCE CARDS ──────────────────────────────────────────── */
-        .audience-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
-        .audience-card { background: var(--off2); padding: 20px; border-top: 2px solid var(--navy); }
-        .audience-card-title { font-family: var(--fd); font-size: 18px; color: var(--navy); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
-        .audience-card-body  { font-family: var(--fs); font-size: 13.5px; line-height: 1.55; color: var(--mid); }
+        .contact-lbl { font-family: var(--fm); font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ltgrey); margin-bottom: 4px; display: block; }
+        .contact-val { font-family: var(--fs); font-size: 10px; color: var(--mid); }
 
         @media print {
             body  { background: white; padding: 0; }
@@ -252,9 +226,9 @@
 <body>
 <div class="book">
 
-{# ══════════════════════════════════════════════════════════════════════════ #}
-{# PAGE 1 — COVER                                                             #}
-{# ══════════════════════════════════════════════════════════════════════════ #}
+{# ══════════════════════════════════════════════════════════════════════ #}
+{# PAGE 1 — COVER                                                         #}
+{# ══════════════════════════════════════════════════════════════════════ #}
 <div class="page cover">
     <div class="cv-top">
         <div class="cv-name">{{companyName | default('Strategic Advisory')}}</div>
@@ -273,9 +247,9 @@
     </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════════════════ #}
-{# PAGE 2 — TABLE OF CONTENTS                                                 #}
-{# ══════════════════════════════════════════════════════════════════════════ #}
+{# ══════════════════════════════════════════════════════════════════════ #}
+{# PAGE 2 — TABLE OF CONTENTS                                             #}
+{# ══════════════════════════════════════════════════════════════════════ #}
 <div class="page">
     <div class="pg-head">
         <div class="pg-head-row">
@@ -284,7 +258,7 @@
         </div>
     </div>
     <div class="bw">
-        <h1 class="ch-h1" style="font-size: 48px; margin-top: 20px;">Table of<br>Contents</h1>
+        <h1 class="ch-h1" style="font-size: 46px; border-bottom: none; margin-bottom: 4px;">Table of<br>Contents</h1>
         <div class="toc-grid">
             {% for section in toc_sections %}
             <div class="toc-item">
@@ -302,11 +276,14 @@
     </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════════════════ #}
-{# PAGES 3–17 — DYNAMIC CONTENT SECTIONS                                      #}
-{# Loops over `content_sections` list of dicts built by groq_client           #}
-{# Each dict: key, title, label, page_num, content, drop_cap                  #}
-{# ══════════════════════════════════════════════════════════════════════════ #}
+{# ══════════════════════════════════════════════════════════════════════ #}
+{# PAGES 3–17 — CONTENT SECTIONS                                          #}
+{#                                                                        #}
+{# NO drop-cap span — avoids the "H" bug where Groq's first character    #}
+{# in the content (from an <h3> tag) gets pulled as the drop letter.     #}
+{#                                                                        #}
+{# Images: larger, styled with navy accent bar and shadow                 #}
+{# ══════════════════════════════════════════════════════════════════════ #}
 {% for section in content_sections %}
 <div class="page">
 
@@ -324,49 +301,46 @@
         </div>
         <h1 class="ch-h1">{{section.title | safe}}</h1>
 
-        {# ── IMAGE SLOT 1 — section index 2 (page 5), float RIGHT ─────── #}
+        {# ── IMAGE SLOT 1 — index 2 (page 5), float RIGHT ────────────── #}
         {% if loop.index0 == 2 and image_1_url %}
         <div class="cf">
-            <div class="img-block img-right">
-                <img src="{{image_1_url}}" alt="{{image_1_caption | default('Strategic Context')}}">
+            <div class="img-wrap img-right">
+                <div class="img-inner">
+                    <img src="{{image_1_url}}" alt="{{image_1_caption | default('Strategic Context')}}">
+                </div>
                 <span class="img-cap">{{image_1_caption | default('Strategic Context')}}</span>
             </div>
-            <div class="body">
-                <span class="drop-letter">{{section.drop_cap}}</span>
-                {{section.content | safe}}
-            </div>
+            <div class="body">{{section.content | safe}}</div>
         </div>
 
-        {# ── IMAGE SLOT 2 — section index 5 (page 8), float LEFT ─────── #}
+        {# ── IMAGE SLOT 2 — index 5 (page 8), float LEFT ─────────────── #}
         {% elif loop.index0 == 5 and image_2_url %}
         <div class="cf">
-            <div class="img-block img-left">
-                <img src="{{image_2_url}}" alt="{{image_2_caption | default('Technical Framework')}}">
+            <div class="img-wrap img-left">
+                <div class="img-inner">
+                    <img src="{{image_2_url}}" alt="{{image_2_caption | default('Technical Framework')}}">
+                </div>
                 <span class="img-cap">{{image_2_caption | default('Technical Framework')}}</span>
             </div>
-            <div class="body">
-                <span class="drop-letter">{{section.drop_cap}}</span>
-                {{section.content | safe}}
-            </div>
+            <div class="body">{{section.content | safe}}</div>
         </div>
 
-        {# ── IMAGE SLOT 3 — section index 9 (page 12), full-width ───── #}
+        {# ── IMAGE SLOT 3 — index 9 (page 12), full-width ────────────── #}
         {% elif loop.index0 == 9 and image_3_url %}
-        <div class="img-block img-full">
-            <img src="{{image_3_url}}" alt="{{image_3_caption | default('Implementation Overview')}}">
+        <div class="img-wrap img-full">
+            <div class="img-inner">
+                <img src="{{image_3_url}}" alt="{{image_3_caption | default('Implementation Overview')}}">
+            </div>
             <span class="img-cap">{{image_3_caption | default('Implementation Overview')}}</span>
         </div>
         <div class="body">{{section.content | safe}}</div>
 
-        {# ── STANDARD — no image ─────────────────────────────────────── #}
+        {# ── STANDARD — no image ──────────────────────────────────────── #}
         {% else %}
-        <div class="body cf">
-            <span class="drop-letter">{{section.drop_cap}}</span>
-            {{section.content | safe}}
-        </div>
+        <div class="body">{{section.content | safe}}</div>
         {% endif %}
 
-        {# ── LAST SECTION — CTA + contact block ─────────────────────── #}
+        {# ── LAST SECTION — CTA ───────────────────────────────────────── #}
         {% if loop.last %}
         <div class="cta-navy-box">
             <span class="cta-box-eyebrow">Strategic Engagement</span>
