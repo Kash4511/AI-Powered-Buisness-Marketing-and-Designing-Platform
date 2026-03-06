@@ -440,17 +440,31 @@ class GroqClient:
             logger.info(f"✅ parsed | keys={list(parsed.keys())}")
             return parsed
         except json.JSONDecodeError:
-            # Try extracting JSON object with regex as last resort
-            m = re.search(r"\{[\s\S]+\}", cleaned)
-            if m:
-                try:
-                    parsed = json.loads(m.group(0))
-                    logger.warning(f"⚠️ parsed via regex extraction | keys={list(parsed.keys())}")
-                    return parsed
-                except json.JSONDecodeError:
-                    pass
-            logger.error(f"❌ JSON parse failed\nRaw:\n{raw_text}")
-            raise ValueError(f"Invalid JSON from Groq. Raw: {raw_text[:300]}")
+            pass
+
+        # ── Repair: Groq returned {"key": <html> without quoting the value
+        m_repair = re.search(r'\{"(\w+)"\s*:\s*([^"\{][\s\S]*?)\s*\}\s*$', cleaned)
+        if m_repair:
+            try:
+                repaired = json.dumps({m_repair.group(1): m_repair.group(2).strip()})
+                parsed = json.loads(repaired)
+                logger.warning(f"⚠️ repaired unquoted value | keys={list(parsed.keys())}")
+                return parsed
+            except Exception:
+                pass
+
+        # ── Fallback: extract key name + grab everything after the colon as content
+        m_key = re.search(r'"(\w+)"\s*:\s*', cleaned)
+        if m_key:
+            key_name = m_key.group(1)
+            content_start = m_key.end()
+            content_val = cleaned[content_start:].rstrip().rstrip("}")
+            if content_val.strip():
+                logger.warning(f"⚠️ extracted raw content for key='{key_name}'")
+                return {key_name: content_val.strip()}
+
+        logger.error(f"❌ JSON parse fully failed\nRaw:\n{raw_text}")
+        raise ValueError(f"Invalid JSON from Groq. Raw: {raw_text[:300]}")
 
     def _ensure_closed_tags(self, html: str) -> str:
         void = {"br", "hr", "img", "input", "link", "meta"}
