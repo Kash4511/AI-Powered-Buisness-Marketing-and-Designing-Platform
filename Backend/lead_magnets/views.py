@@ -219,20 +219,9 @@ def _run_generation_job(job_id, body, user_id):
 
         ai_client = GroqClient()
 
-        # ── DEFENSIVE CHECKS: sanitize placeholder values "h" ──
-        def sanitize_h(val, default):
-            v = str(val or "").strip()
-            if v.lower() == "h" or not v:
-                return default
-            return v
-
-        clean_topic = sanitize_h(gen_data.main_topic, "Strategic Design")
-        clean_outcome = sanitize_h(gen_data.desired_outcome, "a comprehensive strategic roadmap")
-        clean_cta = sanitize_h(gen_data.call_to_action, "Book a strategic consultation")
-
         # ── FIX 1: pass document_type so the correct 15-section config is selected ──
         ai_input_data = {
-            'main_topic':      clean_topic,
+            'main_topic':      gen_data.main_topic,
             'target_audience': gen_data.target_audience,
             'pain_points':     (
                 gen_data.audience_pain_points
@@ -247,8 +236,6 @@ def _run_generation_job(job_id, body, user_id):
                 else "guide"
             ),
             'lead_magnet_type': gen_data.lead_magnet_type if gen_data else 'Strategic Guide',
-            'desired_outcome':  clean_outcome,
-            'call_to_action':   clean_cta,
         }
 
         # Firm profile
@@ -276,16 +263,13 @@ def _run_generation_job(job_id, body, user_id):
                 'industry':              'Architecture',
             }
 
-        # ── FIX 2: resolve image URLs ──
-        resolved_images = []
-        for img_obj in architectural_images:
-            resolved_images.append(_resolve_image_url(img_obj))
-        
-        firm_profile['architectural_images'] = resolved_images
-        # Maintain legacy keys for compatibility
-        firm_profile['image_1_url'] = resolved_images[0] if len(resolved_images) > 0 else ""
-        firm_profile['image_2_url'] = resolved_images[1] if len(resolved_images) > 1 else ""
-        firm_profile['image_3_url'] = resolved_images[2] if len(resolved_images) > 2 else ""
+        # ── FIX 2: resolve image URLs and inject into firm_profile ──
+        img_1 = _resolve_image_url(architectural_images[0]) if len(architectural_images) > 0 else ""
+        img_2 = _resolve_image_url(architectural_images[1]) if len(architectural_images) > 1 else ""
+        img_3 = _resolve_image_url(architectural_images[2]) if len(architectural_images) > 2 else ""
+        firm_profile['image_1_url'] = img_1
+        firm_profile['image_2_url'] = img_2
+        firm_profile['image_3_url'] = img_3
 
         template_vars = {}
 
@@ -329,13 +313,8 @@ def _run_generation_job(job_id, body, user_id):
                 _set_job(job_id, status="failed", error=f"AI Error: {err_msg}")
                 return
             except Exception as e:
-                # Provide a more descriptive error than just "0"
-                err_msg = str(e)
-                if err_msg == "0" or not err_msg:
-                    err_msg = f"Silent error ({type(e).__name__}). Check API keys or network connection."
-                
-                logger.error(f"❌ AI Pipeline Error: {err_msg}\n{traceback.format_exc()}")
-                _set_job(job_id, status="failed", error=f"AI generation failed: {err_msg}")
+                logger.error(f"❌ AI Pipeline Error: {str(e)}\n{traceback.format_exc()}")
+                _set_job(job_id, status="failed", error=f"AI generation failed: {str(e)}")
                 return
         else:
             template_vars = {
@@ -357,10 +336,6 @@ def _run_generation_job(job_id, body, user_id):
             _set_job(job_id, status="processing", progress=80, message="Rendering PDF via DocRaptor...")
             start_pdf = time.time()
             logger.info("📄 PDF Generation Start (DocRaptor)")
-
-            img_1 = resolved_images[0] if len(resolved_images) > 0 else ""
-            img_2 = resolved_images[1] if len(resolved_images) > 1 else ""
-            img_3 = resolved_images[2] if len(resolved_images) > 2 else ""
 
             # ── FIX 4: docraptor_vars passes the pre-built section lists ──
             docraptor_vars = {
