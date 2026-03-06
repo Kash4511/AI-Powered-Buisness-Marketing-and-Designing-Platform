@@ -244,7 +244,7 @@ class GroqClient:
 
         # Generate all 15 sections in 3 batches of 5 to avoid rate limits
         sections      = config["sections"]
-        batch_size    = 5
+        batch_size    = 2
         sections_content: Dict[str, str] = {}
 
         for batch_start in range(0, len(sections), batch_size):
@@ -428,7 +428,7 @@ Return JSON:
             f"Write {len(batch)} sections of a {config['label']} about {signals['topic']}.\n\n"
             f"SECTIONS TO WRITE:\n" + "\n".join(section_specs) + "\n\n"
             f"REQUIREMENTS per section:\n"
-            f"- 400-600 words of dense prose\n"
+            f"- 200-300 words of focused prose\n"
             f"- At least 2 specific metrics or percentages\n"
             f"- Wrap paragraphs in <p> tags, key terms in <strong>, subheadings in <h3>\n\n"
             f"Return ONLY this JSON with EXACTLY these keys:\n"
@@ -437,7 +437,7 @@ Return JSON:
 
         logger.info(f"🚀 Groq batch call | keys={keys_list} | topic={signals['topic']}")
 
-        raw = self._call_ai(system, prompt, max_tokens=8000)
+        raw = self._call_ai(system, prompt, max_tokens=4000)
 
         logger.info(f"📦 Groq batch response keys: {list(raw.keys())}")
         logger.debug(f"📄 Groq batch raw (first 500 chars): {str(raw)[:500]}")
@@ -447,7 +447,7 @@ Return JSON:
         for key, title, *_ in batch:
             content = self._extract_content(raw, key)
             word_count = len(content.split()) if content else 0
-            if content and word_count >= 30:
+            if content and word_count >= 15:
                 results[key] = content
                 logger.info(f"✅ Section '{key}': {word_count} words")
             else:
