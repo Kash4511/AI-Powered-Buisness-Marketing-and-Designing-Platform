@@ -240,15 +240,19 @@ class GroqClient:
 
         logger.info(f"📄 Generating {config['label']} | topic={signals['topic']}")
 
-        title_data        = self._generate_title(signals, config)
+        title_data = self._generate_title(signals, config)
+
+        # Generate all 15 sections in 3 batches of 5 to avoid rate limits
+        sections      = config["sections"]
+        batch_size    = 5
         sections_content: Dict[str, str] = {}
 
-        for idx, (key, title, label, brief) in enumerate(config["sections"], 1):
-            logger.info(f"✍️  Section {idx}/15: {key}")
-            sections_content[key] = self._generate_section(
-                key=key, title=title, label=label, brief=brief,
-                signals=signals, config=config, section_num=idx,
-            )
+        for batch_start in range(0, len(sections), batch_size):
+            batch = sections[batch_start: batch_start + batch_size]
+            batch_num = batch_start // batch_size + 1
+            logger.info(f"✍️  Batch {batch_num}: sections {batch_start+1}-{batch_start+len(batch)}")
+            batch_result = self._generate_section_batch(batch, signals, config)
+            sections_content.update(batch_result)
 
         return {
             "title":                   title_data.get("title", signals["topic"]),
@@ -391,130 +395,131 @@ Return JSON:
   "subtitle": "12-15 word subtitle naming the specific value delivered.",
   "target_audience_summary": "One sentence: who this is for and what specific outcome they get."
 }}"""
-        try:
-            return self._call_ai(system, prompt)
-        except Exception as e:
-            logger.error(f"Title generation failed: {e}")
-            return {"title": signals["topic"], "subtitle": config["label"], "target_audience_summary": ""}
+        logger.info(f"🔵 Generating title for topic='{signals['topic']}'")
+        return self._call_ai(system, prompt)
 
-    def _generate_section(self, key, title, label, brief, signals, config, section_num) -> str:
-        brief_filled = brief.format(
-            topic=signals["topic"],
-            audience=signals["audience"],
-            pain_points=signals["pain_points"],
-            industry=signals["industry"],
-        )
+    def _generate_section_batch(self, batch: list, signals: Dict, config: Dict) -> Dict[str, str]:
+        """
+        Generate up to 5 sections in a single Groq call.
+        Raises immediately on any failure — no fallbacks, no silent swallowing.
+        """
+        import traceback as _tb
+
+        section_specs = []
+        for key, title, label, brief in batch:
+            brief_filled = brief.format(
+                topic       = signals["topic"],
+                audience    = signals["audience"],
+                pain_points = signals["pain_points"],
+                industry    = signals["industry"],
+            )
+            section_specs.append(f'- "{key}": {title} — {brief_filled[:200]}')
+
+        keys_list = [k for k, *_ in batch]
+        keys_json = ", ".join(f'"{k}": "prose"' for k in keys_list)
 
         system = (
-            f"You are a senior {signals['industry']} consultant writing one section of a "
-            f"{config['label']}. Tone: {config['tone']}. "
-            f"Write ONLY about {signals['topic']} for {signals['audience']}. "
-            f"Every paragraph must reference at least one pain point from: {signals['pain_points']}. "
-            f"Use specific metrics and financial figures. No filler phrases. "
-            f"Return valid JSON only — no markdown, no code fences."
+            f"You are a senior {signals['industry']} consultant writing sections of a {config['label']}. "
+            f"Tone: {config['tone']}. Write ONLY about {signals['topic']} for {signals['audience']}. "
+            f"Every section must reference: {signals['pain_points']}. "
+            f"Use specific metrics. No filler. Return valid JSON only."
         )
-
         prompt = (
-            f"Write the '{title}' section ({section_num}/15) of this {config['label']}.\n\n"
-            f"BRIEF: {brief_filled}\n\n"
-            f"RULES:\n"
-            f"- 600-900 words of dense analytical prose\n"
-            f"- Entirely about {signals['topic']} — no generic filler\n"
-            f"- Include at least 3 specific metrics or percentages\n"
-            f"- Use HTML tags: <p> for paragraphs, <strong> for key terms, <h3> for subheadings\n\n"
-            f"Return ONLY valid JSON using EXACTLY this key name (not 'content'):\n"
-            f'{{"{key}": "<p>Your full prose here. Keep response under 3000 characters.</p>"}}'
+            f"Write {len(batch)} sections of a {config['label']} about {signals['topic']}.\n\n"
+            f"SECTIONS TO WRITE:\n" + "\n".join(section_specs) + "\n\n"
+            f"REQUIREMENTS per section:\n"
+            f"- 400-600 words of dense prose\n"
+            f"- At least 2 specific metrics or percentages\n"
+            f"- Wrap paragraphs in <p> tags, key terms in <strong>, subheadings in <h3>\n\n"
+            f"Return ONLY this JSON with EXACTLY these keys:\n"
+            f"{{{keys_json}}}"
         )
 
-        try:
-            result  = self._call_ai(system, prompt, max_tokens=8000)
-            content = self._extract_content(result, key)
-            if len(content.split()) < 60:
-                raise ValueError(f"Content too short: {len(content.split())} words")
-            return content
-        except Exception as e:
-            logger.warning(f"⚠️ Section '{key}' attempt 1 failed: {e}. Retrying with simplified prompt...")
-            return self._retry_section(key, title, signals, config)
+        logger.info(f"🚀 Groq batch call | keys={keys_list} | topic={signals['topic']}")
 
-    def _extract_content(self, result: Dict, key: str) -> str:
-        """
-        Robustly extract section content from whatever JSON shape Groq returns.
-        Tries: result[key], result['content'], first string value, entire result as string.
-        """
-        if not result:
-            return ""
-        # Try exact key first
-        if key in result and isinstance(result[key], str) and len(result[key]) > 50:
-            return result[key]
-        # Try generic 'content' key
-        if "content" in result and isinstance(result["content"], str) and len(result["content"]) > 50:
-            return result["content"]
-        # Try any key whose value is a long string
-        for v in result.values():
-            if isinstance(v, str) and len(v) > 100:
-                return v
-        # Last resort: JSON-dump the whole thing
-        return json.dumps(result)
+        raw = self._call_ai(system, prompt, max_tokens=8000)
 
-    def _retry_section(self, key, title, signals, config) -> str:
-        """Simplified retry — uses actual key name so normalize_ai_output finds it."""
-        system = "You are a senior strategic consultant. Return valid JSON only. No markdown."
-        prompt = (
-            f"Write 300 words about '{title}' for a {config['label']}.\n"
-            f"Topic: {signals['topic']}. Audience: {signals['audience']}.\n"
-            f"Use HTML <p> and <strong> tags.\n"
-            f"Return ONLY: {{\"{key}\": \"<p>your prose here</p>\"}}"
-        )
-        try:
-            result  = self._call_ai(system, prompt, max_tokens=3000)
-            content = self._extract_content(result, key)
-            if content and len(content.split()) > 30:
-                return content
-        except Exception as e:
-            logger.error(f"❌ Section '{key}' retry also failed: {e}")
+        logger.info(f"📦 Groq batch response keys: {list(raw.keys())}")
+        logger.debug(f"📄 Groq batch raw (first 500 chars): {str(raw)[:500]}")
 
-        # Hard fallback — at least renders something meaningful
-        return (
-            f"<p><strong>{title}</strong> is a critical component of {signals['topic']} "
-            f"strategy for {signals['audience']}.</p>"
-            f"<p>Key challenges addressed in this section include: {signals['pain_points']}. "
-            f"Effective management of these factors is essential for project success in "
-            f"{signals['industry']}.</p>"
-            f"<p>Organisations that proactively address {signals['pain_points']} report "
-            f"measurably better outcomes across cost, timeline and stakeholder satisfaction metrics.</p>"
-        )
+        results: Dict[str, str] = {}
+        missing = []
+        for key, title, *_ in batch:
+            content = self._extract_content(raw, key)
+            word_count = len(content.split()) if content else 0
+            if content and word_count >= 30:
+                results[key] = content
+                logger.info(f"✅ Section '{key}': {word_count} words")
+            else:
+                missing.append(key)
+                logger.error(
+                    f"❌ SECTION EMPTY: key='{key}' | word_count={word_count} | "
+                    f"raw_keys={list(raw.keys())} | "
+                    f"raw_snippet={str(raw.get(key, raw))[:300]}"
+                )
+
+        if missing:
+            raise ValueError(
+                f"Groq returned empty/missing content for sections: {missing}. "
+                f"Groq response keys were: {list(raw.keys())}. "
+                f"Full raw response: {str(raw)[:800]}"
+            )
+
+        return results
 
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:
-        start    = time.time()
-        tokens   = max_tokens or self.max_tokens
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": user_prompt},
-            ],
-            temperature=self.temperature,
-            max_tokens=tokens,
-            response_format={"type": "json_object"},
-        )
+        import traceback as _tb
+        start  = time.time()
+        tokens = max_tokens or self.max_tokens
+
+        logger.info(f"🔵 Groq call | model={self.model} | max_tokens={tokens}")
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user",   "content": user_prompt},
+                ],
+                temperature=self.temperature,
+                max_tokens=tokens,
+                response_format={"type": "json_object"},
+            )
+        except Exception as api_err:
+            logger.error(f"❌ Groq API call FAILED: {type(api_err).__name__}: {api_err}\n{_tb.format_exc()}")
+            raise RuntimeError(f"Groq API call failed: {type(api_err).__name__}: {api_err}") from api_err
+
         duration = time.time() - start
         finish   = response.choices[0].finish_reason
         raw_text = response.choices[0].message.content or ""
-        logger.info(f"✅ Groq | {duration:.2f}s | finish={finish} | chars={len(raw_text)}")
 
-        # Truncated: repair JSON before parsing instead of raising
+        logger.info(f"🟢 Groq response | {duration:.2f}s | finish={finish} | chars={len(raw_text)}")
+
         if finish == "length":
-            logger.warning("⚠️ Groq truncated — attempting JSON repair")
-            if raw_text.count('"') % 2 != 0:
-                raw_text += '"'
-            if not raw_text.rstrip().endswith("}"):
-                raw_text = raw_text.rstrip() + '"}'
+            logger.error(
+                f"❌ Groq TRUNCATED response (finish=length). "
+                f"max_tokens={tokens} was too low. "
+                f"raw_text snippet: {raw_text[:300]}"
+            )
+            raise ValueError(
+                f"Groq truncated the response (finish_reason=length). "
+                f"Increase max_tokens above {tokens}. Raw snippet: {raw_text[:200]}"
+            )
+
+        if not raw_text.strip():
+            logger.error(f"❌ Groq returned EMPTY response. finish={finish}")
+            raise ValueError(f"Groq returned an empty response. finish_reason={finish}")
 
         try:
-            return json.loads(raw_text)
-        except json.JSONDecodeError:
-            # Wrap raw text so _extract_content can still pull a string
-            return {"content": raw_text}
+            parsed = json.loads(raw_text)
+            logger.info(f"✅ JSON parsed OK | keys={list(parsed.keys())}")
+            return parsed
+        except json.JSONDecodeError as je:
+            logger.error(
+                f"❌ JSON PARSE FAILED: {je}\n"
+                f"Raw Groq output (full):\n{raw_text}"
+            )
+            raise ValueError(f"Groq returned invalid JSON: {je}. Raw: {raw_text[:400]}") from je
 
     def _ensure_closed_tags(self, html: str) -> str:
         if not html:
