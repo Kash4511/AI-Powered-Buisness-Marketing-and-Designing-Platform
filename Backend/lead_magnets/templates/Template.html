@@ -73,10 +73,10 @@
             border-bottom: 0.5px solid var(--rule);
         }
         .pg-label {
-            font-family: var(--fm); font-size: 7px;
+            font-family: var(--fm); font-size: 9px;
             letter-spacing: 0.24em; text-transform: uppercase; color: var(--ltgrey);
         }
-        .pg-num { font-family: var(--fs); font-size: 8px; color: var(--ltgrey); }
+        .pg-num { font-family: var(--fs); font-size: 10px; color: var(--ltgrey); }
 
         /* ── FOOTER ──────────────────────────────────────────────────── */
         .pg-foot {
@@ -85,8 +85,8 @@
             border-top: 0.5px solid var(--rule);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .pg-foot-l { font-family: var(--fs); font-size: 7.5px; color: var(--grey); font-style: italic; }
-        .pg-foot-r { font-family: var(--fm); font-size: 7.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
+        .pg-foot-l { font-family: var(--fs); font-size: 9.5px; color: var(--grey); font-style: italic; }
+        .pg-foot-r { font-family: var(--fm); font-size: 9.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
 
         /* ── BODY WRAPPER ────────────────────────────────────────────── */
         .bw {
@@ -119,19 +119,19 @@
 
         /* ── BODY TEXT ───────────────────────────────────────────────── */
         .body {
-            font-family: var(--fs); font-size: 10.5px; line-height: 1.45;
+            font-family: var(--fs); font-size: 13.5px; line-height: 1.55;
             color: var(--mid); font-weight: 400;
             text-align: justify;
             flex: 1;
         }
-        .body p         { margin-bottom: 9px; }
+        .body p         { margin-bottom: 12px; }
         .body strong    { color: var(--ink); font-weight: 700; }
-        .body h3        { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin: 14px 0 5px; }
-        .body h4        { font-family: var(--fs); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 10px 0 4px; }
-        .body ul        { list-style: none; padding: 0; margin: 8px 0 12px; }
-        .body ul li     { padding: 5px 0 5px 18px; position: relative; border-bottom: 0.5px solid var(--rule); font-size: 10px; color: var(--mid); line-height: 1.5; }
+        .body h3        { font-family: var(--fd); font-size: 17px; font-weight: 700; color: var(--navy); margin: 18px 0 8px; }
+        .body h4        { font-family: var(--fs); font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 14px 0 6px; }
+        .body ul        { list-style: none; padding: 0; margin: 10px 0 16px; }
+        .body ul li     { padding: 7px 0 7px 22px; position: relative; border-bottom: 0.5px solid var(--rule); font-size: 12.5px; color: var(--mid); line-height: 1.6; }
         .body ul li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
-        .body-sm { font-family: var(--fs); font-size: 9.5px; line-height: 1.4; color: var(--mid); font-weight: 400; margin-bottom: 6px; }
+        .body-sm { font-family: var(--fs); font-size: 11.5px; line-height: 1.5; color: var(--mid); font-weight: 400; margin-bottom: 8px; }
 
         /* ── DROP CAP ────────────────────────────────────────────────── */
         .drop-letter {
@@ -161,17 +161,17 @@
             background: var(--off2); border-left: 3px solid var(--navy);
             padding: 14px 18px; margin: 12px 0; break-inside: avoid;
         }
-        .callout-title { font-family: var(--fd); font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
-        .callout-body  { font-family: var(--fs); font-size: 11px; color: var(--mid); line-height: 1.5; }
+        .callout-title { font-family: var(--fd); font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+        .callout-body  { font-family: var(--fs); font-size: 13.5px; color: var(--mid); line-height: 1.55; }
         .callout.navy-fill { background: var(--navy); border-left-color: rgba(255,255,255,0.3); }
         .callout.navy-fill .callout-title { color: var(--white); }
         .callout.navy-fill .callout-body  { color: rgba(255,255,255,0.75); }
 
         /* ── LISTS ───────────────────────────────────────────────────── */
-        .b-list { list-style: none; margin: 12px 0 18px; padding: 0; }
+        .b-list { list-style: none; margin: 16px 0 24px; padding: 0; }
         .b-list li {
-            font-family: var(--fs); font-size: 11px; color: var(--mid);
-            line-height: 1.6; padding: 6px 0 6px 20px;
+            font-family: var(--fs); font-size: 13.5px; color: var(--mid);
+            line-height: 1.65; padding: 8px 0 8px 24px;
             border-bottom: 1px solid var(--rule); position: relative;
         }
         .b-list li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
@@ -206,16 +206,16 @@
         /* ── TABLE OF CONTENTS ───────────────────────────────────────── */
         .toc-grid    { margin-top: 16px; }
         .toc-item    { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--rule); }
-        .toc-num     { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 28px; font-weight: 700; }
-        .toc-title   { font-family: var(--fd); font-size: 12px; font-weight: 700; color: var(--ink); flex: 1; }
-        .toc-label   { font-family: var(--fm); font-size: 7.5px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
-        .toc-pg      { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 22px; text-align: right; }
+        .toc-num     { font-family: var(--fm); font-size: 11px; color: var(--navy); min-width: 28px; font-weight: 700; }
+        .toc-title   { font-family: var(--fd); font-size: 15px; font-weight: 700; color: var(--ink); flex: 1; }
+        .toc-label   { font-family: var(--fm); font-size: 9px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
+        .toc-pg      { font-family: var(--fm); font-size: 11px; color: var(--navy); min-width: 22px; text-align: right; }
 
         /* ── CTA BLOCK ───────────────────────────────────────────────── */
         .cta-navy-box    { background: var(--navy); padding: 20px 24px; margin: 16px 0; break-inside: avoid; }
-        .cta-box-eyebrow { font-family: var(--fm); font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
-        .cta-box-title   { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; }
-        .cta-box-body    { font-family: var(--fs); font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+        .cta-box-eyebrow { font-family: var(--fm); font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+        .cta-box-title   { font-family: var(--fd); font-size: 24px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; }
+        .cta-box-body    { font-family: var(--fs); font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.6; }
 
         .cta-block    { background: var(--navy); padding: 20px 22px; margin-top: 16px; break-inside: avoid; }
         .cta-eyebrow  { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
@@ -240,8 +240,8 @@
         /* ── AUDIENCE CARDS ──────────────────────────────────────────── */
         .audience-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
         .audience-card { background: var(--off2); padding: 20px; border-top: 2px solid var(--navy); }
-        .audience-card-title { font-family: var(--fd); font-size: 16px; color: var(--navy); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
-        .audience-card-body  { font-family: var(--fs); font-size: 11px; line-height: 1.5; color: var(--mid); }
+        .audience-card-title { font-family: var(--fd); font-size: 18px; color: var(--navy); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+        .audience-card-body  { font-family: var(--fs); font-size: 13.5px; line-height: 1.55; color: var(--mid); }
 
         @media print {
             body  { background: white; padding: 0; }
