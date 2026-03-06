@@ -8,10 +8,6 @@ from groq import Groq
 
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 8 SECTIONS — each has a laser-focused brief that forces domain depth
-# Token budget per section: ~1,800 tokens → 8 sections = ~14,400 total
-# ─────────────────────────────────────────────────────────────────────────────
 SECTIONS = [
     (
         "executive_summary",
@@ -25,8 +21,7 @@ SECTIONS = [
             "2. A paragraph explaining the current landscape: what is changing in {topic} right now "
             "and why {audience} cannot afford to ignore it.\n"
             "3. For EACH pain point in [{pain_points}]: one sentence stating the specific consequence "
-            "of this pain point for {audience} in {topic} work (e.g. cost overrun, missed deadline, "
-            "community backlash, regulatory rejection).\n"
+            "of this pain point for {audience} in {topic} work.\n"
             "4. A closing paragraph: what this guide delivers and the tangible outcome the reader gets.\n"
             "150-200 words. Dense, specific, no filler."
         )
@@ -38,11 +33,8 @@ SECTIONS = [
         (
             "Write the Key Challenges section for {audience} in {topic}.\n"
             "For EACH pain point in [{pain_points}] write a named <h3> subsection containing:\n"
-            "- Root cause: WHY does this specific challenge occur in {topic}? "
-            "(be mechanistic — e.g. fragmented land ownership, multi-agency approval chains, "
-            "community trust deficits — not 'lack of alignment')\n"
-            "- Impact: concrete operational or financial consequence for {audience} "
-            "(e.g. '6-month delays', '$200k redesign costs', 'loss of community buy-in')\n"
+            "- Root cause: WHY does this specific challenge occur in {topic}? (be mechanistic)\n"
+            "- Impact: concrete operational or financial consequence for {audience}\n"
             "- Real scenario: 2-3 sentences describing a realistic situation where this plays out\n"
             "Every subsection must be grounded in {topic} specifically.\n"
             "180-220 words total."
@@ -56,8 +48,7 @@ SECTIONS = [
             "Write a Strategic Framework section for {topic} for {audience}.\n"
             "Invent a NAMED framework (3-5 steps) that is genuinely specific to {topic}.\n"
             "RULES:\n"
-            "- Step names must use vocabulary from {topic} domain "
-            "(e.g. for urban placemaking: 'Community Pulse Mapping', 'Activation Sequencing')\n"
+            "- Step names must use vocabulary from {topic} domain\n"
             "- Each step: name + 2-3 sentences on what practitioners actually DO in this step\n"
             "- At least 2 steps must directly address pain points from: {pain_points}\n"
             "- Include one concrete example of the framework applied to a real-world {topic} scenario\n"
@@ -109,9 +100,6 @@ SECTIONS = [
             "- Explain the METHOD: how expert {audience} actually implement this in {topic}\n"
             "- Give one concrete example from {topic} practice\n"
             "- Reference how it addresses one of [{pain_points}]\n"
-            "Examples of what good looks like for urban placemaking: "
-            "'Tactical Urbanism Pilots', 'Community Asset Mapping', 'Pop-up Activation Testing'\n"
-            "Match this specificity for {topic}.\n"
             "180-220 words."
         )
     ),
@@ -127,8 +115,6 @@ SECTIONS = [
             "Group 3 — <h3>Measuring Success</h3>: 4-5 items with {topic}-specific KPIs/metrics\n"
             "Each item must be a concrete action, not a vague instruction.\n"
             "Bad: 'Engage stakeholders'. Good: 'Map all landowners within 500m of the site'\n"
-            "Bad: 'Track progress'. Good: 'Measure footfall change weekly using manual counts'\n"
-            "Every item must be specific to {topic} and {audience}.\n"
             "150-180 words."
         )
     ),
@@ -140,10 +126,8 @@ SECTIONS = [
             "Write the Conclusion & Next Steps for this {topic} guide for {audience}.\n"
             "Structure:\n"
             "1. One paragraph: the single most important insight from this guide specific to {topic}\n"
-            "2. Three numbered next steps — each must be a specific action in {topic} "
-            "(not 'read more' or 'consult an expert')\n"
-            "3. One forward-looking paragraph: what {audience} who master {topic} will achieve "
-            "in the next 2-3 years, tied to resolving [{pain_points}]\n"
+            "2. Three numbered next steps — each must be a specific action in {topic}\n"
+            "3. One forward-looking paragraph: what {audience} who master {topic} will achieve\n"
             "4. One closing sentence that is a direct call to action.\n"
             "130-160 words. Punchy, specific, no filler."
         )
@@ -191,6 +175,8 @@ class GroqClient:
         self.model       = "llama-3.1-8b-instant"   # swap to llama-3.3-70b-versatile for production
         self.temperature = 0.45
         self.max_tokens  = 4096
+        self._analysis   = None   # Layer 1 cache
+        self._framework  = None   # Layer 2 cache
 
     # ── PUBLIC API ────────────────────────────────────────────────────────────
 
@@ -220,11 +206,25 @@ class GroqClient:
         type_label = DOC_TYPE_LABELS.get(doc_type, "Strategic Guide")
         logger.info(f"📄 {type_label} | topic={signals['topic']} | model={self.model}")
 
+        # ── Layer 1: Understand the topic/audience deeply (~400 tokens, 1 call)
+        logger.info("🧠 Layer 1 — Input Analysis")
+        self._analysis = self._analyze_inputs(signals)
+
+        # ── Layer 2: Build per-section writing blueprint (~800 tokens, 1 call)
+        logger.info("📐 Layer 2 — Framework Generation")
+        section_keys = [key for key, *_ in SECTIONS]
+        self._framework = self._generate_framework(self._analysis, section_keys, signals)
+
+        # ── Layer 3: Title + 8 sections, each with full context (~1800 tokens × 9)
         title_data = self._generate_title(signals, type_label)
         expansions: Dict[str, str] = {}
         for key, title, label, brief in SECTIONS:
-            logger.info(f"✍️  {key}")
+            logger.info(f"✍️  Layer 3 — {key}")
             expansions[key] = self._generate_section(key, title, brief, signals)
+
+        # Clear cache
+        self._analysis  = None
+        self._framework = None
 
         return {
             "title":                   title_data.get("title", signals["topic"]),
@@ -265,16 +265,18 @@ class GroqClient:
         for idx, (key, title, label, _) in enumerate(SECTIONS):
             page_num = f"{idx + 3:02d}"
             raw_content = ai_content.get(key, "")
-            # Post-process checklist section to wrap <li> items in styled boxes
             if key == "action_checklist":
                 raw_content = self._enrich_checklist(raw_content)
             content_sections.append({
-                "key": key, "title": title, "label": label,
-                "page_num": page_num, "content": raw_content,
+                "key":          key,
+                "title":        title,
+                "label":        label,
+                "page_num":     page_num,
+                "content":      raw_content,
                 "is_checklist": key == "action_checklist",
                 "is_framework": key == "strategic_framework",
                 "is_risk":      key == "risk_management",
-                "is_conclusion": key == "conclusion",
+                "is_conclusion":key == "conclusion",
             })
             toc_sections.append({"title": title, "label": label, "page_num": page_num})
 
@@ -316,14 +318,76 @@ class GroqClient:
             "image_1_caption":   firm_profile.get("image_1_caption", "Field Context"),
             "image_2_caption":   firm_profile.get("image_2_caption", "Implementation"),
             "image_3_caption":   firm_profile.get("image_3_caption", "Outcomes"),
-            # CTA: strip all HTML tags so it renders as plain text in the CTA box
-            "cta": re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion", "Contact us to begin your strategic engagement.")).strip(),
+            "cta":               re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion", "Contact us to begin.")).strip(),
         }
 
     def ensure_section_content(self, sections, signals, firm_profile):
         return sections or []
 
     # ── PRIVATE ───────────────────────────────────────────────────────────────
+
+    def _analyze_inputs(self, signals: Dict[str, Any]) -> Dict[str, Any]:
+        """Layer 1 — extract deep domain insights from user inputs."""
+        system = "You are a strategic industry analyst. Return valid JSON only. No markdown."
+        prompt = (
+            f"Analyze these inputs and return structured domain insights.\n\n"
+            f"Topic: {signals['topic']}\n"
+            f"Audience: {signals['audience']}\n"
+            f"Pain Points: {signals['pain_points']}\n\n"
+            f"Return ONLY this JSON:\n"
+            f'{{\n'
+            f'  "industry_context": "2-sentence description of the current state of this industry",\n'
+            f'  "core_problem_summary": "1-sentence root cause of why these pain points occur in {signals["topic"]}",\n'
+            f'  "stakeholder_roles": ["role specific to this topic", "another role"],\n'
+            f'  "strategic_focus_areas": ["domain-specific area 1", "area 2", "area 3"],\n'
+            f'  "risk_factors": ["specific risk in {signals["topic"]}", "another risk"],\n'
+            f'  "pain_point_solutions": {{\n'
+            f'    "exact pain point text": "specific solution framework name for this topic"\n'
+            f'  }},\n'
+            f'  "implementation_priorities": ["priority 1 specific to topic", "priority 2"]\n'
+            f'}}'
+        )
+        logger.info(f"🔵 Layer 1 | {signals['topic']}")
+        result = self._call_ai(system, prompt, max_tokens=500)
+        logger.info(f"✅ Layer 1 done | keys={list(result.keys())}")
+        return result
+
+    def _generate_framework(self, analysis: Dict[str, Any], section_keys: List[str], signals: Dict[str, Any]) -> Dict[str, Any]:
+        """Layer 2 — build per-section editorial blueprint using exact section keys."""
+        system = "You are a senior content strategist. Return valid JSON only. No markdown."
+        # Give Groq the exact key names it must use — prevents title vs key mismatch
+        keys_str = json.dumps(section_keys)
+        prompt = (
+            f"You are planning a professional guide.\n"
+            f"Topic: {signals['topic']} | Audience: {signals['audience']}\n"
+            f"Pain Points: {signals['pain_points']}\n\n"
+            f"DOMAIN INSIGHTS:\n{json.dumps(analysis, indent=2)}\n\n"
+            f"For EACH of these section keys, define a writing plan:\n{keys_str}\n\n"
+            f"For every key return:\n"
+            f"  angle: 1-sentence editorial angle specific to this topic + audience\n"
+            f"  key_points: exactly 3 specific points the writer MUST cover (domain-specific, not generic)\n"
+            f"  pain_point_tie: which pain point from [{signals['pain_points']}] this section resolves\n\n"
+            f"Return ONLY:\n"
+            f'{{"sections": {{\n'
+            f'  "executive_summary": {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "key_challenges":    {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "strategic_framework":{{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "implementation_strategy":{{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "risk_management":   {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "best_practices":    {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "action_checklist":  {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "conclusion":        {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}}\n'
+            f'}}}}'
+        )
+        logger.info(f"🔵 Layer 2 | {len(section_keys)} sections")
+        result = self._call_ai(system, prompt, max_tokens=900)
+        # Normalise: if Groq returned keys directly (no "sections" wrapper), wrap them
+        if "sections" not in result and isinstance(result, dict):
+            if any(k in result for k in section_keys):
+                result = {"sections": result}
+                logger.warning("⚠️ Layer 2 — wrapped bare dict in 'sections'")
+        logger.info(f"✅ Layer 2 done | section_keys={list(result.get('sections', {}).keys())}")
+        return result
 
     def _generate_title(self, signals: Dict, type_label: str) -> Dict:
         system = "You are a senior document strategist. Return valid JSON only. No markdown."
@@ -340,6 +404,7 @@ class GroqClient:
         return self._call_ai(system, prompt, max_tokens=250)
 
     def _generate_section(self, key: str, title: str, brief: str, signals: Dict) -> str:
+        """Layer 3 — write one section with full Layer 1+2 context injected."""
         brief_filled = brief.format(
             topic       = signals["topic"],
             audience    = signals["audience"],
@@ -347,40 +412,57 @@ class GroqClient:
             industry    = signals.get("industry") or signals["topic"],
         )
 
+        # Pull Layer 1 + Layer 2 context for this section
+        analysis  = self._analysis  or {}
+        secs      = (self._framework or {}).get("sections", {}) if isinstance(self._framework, dict) else {}
+        sec_plan  = secs.get(key) or {}
+        if not isinstance(sec_plan, dict):
+            sec_plan = {}
+
+        pain_tie  = sec_plan.get("pain_point_tie", "")
+        solution  = analysis.get("pain_point_solutions", {}).get(pain_tie, "")
+        angle     = sec_plan.get("angle", "")
+        key_pts   = sec_plan.get("key_points", [])
+
         system = (
-            f"You are a domain expert and senior consultant specialising in {signals['topic']}.\n"
+            f"You are a domain expert and senior consultant in {signals['topic']}.\n"
             f"You are writing one section of a professional lead-magnet guide.\n\n"
+            # Layer 1 context
+            f"INDUSTRY CONTEXT: {analysis.get('industry_context', '')}\n"
+            f"CORE PROBLEM: {analysis.get('core_problem_summary', '')}\n\n"
+            # Layer 2 context
+            f"THIS SECTION'S ANGLE: {angle}\n"
+            f"PAIN POINT THIS RESOLVES: {pain_tie}\n"
+            f"SOLUTION FRAMEWORK: {solution}\n\n"
             f"NON-NEGOTIABLE RULES:\n"
-            f"1. EVERY sentence must be specific to '{signals['topic']}' — no generic advice.\n"
-            f"2. Directly address these pain points: {signals['pain_points']}\n"
-            f"3. Write FOR this audience: {signals['audience']}\n"
-            f"4. BANNED phrases (instant fail): 'leverage', 'synergies', 'optimize solutions', "
-            f"'unlock value', 'drive innovation', 'holistic approach', 'best-in-class'\n"
-            f"5. HTML only: <p>, <strong>, <h3>, <h4>, <ul>, <li>. No <div>, no <span>, no <table>.\n"
-            f"6. DO NOT write the section title — it renders above your content.\n"
+            f"1. Every sentence must be specific to '{signals['topic']}' — no generic advice.\n"
+            f"2. Directly address: {signals['pain_points']}\n"
+            f"3. Write for: {signals['audience']}\n"
+            f"4. BANNED: 'leverage', 'synergies', 'optimize solutions', 'unlock value', "
+            f"'drive innovation', 'holistic approach', 'best-in-class'\n"
+            f"5. HTML only: <p>, <strong>, <h3>, <h4>, <ul>, <li>. No <div>, <span>, <table>.\n"
+            f"6. DO NOT write the section title — it already renders above your content.\n"
             f"7. First element MUST be <p>, never <h3>.\n"
-            f"8. Return valid JSON only. No markdown. No prose outside JSON.\n"
+            f"8. Return valid JSON only. No markdown.\n"
         )
 
         prompt = (
             f"Write the '{title}' section for a {signals['topic']} guide.\n\n"
-            f"BRIEF (follow exactly):\n{brief_filled}\n\n"
+            + (f"KEY POINTS TO COVER (mandatory — weave all 3 in):\n" + "\n".join(f"- {p}" for p in key_pts) + "\n\n" if key_pts else "")
+            + f"SECTION BRIEF:\n{brief_filled}\n\n"
             f"SPECIAL REQUESTS: {signals.get('special') or 'None'}\n\n"
-            f"Return ONLY this JSON:\n"
-            f'{{"{key}": "your full HTML content here"}}'
+            f'Return ONLY: {{"{key}": "your full HTML content here"}}'
         )
 
-        logger.info(f"🔵 section '{key}'")
-        raw = self._call_ai(system, prompt, max_tokens=1800)
+        logger.info(f"🔵 Layer 3 — '{key}'")
+        raw     = self._call_ai(system, prompt, max_tokens=1800)
         content = self._extract_content(raw, key)
-        words = len(content.split()) if content else 0
-        logger.info(f"✅ '{key}': {words} words")
+        words   = len(content.split()) if content else 0
+        logger.info(f"✅ '{key}': {words} words | angle='{angle[:40]}...' " if angle else f"✅ '{key}': {words} words")
 
         if words < 50:
-            raise ValueError(
-                f"Section '{key}' too short ({words} words). "
-                f"Keys returned: {list(raw.keys())}. Snippet: {str(raw)[:300]}"
-            )
+            raise ValueError(f"Section '{key}' too short ({words} words). Keys: {list(raw.keys())}. Snippet: {str(raw)[:200]}")
+
         return self._sanitize_html(content)
 
     def _extract_content(self, result: Dict, key: str) -> str:
@@ -400,25 +482,22 @@ class GroqClient:
         return ""
 
     def _enrich_checklist(self, html: str) -> str:
-        """
-        Wraps <li> items from checklist section in styled checkbox divs
-        and keeps <h3> group headers. Makes the checklist page visually rich.
-        """
-        import re as _re
-        result = []
-        current_group = None
-        # Extract h3 group titles and li items
-        parts = _re.split(r'(<h3>[^<]*</h3>|<li>[\s\S]*?</li>)', html)
+        """Wraps <li> items in styled checkbox divs and keeps <h3> group headers."""
+        result        = []
+        current_group = False
+        parts         = re.split(r'(<h3>[^<]*</h3>|<li>[\s\S]*?</li>)', html)
         for part in parts:
             part = part.strip()
             if not part:
                 continue
             if part.startswith('<h3>'):
-                title_text = _re.sub(r'<[^>]+>', '', part)
+                if current_group:
+                    result.append('</div>')
+                title_text = re.sub(r'<[^>]+>', '', part)
                 result.append(f'<div class="ck-group"><div class="ck-title">{title_text}</div>')
                 current_group = True
             elif part.startswith('<li>'):
-                inner = _re.sub(r'</?li>', '', part).strip()
+                inner = re.sub(r'</?li>', '', part).strip()
                 result.append(
                     f'<div class="ck-item">'
                     f'<div class="ck-box"></div>'
@@ -437,21 +516,17 @@ class GroqClient:
     def _sanitize_html(self, html: str) -> str:
         if not html:
             return html
-        # Strip stray leading/trailing quote chars Groq sometimes wraps content in
         html = html.strip()
         if html.startswith('"') and html.endswith('"'):
             html = html[1:-1].strip()
-        # Remove image placeholders
         html = re.sub(r'\[IMAGE_PLACEHOLDER:[^\]]*\]', '', html)
-        # Strip disallowed HTML tags (keep inner text)
         html = re.sub(
             r'<(/?)(\w+)([^>]*)>',
             lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "",
             html
         )
-        # Strip any remaining raw visible quote artifacts at start/end of paragraphs
-        html = re.sub(r'(?<=^)"(?=<)', '', html)
-        html = re.sub(r'(?<=>)"(?=$)', '', html)
+        html = re.sub(r'(?:^)"(?=<)', '', html)
+        html = re.sub(r'(?<=>)"(?:$)', '', html)
         return self._ensure_closed_tags(html).strip()
 
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:
@@ -467,7 +542,6 @@ class GroqClient:
                 ],
                 temperature=self.temperature,
                 max_tokens=tokens,
-                # NO response_format json_object — it rejects valid HTML inside JSON strings
             )
         except Exception as e:
             logger.error(f"❌ Groq API: {type(e).__name__}: {e}\n{_tb.format_exc()}")
@@ -482,7 +556,6 @@ class GroqClient:
         if not raw_text.strip():
             raise ValueError(f"Groq empty response. finish={finish}")
 
-        # Strip markdown fences if Groq wrapped in ```json ... ```
         cleaned = raw_text.strip()
         cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
         cleaned = re.sub(r"\s*```$", "", cleaned)
@@ -495,25 +568,23 @@ class GroqClient:
         except json.JSONDecodeError:
             pass
 
-        # ── Repair: Groq returned {"key": <html> without quoting the value
+        # Repair: Groq returned {"key": <unquoted html>}
         m_repair = re.search(r'\{"(\w+)"\s*:\s*([^"\{][\s\S]*?)\s*\}\s*$', cleaned)
         if m_repair:
             try:
-                repaired = json.dumps({m_repair.group(1): m_repair.group(2).strip()})
-                parsed = json.loads(repaired)
+                parsed = json.loads(json.dumps({m_repair.group(1): m_repair.group(2).strip()}))
                 logger.warning(f"⚠️ repaired unquoted value | keys={list(parsed.keys())}")
                 return parsed
             except Exception:
                 pass
 
-        # ── Fallback: extract key name + grab everything after the colon as content
+        # Fallback: grab everything after the first key's colon
         m_key = re.search(r'"(\w+)"\s*:\s*', cleaned)
         if m_key:
-            key_name = m_key.group(1)
-            content_start = m_key.end()
-            content_val = cleaned[content_start:].rstrip().rstrip("}")
+            key_name    = m_key.group(1)
+            content_val = cleaned[m_key.end():].rstrip().rstrip("}")
             if content_val.strip():
-                logger.warning(f"⚠️ extracted raw content for key='{key_name}'")
+                logger.warning(f"⚠️ raw extraction for key='{key_name}'")
                 return {key_name: content_val.strip()}
 
         logger.error(f"❌ JSON parse fully failed\nRaw:\n{raw_text}")
