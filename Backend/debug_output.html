@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TEST TITLE – Test Firm</title>
+    <title>Urban Placemaking Guide 11 – kaashifameen32</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy:   #2a5766;
-            --navy2:  #FFFFFF;
-            --navy3:  #1E3A5F;
-            --navylt: #4F7A8B;
+            --navy:   #3f1d4e;
+            --navy2:  #100909;
+            --navy3:  #4F7A8B;
+            --navylt: #E8F1F4;
             --white:  #ffffff;
             --off:    #F7F4EF;
-            --off2:   #EAE5DC;
+            --off2:   #EBE6DA;
             --ink:    #1A1A1A;
-            --mid:    #4A4A4A;
-            --grey:   #808080;
+            --mid:    #444444;
+            --grey:   #888888;
             --ltgrey: #DDDDDD;
             --rule:   #EEEEEE;
-            --cover-text: #FFFFFF;
+            --cover-text:   #FFFFFF;
             --cover-filter: brightness(0) invert(1);
 
             --fd: 'Playfair Display', serif;
@@ -38,18 +38,19 @@
         body {
             font-family: var(--fs);
             background: #a0a0a8;
-            padding: 28px 20px;
+            padding: 20px 15px;
             color: var(--ink);
-            font-size: 1.15rem; /* Increase base font size by ~15% */
+            font-size: 1rem;
+            line-height: 1.35;
         }
 
         .book { width: 210mm; margin: 0 auto; }
 
+        /* ── PAGE SHELL ──────────────────────────────────────────────── */
         .page {
             width: 210mm;
-            height: 297mm; /* Set fixed height to prevent leaking */
+            min-height: 297mm;
             background: var(--white);
-            overflow: hidden;
             break-inside: avoid;
             page-break-inside: avoid;
             margin-bottom: 20px;
@@ -59,659 +60,919 @@
             position: relative;
         }
         .page + .page { break-before: page; page-break-before: always; }
-        
-        /* Ensure specific blocks don't split */
-        .cta-navy-box, .contact-grid, .ch-insight-box, .ch-list-grid, .trade-grid, .phase-row, .case-grid, .method-grid {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
 
-        /* Prevent overflow in body content */
-        .body, .ch-p-intro {
-            max-height: 100%;
-            overflow: hidden;
-        }
-
-        /* ── PAGE CHROME ─────────────────────── */
+        /* ── HEADER ──────────────────────────────────────────────────── */
         .pg-head {
             flex-shrink: 0; break-after: avoid;
-            padding: 9px 16mm 0;
-            display: flex; flex-direction: column; gap: 4px;
+            padding: 12px 14mm 0;
+            display: flex; flex-direction: column; gap: 3px;
         }
-        .pg-rule1 { height: 2px; background: var(--navy); }
-        .pg-rule2 { height: 0.75px; background: var(--rule); }
         .pg-head-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 0.5px solid var(--rule);
         }
         .pg-label {
-            font-family: var(--fm);
-            font-size: 7.5px; letter-spacing: 0.24em; text-transform: uppercase;
-            color: var(--ltgrey);
+            font-family: var(--fm); font-size: 7px;
+            letter-spacing: 0.24em; text-transform: uppercase; color: var(--ltgrey);
         }
-        .pg-num { font-family: var(--fs); font-size: 8.5px; color: var(--ltgrey); }
+        .pg-num { font-family: var(--fs); font-size: 8px; color: var(--ltgrey); }
 
+        /* ── FOOTER ──────────────────────────────────────────────────── */
         .pg-foot {
             margin-top: auto; flex-shrink: 0;
-            padding: 9px 16mm;
-            border-top: 0.75px solid var(--rule);
+            padding: 10px 14mm;
+            border-top: 0.5px solid var(--rule);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .pg-foot-l { font-family: var(--fs); font-size: 8px; color: var(--grey); font-style: italic; }
-        .pg-foot-r { font-family: var(--fm); font-size: 8px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
+        .pg-foot-l { font-family: var(--fs); font-size: 7.5px; color: var(--grey); font-style: italic; }
+        .pg-foot-r { font-family: var(--fm); font-size: 7.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
 
-        .bw { padding: 16px 16mm 20px; flex: 1; }
-
-        /* ── DYNAMIC IMAGE PLACEHOLDERS (hybrid of both templates) ── */
-        .img-ph-single {
-            width: 100%;
-            height: 100%;
-            border-radius: 0;
-            background: var(--off2);
-            display: flex; align-items: center; justify-content: center;
-            position: relative; overflow: hidden;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        .img-ph-single img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            display: block;
-        }
-        .img-ph-inner {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-            background-image: repeating-linear-gradient(-45deg, transparent, transparent 14px, rgba(0,0,0,0.03) 14px, rgba(0,0,0,0.03) 15px);
-            backdrop-filter: blur(2px);
-        }
-        .img-icon {
-            width: 50px; height: 50px; border-radius: 50%;
-            background: rgba(255,255,255,0.8);
-            border: 1px solid rgba(0,0,0,0.12);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .img-label-text {
-            font-family: var(--fm);
-            font-size: 9px; letter-spacing: 0.22em;
-            text-transform: uppercase; color: var(--ink);
-            opacity: 0.8; text-align: center; padding: 4px 12px;
-            background: rgba(255,255,255,0.7);
-            border-radius: 30px;
-            font-weight: 500;
-        }
-        .img-cap {
-            font-family: var(--fs); font-size: 9px; font-style: italic;
-            color: var(--grey); text-align: center; margin-top: 6px; line-height: 1.5; display: block;
-            clear: both;
+        /* ── BODY WRAPPER ────────────────────────────────────────────── */
+        .bw {
+            padding: 4px 14mm 8px;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* original float classes adapted */
-        .img-left  { float: left;  width: 46%; margin: 4px 20px 12px 0; }
-        .img-right { float: right; width: 46%; margin: 4px 0 12px 20px; }
-        .cf::after { content: ""; display: table; clear: both; }
-
-        /* full-width center image (extends to page edges) */
-        .img-container.full-width-center {
-            margin-left: -16mm;
-            margin-right: -16mm;
-            width: calc(100% + 32mm);
-            text-align: center;
-            padding: 0 16mm;
-            background: linear-gradient(to right, transparent, rgba(0,0,0,0.02) 5%, rgba(0,0,0,0.02) 95%, transparent);
-            margin-top: 30px;
-            margin-bottom: 30px;
-        }
-        .img-container.full-width-center .img-wrapper {
-            display: block;
-            width: 100%;
-            max-width: 100%;
-        }
-        .img-container.full-width-center .img-ph-single {
-            border-radius: 0;
-            height: 260px;
-        }
-
-        /* ── TYPOGRAPHY ──────────────────────── */
+        /* ── EYEBROW ─────────────────────────────────────────────────── */
         .ch-eyebrow {
-            display: flex; align-items: center; gap: 12px;
-            margin-bottom: 10px; break-after: avoid;
+            display: flex; align-items: center; gap: 6px;
+            margin-bottom: 6px; break-after: avoid;
         }
         .ch-eyebrow-label {
-            font-family: var(--fm); font-size: 8px; letter-spacing: 0.32em;
-            text-transform: uppercase; color: var(--navy); white-space: nowrap; flex-shrink: 0;
+            font-family: var(--fm); font-size: 8px; letter-spacing: 0.24em;
+            text-transform: uppercase; color: var(--navy); white-space: nowrap;
         }
-        .ch-eyebrow-rule { flex: 1; height: 1px; background: var(--rule); }
+        .ch-eyebrow-rule { flex: 1; height: 0.75px; background: var(--rule); }
 
+        /* ── HEADINGS ────────────────────────────────────────────────── */
         .ch-h1 {
-            font-family: var(--fd); font-size: 32px; font-weight: 700;
-            color: var(--navy); line-height: 1.08; letter-spacing: -0.4px;
-            margin-bottom: 16px; break-after: avoid;
+            font-family: var(--fd); font-size: 28px; font-weight: 700;
+            color: var(--navy); line-height: 1.05; letter-spacing: -0.3px;
+            margin-bottom: 12px;
         }
+        .sec-h  { font-family: var(--fd); font-size: 16px; font-weight: 700; color: var(--navy); margin: 14px 0 6px; }
+        .sec-h2 { font-family: var(--fs); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 10px 0 4px; }
 
-        .sec-h {
-            font-family: var(--fd); font-size: 15px; font-weight: 700;
-            color: var(--navy); margin: 18px 0 7px; break-after: avoid;
-        }
-        .sec-h2 {
-            font-family: var(--fs); font-size: 10.5px; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            color: var(--navy); margin: 16px 0 6px; break-after: avoid;
-        }
-
+        /* ── BODY TEXT ───────────────────────────────────────────────── */
         .body {
-            font-family: var(--fs); font-size: 11.5px; line-height: 1.90;
-            color: var(--mid); font-weight: 300; margin-bottom: 12px;
+            font-family: var(--fs); font-size: 10.5px; line-height: 1.45;
+            color: var(--mid); font-weight: 400;
+            text-align: justify;
+            flex: 1;
         }
-        .body-sm {
-            font-family: var(--fs); font-size: 10.5px; line-height: 1.85;
-            color: var(--mid); font-weight: 300; margin-bottom: 10px;
-        }
+        .body p         { margin-bottom: 9px; }
+        .body strong    { color: var(--ink); font-weight: 700; }
+        .body h3        { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin: 14px 0 5px; }
+        .body h4        { font-family: var(--fs); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin: 10px 0 4px; }
+        .body ul        { list-style: none; padding: 0; margin: 8px 0 12px; }
+        .body ul li     { padding: 5px 0 5px 18px; position: relative; border-bottom: 0.5px solid var(--rule); font-size: 10px; color: var(--mid); line-height: 1.5; }
+        .body ul li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
+        .body-sm { font-family: var(--fs); font-size: 9.5px; line-height: 1.4; color: var(--mid); font-weight: 400; margin-bottom: 6px; }
 
-        .drop-cap-wrap { overflow: hidden; }
+        /* ── DROP CAP ────────────────────────────────────────────────── */
         .drop-letter {
-            font-family: var(--fd); font-size: 72px; font-weight: 900;
-            color: var(--navy); float: left; line-height: 0.74;
-            margin: 9px 7px 0 0; padding-right: 2px;
+            font-family: var(--fd); font-size: 60px; font-weight: 900;
+            color: var(--navy); float: left; line-height: 0.6;
+            margin: 6px 6px 0 0; padding-right: 2px;
+        }
+        .cf::after { content: ""; display: table; clear: both; }
+
+        /* ── IMAGE BLOCKS ────────────────────────────────────────────── */
+        .img-block              { margin: 14px 0 10px; break-inside: avoid; }
+        .img-block.img-left     { float: left;  width: 46%; margin: 4px 20px 12px 0; }
+        .img-block.img-right    { float: right; width: 46%; margin: 4px 0 12px 20px; }
+        .img-block.img-full     { width: 100%;  clear: both; margin: 14px 0; }
+        .img-block img          { width: 100%; display: block; object-fit: cover; border-radius: 0; }
+        .img-block.img-left img,
+        .img-block.img-right img { max-height: 200px; }
+        .img-block.img-full img  { max-height: 220px; }
+        .img-cap {
+            font-family: var(--fs); font-size: 9px; font-style: italic;
+            color: var(--grey); text-align: center; margin-top: 6px;
+            line-height: 1.5; display: block;
         }
 
-        .h-rule { height: 0.75px; background: var(--rule); margin: 16px 0; }
-        .accent-dash { width: 32px; height: 3px; background: var(--navy); margin: 12px 0 16px; }
-
-        /* Callout blocks */
+        /* ── CALLOUT ─────────────────────────────────────────────────── */
         .callout {
             background: var(--off2); border-left: 3px solid var(--navy);
-            padding: 15px 20px; margin: 12px 0; break-inside: avoid;
+            padding: 14px 18px; margin: 12px 0; break-inside: avoid;
         }
-        .callout-title {
-            font-family: var(--fd); font-size: 14px; font-weight: 700;
-            color: var(--navy); margin-bottom: 6px; break-after: avoid;
-        }
-        .callout-body {
-            font-family: var(--fs); font-size: 10.5px; font-weight: 300;
-            color: var(--mid); line-height: 1.78;
-        }
-
-        .callout.navy-fill { background: var(--navy); }
+        .callout-title { font-family: var(--fd); font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+        .callout-body  { font-family: var(--fs); font-size: 11px; color: var(--mid); line-height: 1.5; }
+        .callout.navy-fill { background: var(--navy); border-left-color: rgba(255,255,255,0.3); }
         .callout.navy-fill .callout-title { color: var(--white); }
-        .callout.navy-fill .callout-body { color: rgba(255,255,255,0.58); }
+        .callout.navy-fill .callout-body  { color: rgba(255,255,255,0.75); }
 
-        /* Bullet list */
-        .b-list { list-style: none; margin: 8px 0 12px; padding: 0; }
+        /* ── LISTS ───────────────────────────────────────────────────── */
+        .b-list { list-style: none; margin: 12px 0 18px; padding: 0; }
         .b-list li {
-            font-family: var(--fs); font-size: 11px; font-weight: 300;
-            color: var(--mid); line-height: 1.80; padding: 5px 0 5px 20px;
-            border-bottom: 0.75px solid var(--rule); position: relative;
+            font-family: var(--fs); font-size: 11px; color: var(--mid);
+            line-height: 1.6; padding: 6px 0 6px 20px;
+            border-bottom: 1px solid var(--rule); position: relative;
         }
-        .b-list li:first-child { border-top: 0.75px solid var(--rule); }
         .b-list li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
 
-        /* Two-column */
+        /* ── GRID ────────────────────────────────────────────────────── */
         .col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
-        /* ── COVER ───────────────────────────── */
+        /* ── COVER PAGE ──────────────────────────────────────────────── */
         .cover {
             background: var(--navy);
             min-height: 297mm;
             display: flex; flex-direction: column;
-            position: relative; overflow: hidden;
+            padding: 0 18mm;
         }
+        .cv-top         { padding-top: 40px; text-align: center; }
+        .cv-name        { font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+        .cv-type-badge  {
+            display: inline-block; margin-top: 12px;
+            font-family: var(--fm); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase;
+            color: rgba(255,255,255,0.35); border: 0.5px solid rgba(255,255,255,0.2);
+            padding: 4px 12px; border-radius: 2px;
+        }
+        .cv-body        { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .cv-aud-text    { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.42); margin-bottom: 20px; }
+        .cv-title-bold  { font-family: var(--fd); font-size: 64px; font-weight: 900; line-height: 0.9; color: var(--cover-text); }
+        .cv-title-italic{ font-family: var(--fd); font-size: 50px; font-weight: 400; font-style: italic; color: rgba(255,255,255,0.42); }
+        .cv-divider     { width: 40px; height: 2px; background: rgba(255,255,255,0.3); margin: 28px 0; }
+        .cv-summary     { font-family: var(--fs); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.55); max-width: 420px; }
+        .cv-foot        { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        .cv-foot span   { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.32); }
 
-        /* Arc watermarks (decorative, no dynamic colors needed) */
-        .arc { position: absolute; pointer-events: none; }
-        .arc-1 { width: 500px; height: 500px; border-radius: 50%; border: 60px solid rgba(255,255,255,0.04); top: -170px; right: -150px; }
-        .arc-2 { width: 340px; height: 340px; border-radius: 50%; border: 45px solid rgba(255,255,255,0.035); top: -80px; right: -60px; }
-        .arc-3 { width: 270px; height: 270px; border-radius: 50%; background: rgba(255,255,255,0.025); top: 50px; right: 20px; }
-        .arc-4 { width: 400px; height: 400px; border-radius: 50%; border: 52px solid rgba(255,255,255,0.028); bottom: -190px; left: -100px; }
-        .arc-5 { width: 200px; height: 200px; border-radius: 50%; border: 30px solid rgba(255,255,255,0.022); bottom: -60px; left: 60px; }
+        /* ── TABLE OF CONTENTS ───────────────────────────────────────── */
+        .toc-grid    { margin-top: 16px; }
+        .toc-item    { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--rule); }
+        .toc-num     { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 28px; font-weight: 700; }
+        .toc-title   { font-family: var(--fd); font-size: 12px; font-weight: 700; color: var(--ink); flex: 1; }
+        .toc-label   { font-family: var(--fm); font-size: 7.5px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
+        .toc-pg      { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 22px; text-align: right; }
 
-        .cv-top {
-            position: relative; z-index: 10;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 30px 0 0;
-        }
-        .cv-name {
-            font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em;
-            text-transform: uppercase; color: rgba(255,255,255,0.60);
-            text-align: center; line-height: 1.6;
-        }
+        /* ── CTA BLOCK ───────────────────────────────────────────────── */
+        .cta-navy-box    { background: var(--navy); padding: 20px 24px; margin: 16px 0; break-inside: avoid; }
+        .cta-box-eyebrow { font-family: var(--fm); font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+        .cta-box-title   { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; }
+        .cta-box-body    { font-family: var(--fs); font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.6; }
 
-        .cv-body {
-            position: relative; z-index: 10;
-            flex: 1; padding: 0 18mm;
-            display: flex; flex-direction: column; 
-            justify-content: center; /* Center vertically */
-            align-items: flex-start; /* Align horizontally to the left */
+        .cta-block    { background: var(--navy); padding: 20px 22px; margin-top: 16px; break-inside: avoid; }
+        .cta-eyebrow  { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+        .cta-title    { font-family: var(--fd); font-size: 18px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; line-height: 1.2; }
+        .cta-body     { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.6); line-height: 1.55; }
+        .contact-row  {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px; margin-top: 16px; padding-top: 16px;
+            border-top: 0.5px solid rgba(255,255,255,0.15);
         }
-        .cv-audience { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-        .cv-aud-dash { width: 28px; height: 1px; background: rgba(255,255,255,0.35); }
-        .cv-aud-text {
-            font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em;
-            text-transform: uppercase; color: rgba(255,255,255,0.42);
+        .contact-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 18px; margin-top: 18px; padding-top: 18px;
+            border-top: 0.75px solid var(--rule);
+            break-inside: avoid;
         }
-        .cv-title-bold {
-            font-family: var(--fd); font-size: 74px; font-weight: 900;
-            line-height: 0.88; letter-spacing: -1.5px; color: var(--white);
-            text-align: left; /* Ensure left alignment */
-        }
-        .cv-title-italic {
-            font-family: var(--fd); font-size: 60px; font-weight: 400; font-style: italic;
-            line-height: 0.92; letter-spacing: -0.5px; color: rgba(255,255,255,0.42);
-            margin-top: 2px;
-            text-align: left; /* Ensure left alignment */
-        }
-        .cv-rule-line { width: 32px; height: 2px; background: rgba(255,255,255,0.38); margin: 22px 0 0; }
+        .contact-item .lbl,
+        .contact-lbl { font-family: var(--fm); font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+        .contact-item .val,
+        .contact-val { font-family: var(--fs); font-size: 10px; color: rgba(255,255,255,0.75); }
 
-        .cv-foot {
-            position: relative; z-index: 10;
-            padding: 13px 18mm;
-            border-top: 1px solid rgba(255,255,255,0.07);
-            display: flex; justify-content: space-between; align-items: center;
-            margin-top: 20px;
-        }
-        .cv-foot span { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.32); letter-spacing: 0.14em; }
-
-        /* ── TERMS ───────────────────────────── */
-        .terms-h { font-family: var(--fd); font-size: 36px; font-weight: 700; color: var(--navy); line-height: 1.1; margin-bottom: 20px; break-after: avoid; }
-        .terms-body { font-family: var(--fs); font-size: 11.5px; line-height: 1.90; color: var(--mid); font-weight: 300; margin-bottom: 12px; }
-        .terms-quote { border-left: 3px solid var(--navy); background: var(--off2); padding: 14px 20px; margin: 18px 0; break-inside: avoid; }
-        .terms-quote p { font-family: var(--fd); font-size: 15px; font-style: italic; color: var(--navy); line-height: 1.6; margin: 0; }
-
-        /* ── TOC ─────────────────────────────── */
-        .toc-big-bold  { font-family: var(--fd); font-size: 50px; font-weight: 900; color: var(--navy); line-height: 0.92; letter-spacing: -1px; break-after: avoid; }
-        .toc-big-italic { font-family: var(--fd); font-size: 44px; font-weight: 500; font-style: italic; color: var(--navy2); line-height: 0.92; letter-spacing: -0.5px; opacity: 0.6; break-after: avoid; margin-bottom: 16px; }
-        .toc-intro { font-family: var(--fs); font-size: 11px; font-weight: 300; color: var(--mid); line-height: 1.85; margin-bottom: 22px; }
-        .toc-row { padding: 12px 0; border-bottom: 0.75px solid var(--rule); break-inside: avoid; }
-        .toc-row:first-of-type { border-top: 0.75px solid var(--rule); }
-        .toc-row-line { display: flex; align-items: baseline; gap: 6px; }
-        .toc-n { font-family: var(--fm); font-size: 10.5px; font-weight: 500; color: var(--navy); width: 28px; flex-shrink: 0; }
-        .toc-t { font-family: var(--fs); font-size: 12.5px; font-weight: 700; color: var(--ink); flex: 1; }
-        .toc-dots { flex: 1; border-bottom: 1.5px dotted var(--ltgrey); min-width: 30px; margin: 0 10px 3px; }
-        .toc-pg { font-family: var(--fs); font-size: 10px; color: var(--grey); width: 18px; text-align: right; }
-        .toc-sub { font-family: var(--fs); font-size: 9.5px; font-weight: 300; color: var(--ltgrey); padding-left: 34px; margin-top: 4px; }
-
-        /* ── BACK COVER ──────────────────────── */
-        .back-cover {
-            background: var(--navy); min-height: 297mm;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative; overflow: hidden;
-        }
-        .bc-brand { font-family: var(--fm); font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.55); text-align: center; line-height: 1.8; position: relative; z-index: 10; margin-bottom: 14px; }
-        .bc-title { font-family: var(--fm); font-size: 12px; letter-spacing: 0.38em; text-transform: uppercase; color: var(--white); position: relative; z-index: 10; text-align: center; margin-bottom: 5px; }
-        .bc-sub { font-family: var(--fs); font-size: 22px; font-weight: 300; color: rgba(255,255,255,0.55); position: relative; z-index: 10; }
-        .bc-sub strong { font-weight: 700; color: var(--white); }
-
-        /* ── CTA ─────────────────────────────── */
-        .cta-navy-box { background: var(--navy); padding: 20px 24px; margin: 16px 0; break-inside: avoid; }
-        .cta-box-eyebrow { font-family: var(--fm); font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 8px; display: block; }
-        .cta-box-title { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 10px; break-after: avoid; }
-        .cta-box-body { font-family: var(--fs); font-size: 11px; font-weight: 300; color: rgba(255,255,255,0.55); line-height: 1.78; }
-        .contact-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 18px; padding-top: 18px; border-top: 0.75px solid var(--rule); break-inside: avoid; }
-        .contact-lbl { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--navy); margin-bottom: 4px; display: block; }
-        .contact-val { font-family: var(--fs); font-size: 11px; font-weight: 400; color: var(--ink); }
+        /* ── AUDIENCE CARDS ──────────────────────────────────────────── */
+        .audience-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .audience-card { background: var(--off2); padding: 20px; border-top: 2px solid var(--navy); }
+        .audience-card-title { font-family: var(--fd); font-size: 16px; color: var(--navy); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+        .audience-card-body  { font-family: var(--fs); font-size: 11px; line-height: 1.5; color: var(--mid); }
 
         @media print {
-            body { background: white; padding: 0; }
-            .book { width: auto; }
+            body  { background: white; padding: 0; }
             .page { box-shadow: none; margin-bottom: 0; }
         }
     </style>
 </head>
 <body>
-
-<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <polyline points="21 15 16 10 5 21"/>
-    </symbol>
-</svg>
-
 <div class="book">
 
-<!-- PAGE 1 — COVER (dynamic) -->
+
+
+
 <div class="page cover">
-    <div class="arc arc-1"></div><div class="arc arc-2"></div>
-    <div class="arc arc-3"></div><div class="arc arc-4"></div><div class="arc arc-5"></div>
-
     <div class="cv-top">
-        <div class="cv-name">Test Firm</div>
+        <div class="cv-name">kaashifameen32</div>
+        <div class="cv-type-badge">Strategic Guide</div>
     </div>
-
     <div class="cv-body">
-        <div class="cv-audience">
-            <div class="cv-aud-dash"></div>
-            <div class="cv-aud-text">REINTERPRET: Homeowners</div>
-        </div>
-        <div class="cv-title-bold">Test Title</div>
-        <div class="cv-title-italic">Professional Report</div>
-        <div class="cv-rule-line"></div>
+        <div class="cv-aud-text">Architects</div>
+        <div class="cv-title-bold">Urban Placemaking Guide 11</div>
+        <div class="cv-title-italic">Transforming Public Spaces</div>
+        <div class="cv-divider"></div>
+        <div class="cv-summary">Architects</div>
     </div>
-
     <div class="cv-foot">
-        <span>Test Firm · test@example.com</span>
-        <span>Test Summary</span>
+        <span>© kaashifameen32</span>
+        <span>STRATEGIC GUIDE</span>
     </div>
 </div>
 
-<!-- PAGE 2 — TERMS OF USE -->
+
+
+
 <div class="page">
     <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">Introduction</span><span class="pg-num">2</span></div>
-    </div>
-    <div class="bw">
-        <h1 class="terms-h">Test Title: Professional Report</h1>
-        <p class="terms-body">Test Summary</p>
-        <p class="terms-body">This guide provides expert insights to facilitate professional growth and strategic alignment.</p>
-        <div class="terms-quote"><p>Strategy is not about being different, but about making a difference.</p></div>
-        <p class="terms-body">Our approach combines data-driven analysis with practical implementation frameworks.</p>
-        <p class="terms-body">We empower organisations to navigate complexity with clarity and purpose.</p>
-        <p class="terms-body">© 2026 Test Firm. All rights reserved.</p>
-    </div>
-    <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
-    </div>
-</div>
-
-<!-- PAGE 3 — TABLE OF CONTENTS -->
-<div class="page">
-    <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">Contents</span><span class="pg-num">3</span></div>
-    </div>
-    <div class="bw">
-        <div class="toc-big-bold">Strategic</div>
-        <div class="toc-big-italic">Roadmap</div>
-        <p class="toc-intro">An overview of the key insights and frameworks in this guide.</p>
-
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">01</span><span class="toc-t">Section 0</span><span class="toc-dots"></span><span class="toc-pg">4</span></div><div class="toc-sub">Setting the stage</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">02</span><span class="toc-t">Section 1</span><span class="toc-dots"></span><span class="toc-pg">5</span></div><div class="toc-sub">The landscape of opportunity</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">03</span><span class="toc-t">Section 2</span><span class="toc-dots"></span><span class="toc-pg">6</span></div><div class="toc-sub">Principles for excellence</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">04</span><span class="toc-t">Section 3</span><span class="toc-dots"></span><span class="toc-pg">7</span></div><div class="toc-sub">Driving measurable impact</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">05</span><span class="toc-t">Section 4</span><span class="toc-dots"></span><span class="toc-pg">8</span></div><div class="toc-sub">Turning vision into reality</div></div>
-        <div class="toc-row"><div class="toc-row-line"><span class="toc-n">06</span><span class="toc-t">Section 5</span><span class="toc-dots"></span><span class="toc-pg">9</span></div><div class="toc-sub">Measuring what matters</div></div>
-    </div>
-    <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
-    </div>
-</div>
-
-<!-- PAGE 4 — RISK MANAGEMENT (with left image) -->
-<div class="page">
-    <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">CHAPTER 01</span><span class="pg-num">4</span></div>
-    </div>
-    <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">STRATEGIC ANALYSIS</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Section 0</h1>
-
-        <div class="cf">
-            <div class="img-left">
-                <div class="img-wrapper">
-                    <div class="img-ph-single" style="height:195px;">
-                        
-                            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" alt="Mapping the path to strategic alignment.">
-                        
-                    </div>
-                    <span class="img-cap">Mapping the path to strategic alignment.</span>
-                </div>
-            </div>
-
-            <div class="drop-cap-wrap">
-                <span class="drop-letter">C</span>
-                <p class="body" style="margin:0;">Content 0</p>
-            </div>
-        </div>
-
-        <p class="body">Content 0</p>
-        <div class="h-rule"></div>
-
-        <div class="callout">
-            <div class="callout-title">KEY TAKEAWAY</div>
-            <div class="callout-body">Success is measured by clarity of intent and consistency of execution.</div>
-        </div>
-        <div class="callout">
-            <div class="callout-title">PRO TIP</div>
-            <div class="callout-body">Automate routine tasks to free up bandwidth for high-value strategic work.</div>
+        <div class="pg-head-row">
+            <span class="pg-label">CONTENT</span>
+            <span class="pg-num">02</span>
         </div>
     </div>
-    <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
-    </div>
-</div>
-
-<!-- PAGE 5 — KEY CONSIDERATIONS (with right image) -->
-<div class="page">
-    <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">CHAPTER 02</span><span class="pg-num">5</span></div>
-    </div>
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">OPERATIONAL VIEW</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Section 1</h1>
-
-        <div class="cf">
-            <div class="img-right">
-                <div class="img-wrapper">
-                    <div class="img-ph-single" style="height:200px;">
-                        
-                            <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;640&#39; height=&#39;480&#39;&gt;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;%23eeeeee&#39;/&gt;&lt;text x=&#39;50%&#39; y=&#39;50%&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; fill=&#39;%23999&#39; font-size=&#39;20&#39;&gt;Image Placeholder&lt;/text&gt;&lt;/svg&gt;" alt="Visualising the components of successful execution.">
-                        
-                    </div>
-                    <span class="img-cap">Visualising the components of successful execution.</span>
-                </div>
+        <h1 class="ch-h1" style="font-size: 48px; margin-top: 20px;">Table of<br>Contents</h1>
+        <div class="toc-grid">
+            
+            <div class="toc-item">
+                <span class="toc-num">03</span>
+                <span class="toc-title">Executive Summary</span>
+                <span class="toc-label">STRATEGY</span>
+                <span class="toc-pg">03</span>
             </div>
-
-            <div class="drop-cap-wrap">
-                <span class="drop-letter">C</span>
-                <p class="body" style="margin:0;">Content 1</p>
+            
+            <div class="toc-item">
+                <span class="toc-num">04</span>
+                <span class="toc-title">Market Landscape</span>
+                <span class="toc-label">MARKET</span>
+                <span class="toc-pg">04</span>
             </div>
-        </div>
-
-        <p class="body">Content 1</p>
-        <div class="h-rule"></div>
-        <div class="sec-h2">Strategic Considerations</div>
-
-        <ul class="b-list">
-            <li><strong style="font-weight:600;color:var(--navy);">Efficiency</strong> — Optimising resource allocation for maximum output.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Quality</strong> — Ensuring high standards across all deliverables.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Agility</strong> — Maintaining the ability to pivot as markets change.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Resilience</strong> — Building systems that withstand external shocks.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Innovation</strong> — Investing in future-ready capabilities today.</li>
-        </ul>
-
-        <div class="callout">
-            <div class="callout-title">STRATEGY NOTE</div>
-            <div class="callout-body">Consistency is the bridge between goals and accomplishment.</div>
+            
+            <div class="toc-item">
+                <span class="toc-num">05</span>
+                <span class="toc-title">Core Challenge: Complexity</span>
+                <span class="toc-label">ANALYSIS</span>
+                <span class="toc-pg">05</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">06</span>
+                <span class="toc-title">Core Challenge: Alignment</span>
+                <span class="toc-label">ANALYSIS</span>
+                <span class="toc-pg">06</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">07</span>
+                <span class="toc-title">Core Challenge: Risk</span>
+                <span class="toc-label">ANALYSIS</span>
+                <span class="toc-pg">07</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">08</span>
+                <span class="toc-title">Strategic Framework</span>
+                <span class="toc-label">FRAMEWORK</span>
+                <span class="toc-pg">08</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">09</span>
+                <span class="toc-title">Commercial Stakeholder Playbook</span>
+                <span class="toc-label">PLAYBOOK</span>
+                <span class="toc-pg">09</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">10</span>
+                <span class="toc-title">Technical Practitioner Playbook</span>
+                <span class="toc-label">PLAYBOOK</span>
+                <span class="toc-pg">10</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">11</span>
+                <span class="toc-title">Public Sector Playbook</span>
+                <span class="toc-label">PLAYBOOK</span>
+                <span class="toc-pg">11</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">12</span>
+                <span class="toc-title">Risk and Governance</span>
+                <span class="toc-label">RISK</span>
+                <span class="toc-pg">12</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">13</span>
+                <span class="toc-title">Financial Modeling</span>
+                <span class="toc-label">FINANCIAL</span>
+                <span class="toc-pg">13</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">14</span>
+                <span class="toc-title">Case Studies</span>
+                <span class="toc-label">EVIDENCE</span>
+                <span class="toc-pg">14</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">15</span>
+                <span class="toc-title">Implementation Roadmap</span>
+                <span class="toc-label">ROADMAP</span>
+                <span class="toc-pg">15</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">16</span>
+                <span class="toc-title">Performance Dashboard</span>
+                <span class="toc-label">OUTCOMES</span>
+                <span class="toc-pg">16</span>
+            </div>
+            
+            <div class="toc-item">
+                <span class="toc-num">17</span>
+                <span class="toc-title">Final Recommendations</span>
+                <span class="toc-label">CONCLUSION</span>
+                <span class="toc-pg">17</span>
+            </div>
+            
         </div>
     </div>
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 02</span>
     </div>
 </div>
 
-<!-- PAGE 6 — IMPLEMENTATION (full-width image) -->
+
+
+
+
+
+
 <div class="page">
+
     <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">CHAPTER 03</span><span class="pg-num">6</span></div>
+        <div class="pg-head-row">
+            <span class="pg-label">STRATEGY</span>
+            <span class="pg-num">03</span>
+        </div>
     </div>
+
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">IMPLEMENTATION</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Section 2</h1>
-
-        <p class="body">Content 2</p>
-
-        <div class="img-container full-width-center">
-            <div class="img-wrapper">
-                <div class="img-ph-single" style="height:175px;">
-                    
-                        <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;640&#39; height=&#39;480&#39;&gt;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;%23eeeeee&#39;/&gt;&lt;text x=&#39;50%&#39; y=&#39;50%&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; fill=&#39;%23999&#39; font-size=&#39;20&#39;&gt;Image Placeholder&lt;/text&gt;&lt;/svg&gt;" alt="Tracking progress against strategic objectives.">
-                    
-                </div>
-                <span class="img-cap">Tracking progress against strategic objectives.</span>
-            </div>
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">STRATEGY</span>
+            <span class="ch-eyebrow-rule"></span>
         </div>
+        <h1 class="ch-h1">Executive Summary</h1>
 
-        <div class="h-rule"></div>
-
-        <div class="col2">
-            <div>
-                <div class="sec-h2">Phase 1: Definition</div>
-                <p class="body-sm">Clarify objectives, constraints, and success metrics.</p>
-            </div>
-            <div>
-                <div class="sec-h2">Phase 2: Execution</div>
-                <p class="body-sm">Operationalise the framework with iterative delivery.</p>
-            </div>
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">H</span>
+            <h1>Executive Summary</h1><p>Urban placemaking is essential...</p>
         </div>
+        
 
-        <div class="callout">
-            <div class="callout-title">EXPERT ADVICE</div>
-            <div class="callout-body">Always validate your assumptions against real-world performance metrics.</div>
-        </div>
+        
+        
+
     </div>
+
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 03</span>
     </div>
+
 </div>
 
-<!-- PAGE 7 — EXAMPLES (two-column case studies) -->
 <div class="page">
-    <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">CHAPTER 04</span><span class="pg-num">7</span></div>
-    </div>
-    <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">CASE STUDIES</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Section 3</h1>
 
-        <div class="drop-cap-wrap">
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">MARKET</span>
+            <span class="pg-num">04</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">MARKET</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Market Landscape</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">B</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 04</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">ANALYSIS</span>
+            <span class="pg-num">05</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">ANALYSIS</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Core Challenge: Complexity</h1>
+
+        
+        
+        <div class="body cf">
             <span class="drop-letter">C</span>
-            <p class="body" style="margin:0;">Content 3</p>
+            
         </div>
+        
 
-        <div class="h-rule"></div>
+        
+        
 
-        <div class="col2">
-            <div>
-                <div class="sec-h">Strategic Transformation</div>
-                <p class="body-sm">A concise account demonstrating improved performance through structured delivery.</p>
-            </div>
-            <div>
-                <div class="sec-h">Operational Excellence</div>
-                <p class="body-sm">A scenario that surfaces lessons learned and risk trade-offs in execution.</p>
-            </div>
-        </div>
-
-        <div class="callout navy-fill">
-            <div class="callout-title">KEY INSIGHT</div>
-            <div class="callout-body">Execution is the ultimate differentiator in competitive markets.</div>
-        </div>
     </div>
+
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 05</span>
     </div>
+
 </div>
 
-<!-- PAGE 8 — COMMUNITY ENGAGEMENT (full-width image + bullet list) -->
 <div class="page">
+
     <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">CHAPTER 05</span><span class="pg-num">8</span></div>
+        <div class="pg-head-row">
+            <span class="pg-label">ANALYSIS</span>
+            <span class="pg-num">06</span>
+        </div>
     </div>
+
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">ENGAGEMENT</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Section 4</h1>
-
-        <div class="drop-cap-wrap">
-            <span class="drop-letter">C</span>
-            <p class="body" style="margin:0;">Content 4</p>
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">ANALYSIS</span>
+            <span class="ch-eyebrow-rule"></span>
         </div>
+        <h1 class="ch-h1">Core Challenge: Alignment</h1>
 
-        <p class="body">Content 4</p>
-
-        <div class="img-container full-width-center">
-            <div class="img-wrapper">
-                <div class="img-ph-single" style="height:155px;">
-                    
-                        <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;800&#39; height=&#39;160&#39;&gt;&lt;rect width=&#39;100%&#39; height=&#39;100%&#39; fill=&#39;%23eeeeee&#39;/&gt;&lt;text x=&#39;50%&#39; y=&#39;50%&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; fill=&#39;%23999&#39; font-size=&#39;20&#39;&gt;Banner Placeholder&lt;/text&gt;&lt;/svg&gt;" alt="Visualising stakeholder engagement frameworks.">
-                    
-                </div>
-                <span class="img-cap">Visualising stakeholder engagement frameworks.</span>
-            </div>
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">D</span>
+            
         </div>
+        
 
-        <div class="h-rule"></div>
-        <div class="sec-h2">Engagement Framework</div>
+        
+        
 
-        <ul class="b-list">
-            <li><strong style="font-weight:600;color:var(--navy);">Discovery</strong> — Clarify context and desired outcomes.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Design</strong> — Co-create frameworks aligned to priorities.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Pilot</strong> — Validate assumptions and iterate rapidly.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Scale</strong> — Operationalise with governance and metrics.</li>
-            <li><strong style="font-weight:600;color:var(--navy);">Review</strong> — Close feedback loops and sustain improvements.</li>
-        </ul>
     </div>
+
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 06</span>
     </div>
+
 </div>
 
-<!-- PAGE 9 — STRATEGY SESSION / CONTACT -->
 <div class="page">
+
     <div class="pg-head">
-        <div class="pg-rule1"></div><div class="pg-rule2"></div>
-        <div class="pg-head-row"><span class="pg-label">CHAPTER 06</span><span class="pg-num">9</span></div>
+        <div class="pg-head-row">
+            <span class="pg-label">ANALYSIS</span>
+            <span class="pg-num">07</span>
+        </div>
     </div>
+
     <div class="bw">
-        <div class="ch-eyebrow"><span class="ch-eyebrow-label">NEXT STEPS</span><span class="ch-eyebrow-rule"></span></div>
-        <h1 class="ch-h1">Taking Action</h1>
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">ANALYSIS</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Core Challenge: Risk</h1>
 
-        <p class="body">Test Summary</p>
-        <p class="body">We help translate insight into measurable results through disciplined delivery.</p>
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">E</span>
+            
+        </div>
+        
 
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 07</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">FRAMEWORK</span>
+            <span class="pg-num">08</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">FRAMEWORK</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Strategic Framework</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">F</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 08</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">PLAYBOOK</span>
+            <span class="pg-num">09</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">PLAYBOOK</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Commercial Stakeholder Playbook</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">G</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 09</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">PLAYBOOK</span>
+            <span class="pg-num">10</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">PLAYBOOK</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Technical Practitioner Playbook</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">H</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 10</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">PLAYBOOK</span>
+            <span class="pg-num">11</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">PLAYBOOK</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Public Sector Playbook</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">I</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 11</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">RISK</span>
+            <span class="pg-num">12</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">RISK</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Risk and Governance</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">J</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 12</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">FINANCIAL</span>
+            <span class="pg-num">13</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">FINANCIAL</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Financial Modeling</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">K</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 13</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">EVIDENCE</span>
+            <span class="pg-num">14</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">EVIDENCE</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Case Studies</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">L</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 14</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">ROADMAP</span>
+            <span class="pg-num">15</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">ROADMAP</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Implementation Roadmap</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">M</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 15</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">OUTCOMES</span>
+            <span class="pg-num">16</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">OUTCOMES</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Performance Dashboard</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">N</span>
+            
+        </div>
+        
+
+        
+        
+
+    </div>
+
+    <div class="pg-foot">
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 16</span>
+    </div>
+
+</div>
+
+<div class="page">
+
+    <div class="pg-head">
+        <div class="pg-head-row">
+            <span class="pg-label">CONCLUSION</span>
+            <span class="pg-num">17</span>
+        </div>
+    </div>
+
+    <div class="bw">
+        <div class="ch-eyebrow">
+            <span class="ch-eyebrow-label">CONCLUSION</span>
+            <span class="ch-eyebrow-rule"></span>
+        </div>
+        <h1 class="ch-h1">Final Recommendations</h1>
+
+        
+        
+        <div class="body cf">
+            <span class="drop-letter">O</span>
+            
+        </div>
+        
+
+        
+        
         <div class="cta-navy-box">
-            <span class="cta-box-eyebrow">NEXT STEPS</span>
-            <div class="cta-box-title">Start Your Journey</div>
-            <p class="cta-box-body">We are ready to help you turn these insights into measurable growth.</p>
+            <span class="cta-box-eyebrow">Strategic Engagement</span>
+            <div class="cta-box-title">Ready to implement this framework?</div>
+            <p class="cta-box-body"></p>
         </div>
-
         <div class="contact-grid">
-            <div><span class="contact-lbl">EMAIL</span><div class="contact-val">test@example.com</div></div>
-            <div><span class="contact-lbl">PHONE</span><div class="contact-val">123456789</div></div>
-            <div><span class="contact-lbl">WEB</span><div class="contact-val">www.test.com</div></div>
+            
+            <div>
+                <span class="contact-lbl">EMAIL</span>
+                <div class="contact-val">kaashifameen32@gmail.com</div>
+            </div>
+            
+            
+            <div>
+                <span class="contact-lbl">PHONE</span>
+                <div class="contact-val">3423131</div>
+            </div>
+            
+            
+            <div>
+                <span class="contact-lbl">WEBSITE</span>
+                <div class="contact-val">https://www.kyro.com</div>
+            </div>
+            
         </div>
+        
+
     </div>
+
     <div class="pg-foot">
-        <span class="pg-foot-l">© 2026 Test Firm</span>
-        <span class="pg-foot-r">TEST TITLE</span>
+        <span class="pg-foot-l">© kaashifameen32</span>
+        <span class="pg-foot-r">PAGE 17</span>
     </div>
+
 </div>
 
-<!-- PAGE 10 — BACK COVER -->
-<div class="page back-cover">
-    <div class="arc arc-1"></div><div class="arc arc-2"></div>
-    <div class="arc arc-3"></div><div class="arc arc-4"></div><div class="arc arc-5"></div>
 
-    <div style="position:relative;z-index:10;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;">
-        <div class="bc-brand">Test Firm</div>
-        <div class="bc-title">Test Title</div>
-        <div class="bc-sub">Test Summary <strong>2026</strong></div>
-    </div>
 </div>
-
-</div><!-- /.book -->
 </body>
 </html>

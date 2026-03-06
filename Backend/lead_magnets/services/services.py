@@ -2,6 +2,7 @@ import os
 import re
 import requests
 import time
+import threading
 from typing import Dict, Any, List
 from django.conf import settings
 from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
@@ -9,6 +10,9 @@ import logging
 
 
 logger = logging.getLogger(__name__)
+
+# Global semaphore to limit concurrent DocRaptor requests to 10
+DOCRAPTOR_SEMAPHORE = threading.Semaphore(10)
 
 
 def validate_rendered_html(html: str) -> Dict[str, Any]:
@@ -241,100 +245,103 @@ class DocRaptorService:
             }
 
         # Exponential Backoff Retry Logic
-        max_retries = 3
-        base_delay = 2 # seconds
+        max_retries = 5 # Increased from 3
+        base_delay = 3 # Increased from 2
         
         for attempt in range(max_retries):
-            try:
-                logger.info(f"DocRaptorService: Posting to DocRaptor API (Attempt {attempt + 1})", extra={
-                    'template_id': template_id,
-                    'html_size': len(rendered_html)
-                })
-                
-                doc_data = {
-                    'user_credentials': self.api_key,
-                    'doc': {
-                        'document_type': 'pdf',
-                        'document_content': rendered_html,
-                        'name': f'lead-magnet-{template_id}',
-                        'test': self.test_mode,
-                        'strict': 'none',
-                        'javascript': False,
-                        'help': True
+            # Limit concurrent requests to DocRaptor using global semaphore
+            with DOCRAPTOR_SEMAPHORE:
+                try:
+                    logger.info(f"DocRaptorService: Posting to DocRaptor API (Attempt {attempt + 1})", extra={
+                        'template_id': template_id,
+                        'html_size': len(rendered_html)
+                    })
+                    
+                    doc_data = {
+                        'user_credentials': self.api_key,
+                        'doc': {
+                            'document_type': 'pdf',
+                            'document_content': rendered_html,
+                            'name': f'lead-magnet-{template_id}',
+                            'test': self.test_mode,
+                            'strict': 'none',
+                            'javascript': False,
+                            'help': False # CRITICAL: Disable diagnostic mode to avoid "Too many open help requests"
+                        }
                     }
-                }
-                
-                # Log full request headers and partially redacted body
-                logger.debug(f"DocRaptor Request Headers: {{'Content-Type': 'application/json'}}")
-                logger.debug(f"DocRaptor Request Body (redacted): {{'user_credentials': '...', 'doc': {{...}}}}")
+                    
+                    # Log full request headers and partially redacted body
+                    logger.debug(f"DocRaptor Request Headers: {{'Content-Type': 'application/json'}}")
+                    logger.debug(f"DocRaptor Request Body (redacted): {{'user_credentials': '...', 'doc': {{...}}}}")
 
-                # DocRaptor supports both user_credentials in body and Basic Auth
-                # We provide both for maximum compatibility and to satisfy header requirements
-                auth = (self.api_key, '') # Basic Auth uses API key as username, empty password
-                
-                timeout = 90 # Increased timeout for dense documents
-                response = requests.post(
-                    self.base_url,
-                    json=doc_data,
-                    auth=auth,
-                    headers={'Content-Type': 'application/json'},
-                    timeout=timeout
-                )
-                
-                # Log full response details
-                logger.info(f"DocRaptor Response Status: {response.status_code}")
-                logger.debug(f"DocRaptor Response Headers: {dict(response.headers)}")
-                
-                if response.status_code == 200:
-                    logger.info(f"DocRaptorService: PDF generated successfully ({len(response.content)} bytes)")
-                    return {
-                        'success': True,
-                        'pdf_data': response.content,
-                        'content_type': 'application/pdf',
-                        'filename': f'lead-magnet-{template_id}.pdf',
-                        'template_id': template_id
-                    }
-                elif response.status_code == 401:
-                    logger.error("❌ DocRaptor Authentication Failed (401). Check API Key.")
-                    return {
-                        'success': False,
-                        'error': 'DocRaptor Authentication Failed',
-                        'details': 'The DocRaptor API key is invalid or has expired.'
-                    }
-                elif response.status_code in (429, 500, 502, 503, 504):
-                    # Transient errors - retry
+                    # DocRaptor supports both user_credentials in body and Basic Auth
+                    # We provide both for maximum compatibility and to satisfy header requirements
+                    auth = (self.api_key, '') # Basic Auth uses API key as username, empty password
+                    
+                    timeout = 120 # Increased timeout for dense documents
+                    response = requests.post(
+                        self.base_url,
+                        json=doc_data,
+                        auth=auth,
+                        headers={'Content-Type': 'application/json'},
+                        timeout=timeout
+                    )
+                    
+                    # Log full response details
+                    logger.info(f"DocRaptor Response Status: {response.status_code}")
+                    logger.debug(f"DocRaptor Response Headers: {dict(response.headers)}")
+                    
+                    if response.status_code == 200:
+                        logger.info(f"DocRaptorService: PDF generated successfully ({len(response.content)} bytes)")
+                        return {
+                            'success': True,
+                            'pdf_data': response.content,
+                            'content_type': 'application/pdf',
+                            'filename': f'lead-magnet-{template_id}.pdf',
+                            'template_id': template_id
+                        }
+                    elif response.status_code == 401:
+                        logger.error("❌ DocRaptor Authentication Failed (401). Check API Key.")
+                        return {
+                            'success': False,
+                            'error': 'DocRaptor Authentication Failed',
+                            'details': 'The DocRaptor API key is invalid or has expired.'
+                        }
+                    elif response.status_code in (403, 429, 500, 502, 503, 504):
+                        # Transient errors or rate limits - retry with backoff
+                        # 403 can also be "Too many open help requests" if help: True was used previously
+                        wait_time = base_delay * (2 ** attempt)
+                        logger.warning(f"⚠️ DocRaptor transient error {response.status_code}. Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        # Permanent error
+                        logger.error(f"❌ DocRaptor API Error {response.status_code}: {response.text}")
+                        return {
+                            'success': False,
+                            'error': f'PDF Engine Error ({response.status_code})',
+                            'details': f"Status {response.status_code}: {response.text[:1000]}..."
+                        }
+
+                except requests.exceptions.Timeout:
                     wait_time = base_delay * (2 ** attempt)
-                    logger.warning(f"⚠️ DocRaptor transient error {response.status_code}. Retrying in {wait_time}s...")
+                    logger.warning(f"⚠️ DocRaptor timeout. Retrying in {wait_time}s...")
                     time.sleep(wait_time)
                     continue
-                else:
-                    # Permanent error
-                    logger.error(f"❌ DocRaptor API Error {response.status_code}: {response.text}")
+                except requests.exceptions.RequestException as e:
+                    logger.error(f"❌ DocRaptor RequestException: {str(e)}")
                     return {
                         'success': False,
-                        'error': f'PDF Engine Error ({response.status_code})',
-                        'details': f"Status {response.status_code}: {response.text[:1000]}..."
+                        'error': 'PDF generation service unreachable',
+                        'details': str(e)
                     }
-
-            except requests.exceptions.Timeout:
-                wait_time = base_delay * (2 ** attempt)
-                logger.warning(f"⚠️ DocRaptor timeout. Retrying in {wait_time}s...")
-                time.sleep(wait_time)
-                continue
-            except requests.exceptions.RequestException as e:
-                logger.error(f"❌ DocRaptor RequestException: {str(e)}")
-                return {
-                    'success': False,
-                    'error': 'PDF generation service unreachable',
-                    'details': str(e)
-                }
-            except Exception as e:
-                logger.error('DocRaptorService: unexpected error during PDF generation', exc_info=True)
-                return {
-                    'success': False,
-                    'error': 'Unexpected PDF generation error',
-                    'details': str(e)
-                }
+                except Exception as e:
+                    logger.error('DocRaptorService: unexpected error during PDF generation', exc_info=True)
+                    return {
+                        'success': False,
+                        'error': 'Unexpected PDF generation error',
+                        'details': str(e)
+                    }
         
         # If we reach here, all retries failed
         return {

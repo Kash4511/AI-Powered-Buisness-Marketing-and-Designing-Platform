@@ -333,7 +333,7 @@ def _run_generation_job(job_id, body, user_id):
         # ── PDF RENDERING ──────────────────────────────────────────────────────
         pdf_service = DocRaptorService()
         try:
-            _set_job(job_id, status="processing", progress=80, message="Rendering PDF via DocRaptor...")
+            _set_job(job_id, status="processing", progress=75, message="Waiting for PDF rendering slot (DocRaptor queue)...")
             start_pdf = time.time()
             logger.info("📄 PDF Generation Start (DocRaptor)")
 
@@ -381,6 +381,7 @@ def _run_generation_job(job_id, body, user_id):
             }
 
             logger.info(f"🚀 Submitting to DocRaptor for Lead Magnet {lead_magnet_id}")
+            _set_job(job_id, status="processing", progress=82, message="DocRaptor is now rendering your professional PDF...")
             result       = pdf_service.generate_pdf('modern-guide', docraptor_vars)
             pdf_duration = time.time() - start_pdf
 
@@ -391,7 +392,7 @@ def _run_generation_job(job_id, body, user_id):
                 _set_job(job_id, status="failed", error=f"{err}: {details}")
                 return
 
-            _set_job(job_id, status="processing", progress=92, message="Saving...")
+            _set_job(job_id, status="processing", progress=92, message="Finalizing and saving your lead magnet...")
             pdf_data = result.get('pdf_data')
             filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
 
