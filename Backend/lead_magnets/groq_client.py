@@ -203,7 +203,7 @@ class GroqClient:
 
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         doc_type   = signals.get("document_type", "guide")
-        type_label = DOC_TYPE_LABELS.get(doc_type, "Strategic Guide")
+        type_label = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
         logger.info(f"📄 {type_label} | topic={signals['topic']} | model={self.model}")
 
         # ── Layer 1: Understand the topic/audience deeply (~400 tokens, 1 call)
@@ -238,11 +238,11 @@ class GroqClient:
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
         exp = raw.get("expansions", {})
         normalized: Dict[str, Any] = {
-            "title":               raw.get("title", "Strategic Report"),
+            "title":               raw.get("title") or "",
             "subtitle":            raw.get("subtitle", ""),
             "summary":             raw.get("target_audience_summary", ""),
             "document_type":       raw.get("document_type", "guide"),
-            "document_type_label": raw.get("document_type_label", "Strategic Guide"),
+            "document_type_label": raw.get("document_type_label") or "",
             "sections_config":     SECTIONS,
         }
         for key, *_ in SECTIONS:
@@ -282,7 +282,7 @@ class GroqClient:
 
         primary_color = (
             firm_profile.get("primary_brand_color")
-            or (signals or {}).get("primary_color") or "#2a5766"
+            or (signals or {}).get("primary_color") or ""
         )
         if primary_color and not str(primary_color).startswith("#"):
             primary_color = "#" + primary_color
@@ -290,24 +290,24 @@ class GroqClient:
         return {
             "mainTitle":         ai_content.get("title"),
             "documentSubtitle":  ai_content.get("subtitle"),
-            "documentTypeLabel": ai_content.get("document_type_label", "Strategic Guide"),
+            "documentTypeLabel": ai_content.get("document_type_label") or "",
             "companyName":       firm_profile.get("firm_name", ""),
             "emailAddress":      firm_profile.get("work_email", ""),
             "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
-            "footerText":        f"© {firm_profile.get('firm_name', 'Strategic Report')}",
+            "footerText":        f"© {firm_profile.get('firm_name') or ''}",
             "primaryColor":      primary_color,
-            "secondaryColor":    firm_profile.get("secondary_brand_color") or "#FFFFFF",
-            "tertiaryColor":     firm_profile.get("tertiary_brand_color") or "#4F7A8B",
-            "accentColor":       firm_profile.get("accent_color") or "#E8F1F4",
-            "creamColor":        firm_profile.get("cream_color") or "#F7F4EF",
-            "creamDarkColor":    firm_profile.get("cream_dark_color") or "#EBE6DA",
-            "inkColor":          firm_profile.get("ink_color") or "#1A1A1A",
-            "inkMidColor":       firm_profile.get("ink_mid_color") or "#444444",
-            "inkLightColor":     firm_profile.get("ink_light_color") or "#888888",
-            "ruleColor":         firm_profile.get("rule_color") or "#DDDDDD",
-            "ruleLightColor":    firm_profile.get("rule_light_color") or "#EEEEEE",
-            "coverTextColor":    firm_profile.get("cover_text_color") or "#FFFFFF",
+            "secondaryColor":    firm_profile.get("secondary_brand_color") or "",
+            "tertiaryColor":     firm_profile.get("tertiary_brand_color") or "",
+            "accentColor":       firm_profile.get("accent_color") or "",
+            "creamColor":        firm_profile.get("cream_color") or "",
+            "creamDarkColor":    firm_profile.get("cream_dark_color") or "",
+            "inkColor":          firm_profile.get("ink_color") or "",
+            "inkMidColor":       firm_profile.get("ink_mid_color") or "",
+            "inkLightColor":     firm_profile.get("ink_light_color") or "",
+            "ruleColor":         firm_profile.get("rule_color") or "",
+            "ruleLightColor":    firm_profile.get("rule_light_color") or "",
+            "coverTextColor":    firm_profile.get("cover_text_color") or "",
             "coverLogoFilter":   firm_profile.get("cover_logo_filter") or "brightness(0) invert(1)",
             "summary":           ai_content.get("summary", ""),
             "content_sections":  content_sections,
@@ -315,14 +315,14 @@ class GroqClient:
             "image_1_url":       firm_profile.get("image_1_url", ""),
             "image_2_url":       firm_profile.get("image_2_url", ""),
             "image_3_url":       firm_profile.get("image_3_url", ""),
-            "image_1_caption":   firm_profile.get("image_1_caption", "Field Context"),
-            "image_2_caption":   firm_profile.get("image_2_caption", "Implementation"),
-            "image_3_caption":   firm_profile.get("image_3_caption", "Outcomes"),
-            "cta":               re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion", "Contact us to begin.")).strip(),
+            "image_1_caption":   firm_profile.get("image_1_caption") or "",
+            "image_2_caption":   firm_profile.get("image_2_caption") or "",
+            "image_3_caption":   firm_profile.get("image_3_caption") or "",
+            "cta":               re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion") or "").strip(),
         }
 
     def ensure_section_content(self, sections, signals, firm_profile):
-        return sections or []
+        return sections
 
     # ── PRIVATE ───────────────────────────────────────────────────────────────
 
@@ -380,7 +380,7 @@ class GroqClient:
             f'}}}}'
         )
         logger.info(f"🔵 Layer 2 | {len(section_keys)} sections")
-        result = self._call_ai(system, prompt, max_tokens=900)
+        result = self._call_ai(system, prompt, max_tokens=1500)
         # Normalise: if Groq returned keys directly (no "sections" wrapper), wrap them
         if "sections" not in result and isinstance(result, dict):
             if any(k in result for k in section_keys):
@@ -413,11 +413,13 @@ class GroqClient:
         )
 
         # Pull Layer 1 + Layer 2 context for this section
-        analysis  = self._analysis  or {}
-        secs      = (self._framework or {}).get("sections", {}) if isinstance(self._framework, dict) else {}
-        sec_plan  = secs.get(key) or {}
+        if not self._analysis or not self._framework:
+            raise RuntimeError("Layer 1/2 context missing — _analyze_inputs and _generate_framework must run before _generate_section")
+        analysis = self._analysis
+        secs     = self._framework.get("sections", {})
+        sec_plan = secs.get(key)
         if not isinstance(sec_plan, dict):
-            sec_plan = {}
+            raise RuntimeError(f"Layer 2 framework missing plan for section '{key}'. Got keys: {list(secs.keys())}")
 
         pain_tie  = sec_plan.get("pain_point_tie", "")
         solution  = analysis.get("pain_point_solutions", {}).get(pain_tie, "")
@@ -548,7 +550,7 @@ class GroqClient:
             raise RuntimeError(f"Groq API failed: {type(e).__name__}: {e}") from e
 
         finish   = response.choices[0].finish_reason
-        raw_text = response.choices[0].message.content or ""
+        raw_text = response.choices[0].message.content
         logger.info(f"🟢 finish={finish} | chars={len(raw_text)}")
 
         if finish == "length":
@@ -578,7 +580,7 @@ class GroqClient:
             except Exception:
                 pass
 
-        # Fallback: grab everything after the first key's colon
+        # Last-resort extraction: grab content after the first key's colon
         m_key = re.search(r'"(\w+)"\s*:\s*', cleaned)
         if m_key:
             key_name    = m_key.group(1)
