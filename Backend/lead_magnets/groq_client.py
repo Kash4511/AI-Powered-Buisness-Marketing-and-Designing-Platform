@@ -8,39 +8,44 @@ from groq import Groq
 
 logger = logging.getLogger(__name__)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# UNIVERSAL 8-SECTION STRUCTURE
-# All document types use the same 8 sections — each generated individually
-# with a domain-expert prompt that forces topic-specific, non-generic content.
+# 8 SECTIONS — each has a laser-focused brief that forces domain depth
+# Token budget per section: ~1,800 tokens → 8 sections = ~14,400 total
 # ─────────────────────────────────────────────────────────────────────────────
-
 SECTIONS = [
     (
         "executive_summary",
         "Executive Summary",
         "OVERVIEW",
         (
-            "Write the Executive Summary for this guide on {topic}.\n"
-            "Explain: what {topic} is, why it matters RIGHT NOW for {audience}, "
-            "and what specific pain points ({pain_points}) this guide addresses.\n"
-            "Include real statistics or data points specific to {topic}.\n"
-            "End with a clear statement of what the reader will gain from this guide.\n"
-            "300-400 words. Be specific to {topic} — not generic project management advice."
+            "Write the Executive Summary for a professional guide on {topic} for {audience}.\n"
+            "REQUIRED elements (all must appear):\n"
+            "1. One crisp paragraph explaining what {topic} is in the context of {audience} work — "
+            "not a dictionary definition, but why it matters operationally.\n"
+            "2. A paragraph explaining the current landscape: what is changing in {topic} right now "
+            "and why {audience} cannot afford to ignore it.\n"
+            "3. For EACH pain point in [{pain_points}]: one sentence stating the specific consequence "
+            "of this pain point for {audience} in {topic} work (e.g. cost overrun, missed deadline, "
+            "community backlash, regulatory rejection).\n"
+            "4. A closing paragraph: what this guide delivers and the tangible outcome the reader gets.\n"
+            "150-200 words. Dense, specific, no filler."
         )
     ),
     (
         "key_challenges",
-        "Understanding the Key Challenges",
+        "Key Challenges",
         "CHALLENGES",
         (
-            "Write the Key Challenges section for {audience} working in {topic}.\n"
-            "For EACH pain point in [{pain_points}], write a dedicated subsection with:\n"
-            "  - Why this specific challenge occurs in {topic} (root cause)\n"
-            "  - How it concretely impacts {audience} (financial, operational, social impact)\n"
-            "  - A real-world example or scenario from {topic} practice\n"
-            "These must be challenges SPECIFIC to {topic} — not generic business challenges.\n"
-            "350-450 words total."
+            "Write the Key Challenges section for {audience} in {topic}.\n"
+            "For EACH pain point in [{pain_points}] write a named <h3> subsection containing:\n"
+            "- Root cause: WHY does this specific challenge occur in {topic}? "
+            "(be mechanistic — e.g. fragmented land ownership, multi-agency approval chains, "
+            "community trust deficits — not 'lack of alignment')\n"
+            "- Impact: concrete operational or financial consequence for {audience} "
+            "(e.g. '6-month delays', '$200k redesign costs', 'loss of community buy-in')\n"
+            "- Real scenario: 2-3 sentences describing a realistic situation where this plays out\n"
+            "Every subsection must be grounded in {topic} specifically.\n"
+            "180-220 words total."
         )
     ),
     (
@@ -48,15 +53,16 @@ SECTIONS = [
         "Strategic Framework",
         "FRAMEWORK",
         (
-            "Write a Strategic Framework for solving {topic} challenges for {audience}.\n"
-            "Create a NAMED framework (e.g. a 4-step or 5-step process) specific to {topic}.\n"
-            "Each step must:\n"
-            "  - Have a descriptive name tied to {topic} vocabulary\n"
-            "  - Explain what actually happens in this step (not generic advice)\n"
-            "  - Reference at least one of these pain points: {pain_points}\n"
-            "Include a real example of how this framework applies to {topic}.\n"
-            "Do NOT use steps like 'Define Goals' or 'Identify Stakeholders' — those are generic PM.\n"
-            "350-450 words."
+            "Write a Strategic Framework section for {topic} for {audience}.\n"
+            "Invent a NAMED framework (3-5 steps) that is genuinely specific to {topic}.\n"
+            "RULES:\n"
+            "- Step names must use vocabulary from {topic} domain "
+            "(e.g. for urban placemaking: 'Community Pulse Mapping', 'Activation Sequencing')\n"
+            "- Each step: name + 2-3 sentences on what practitioners actually DO in this step\n"
+            "- At least 2 steps must directly address pain points from: {pain_points}\n"
+            "- Include one concrete example of the framework applied to a real-world {topic} scenario\n"
+            "- DO NOT use generic steps like 'Define Goals', 'Plan', 'Execute', 'Review'\n"
+            "180-220 words."
         )
     ),
     (
@@ -64,14 +70,16 @@ SECTIONS = [
         "Implementation Strategy",
         "IMPLEMENTATION",
         (
-            "Write an Implementation Strategy section for {audience} applying {topic} in practice.\n"
-            "Include:\n"
-            "  - Specific processes unique to {topic} (not generic project phases)\n"
-            "  - Decision points that {audience} will actually face in {topic} work\n"
-            "  - Tools, methods, or approaches used by practitioners in {topic}\n"
-            "  - Common implementation mistakes specific to {topic} and how to avoid them\n"
-            "Reference how {pain_points} affect implementation and how to navigate them.\n"
-            "350-450 words."
+            "Write an Implementation Strategy for {audience} applying {topic}.\n"
+            "Structure as THREE phases with specific {topic}-domain actions in each:\n"
+            "Phase 1 (weeks 1-4): discovery/diagnosis actions unique to {topic}\n"
+            "Phase 2 (weeks 5-12): design/coordination actions unique to {topic}\n"
+            "Phase 3 (weeks 13+): delivery/activation actions unique to {topic}\n"
+            "For each phase include:\n"
+            "- 2-3 specific tasks practitioners do in {topic} (not 'hold meetings')\n"
+            "- One decision point {audience} will face and how to navigate it\n"
+            "- How one pain point from [{pain_points}] surfaces in this phase and what to do\n"
+            "180-220 words."
         )
     ),
     (
@@ -80,44 +88,48 @@ SECTIONS = [
         "RISK",
         (
             "Write a Risk Management section for {audience} working on {topic}.\n"
-            "Identify 5-6 risks that are SPECIFIC to {topic} — not generic project risks.\n"
-            "For each risk include: what causes it in {topic}, how it impacts {audience}, "
-            "and a concrete mitigation strategy used in real {topic} practice.\n"
-            "Format as: <h3>Risk Name</h3> then explanation paragraph for each risk.\n"
-            "Connect risks back to these pain points: {pain_points}.\n"
-            "350-450 words."
+            "Identify exactly 4 risks SPECIFIC to {topic} — not 'scope creep' or 'budget overrun'.\n"
+            "For each risk use this structure:\n"
+            "<h3>[Risk Name specific to {topic}]</h3>\n"
+            "<p><strong>Cause:</strong> [what triggers this in {topic} work]</p>\n"
+            "<p><strong>Impact on {audience}:</strong> [specific consequence]</p>\n"
+            "<p><strong>Mitigation:</strong> [what expert practitioners actually do]</p>\n"
+            "At least 2 risks must be directly caused by pain points in [{pain_points}].\n"
+            "180-220 words."
         )
     ),
     (
         "best_practices",
-        "Best Practices & Emerging Approaches",
-        "BEST PRACTICE",
+        "Best Practices",
+        "METHODS",
         (
-            "Write a Best Practices section covering modern methods and tools for {topic}.\n"
-            "Include:\n"
-            "  - 4-5 best practices that expert practitioners use in {topic}\n"
-            "  - Specific tools, technologies, or methodologies relevant to {topic}\n"
-            "  - Examples of how leading {audience} apply these in real {topic} projects\n"
-            "  - Emerging trends or innovations changing how {topic} is practiced\n"
-            "These must be DOMAIN-SPECIFIC to {topic} — not generic advice.\n"
-            "Avoid vague phrases. Explain HOW things actually work.\n"
-            "350-450 words."
+            "Write a Best Practices section for {audience} in {topic}.\n"
+            "Provide exactly 4 best practices. Each must:\n"
+            "- Have a specific name (not 'Communicate Well' or 'Plan Ahead')\n"
+            "- Explain the METHOD: how expert {audience} actually implement this in {topic}\n"
+            "- Give one concrete example from {topic} practice\n"
+            "- Reference how it addresses one of [{pain_points}]\n"
+            "Examples of what good looks like for urban placemaking: "
+            "'Tactical Urbanism Pilots', 'Community Asset Mapping', 'Pop-up Activation Testing'\n"
+            "Match this specificity for {topic}.\n"
+            "180-220 words."
         )
     ),
     (
         "action_checklist",
-        "Practical Action Checklist",
+        "Action Checklist",
         "CHECKLIST",
         (
-            "Write a Practical Action Checklist for {audience} working on {topic}.\n"
-            "Provide 15-20 specific, actionable checklist items.\n"
-            "Each item must be:\n"
-            "  - Specific to {topic} — not generic business advice\n"
-            "  - Something {audience} can DO immediately or in the next 30 days\n"
-            "  - Connected to resolving one of these pain points: {pain_points}\n"
-            "Format as a <ul> list with each item in <li> tags.\n"
-            "Group items under subheadings by phase or theme if helpful.\n"
-            "300-400 words."
+            "Write a practical Action Checklist for {audience} working on {topic}.\n"
+            "Create exactly 3 groups of checklist items:\n"
+            "Group 1 — <h3>Before You Start</h3>: 4-5 items specific to {topic} preparation\n"
+            "Group 2 — <h3>During Implementation</h3>: 4-5 items specific to {topic} execution\n"
+            "Group 3 — <h3>Measuring Success</h3>: 4-5 items with {topic}-specific KPIs/metrics\n"
+            "Each item must be a concrete action, not a vague instruction.\n"
+            "Bad: 'Engage stakeholders'. Good: 'Map all landowners within 500m of the site'\n"
+            "Bad: 'Track progress'. Good: 'Measure footfall change weekly using manual counts'\n"
+            "Every item must be specific to {topic} and {audience}.\n"
+            "150-180 words."
         )
     ),
     (
@@ -125,49 +137,48 @@ SECTIONS = [
         "Conclusion & Next Steps",
         "CONCLUSION",
         (
-            "Write the Conclusion and Next Steps for this {topic} guide for {audience}.\n"
-            "Include:\n"
-            "  - A brief synthesis of the most important insights from this guide\n"
-            "  - 3 immediate next steps {audience} should take (specific to {topic})\n"
-            "  - A 90-day action agenda specific to {topic} practice\n"
-            "  - A compelling closing statement about why {topic} matters for {audience}\n"
-            "Do NOT just summarize the sections — add forward-looking guidance.\n"
-            "250-350 words."
+            "Write the Conclusion & Next Steps for this {topic} guide for {audience}.\n"
+            "Structure:\n"
+            "1. One paragraph: the single most important insight from this guide specific to {topic}\n"
+            "2. Three numbered next steps — each must be a specific action in {topic} "
+            "(not 'read more' or 'consult an expert')\n"
+            "3. One forward-looking paragraph: what {audience} who master {topic} will achieve "
+            "in the next 2-3 years, tied to resolving [{pain_points}]\n"
+            "4. One closing sentence that is a direct call to action.\n"
+            "130-160 words. Punchy, specific, no filler."
         )
     ),
 ]
 
-# Map doc_type → display label (kept for TOC and cover page)
 DOC_TYPE_LABELS = {
-    "guide":           "Strategic Guide",
-    "case_study":      "Case Study Report",
-    "checklist":       "Implementation Checklist",
-    "roi_calculator":  "ROI Analysis Report",
-    "trends_report":   "Industry Trends Report",
-    "design_portfolio":"Design Portfolio",
+    "guide":            "Strategic Guide",
+    "case_study":       "Case Study Report",
+    "checklist":        "Implementation Checklist",
+    "roi_calculator":   "ROI Analysis Report",
+    "trends_report":    "Industry Trends Report",
+    "design_portfolio": "Design Portfolio",
     "client_onboarding":"Client Onboarding Guide",
-    "custom":          "Strategic Report",
+    "custom":           "Strategic Report",
 }
 
 _TYPE_MAP = {
-    "guide":                   "guide",
-    "strategic guide":         "guide",
-    "case_study":              "case_study",
-    "case study":              "case_study",
-    "checklist":               "checklist",
-    "roi_calculator":          "roi_calculator",
-    "roi calculator":          "roi_calculator",
-    "trends_report":           "trends_report",
-    "trends report":           "trends_report",
-    "design_portfolio":        "design_portfolio",
-    "design portfolio":        "design_portfolio",
-    "client_onboarding_flow":  "client_onboarding",
-    "client_onboarding":       "client_onboarding",
-    "client onboarding flow":  "client_onboarding",
-    "custom":                  "custom",
+    "guide":                  "guide",
+    "strategic guide":        "guide",
+    "case_study":             "case_study",
+    "case study":             "case_study",
+    "checklist":              "checklist",
+    "roi_calculator":         "roi_calculator",
+    "roi calculator":         "roi_calculator",
+    "trends_report":          "trends_report",
+    "trends report":          "trends_report",
+    "design_portfolio":       "design_portfolio",
+    "design portfolio":       "design_portfolio",
+    "client_onboarding_flow": "client_onboarding",
+    "client_onboarding":      "client_onboarding",
+    "client onboarding flow": "client_onboarding",
+    "custom":                 "custom",
 }
 
-# Allowed HTML tags — anything else gets stripped from Groq output
 ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br"}
 
 
@@ -177,7 +188,7 @@ class GroqClient:
         if not api_key:
             raise ValueError("GROQ_API_KEY is required.")
         self.client      = Groq(api_key=api_key)
-        self.model       = "llama-3.1-8b-instant"  # swap to llama-3.3-70b-versatile for production
+        self.model       = "llama-3.1-8b-instant"   # swap to llama-3.3-70b-versatile for production
         self.temperature = 0.45
         self.max_tokens  = 4096
 
@@ -192,7 +203,6 @@ class GroqClient:
         doc_type    = _TYPE_MAP.get(raw_type, "guide")
         pain_points = user_answers.get("pain_points", [])
         audience    = user_answers.get("target_audience", "Stakeholders")
-
         return {
             "topic":           user_answers.get("main_topic", "Strategic Design"),
             "audience":        ", ".join(audience) if isinstance(audience, list) else str(audience),
@@ -206,22 +216,15 @@ class GroqClient:
         }
 
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
-        doc_type    = signals.get("document_type", "guide")
-        type_label  = DOC_TYPE_LABELS.get(doc_type, "Strategic Guide")
+        doc_type   = signals.get("document_type", "guide")
+        type_label = DOC_TYPE_LABELS.get(doc_type, "Strategic Guide")
+        logger.info(f"📄 {type_label} | topic={signals['topic']} | model={self.model}")
 
-        logger.info(f"📄 Generating {type_label} | topic={signals['topic']} | model={self.model}")
-
-        # Step 1 — Generate title
         title_data = self._generate_title(signals, type_label)
-
-        # Step 2 — Generate each section individually (8 calls)
-        # One section per call = topic-specific depth, no token overflow
         expansions: Dict[str, str] = {}
         for key, title, label, brief in SECTIONS:
-            logger.info(f"✍️  Generating section: {key}")
-            expansions[key] = self._generate_section(
-                key=key, title=title, brief=brief, signals=signals
-            )
+            logger.info(f"✍️  {key}")
+            expansions[key] = self._generate_section(key, title, brief, signals)
 
         return {
             "title":                   title_data.get("title", signals["topic"]),
@@ -234,7 +237,6 @@ class GroqClient:
 
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
         exp = raw.get("expansions", {})
-
         normalized: Dict[str, Any] = {
             "title":               raw.get("title", "Strategic Report"),
             "subtitle":            raw.get("subtitle", ""),
@@ -243,15 +245,13 @@ class GroqClient:
             "document_type_label": raw.get("document_type_label", "Strategic Guide"),
             "sections_config":     SECTIONS,
         }
-
-        for key, _title, _label, _ in SECTIONS:
+        for key, *_ in SECTIONS:
             content = exp.get(key, "")
             if isinstance(content, dict):
                 content = json.dumps(content)
-            content = content if isinstance(content, str) else str(content)
-            # Sanitize: strip any disallowed tags that Groq sneaked in
-            normalized[key] = self._sanitize_html(content)
-
+            normalized[key] = self._sanitize_html(
+                content if isinstance(content, str) else str(content)
+            )
         return normalized
 
     def map_to_template_vars(
@@ -262,27 +262,17 @@ class GroqClient:
     ) -> Dict[str, Any]:
         content_sections: List[Dict] = []
         toc_sections:     List[Dict] = []
-
         for idx, (key, title, label, _) in enumerate(SECTIONS):
             page_num = f"{idx + 3:02d}"
-            content  = ai_content.get(key, "")
             content_sections.append({
-                "key":      key,
-                "title":    title,
-                "label":    label,
-                "page_num": page_num,
-                "content":  content,
+                "key": key, "title": title, "label": label,
+                "page_num": page_num, "content": ai_content.get(key, ""),
             })
-            toc_sections.append({
-                "title":    title,
-                "label":    label,
-                "page_num": page_num,
-            })
+            toc_sections.append({"title": title, "label": label, "page_num": page_num})
 
         primary_color = (
             firm_profile.get("primary_brand_color")
-            or (signals or {}).get("primary_color")
-            or "#2a5766"
+            or (signals or {}).get("primary_color") or "#2a5766"
         )
         if primary_color and not str(primary_color).startswith("#"):
             primary_color = "#" + primary_color
@@ -315,148 +305,106 @@ class GroqClient:
             "image_1_url":       firm_profile.get("image_1_url", ""),
             "image_2_url":       firm_profile.get("image_2_url", ""),
             "image_3_url":       firm_profile.get("image_3_url", ""),
-            "image_1_caption":   firm_profile.get("image_1_caption", "Strategic Context"),
-            "image_2_caption":   firm_profile.get("image_2_caption", "Technical Framework"),
-            "image_3_caption":   firm_profile.get("image_3_caption", "Implementation Overview"),
-            "cta":               ai_content.get("conclusion", "Contact us to implement this framework."),
+            "image_1_caption":   firm_profile.get("image_1_caption", "Field Context"),
+            "image_2_caption":   firm_profile.get("image_2_caption", "Implementation"),
+            "image_3_caption":   firm_profile.get("image_3_caption", "Outcomes"),
+            "cta":               ai_content.get("conclusion", "Contact us to begin."),
         }
 
     def ensure_section_content(self, sections, signals, firm_profile):
-        """Legacy compatibility."""
         return sections or []
 
     # ── PRIVATE ───────────────────────────────────────────────────────────────
 
     def _generate_title(self, signals: Dict, type_label: str) -> Dict:
-        system = (
-            "You are a senior document strategist. "
-            "Return valid JSON only. No markdown fences."
-        )
+        system = "You are a senior document strategist. Return valid JSON only. No markdown."
         prompt = (
-            f"Generate a title package for a {type_label} guide.\n\n"
-            f"Topic: {signals['topic']}\n"
+            f"Generate a title for a {type_label} on: {signals['topic']}\n"
             f"Audience: {signals['audience']}\n"
             f"Pain Points: {signals['pain_points']}\n\n"
-            f"Rules:\n"
-            f"- Title: 3-7 words, specific to the topic. No generic words like 'Ultimate' or 'Complete'.\n"
-            f"- Subtitle: 10-16 words describing the specific value delivered to the audience.\n"
-            f"- Summary: One sentence — who this is for and what outcome they get.\n\n"
-            f'Return ONLY: {{"title": "...", "subtitle": "...", "target_audience_summary": "..."}}'
+            f"Rules: title = 3-7 words, domain-specific, no 'Ultimate'/'Complete'.\n"
+            f"subtitle = 10-15 words, specific value delivered.\n"
+            f"target_audience_summary = one sentence who this is for + outcome.\n"
+            f'Return ONLY: {{"title":"...","subtitle":"...","target_audience_summary":"..."}}'
         )
-        logger.info(f"🔵 Generating title | topic={signals['topic']}")
-        return self._call_ai(system, prompt, max_tokens=300)
+        logger.info(f"🔵 title | {signals['topic']}")
+        return self._call_ai(system, prompt, max_tokens=250)
 
     def _generate_section(self, key: str, title: str, brief: str, signals: Dict) -> str:
-        """
-        Generates one section at a time.
-        Uses a domain-expert forcing prompt that demands topic-specific content.
-        Raises immediately on failure — no silent fallbacks.
-        """
         brief_filled = brief.format(
             topic       = signals["topic"],
             audience    = signals["audience"],
             pain_points = signals["pain_points"],
-            industry    = signals.get("industry", signals["topic"]),
+            industry    = signals.get("industry") or signals["topic"],
         )
 
         system = (
-            f"You are an expert consultant and domain specialist in {signals['topic']}.\n"
+            f"You are a domain expert and senior consultant specialising in {signals['topic']}.\n"
             f"You are writing one section of a professional lead-magnet guide.\n\n"
-            f"ABSOLUTE RULES:\n"
-            f"1. Every sentence must be SPECIFIC to {signals['topic']} — not generic business advice.\n"
-            f"2. Address these pain points directly: {signals['pain_points']}\n"
-            f"3. Write for this audience: {signals['audience']}\n"
-            f"4. BANNED phrases: 'leverage synergies', 'optimize solutions', 'unlock value', "
-            f"'drive innovation', 'best practices' (use specific examples instead)\n"
-            f"5. Use HTML: <p> paragraphs, <strong> key terms, <h3> subheadings, <ul>/<li> lists\n"
-            f"6. DO NOT include the section title — it is already rendered above your content\n"
-            f"7. Start with a <p> tag, not <h3>\n"
-            f"8. Return valid JSON only. No markdown fences.\n"
+            f"NON-NEGOTIABLE RULES:\n"
+            f"1. EVERY sentence must be specific to '{signals['topic']}' — no generic advice.\n"
+            f"2. Directly address these pain points: {signals['pain_points']}\n"
+            f"3. Write FOR this audience: {signals['audience']}\n"
+            f"4. BANNED phrases (instant fail): 'leverage', 'synergies', 'optimize solutions', "
+            f"'unlock value', 'drive innovation', 'holistic approach', 'best-in-class'\n"
+            f"5. HTML only: <p>, <strong>, <h3>, <h4>, <ul>, <li>. No <div>, no <span>, no <table>.\n"
+            f"6. DO NOT write the section title — it renders above your content.\n"
+            f"7. First element MUST be <p>, never <h3>.\n"
+            f"8. Return valid JSON only. No markdown. No prose outside JSON.\n"
         )
 
         prompt = (
-            f"Write the '{title}' section of this {signals['topic']} guide.\n\n"
-            f"SECTION BRIEF:\n{brief_filled}\n\n"
-            f"SPECIAL REQUESTS: {signals.get('special', 'None')}\n\n"
-            f'Return ONLY: {{"{key}": "<p>your content here</p>"}}'
+            f"Write the '{title}' section for a {signals['topic']} guide.\n\n"
+            f"BRIEF (follow exactly):\n{brief_filled}\n\n"
+            f"SPECIAL REQUESTS: {signals.get('special') or 'None'}\n\n"
+            f"Return ONLY this JSON:\n"
+            f'{{"{key}": "your full HTML content here"}}'
         )
 
-        logger.info(f"🔵 Section '{key}' | topic={signals['topic']}")
-        raw = self._call_ai(system, prompt, max_tokens=2500)
-
+        logger.info(f"🔵 section '{key}'")
+        raw = self._call_ai(system, prompt, max_tokens=1800)
         content = self._extract_content(raw, key)
-        word_count = len(content.split()) if content else 0
+        words = len(content.split()) if content else 0
+        logger.info(f"✅ '{key}': {words} words")
 
-        logger.info(f"✅ Section '{key}': {word_count} words")
-
-        if word_count < 20:
+        if words < 50:
             raise ValueError(
-                f"Section '{key}' returned only {word_count} words. "
-                f"Groq response keys: {list(raw.keys())}. "
-                f"Raw snippet: {str(raw)[:400]}"
+                f"Section '{key}' too short ({words} words). "
+                f"Keys returned: {list(raw.keys())}. Snippet: {str(raw)[:300]}"
             )
-
         return self._sanitize_html(content)
 
     def _extract_content(self, result: Dict, key: str) -> str:
-        """
-        Robustly pull section content from whatever JSON shape Groq returned.
-        Priority: exact key → 'content' key → first long string value.
-        Logs exactly what it found so failures are visible immediately.
-        """
         if not result:
-            logger.error(f"❌ _extract_content: empty result for key='{key}'")
+            logger.error(f"❌ empty result for '{key}'")
             return ""
         if key in result and isinstance(result[key], str) and len(result[key]) > 30:
             return result[key]
         if "content" in result and isinstance(result["content"], str) and len(result["content"]) > 30:
-            logger.warning(f"⚠️ key='{key}' missing — used 'content' key")
+            logger.warning(f"⚠️ '{key}' missing — used 'content'")
             return result["content"]
         for k, v in result.items():
             if isinstance(v, str) and len(v) > 80:
-                logger.warning(f"⚠️ key='{key}' missing — used first long string under '{k}'")
+                logger.warning(f"⚠️ '{key}' missing — used '{k}'")
                 return v
-        logger.error(
-            f"❌ _extract_content FAILED for '{key}'. "
-            f"Keys: {list(result.keys())}. "
-            f"Preview: { {k: str(v)[:60] for k, v in result.items()} }"
-        )
+        logger.error(f"❌ extract FAILED '{key}' | keys={list(result.keys())}")
         return ""
 
     def _sanitize_html(self, html: str) -> str:
-        """
-        Strip any HTML tags not in ALLOWED_TAGS.
-        Also removes raw [IMAGE_PLACEHOLDER: ...] markers Groq sometimes injects.
-        Ensures all tags are properly closed.
-        """
         if not html:
             return html
-
-        # Remove image placeholders
         html = re.sub(r'\[IMAGE_PLACEHOLDER:[^\]]*\]', '', html)
-
-        # Strip disallowed tags (keep their inner text)
-        def replace_tag(m):
-            tag = m.group(1).lower().split()[0] if m.group(1) else ""
-            if tag in ALLOWED_TAGS:
-                return m.group(0)
-            return ""  # strip the tag, keep content between tags via separate pass
-
-        html = re.sub(r'<(/?)(\w[\w\s="\'.-]*?)>', lambda m: (
-            m.group(0) if m.group(2).split()[0].lower() in ALLOWED_TAGS else ""
-        ), html)
-
-        # Close any unclosed tags
-        html = self._ensure_closed_tags(html)
-
-        return html.strip()
+        html = re.sub(
+            r'<(/?)(\w+)([^>]*)>',
+            lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "",
+            html
+        )
+        return self._ensure_closed_tags(html).strip()
 
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:
-        start  = time.time()
+        import traceback as _tb
         tokens = max_tokens or self.max_tokens
-
-        logger.info(f"🔵 Groq call | model={self.model} | max_tokens={tokens}")
-
+        logger.info(f"🔵 Groq | max_tokens={tokens}")
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -468,49 +416,36 @@ class GroqClient:
                 max_tokens=tokens,
                 response_format={"type": "json_object"},
             )
-        except Exception as api_err:
-            import traceback as _tb
-            logger.error(f"❌ Groq API FAILED: {type(api_err).__name__}: {api_err}\n{_tb.format_exc()}")
-            raise RuntimeError(f"Groq API call failed: {type(api_err).__name__}: {api_err}") from api_err
+        except Exception as e:
+            logger.error(f"❌ Groq API: {type(e).__name__}: {e}\n{_tb.format_exc()}")
+            raise RuntimeError(f"Groq API failed: {type(e).__name__}: {e}") from e
 
-        duration = time.time() - start
         finish   = response.choices[0].finish_reason
         raw_text = response.choices[0].message.content or ""
-
-        logger.info(f"🟢 Groq | {duration:.2f}s | finish={finish} | chars={len(raw_text)}")
+        logger.info(f"🟢 finish={finish} | chars={len(raw_text)}")
 
         if finish == "length":
-            logger.error(
-                f"❌ Groq TRUNCATED (finish=length). max_tokens={tokens} too low. "
-                f"Snippet: {raw_text[:300]}"
-            )
-            raise ValueError(
-                f"Groq truncated response (finish_reason=length). "
-                f"Increase max_tokens above {tokens}. Raw: {raw_text[:200]}"
-            )
-
+            raise ValueError(f"Groq truncated (finish=length, max_tokens={tokens}). Raw: {raw_text[:200]}")
         if not raw_text.strip():
-            raise ValueError(f"Groq returned empty response. finish_reason={finish}")
+            raise ValueError(f"Groq empty response. finish={finish}")
 
         try:
             parsed = json.loads(raw_text)
-            logger.info(f"✅ JSON parsed | keys={list(parsed.keys())}")
+            logger.info(f"✅ parsed | keys={list(parsed.keys())}")
             return parsed
         except json.JSONDecodeError as je:
-            logger.error(f"❌ JSON PARSE FAILED: {je}\nFull raw:\n{raw_text}")
-            raise ValueError(f"Groq returned invalid JSON: {je}. Raw: {raw_text[:400]}") from je
+            logger.error(f"❌ JSON parse failed: {je}\nRaw:\n{raw_text}")
+            raise ValueError(f"Invalid JSON from Groq: {je}. Raw: {raw_text[:300]}") from je
 
     def _ensure_closed_tags(self, html: str) -> str:
-        if not html:
-            return html
-        void_tags = {"br", "hr", "img", "input", "link", "meta"}
-        tags  = re.findall(r"<(/?)([a-zA-Z1-6]+)", html)
+        void = {"br", "hr", "img", "input", "link", "meta"}
+        tags = re.findall(r"<(/?)([a-zA-Z1-6]+)", html)
         stack: List[str] = []
-        for is_closing, tag in tags:
+        for closing, tag in tags:
             tag = tag.lower()
-            if tag in void_tags:
+            if tag in void:
                 continue
-            if is_closing:
+            if closing:
                 if stack and stack[-1] == tag:
                     stack.pop()
             else:
