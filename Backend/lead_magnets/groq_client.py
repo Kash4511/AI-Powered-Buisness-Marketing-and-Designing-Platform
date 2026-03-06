@@ -10,197 +10,165 @@ logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# DOCUMENT TYPE CONFIGURATIONS
+# UNIVERSAL 8-SECTION STRUCTURE
+# All document types use the same 8 sections — each generated individually
+# with a domain-expert prompt that forces topic-specific, non-generic content.
 # ─────────────────────────────────────────────────────────────────────────────
-DOCUMENT_TYPE_CONFIGS = {
-    "guide": {
-        "label": "Strategic Guide",
-        "tone": "authoritative, analytical, institutional",
-        "sections": [
-            ("executive_summary",      "Executive Summary",               "STRATEGY",   "800-word executive-level overview of {topic} for {audience}. What the problem is, why it matters now, what this guide delivers. Include ROI context and strategic urgency specific to {pain_points}. No filler sentences."),
-            ("market_landscape",       "Market Landscape",                "MARKET",     "900-word analysis of the current state of {topic} in {industry}. Include market pressures, emerging shifts, and why {audience} must act now. Reference real market dynamics tied to {pain_points}."),
-            ("core_challenge_1",       "Core Challenge: Complexity",      "ANALYSIS",   "1000-word deep technical analysis of the first major challenge in {topic} for {audience}. Root causes, mechanisms, financial and operational impact of {pain_points}. Data-driven specifics only."),
-            ("core_challenge_2",       "Core Challenge: Alignment",       "ANALYSIS",   "1000-word deep technical analysis of the second major challenge specific to {pain_points}. Quantified risk exposure, failure modes, and downstream consequences for {audience}."),
-            ("core_challenge_3",       "Core Challenge: Risk",            "ANALYSIS",   "1000-word analysis of the third challenge in {topic}. Focus on systemic causes, timeline risk, and financial exposure for {audience} dealing with {pain_points}."),
-            ("strategic_framework",    "Strategic Framework",             "FRAMEWORK",  "1000-word proprietary named framework for solving {topic}. Define 4 pillars. Each pillar gets 200 words of substance. Tie every pillar to {pain_points} and {audience} needs."),
-            ("audience_playbook_1",    "Commercial Stakeholder Playbook", "PLAYBOOK",   "800-word section for commercial and institutional stakeholders in {audience}. Concrete decision criteria, financial logic, and implementation steps specific to {topic}."),
-            ("audience_playbook_2",    "Technical Practitioner Playbook", "PLAYBOOK",   "800-word section for technical practitioners. Implementation steps, coordination protocols, and tools for {topic} addressing {pain_points}."),
-            ("audience_playbook_3",    "Public Sector Playbook",          "PLAYBOOK",   "800-word section for government and regulatory audiences. Policy levers, approval acceleration, ESG alignment for {topic}."),
-            ("risk_governance",        "Risk and Governance",             "RISK",       "900-word risk allocation, contractual frameworks, contingency planning specific to {topic} for {audience}. Include a risk matrix with 6 specific risks from {pain_points}."),
-            ("financial_modeling",     "Financial Modeling",              "FINANCIAL",  "900-word IRR analysis, CapEx sensitivity, cost-benefit modeling, and financing instruments relevant to {topic} for {audience}. Specific numbers and ranges."),
-            ("case_studies",           "Case Studies",                    "EVIDENCE",   "1000-word section with 2 detailed case studies directly about {topic}. Each: context, challenge from {pain_points}, intervention, measurable outcome with specific numbers."),
-            ("implementation_roadmap", "Implementation Roadmap",          "ROADMAP",    "900-word phased roadmap for {audience} implementing {topic} solutions. Phase 1: Discovery (weeks 1-4). Phase 2: Design (weeks 5-10). Phase 3: Execution (weeks 11-24). Phase 4: Optimization. Each phase: objectives, deliverables, KPIs."),
-            ("performance_dashboard",  "Performance Dashboard",           "OUTCOMES",   "800-word KPI framework for {topic}. 8 specific metrics with before/after targets, measurement methodology, and monitoring cadence. Tied directly to {pain_points} resolution."),
-            ("final_recommendations",  "Final Recommendations",           "CONCLUSION", "600-word authoritative conclusion. Top 5 prioritized recommendations for {audience} on {topic}. 90-day quick wins, 12-month agenda, ROI forecast."),
-        ]
-    },
-    "case_study": {
-        "label": "Case Study Report",
-        "tone": "evidence-based, precise, outcome-focused",
-        "sections": [
-            ("executive_summary",      "Executive Summary",               "OVERVIEW",     "700-word executive brief: project type related to {topic}, core challenges from {pain_points}, methodology, headline outcomes for {audience}."),
-            ("project_context",        "Project Context",                 "CONTEXT",      "900-word detailed project background for {topic}. Asset type, strategic objectives, baseline conditions, constraints. Specific and grounded in {industry}."),
-            ("challenge_diagnosis",    "Challenge Diagnosis",             "CHALLENGE",    "1000-word forensic analysis of problems faced. Root cause mapping of {pain_points}, failure point identification, risk exposure. Technical and financial dimensions for {audience}."),
-            ("stakeholder_landscape",  "Stakeholder Landscape",           "STAKEHOLDERS", "800-word mapping of all stakeholders relevant to {topic}. How misalignment from {pain_points} manifested. What was at stake for each party in {audience}."),
-            ("methodology_overview",   "Intervention Methodology",        "METHOD",       "1000-word description of the strategic approach taken for {topic}. Why this methodology over alternatives. Logic of each decision relative to {pain_points}."),
-            ("phase_1_execution",      "Phase 1: Discovery",              "EXECUTION",    "900-word account of Phase 1 for {topic} project. What was found, what was unexpected, how team responded. Specific findings with numbers tied to {pain_points}."),
-            ("phase_2_execution",      "Phase 2: Design and Planning",    "EXECUTION",    "900-word account of Phase 2. Design decisions, coordination mechanisms, approval strategy for {topic} addressing {pain_points}."),
-            ("phase_3_execution",      "Phase 3: Delivery",               "EXECUTION",    "900-word account of delivery phase for {topic}. Trade sequencing, issue resolution, quality milestones. Specific to {audience}."),
-            ("risk_events",            "Risk Events and Responses",       "RISK",         "800-word section on specific risk events from {pain_points}. How each was identified, escalated, and resolved for {topic}. Contractual mechanisms used."),
-            ("financial_performance",  "Financial Performance",           "FINANCIAL",    "900-word financial analysis of {topic} project. Budget vs actuals, change order volume, IRR achieved vs target, CapEx efficiency for {audience}."),
-            ("esg_outcomes",           "ESG and Social Outcomes",         "ESG",          "800-word environmental, social, and governance outcomes from {topic}. Carbon savings, community impact, regulatory compliance for {audience}."),
-            ("lessons_learned",        "Lessons Learned",                 "INSIGHTS",     "900-word honest debrief on {topic}. What worked, what did not, what to do differently. Actionable insights tied to {pain_points} for {audience}."),
-            ("replication_framework",  "Replication Framework",           "FRAMEWORK",    "900-word guide on replicating {topic} success for {audience}. Prerequisites, decision criteria, team structure, timeline expectations."),
-            ("performance_dashboard",  "Performance Dashboard",           "OUTCOMES",     "800-word KPI summary for {topic}. 10 metrics with baseline vs outcome. Tied directly to {pain_points} resolution."),
-            ("final_recommendations",  "Strategic Recommendations",       "CONCLUSION",   "600-word conclusion for {audience} considering {topic} projects. Top 5 recommendations with rationale and risk-adjusted ROI estimate."),
-        ]
-    },
-    "checklist": {
-        "label": "Implementation Checklist",
-        "tone": "precise, actionable, practitioner-grade",
-        "sections": [
-            ("executive_summary",      "How to Use This Checklist",       "OVERVIEW",   "700-word guide on using this checklist for {topic}. Who in {audience} should use it, when, in what sequence. How to handle incomplete items tied to {pain_points}."),
-            ("pre_project_checklist",  "Pre-Project Verification",        "PHASE 0",    "900-word pre-project checklist for {topic}. 15 specific verification items across mandate clarity, budget approval, team assembly, site due diligence. Each item 2-3 sentences for {audience}."),
-            ("site_assessment",        "Site and Technical Assessment",   "PHASE 1",    "900-word site assessment checklist for {topic}. Structural surveys, condition audits, constraint mapping specific to {pain_points}. Pass/fail criteria for {audience}."),
-            ("design_checklist",       "Design and Documentation",        "PHASE 2",    "900-word design phase checklist for {topic}. Documentation requirements, coordination meetings, consultant appointments, submission items specific to {industry}."),
-            ("procurement_checklist",  "Procurement and Contracting",     "PHASE 3",    "900-word procurement checklist for {topic}. Tender documents, contractor selection criteria, contract form selection, insurance requirements tied to {pain_points}."),
-            ("approval_checklist",     "Regulatory Approvals",            "APPROVALS",  "900-word approvals checklist for {topic} in {industry}. Each approval with responsible party, typical timeline, and common blockers from {pain_points}."),
-            ("mobilisation_checklist", "Site Mobilisation",               "PHASE 4",    "800-word pre-construction mobilisation checklist for {topic}. Site establishment, safety plan, logistics plan specific to {audience} needs."),
-            ("early_works_checklist",  "Early Works Execution",           "PHASE 5",    "900-word early works checklist for {topic}. Phased execution steps, hold points and sign-off requirements. Addresses {pain_points} at source."),
-            ("main_works_checklist",   "Main Works Execution",            "PHASE 6",    "900-word main works checklist for {topic} by trade or workstream. Inspection hold points. Coordination items. Specific to {industry} and {audience}."),
-            ("quality_checklist",      "Quality Assurance Gates",         "QA/QC",      "800-word QA checklist for {topic}. Inspection and test plan items, defect management, third-party verification requirements for {audience}."),
-            ("risk_register",          "Risk Register Checklist",         "RISK",       "900-word risk management checklist for {topic}. 15 specific risks from {pain_points} with likelihood, impact, mitigation, and monitoring frequency."),
-            ("handover_checklist",     "Practical Completion",            "PHASE 7",    "900-word handover checklist for {topic}. Defects inspection, documentation, commissioning certificates, training completion for {audience}."),
-            ("post_occupancy",         "Post-Occupancy Review",           "PHASE 8",    "800-word post-occupancy checklist for {topic}. Review items at 6 weeks and 6 months. Performance checks tied to {pain_points} resolution."),
-            ("compliance_tracker",     "Compliance and Reporting",        "COMPLIANCE", "800-word ongoing compliance checklist for {topic} in {industry}. Conditions discharge, ESG reporting, insurance renewals for {audience}."),
-            ("final_recommendations",  "Checklist Master Summary",        "SUMMARY",    "600-word master summary for {topic}. Critical path items, most commonly missed items, decision gate summary for {audience} dealing with {pain_points}."),
-        ]
-    },
-    "roi_calculator": {
-        "label": "ROI Analysis Report",
-        "tone": "financial, quantitative, investment-grade",
-        "sections": [
-            ("executive_summary",      "Investment Summary",              "OVERVIEW",   "700-word investment-grade executive summary for {topic}. Headline ROI metrics, investment thesis, key assumptions, risk-adjusted return range for {audience}."),
-            ("market_opportunity",     "Market Opportunity",              "MARKET",     "900-word market sizing for {topic} in {industry}. Demand drivers, supply constraints, pricing dynamics tied to {pain_points}. Entry timing rationale for {audience}."),
-            ("baseline_financials",    "Baseline Financial Model",        "FINANCIALS", "1000-word baseline financial model for {topic}. Revenue assumptions, cost structure, CapEx requirements, operating cost projections specific to {audience}."),
-            ("roi_calculation",        "ROI Calculation Methodology",     "ROI",        "1000-word ROI calculation for {topic}. IRR, NPV, payback period, cash-on-cash return. Step-by-step with assumptions addressing {pain_points}."),
-            ("capex_analysis",         "CapEx Deep Dive",                 "CAPEX",      "900-word CapEx analysis for {topic}. Hard costs, soft costs, contingency specific to {industry} and {pain_points} for {audience}."),
-            ("revenue_modeling",       "Revenue and NOI Modeling",        "REVENUE",    "900-word revenue model for {topic}. Rate assumptions, occupancy projections, lease structure tied to {pain_points}. NOI build-up for {audience}."),
-            ("sensitivity_analysis",   "Sensitivity Analysis",            "RISK",       "1000-word sensitivity analysis for {topic}. IRR sensitivity to key variables from {pain_points}. Conservative/base/optimistic cases for {audience}."),
-            ("financing_structure",    "Financing Structure",             "FINANCING",  "900-word financing analysis for {topic}. Debt vs equity split, green bond eligibility, tax credit opportunities specific to {industry}."),
-            ("risk_adjusted_returns",  "Risk-Adjusted Returns",           "RISK",       "900-word risk-adjusted analysis for {topic}. Probability-weighted IRR. Downside protection tied to {pain_points} for {audience}."),
-            ("esg_value",              "ESG Value Premium",               "ESG",        "800-word ESG financial value for {topic}. Green premium, lower financing costs, carbon credit value specific to {industry} and {audience}."),
-            ("exit_strategy",          "Exit Strategy Analysis",          "EXIT",       "900-word exit analysis for {topic}. Hold vs sell framework, exit cap rate assumptions tied to {pain_points}. Buyer appetite in {industry}."),
-            ("case_studies",           "Comparable Transactions",         "EVIDENCE",   "900-word analysis of 2-3 comparable {topic} transactions. Achieved IRR, CapEx, exit value. What made them succeed relative to {pain_points}."),
-            ("decision_framework",     "Investment Decision Framework",   "FRAMEWORK",  "900-word go/no-go decision framework for {topic}. Minimum hurdles, entry criteria, deal structuring red lines for {audience} in {industry}."),
-            ("performance_dashboard",  "KPI Dashboard",                   "OUTCOMES",   "800-word financial KPI dashboard for {topic}. 10 metrics with target ranges. Early warning indicators tied to {pain_points} for {audience}."),
-            ("final_recommendations",  "Investment Recommendations",      "CONCLUSION", "600-word investment committee summary for {topic}. Recommendation, key conditions, risk mitigants, next steps for {audience}."),
-        ]
-    },
-    "trends_report": {
-        "label": "Trends Report",
-        "tone": "forward-looking, analytical, evidence-based",
-        "sections": [
-            ("executive_summary",       "Trends Executive Summary",        "OVERVIEW",   "700-word forward-looking executive brief on {topic}. Top 5 trends. Why now. What {audience} must do in the next 12-24 months given {pain_points}."),
-            ("macro_forces",            "Macro Forces",                    "MACRO",      "900-word macro forces driving change in {topic} for {audience}. Economic, demographic, climate, geopolitical forces specific to {industry} and {pain_points}."),
-            ("trend_1",                 "Trend 1: Technology Shift",       "TREND",      "1000-word deep analysis of the primary technology trend in {topic}. Current adoption state, trajectory, investment requirements for {audience} addressing {pain_points}."),
-            ("trend_2",                 "Trend 2: Regulatory Evolution",   "TREND",      "1000-word analysis of regulatory and policy evolution in {topic} for {industry}. Upcoming changes, compliance timeline, strategic implications for {audience}."),
-            ("trend_3",                 "Trend 3: Market Structure",       "TREND",      "1000-word structural market shifts in {topic}. Business model evolution, demand shifts, pricing pressure tied to {pain_points} for {audience}."),
-            ("trend_4",                 "Trend 4: ESG Acceleration",       "TREND",      "900-word ESG trends in {topic} for {industry}. Net zero mandates, social value requirements, green financing evolution for {audience}."),
-            ("trend_5",                 "Trend 5: Workforce and Skills",   "TREND",      "900-word talent and capability trends in {topic}. Skills gaps, automation impact specific to {pain_points} and {audience}."),
-            ("early_adopter_analysis",  "Early Adopter Analysis",          "EVIDENCE",   "900-word analysis of organizations leading on {topic} trends. What competitive advantage they gained relevant to {audience} and {pain_points}."),
-            ("laggard_risk",            "Laggard Risk Assessment",         "RISK",       "900-word risk of not adapting to {topic} trends. Financial penalties, market share erosion, regulatory non-compliance for {audience} with {pain_points}."),
-            ("technology_roadmap",      "Technology Adoption Roadmap",     "ROADMAP",    "900-word technology adoption roadmap for {audience} in {topic}. What to adopt now, what to pilot in 12 months, what to plan for in 24-36 months."),
-            ("regulatory_strategy",     "Regulatory Strategy",             "STRATEGY",   "800-word regulatory anticipation strategy for {topic} in {industry}. How {audience} stays ahead of incoming rules tied to {pain_points}."),
-            ("investment_implications", "Investment Implications",          "FINANCIAL",  "900-word capital allocation implications of {topic} trends for {audience}. Where to invest, where to divest, stranded asset risk from {pain_points}."),
-            ("strategic_scenarios",     "Strategic Scenarios",             "SCENARIOS",  "900-word scenario planning for {topic}. Three futures. Probability and strategic response for {audience} dealing with {pain_points}."),
-            ("action_framework",        "Action Framework",                "FRAMEWORK",  "800-word prioritized action framework for {audience} on {topic}. Immediate (0-90 days), short-term (90 days-1 year), strategic (1-3 years)."),
-            ("final_recommendations",   "Strategic Imperatives",           "CONCLUSION", "600-word closing imperatives for {audience} on {topic}. Top 5 actions ranked by urgency. What success looks like in 24 months given {pain_points}."),
-        ]
-    },
-    "design_portfolio": {
-        "label": "Design Portfolio",
-        "tone": "creative, technical, portfolio-grade",
-        "sections": [
-            ("executive_summary",       "Studio Overview",                 "STUDIO",      "700-word studio positioning for {topic}. Design philosophy, core expertise, signature approach to {pain_points} for {audience}."),
-            ("design_philosophy",       "Design Philosophy",               "PHILOSOPHY",  "900-word design philosophy specific to {topic}. Principles, how the studio approaches {pain_points} for {audience} in {industry}."),
-            ("methodology",             "Design Methodology",              "METHOD",      "1000-word proprietary design methodology for {topic}. Named process with phases, tools, outputs, client touchpoints. Specific to {pain_points}."),
-            ("project_1",               "Project Showcase One",            "PROJECT",     "1000-word detailed project case for {topic}. Brief, design response to {pain_points}, technical challenges, outcomes for {audience}."),
-            ("project_2",               "Project Showcase Two",            "PROJECT",     "1000-word second project for {topic}. Different typology. Show range. Brief, response to {pain_points}, technical resolution, outcome."),
-            ("project_3",               "Project Showcase Three",          "PROJECT",     "900-word third project for {topic}. Focus on innovation in addressing {pain_points} for {audience} in {industry}."),
-            ("technical_expertise",     "Technical Expertise",             "TECHNICAL",   "900-word technical depth in {topic}. Specific tools, software, material science knowledge addressing {pain_points}."),
-            ("sustainability_approach", "Sustainability Approach",         "ESG",         "800-word sustainability methodology for {topic} in {industry}. ESG tools, certifications, carbon performance for {audience}."),
-            ("client_process",          "Client Engagement Process",       "PROCESS",     "800-word client-facing process for {topic}. How decisions get made, changes managed, brief delivered for {audience}."),
-            ("innovation_research",     "Innovation and Research",         "INNOVATION",  "900-word R&D initiatives in {topic}. Emerging design territories addressing {pain_points} for {audience}."),
-            ("team_capability",         "Team and Capabilities",           "TEAM",        "800-word team structure and capability for {topic}. Key roles, specialist expertise, technology stack for {industry}."),
-            ("awards_recognition",      "Awards and Recognition",          "CREDENTIALS", "700-word curated recognition for {topic} work. What each award validates about the approach to {pain_points}."),
-            ("client_outcomes",         "Client Outcomes",                 "OUTCOMES",    "900-word client outcome analysis for {topic}. 3-4 stories focused on value delivered against {pain_points} for {audience}."),
-            ("market_positioning",      "Market Positioning",              "POSITIONING", "800-word competitive positioning for {topic}. How the studio differs from the market on {pain_points} for {audience}."),
-            ("final_recommendations",   "Working With Us",                 "ENGAGEMENT",  "600-word engagement overview for {topic}. Onboarding, fee approach, how to start. Clear call to action for {audience}."),
-        ]
-    },
-    "client_onboarding": {
-        "label": "Client Onboarding Flow",
-        "tone": "clear, structured, client-facing",
-        "sections": [
-            ("executive_summary",      "Welcome and Overview",            "WELCOME",    "700-word welcome for {topic} engagement. What success looks like, how this document helps {audience} navigate {pain_points}."),
-            ("project_scope",          "Project Scope and Objectives",    "SCOPE",      "900-word scope statement for {topic}. What is included, excluded, key deliverables, success criteria, how {pain_points} are managed."),
-            ("team_introduction",      "Your Project Team",               "TEAM",       "800-word team introduction for {topic}. Roles, responsibilities, decision-making authority. How to escalate {pain_points}."),
-            ("process_overview",       "Our Process",                     "PROCESS",    "1000-word end-to-end process for {topic}. All phases from briefing to handover. What {audience} inputs are required."),
-            ("phase_1_brief",          "Phase 1: Briefing",               "PHASE 1",    "900-word briefing phase guide for {topic}. What is needed from {audience}. How {pain_points} are captured and addressed."),
-            ("phase_2_design",         "Phase 2: Design Development",     "PHASE 2",    "900-word design development guide for {topic}. How concepts address {pain_points}. Revision rounds for {audience}."),
-            ("phase_3_approvals",      "Phase 3: Consents and Approvals", "PHASE 3",    "800-word regulatory phase guide for {topic} in {industry}. What approvals are needed. Timeline expectations for {audience}."),
-            ("phase_4_delivery",       "Phase 4: Construction",           "PHASE 4",    "900-word construction phase guide for {topic}. How {pain_points} are managed. Progress reporting for {audience}."),
-            ("communication_protocol", "Communication Protocols",         "COMMS",      "800-word communication framework for {topic}. Meeting types, document standards, SLAs, escalation for {pain_points}."),
-            ("decision_framework",     "Decision-Making Framework",       "DECISIONS",  "800-word client decision guide for {topic}. How to evaluate options tied to {pain_points}. Consequence of delays for {audience}."),
-            ("change_management",      "Managing Changes",                "CHANGES",    "900-word change management protocol for {topic}. How scope changes from {pain_points} are identified, costed, approved."),
-            ("risk_awareness",         "Key Risks to Understand",         "RISK",       "800-word risk briefing for {audience} on {topic}. Top 8 risks from {pain_points}. What the firm does and what the client can do."),
-            ("financial_management",   "Financial Management",            "FINANCIAL",  "900-word financial guide for {audience} on {topic}. Fee structure, payment milestones, how {pain_points} affect costs."),
-            ("quality_standards",      "Quality Standards",               "QUALITY",    "800-word quality framework for {topic}. Standards, internal review, defect resolution for {audience} and {pain_points}."),
-            ("final_recommendations",  "Getting the Best Outcome",        "CONCLUSION", "600-word guide for {audience} on {topic}. What great clients do differently when facing {pain_points}."),
-        ]
-    },
-    "custom": {
-        "label": "Custom Strategic Report",
-        "tone": "authoritative, analytical, institutional",
-        "sections": [
-            ("executive_summary",      "Executive Summary",               "STRATEGY",   "800-word executive summary of {topic} for {audience}. Why {pain_points} matter now, what this report delivers."),
-            ("market_landscape",       "Market Landscape",                "MARKET",     "900-word market analysis of {topic} in {industry}. Key dynamics, demand/supply forces, patterns relevant to {pain_points} and {audience}."),
-            ("challenge_1",            "Core Challenge One",              "ANALYSIS",   "1000-word analysis of the first critical challenge in {topic}. Root causes, mechanisms, financial impact of {pain_points} on {audience}."),
-            ("challenge_2",            "Core Challenge Two",              "ANALYSIS",   "1000-word analysis of the second critical challenge in {topic}. Technical depth, quantified risk exposure from {pain_points} for {audience}."),
-            ("challenge_3",            "Core Challenge Three",            "ANALYSIS",   "1000-word analysis of the third challenge in {topic} specific to {pain_points}. Systemic causes, urgency drivers for {audience}."),
-            ("strategic_framework",    "Strategic Framework",             "FRAMEWORK",  "1000-word named framework for {topic}. 4 pillars each tied to {pain_points}. Real consulting methodology for {audience} in {industry}."),
-            ("audience_application_1", "Application: Group One",          "PLAYBOOK",   "900-word section for the primary {audience} segment on {topic}. Concrete implementation guidance for {pain_points}."),
-            ("audience_application_2", "Application: Group Two",          "PLAYBOOK",   "900-word section for the secondary {audience} on {topic}. Tailored steps, tools, coordination for {pain_points}."),
-            ("risk_governance",        "Risk and Governance",             "RISK",       "900-word risk analysis for {topic}. Risk matrix, contractual frameworks, contingency specific to {pain_points} for {audience}."),
-            ("financial_analysis",     "Financial Analysis",              "FINANCIAL",  "900-word financial modeling for {topic}. Cost-benefit, IRR sensitivity, financing for {audience} addressing {pain_points}."),
-            ("technology_tools",       "Technology and Tools",            "TECHNOLOGY", "900-word technology solutions for {topic}. Best-in-class tools, adoption barriers, implementation sequence for {pain_points}."),
-            ("case_studies",           "Case Studies",                    "EVIDENCE",   "1000-word section with 2-3 case studies on {topic}. Specific context, challenge from {pain_points}, measurable outcome for {audience}."),
-            ("implementation_roadmap", "Implementation Roadmap",          "ROADMAP",    "900-word phased roadmap for {audience} on {topic}. 4 phases with objectives, deliverables, KPIs tied to {pain_points}."),
-            ("performance_dashboard",  "Performance Dashboard",           "OUTCOMES",   "800-word KPI framework for {topic}. 10 metrics with baseline targets tied to {pain_points} for {audience}."),
-            ("final_recommendations",  "Final Recommendations",           "CONCLUSION", "600-word prioritized recommendations for {audience} on {topic}. Top 5 actions, 90-day wins, ROI forecast for {pain_points}."),
-        ]
-    }
+
+SECTIONS = [
+    (
+        "executive_summary",
+        "Executive Summary",
+        "OVERVIEW",
+        (
+            "Write the Executive Summary for this guide on {topic}.\n"
+            "Explain: what {topic} is, why it matters RIGHT NOW for {audience}, "
+            "and what specific pain points ({pain_points}) this guide addresses.\n"
+            "Include real statistics or data points specific to {topic}.\n"
+            "End with a clear statement of what the reader will gain from this guide.\n"
+            "300-400 words. Be specific to {topic} — not generic project management advice."
+        )
+    ),
+    (
+        "key_challenges",
+        "Understanding the Key Challenges",
+        "CHALLENGES",
+        (
+            "Write the Key Challenges section for {audience} working in {topic}.\n"
+            "For EACH pain point in [{pain_points}], write a dedicated subsection with:\n"
+            "  - Why this specific challenge occurs in {topic} (root cause)\n"
+            "  - How it concretely impacts {audience} (financial, operational, social impact)\n"
+            "  - A real-world example or scenario from {topic} practice\n"
+            "These must be challenges SPECIFIC to {topic} — not generic business challenges.\n"
+            "350-450 words total."
+        )
+    ),
+    (
+        "strategic_framework",
+        "Strategic Framework",
+        "FRAMEWORK",
+        (
+            "Write a Strategic Framework for solving {topic} challenges for {audience}.\n"
+            "Create a NAMED framework (e.g. a 4-step or 5-step process) specific to {topic}.\n"
+            "Each step must:\n"
+            "  - Have a descriptive name tied to {topic} vocabulary\n"
+            "  - Explain what actually happens in this step (not generic advice)\n"
+            "  - Reference at least one of these pain points: {pain_points}\n"
+            "Include a real example of how this framework applies to {topic}.\n"
+            "Do NOT use steps like 'Define Goals' or 'Identify Stakeholders' — those are generic PM.\n"
+            "350-450 words."
+        )
+    ),
+    (
+        "implementation_strategy",
+        "Implementation Strategy",
+        "IMPLEMENTATION",
+        (
+            "Write an Implementation Strategy section for {audience} applying {topic} in practice.\n"
+            "Include:\n"
+            "  - Specific processes unique to {topic} (not generic project phases)\n"
+            "  - Decision points that {audience} will actually face in {topic} work\n"
+            "  - Tools, methods, or approaches used by practitioners in {topic}\n"
+            "  - Common implementation mistakes specific to {topic} and how to avoid them\n"
+            "Reference how {pain_points} affect implementation and how to navigate them.\n"
+            "350-450 words."
+        )
+    ),
+    (
+        "risk_management",
+        "Risk Management",
+        "RISK",
+        (
+            "Write a Risk Management section for {audience} working on {topic}.\n"
+            "Identify 5-6 risks that are SPECIFIC to {topic} — not generic project risks.\n"
+            "For each risk include: what causes it in {topic}, how it impacts {audience}, "
+            "and a concrete mitigation strategy used in real {topic} practice.\n"
+            "Format as: <h3>Risk Name</h3> then explanation paragraph for each risk.\n"
+            "Connect risks back to these pain points: {pain_points}.\n"
+            "350-450 words."
+        )
+    ),
+    (
+        "best_practices",
+        "Best Practices & Emerging Approaches",
+        "BEST PRACTICE",
+        (
+            "Write a Best Practices section covering modern methods and tools for {topic}.\n"
+            "Include:\n"
+            "  - 4-5 best practices that expert practitioners use in {topic}\n"
+            "  - Specific tools, technologies, or methodologies relevant to {topic}\n"
+            "  - Examples of how leading {audience} apply these in real {topic} projects\n"
+            "  - Emerging trends or innovations changing how {topic} is practiced\n"
+            "These must be DOMAIN-SPECIFIC to {topic} — not generic advice.\n"
+            "Avoid vague phrases. Explain HOW things actually work.\n"
+            "350-450 words."
+        )
+    ),
+    (
+        "action_checklist",
+        "Practical Action Checklist",
+        "CHECKLIST",
+        (
+            "Write a Practical Action Checklist for {audience} working on {topic}.\n"
+            "Provide 15-20 specific, actionable checklist items.\n"
+            "Each item must be:\n"
+            "  - Specific to {topic} — not generic business advice\n"
+            "  - Something {audience} can DO immediately or in the next 30 days\n"
+            "  - Connected to resolving one of these pain points: {pain_points}\n"
+            "Format as a <ul> list with each item in <li> tags.\n"
+            "Group items under subheadings by phase or theme if helpful.\n"
+            "300-400 words."
+        )
+    ),
+    (
+        "conclusion",
+        "Conclusion & Next Steps",
+        "CONCLUSION",
+        (
+            "Write the Conclusion and Next Steps for this {topic} guide for {audience}.\n"
+            "Include:\n"
+            "  - A brief synthesis of the most important insights from this guide\n"
+            "  - 3 immediate next steps {audience} should take (specific to {topic})\n"
+            "  - A 90-day action agenda specific to {topic} practice\n"
+            "  - A compelling closing statement about why {topic} matters for {audience}\n"
+            "Do NOT just summarize the sections — add forward-looking guidance.\n"
+            "250-350 words."
+        )
+    ),
+]
+
+# Map doc_type → display label (kept for TOC and cover page)
+DOC_TYPE_LABELS = {
+    "guide":           "Strategic Guide",
+    "case_study":      "Case Study Report",
+    "checklist":       "Implementation Checklist",
+    "roi_calculator":  "ROI Analysis Report",
+    "trends_report":   "Industry Trends Report",
+    "design_portfolio":"Design Portfolio",
+    "client_onboarding":"Client Onboarding Guide",
+    "custom":          "Strategic Report",
 }
 
-# Frontend value → config key normalisation
 _TYPE_MAP = {
-    "guide":                  "guide",
-    "strategic guide":        "guide",
-    "case_study":             "case_study",
-    "case study":             "case_study",
-    "checklist":              "checklist",
-    "roi_calculator":         "roi_calculator",
-    "roi calculator":         "roi_calculator",
-    "trends_report":          "trends_report",
-    "trends report":          "trends_report",
-    "design_portfolio":       "design_portfolio",
-    "design portfolio":       "design_portfolio",
-    "client_onboarding_flow": "client_onboarding",
-    "client_onboarding":      "client_onboarding",
-    "client onboarding flow": "client_onboarding",
-    "custom":                 "custom",
+    "guide":                   "guide",
+    "strategic guide":         "guide",
+    "case_study":              "case_study",
+    "case study":              "case_study",
+    "checklist":               "checklist",
+    "roi_calculator":          "roi_calculator",
+    "roi calculator":          "roi_calculator",
+    "trends_report":           "trends_report",
+    "trends report":           "trends_report",
+    "design_portfolio":        "design_portfolio",
+    "design portfolio":        "design_portfolio",
+    "client_onboarding_flow":  "client_onboarding",
+    "client_onboarding":       "client_onboarding",
+    "client onboarding flow":  "client_onboarding",
+    "custom":                  "custom",
 }
+
+# Allowed HTML tags — anything else gets stripped from Groq output
+ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br"}
 
 
 class GroqClient:
@@ -210,70 +178,79 @@ class GroqClient:
             raise ValueError("GROQ_API_KEY is required.")
         self.client      = Groq(api_key=api_key)
         self.model       = "llama-3.1-8b-instant"  # swap to llama-3.3-70b-versatile for production
-        self.temperature = 0.4
+        self.temperature = 0.45
         self.max_tokens  = 4096
 
     # ── PUBLIC API ────────────────────────────────────────────────────────────
 
     def get_semantic_signals(self, user_answers: Dict[str, Any]) -> Dict[str, Any]:
-        raw_type = str(
+        raw_type    = str(
             user_answers.get("document_type")
             or user_answers.get("lead_magnet_type")
             or "guide"
         ).lower().strip()
-
         doc_type    = _TYPE_MAP.get(raw_type, "guide")
         pain_points = user_answers.get("pain_points", [])
+        audience    = user_answers.get("target_audience", "Stakeholders")
 
         return {
-            "topic":         user_answers.get("main_topic", "Strategic Design"),
-            "audience":      user_answers.get("target_audience", "Stakeholders"),
-            "pain_points":   ", ".join(pain_points) if isinstance(pain_points, list) else str(pain_points),
-            "tone":          user_answers.get("tone", "Professional"),
-            "industry":      user_answers.get("industry", "Architecture"),
-            "document_type": doc_type,
+            "topic":           user_answers.get("main_topic", "Strategic Design"),
+            "audience":        ", ".join(audience) if isinstance(audience, list) else str(audience),
+            "pain_points":     ", ".join(pain_points) if isinstance(pain_points, list) else str(pain_points),
+            "desired_outcome": user_answers.get("desired_outcome", ""),
+            "cta":             user_answers.get("call_to_action", ""),
+            "special":         user_answers.get("special_requests", ""),
+            "tone":            user_answers.get("tone", "Professional"),
+            "industry":        user_answers.get("industry", ""),
+            "document_type":   doc_type,
         }
 
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
-        doc_type = signals.get("document_type", "guide")
-        config   = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
-        logger.info(f"📄 Generating {config['label']} | topic={signals['topic']}")
+        doc_type    = signals.get("document_type", "guide")
+        type_label  = DOC_TYPE_LABELS.get(doc_type, "Strategic Guide")
 
-        title_data = self._generate_title(signals, config)
-        sections   = self._generate_all_sections(signals, config)
+        logger.info(f"📄 Generating {type_label} | topic={signals['topic']} | model={self.model}")
+
+        # Step 1 — Generate title
+        title_data = self._generate_title(signals, type_label)
+
+        # Step 2 — Generate each section individually (8 calls)
+        # One section per call = topic-specific depth, no token overflow
+        expansions: Dict[str, str] = {}
+        for key, title, label, brief in SECTIONS:
+            logger.info(f"✍️  Generating section: {key}")
+            expansions[key] = self._generate_section(
+                key=key, title=title, brief=brief, signals=signals
+            )
 
         return {
             "title":                   title_data.get("title", signals["topic"]),
-            "subtitle":                title_data.get("subtitle", config["label"]),
+            "subtitle":                title_data.get("subtitle", type_label),
             "target_audience_summary": title_data.get("target_audience_summary", ""),
             "document_type":           doc_type,
-            "document_type_label":     config["label"],
-            "expansions":              sections,
+            "document_type_label":     type_label,
+            "expansions":              expansions,
         }
 
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
-        exp      = raw.get("expansions", {})
-        doc_type = raw.get("document_type", "guide")
-        config   = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
+        exp = raw.get("expansions", {})
 
         normalized: Dict[str, Any] = {
             "title":               raw.get("title", "Strategic Report"),
             "subtitle":            raw.get("subtitle", ""),
             "summary":             raw.get("target_audience_summary", ""),
-            "document_type":       doc_type,
-            "document_type_label": raw.get("document_type_label", config["label"]),
-            "sections_config":     config["sections"],
+            "document_type":       raw.get("document_type", "guide"),
+            "document_type_label": raw.get("document_type_label", "Strategic Guide"),
+            "sections_config":     SECTIONS,
         }
 
-        for key, _title, _label, _ in config["sections"]:
+        for key, _title, _label, _ in SECTIONS:
             content = exp.get(key, "")
             if isinstance(content, dict):
                 content = json.dumps(content)
-            normalized[key] = content if isinstance(content, str) else str(content)
-
-        for k, v in normalized.items():
-            if isinstance(v, str) and "<" in v:
-                normalized[k] = self._ensure_closed_tags(v)
+            content = content if isinstance(content, str) else str(content)
+            # Sanitize: strip any disallowed tags that Groq sneaked in
+            normalized[key] = self._sanitize_html(content)
 
         return normalized
 
@@ -283,14 +260,10 @@ class GroqClient:
         firm_profile: Dict[str, Any],
         signals: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        doc_type     = ai_content.get("document_type", "guide")
-        config       = DOCUMENT_TYPE_CONFIGS.get(doc_type, DOCUMENT_TYPE_CONFIGS["guide"])
-        sections_cfg = config["sections"]
-
         content_sections: List[Dict] = []
         toc_sections:     List[Dict] = []
 
-        for idx, (key, title, label, _) in enumerate(sections_cfg):
+        for idx, (key, title, label, _) in enumerate(SECTIONS):
             page_num = f"{idx + 3:02d}"
             content  = ai_content.get(key, "")
             content_sections.append({
@@ -314,10 +287,10 @@ class GroqClient:
         if primary_color and not str(primary_color).startswith("#"):
             primary_color = "#" + primary_color
 
-        vars_: Dict[str, Any] = {
+        return {
             "mainTitle":         ai_content.get("title"),
             "documentSubtitle":  ai_content.get("subtitle"),
-            "documentTypeLabel": ai_content.get("document_type_label", config["label"]),
+            "documentTypeLabel": ai_content.get("document_type_label", "Strategic Guide"),
             "companyName":       firm_profile.get("firm_name", ""),
             "emailAddress":      firm_profile.get("work_email", ""),
             "phoneNumber":       firm_profile.get("phone_number", ""),
@@ -325,6 +298,17 @@ class GroqClient:
             "footerText":        f"© {firm_profile.get('firm_name', 'Strategic Report')}",
             "primaryColor":      primary_color,
             "secondaryColor":    firm_profile.get("secondary_brand_color") or "#FFFFFF",
+            "tertiaryColor":     firm_profile.get("tertiary_brand_color") or "#4F7A8B",
+            "accentColor":       firm_profile.get("accent_color") or "#E8F1F4",
+            "creamColor":        firm_profile.get("cream_color") or "#F7F4EF",
+            "creamDarkColor":    firm_profile.get("cream_dark_color") or "#EBE6DA",
+            "inkColor":          firm_profile.get("ink_color") or "#1A1A1A",
+            "inkMidColor":       firm_profile.get("ink_mid_color") or "#444444",
+            "inkLightColor":     firm_profile.get("ink_light_color") or "#888888",
+            "ruleColor":         firm_profile.get("rule_color") or "#DDDDDD",
+            "ruleLightColor":    firm_profile.get("rule_light_color") or "#EEEEEE",
+            "coverTextColor":    firm_profile.get("cover_text_color") or "#FFFFFF",
+            "coverLogoFilter":   firm_profile.get("cover_logo_filter") or "brightness(0) invert(1)",
             "summary":           ai_content.get("summary", ""),
             "content_sections":  content_sections,
             "toc_sections":      toc_sections,
@@ -334,128 +318,91 @@ class GroqClient:
             "image_1_caption":   firm_profile.get("image_1_caption", "Strategic Context"),
             "image_2_caption":   firm_profile.get("image_2_caption", "Technical Framework"),
             "image_3_caption":   firm_profile.get("image_3_caption", "Implementation Overview"),
-            "cta": ai_content.get("final_recommendations", "Contact us to implement this framework."),
+            "cta":               ai_content.get("conclusion", "Contact us to implement this framework."),
         }
-
-        for key, _title, _label, _ in sections_cfg:
-            vars_[key] = ai_content.get(key, "")
-
-        return vars_
 
     def ensure_section_content(self, sections, signals, firm_profile):
         """Legacy compatibility."""
         return sections or []
 
+    # ── PRIVATE ───────────────────────────────────────────────────────────────
 
-    # ── PRIVATE GENERATION ────────────────────────────────────────────────────
-
-    def _generate_title(self, signals: Dict, config: Dict) -> Dict:
-        system = "You are a senior document architect. Return valid JSON only. No markdown."
+    def _generate_title(self, signals: Dict, type_label: str) -> Dict:
+        system = (
+            "You are a senior document strategist. "
+            "Return valid JSON only. No markdown fences."
+        )
         prompt = (
-            f"Generate a professional title package for this {config['label']}.\n\n"
-            f"TOPIC: {signals['topic']}\n"
-            f"AUDIENCE: {signals['audience']}\n"
-            f"PAIN POINTS: {signals['pain_points']}\n\n"
-            f"Return ONLY this JSON:\n"
-            f"{{\n"
-            f'  "title": "3-6 word specific title. No generic words like Ultimate or Complete.",\n'
-            f'  "subtitle": "10-14 word subtitle naming the exact value delivered.",\n'
-            f'  "target_audience_summary": "One sentence: who this is for and what outcome they get."\n'
-            f"}}\n"
+            f"Generate a title package for a {type_label} guide.\n\n"
+            f"Topic: {signals['topic']}\n"
+            f"Audience: {signals['audience']}\n"
+            f"Pain Points: {signals['pain_points']}\n\n"
+            f"Rules:\n"
+            f"- Title: 3-7 words, specific to the topic. No generic words like 'Ultimate' or 'Complete'.\n"
+            f"- Subtitle: 10-16 words describing the specific value delivered to the audience.\n"
+            f"- Summary: One sentence — who this is for and what outcome they get.\n\n"
+            f'Return ONLY: {{"title": "...", "subtitle": "...", "target_audience_summary": "..."}}'
         )
         logger.info(f"🔵 Generating title | topic={signals['topic']}")
-        return self._call_ai(system, prompt, max_tokens=400)
+        return self._call_ai(system, prompt, max_tokens=300)
 
-    def _generate_all_sections(self, signals: Dict, config: Dict) -> Dict[str, str]:
+    def _generate_section(self, key: str, title: str, brief: str, signals: Dict) -> str:
         """
-        Generates all 15 sections in two API calls:
-          Call 1 — sections 1-8  (the main analytical content)
-          Call 2 — sections 9-15 (playbooks, financials, roadmap, conclusion)
-
-        Uses a structured expert-consultant prompt that forces:
-          - frameworks, checklists, real examples
-          - audience-specific content
-          - pain-point-tied paragraphs
-          - NO filler or generic consulting language
+        Generates one section at a time.
+        Uses a domain-expert forcing prompt that demands topic-specific content.
+        Raises immediately on failure — no silent fallbacks.
         """
-        sections_cfg = config["sections"]
-        result: Dict[str, str] = {}
+        brief_filled = brief.format(
+            topic       = signals["topic"],
+            audience    = signals["audience"],
+            pain_points = signals["pain_points"],
+            industry    = signals.get("industry", signals["topic"]),
+        )
 
-        # Split into two halves
-        half = len(sections_cfg) // 2
-        batches = [sections_cfg[:half], sections_cfg[half:]]
+        system = (
+            f"You are an expert consultant and domain specialist in {signals['topic']}.\n"
+            f"You are writing one section of a professional lead-magnet guide.\n\n"
+            f"ABSOLUTE RULES:\n"
+            f"1. Every sentence must be SPECIFIC to {signals['topic']} — not generic business advice.\n"
+            f"2. Address these pain points directly: {signals['pain_points']}\n"
+            f"3. Write for this audience: {signals['audience']}\n"
+            f"4. BANNED phrases: 'leverage synergies', 'optimize solutions', 'unlock value', "
+            f"'drive innovation', 'best practices' (use specific examples instead)\n"
+            f"5. Use HTML: <p> paragraphs, <strong> key terms, <h3> subheadings, <ul>/<li> lists\n"
+            f"6. DO NOT include the section title — it is already rendered above your content\n"
+            f"7. Start with a <p> tag, not <h3>\n"
+            f"8. Return valid JSON only. No markdown fences.\n"
+        )
 
-        for batch_idx, batch in enumerate(batches):
-            keys_needed = {key: title for key, title, *_ in batch}
-            logger.info(f"✍️  Generating sections batch {batch_idx+1}/2: {list(keys_needed.keys())}")
+        prompt = (
+            f"Write the '{title}' section of this {signals['topic']} guide.\n\n"
+            f"SECTION BRIEF:\n{brief_filled}\n\n"
+            f"SPECIAL REQUESTS: {signals.get('special', 'None')}\n\n"
+            f'Return ONLY: {{"{key}": "<p>your content here</p>"}}'
+        )
 
-            # Build the section list for the prompt
-            section_list = "\n".join(
-                f'  "{key}": "{title}"' for key, title, *_ in batch
-            )
-            keys_json = ", ".join(f'"{k}": "content here"' for k in keys_needed)
+        logger.info(f"🔵 Section '{key}' | topic={signals['topic']}")
+        raw = self._call_ai(system, prompt, max_tokens=2500)
 
-            system = (
-                f"You are an expert {signals['industry']} strategy consultant.\n"
-                f"You write high-value professional lead-magnet guides — insightful, practical, audience-specific.\n"
-                f"Your writing contains frameworks, checklists, real examples, and specific data.\n"
-                f"You NEVER use vague consulting filler like 'leverage synergies', 'unlock value', 'optimize solutions'.\n"
-                f"Return valid JSON only. No markdown fences."
-            )
+        content = self._extract_content(raw, key)
+        word_count = len(content.split()) if content else 0
 
-            prompt = (
-                f"Generate {len(batch)} sections of a professional {config['label']} guide.\n\n"
-                f"USER INPUT:\n"
-                f"- Main Topic: {signals['topic']}\n"
-                f"- Target Audience: {signals['audience']}\n"
-                f"- Audience Pain Points: {signals['pain_points']}\n"
-                f"- Industry: {signals['industry']}\n\n"
-                f"SECTIONS TO GENERATE:\n{section_list}\n\n"
-                f"WRITING REQUIREMENTS for EVERY section:\n"
-                f"1. Insightful and educational — not promotional\n"
-                f"2. Include specific examples, frameworks, checklists, or real-world scenarios\n"
-                f"3. Tie every paragraph back to the audience pain points: {signals['pain_points']}\n"
-                f"4. Use practical tools: step-by-step frameworks, bullet checklists, stakeholder strategies\n"
-                f"5. Write 250-400 words per section\n"
-                f"6. Use HTML: <p> for paragraphs, <strong> for key terms, <h3> for subheadings\n"
-                f"7. DO NOT repeat the section title — it is already shown above the content\n"
-                f"8. Start each section directly with a <p> tag, not an <h3>\n\n"
-                f"Return ONLY this JSON with EXACTLY these keys:\n"
-                f"{{{keys_json}}}"
+        logger.info(f"✅ Section '{key}': {word_count} words")
+
+        if word_count < 20:
+            raise ValueError(
+                f"Section '{key}' returned only {word_count} words. "
+                f"Groq response keys: {list(raw.keys())}. "
+                f"Raw snippet: {str(raw)[:400]}"
             )
 
-            raw = self._call_ai(system, prompt, max_tokens=6000)
-            logger.info(f"📦 Batch {batch_idx+1} response keys: {list(raw.keys())}")
-
-            missing = []
-            for key, title, *_ in batch:
-                content = self._extract_content(raw, key)
-                word_count = len(content.split()) if content else 0
-                if content and word_count >= 20:
-                    result[key] = content
-                    logger.info(f"✅ '{key}': {word_count} words")
-                else:
-                    missing.append(key)
-                    logger.error(
-                        f"❌ EMPTY SECTION: key='{key}' | words={word_count} | "
-                        f"raw_keys={list(raw.keys())} | snippet={str(raw.get(key, ''))[:200]}"
-                    )
-
-            if missing:
-                raise ValueError(
-                    f"Batch {batch_idx+1} missing sections: {missing}. "
-                    f"Groq returned keys: {list(raw.keys())}. "
-                    f"Raw (first 600 chars): {str(raw)[:600]}"
-                )
-
-        return result
-
+        return self._sanitize_html(content)
 
     def _extract_content(self, result: Dict, key: str) -> str:
         """
-        Robustly extract section content from Groq response.
-        Tries: exact key → 'content' key → any long string value.
-        Logs exactly what it found so failures are visible in the debugger.
+        Robustly pull section content from whatever JSON shape Groq returned.
+        Priority: exact key → 'content' key → first long string value.
+        Logs exactly what it found so failures are visible immediately.
         """
         if not result:
             logger.error(f"❌ _extract_content: empty result for key='{key}'")
@@ -463,21 +410,48 @@ class GroqClient:
         if key in result and isinstance(result[key], str) and len(result[key]) > 30:
             return result[key]
         if "content" in result and isinstance(result["content"], str) and len(result["content"]) > 30:
-            logger.warning(f"⚠️ key='{key}' not found — used 'content' key instead")
+            logger.warning(f"⚠️ key='{key}' missing — used 'content' key")
             return result["content"]
         for k, v in result.items():
             if isinstance(v, str) and len(v) > 80:
-                logger.warning(f"⚠️ key='{key}' not found — used first long string under key='{k}'")
+                logger.warning(f"⚠️ key='{key}' missing — used first long string under '{k}'")
                 return v
         logger.error(
-            f"❌ _extract_content FAILED for key='{key}'. "
-            f"Available keys: {list(result.keys())}. "
+            f"❌ _extract_content FAILED for '{key}'. "
+            f"Keys: {list(result.keys())}. "
             f"Preview: { {k: str(v)[:60] for k, v in result.items()} }"
         )
         return ""
 
+    def _sanitize_html(self, html: str) -> str:
+        """
+        Strip any HTML tags not in ALLOWED_TAGS.
+        Also removes raw [IMAGE_PLACEHOLDER: ...] markers Groq sometimes injects.
+        Ensures all tags are properly closed.
+        """
+        if not html:
+            return html
+
+        # Remove image placeholders
+        html = re.sub(r'\[IMAGE_PLACEHOLDER:[^\]]*\]', '', html)
+
+        # Strip disallowed tags (keep their inner text)
+        def replace_tag(m):
+            tag = m.group(1).lower().split()[0] if m.group(1) else ""
+            if tag in ALLOWED_TAGS:
+                return m.group(0)
+            return ""  # strip the tag, keep content between tags via separate pass
+
+        html = re.sub(r'<(/?)(\w[\w\s="\'.-]*?)>', lambda m: (
+            m.group(0) if m.group(2).split()[0].lower() in ALLOWED_TAGS else ""
+        ), html)
+
+        # Close any unclosed tags
+        html = self._ensure_closed_tags(html)
+
+        return html.strip()
+
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:
-        import traceback as _tb
         start  = time.time()
         tokens = max_tokens or self.max_tokens
 
@@ -495,39 +469,35 @@ class GroqClient:
                 response_format={"type": "json_object"},
             )
         except Exception as api_err:
-            logger.error(f"❌ Groq API call FAILED: {type(api_err).__name__}: {api_err}\n{_tb.format_exc()}")
+            import traceback as _tb
+            logger.error(f"❌ Groq API FAILED: {type(api_err).__name__}: {api_err}\n{_tb.format_exc()}")
             raise RuntimeError(f"Groq API call failed: {type(api_err).__name__}: {api_err}") from api_err
 
         duration = time.time() - start
         finish   = response.choices[0].finish_reason
         raw_text = response.choices[0].message.content or ""
 
-        logger.info(f"🟢 Groq response | {duration:.2f}s | finish={finish} | chars={len(raw_text)}")
+        logger.info(f"🟢 Groq | {duration:.2f}s | finish={finish} | chars={len(raw_text)}")
 
         if finish == "length":
             logger.error(
-                f"❌ Groq TRUNCATED response (finish=length). "
-                f"max_tokens={tokens} was too low. "
-                f"raw_text snippet: {raw_text[:300]}"
+                f"❌ Groq TRUNCATED (finish=length). max_tokens={tokens} too low. "
+                f"Snippet: {raw_text[:300]}"
             )
             raise ValueError(
-                f"Groq truncated the response (finish_reason=length). "
-                f"Increase max_tokens above {tokens}. Raw snippet: {raw_text[:200]}"
+                f"Groq truncated response (finish_reason=length). "
+                f"Increase max_tokens above {tokens}. Raw: {raw_text[:200]}"
             )
 
         if not raw_text.strip():
-            logger.error(f"❌ Groq returned EMPTY response. finish={finish}")
-            raise ValueError(f"Groq returned an empty response. finish_reason={finish}")
+            raise ValueError(f"Groq returned empty response. finish_reason={finish}")
 
         try:
             parsed = json.loads(raw_text)
-            logger.info(f"✅ JSON parsed OK | keys={list(parsed.keys())}")
+            logger.info(f"✅ JSON parsed | keys={list(parsed.keys())}")
             return parsed
         except json.JSONDecodeError as je:
-            logger.error(
-                f"❌ JSON PARSE FAILED: {je}\n"
-                f"Raw Groq output (full):\n{raw_text}"
-            )
+            logger.error(f"❌ JSON PARSE FAILED: {je}\nFull raw:\n{raw_text}")
             raise ValueError(f"Groq returned invalid JSON: {je}. Raw: {raw_text[:400]}") from je
 
     def _ensure_closed_tags(self, html: str) -> str:
