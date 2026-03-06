@@ -1,384 +1,536 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{mainTitle}} – {{companyName}}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --navy:   {{primaryColor}};
-            --navy2:  {{secondaryColor}};
-            --navy3:  {{tertiaryColor | default('#4F7A8B')}};
-            --navylt: {{accentColor | default('#E8F1F4')}};
-            --white:  #ffffff;
-            --off:    {{creamColor | default('#F7F4EF')}};
-            --off2:   {{creamDarkColor | default('#EBE6DA')}};
-            --ink:    {{inkColor | default('#1A1A1A')}};
-            --mid:    {{inkMidColor | default('#444444')}};
-            --grey:   {{inkLightColor | default('#888888')}};
-            --ltgrey: {{ruleColor | default('#DDDDDD')}};
-            --rule:   {{ruleLightColor | default('#EEEEEE')}};
-            --cover-text:   {{coverTextColor | default('#FFFFFF')}};
-            --cover-filter: {{coverLogoFilter | default('brightness(0) invert(1)')}};
-            --fd: 'Playfair Display', serif;
-            --fs: 'Lato', sans-serif;
-            --fm: 'DM Mono', monospace;
-        }
+<meta charset="UTF-8">
+<title>{{mainTitle}}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --P:  {{primaryColor}};
+  --P2: {{secondaryColor}};
+  --P3: {{tertiaryColor | default('#4F7A8B')}};
+  --A:  {{accentColor   | default('#E8F1F4')}};
+  --CR: {{creamColor    | default('#F7F4EF')}};
+  --C2: {{creamDarkColor| default('#EBE6DA')}};
+  --I:  {{inkColor      | default('#111111')}};
+  --I2: {{inkMidColor   | default('#3A3A3A')}};
+  --I3: {{inkLightColor | default('#777777')}};
+  --R:  {{ruleColor     | default('#D8D8D8')}};
+  --R2: {{ruleLightColor| default('#EDEDED')}};
+  --CT: {{coverTextColor| default('#FFFFFF')}};
+  --fd: 'Playfair Display', serif;
+  --fs: 'Inter', sans-serif;
+  --fm: 'JetBrains Mono', monospace;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box;
+  -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+@page { size:A4; margin:0; }
+body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(--I); }
+.book { width:210mm; margin:0 auto; }
 
-        *, *::before, *::after {
-            margin: 0; padding: 0; box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
+/* ── PAGE SHELL ─────────────────────────────────────────────────── */
+.page {
+  width:210mm; min-height:297mm; background:#fff;
+  margin-bottom:24px; break-inside:avoid; page-break-inside:avoid;
+  box-shadow:0 24px 80px rgba(0,0,0,.32);
+  display:flex; flex-direction:column; position:relative; overflow:hidden;
+}
+.page + .page { break-before:page; page-break-before:always; }
 
-        @page { size: A4; margin: 0; }
+/* ── DECORATIVE LEFT SPINE ─────────────────────────────────────── */
+.page::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:5px; background:var(--P);
+}
 
-        body {
-            font-family: var(--fs);
-            background: #a0a0a8;
-            padding: 20px 15px;
-            color: var(--ink);
-        }
+/* ── TOP CORNER ACCENT ─────────────────────────────────────────── */
+.page::after {
+  content:''; position:absolute; top:0; right:0;
+  width:48px; height:48px;
+  background:var(--P); clip-path:polygon(100% 0,0 0,100% 100%);
+}
 
-        .book { width: 210mm; margin: 0 auto; }
+/* ── PAGE HEADER ───────────────────────────────────────────────── */
+.pg-head {
+  flex-shrink:0; padding:14px 16mm 0 18mm;
+}
+.pg-head-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding-bottom:7px; border-bottom:1.5px solid var(--P);
+}
+.pg-label {
+  font-family:var(--fm); font-size:6.5px; letter-spacing:.28em;
+  text-transform:uppercase; color:var(--P); font-weight:500;
+}
+.pg-num {
+  font-family:var(--fm); font-size:7px; color:var(--I3);
+}
 
-        /* ── PAGE SHELL ──────────────────────────────────────────────── */
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            background: var(--white);
-            break-inside: avoid;
-            page-break-inside: avoid;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 64px rgba(0,0,0,0.30);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        .page + .page { break-before: page; page-break-before: always; }
+/* ── BODY WRAPPER ──────────────────────────────────────────────── */
+.bw { padding:10px 16mm 14px 18mm; flex:1; display:flex; flex-direction:column; }
 
-        /* ── HEADER ──────────────────────────────────────────────────── */
-        .pg-head { flex-shrink: 0; padding: 12px 14mm 0; }
-        .pg-head-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 6px; border-bottom: 0.5px solid var(--rule);
-        }
-        .pg-label { font-family: var(--fm); font-size: 7px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ltgrey); }
-        .pg-num   { font-family: var(--fs); font-size: 8px; color: var(--ltgrey); }
+/* ── SECTION EYEBROW ───────────────────────────────────────────── */
+.eyebrow { display:flex; align-items:center; gap:8px; margin-bottom:6px; margin-top:4px; }
+.eyebrow-tag {
+  font-family:var(--fm); font-size:6px; letter-spacing:.3em; text-transform:uppercase;
+  color:#fff; background:var(--P); padding:3px 9px; border-radius:2px;
+}
+.eyebrow-line { flex:1; height:1px; background:var(--R); }
 
-        /* ── FOOTER ──────────────────────────────────────────────────── */
-        .pg-foot {
-            margin-top: auto; flex-shrink: 0;
-            padding: 10px 14mm; border-top: 0.5px solid var(--rule);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .pg-foot-l { font-family: var(--fs); font-size: 7.5px; color: var(--grey); font-style: italic; }
-        .pg-foot-r { font-family: var(--fm); font-size: 7.5px; color: var(--navy); letter-spacing: 0.1em; text-transform: uppercase; }
+/* ── SECTION TITLE ─────────────────────────────────────────────── */
+.ch-h1 {
+  font-family:var(--fd); font-size:28px; font-weight:900; line-height:1.05;
+  color:var(--I); letter-spacing:-.5px; margin-bottom:12px;
+  padding-bottom:10px; position:relative;
+}
+.ch-h1::after {
+  content:''; position:absolute; bottom:0; left:0;
+  width:48px; height:3px; background:var(--P); border-radius:2px;
+}
 
-        /* ── BODY WRAPPER ────────────────────────────────────────────── */
-        .bw { padding: 8px 14mm 12px; flex: 1; display: flex; flex-direction: column; }
+/* ── BODY TEXT ─────────────────────────────────────────────────── */
+.body { font-size:10px; line-height:1.6; color:var(--I2); flex:1; }
+.body p      { margin-bottom:9px; text-align:justify; }
+.body strong { color:var(--I); font-weight:600; }
+.body em     { color:var(--P); font-style:normal; font-weight:500; }
 
-        /* ── EYEBROW ─────────────────────────────────────────────────── */
-        .ch-eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
-        .ch-eyebrow-label {
-            font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.24em;
-            text-transform: uppercase; color: var(--navy); white-space: nowrap;
-        }
-        .ch-eyebrow-rule { flex: 1; height: 0.75px; background: var(--rule); }
+/* Styled h3 subheadings with left accent */
+.body h3 {
+  font-family:var(--fd); font-size:13px; font-weight:700; color:var(--P);
+  margin:14px 0 5px; padding:6px 10px;
+  background:var(--A); border-left:3px solid var(--P);
+  border-radius:0 3px 3px 0;
+}
+.body h4 {
+  font-family:var(--fs); font-size:9px; font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase;
+  color:var(--P3); margin:10px 0 4px;
+}
 
-        /* ── SECTION TITLE ───────────────────────────────────────────── */
-        .ch-h1 {
-            font-family: var(--fd); font-size: 30px; font-weight: 700;
-            color: var(--navy); line-height: 1.05; letter-spacing: -0.5px;
-            margin-bottom: 14px; padding-bottom: 10px;
-            border-bottom: 2px solid var(--navy);
-        }
+/* Styled lists */
+.body ul { list-style:none; padding:0; margin:6px 0 10px; }
+.body ul li {
+  font-size:9.5px; line-height:1.5; color:var(--I2);
+  padding:5px 0 5px 20px; position:relative;
+  border-bottom:1px solid var(--R2);
+}
+.body ul li::before {
+  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:8px; height:8px; border-radius:50%; background:var(--P); opacity:.7;
+}
+.body ol { padding-left:18px; margin:6px 0 10px; }
+.body ol li {
+  font-size:9.5px; line-height:1.6; color:var(--I2);
+  padding:3px 0; border-bottom:1px solid var(--R2);
+}
+.body ol li::marker { color:var(--P); font-weight:700; font-size:10px; }
 
-        /* ── BODY TEXT ───────────────────────────────────────────────── */
-        .body {
-            font-family: var(--fs); font-size: 10.5px; line-height: 1.55;
-            color: var(--mid); text-align: justify; flex: 1;
-        }
-        .body p      { margin-bottom: 10px; }
-        .body strong { color: var(--ink); font-weight: 700; }
-        .body h3     {
-            font-family: var(--fd); font-size: 14px; font-weight: 700;
-            color: var(--navy); margin: 16px 0 6px;
-            padding-left: 10px; border-left: 3px solid var(--navy);
-        }
-        .body h4     {
-            font-family: var(--fs); font-size: 10px; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            color: var(--navy); margin: 12px 0 4px;
-        }
-        .body ul     { list-style: none; padding: 0; margin: 8px 0 12px; }
-        .body ul li  {
-            padding: 5px 0 5px 18px; position: relative;
-            border-bottom: 0.5px solid var(--rule);
-            font-size: 10px; color: var(--mid); line-height: 1.5;
-        }
-        .body ul li::before { content: '—'; position: absolute; left: 0; color: var(--navy); font-weight: 700; }
+/* ── STAT CALLOUT (used in Executive Summary) ──────────────────── */
+.stat-row {
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:8px; margin:12px 0;
+}
+.stat-card {
+  background:var(--P); padding:12px 10px;
+  text-align:center; border-radius:3px;
+}
+.stat-num {
+  font-family:var(--fd); font-size:22px; font-weight:900;
+  color:#fff; line-height:1; display:block; margin-bottom:3px;
+}
+.stat-lbl {
+  font-family:var(--fs); font-size:7px; color:rgba(255,255,255,.7);
+  text-transform:uppercase; letter-spacing:.15em;
+}
 
-        /* ── IMAGE BLOCKS ─────────────────────────────────────────────
-           Much larger, with navy accent bar, full-bleed feel
-        ──────────────────────────────────────────────────────────────── */
-        .img-wrap { margin: 14px 0; break-inside: avoid; }
+/* ── HIGHLIGHT BOX ─────────────────────────────────────────────── */
+.highlight-box {
+  background:var(--A); border:1px solid var(--P);
+  border-radius:4px; padding:12px 14px; margin:10px 0;
+}
+.highlight-box-title {
+  font-family:var(--fm); font-size:7px; text-transform:uppercase;
+  letter-spacing:.22em; color:var(--P); margin-bottom:5px;
+}
+.highlight-box p {
+  font-size:9.5px; color:var(--I2); line-height:1.55; margin:0; text-align:left;
+}
 
-        /* Right-floated (page 5) */
-        .img-wrap.img-right {
-            float: right; width: 48%;
-            margin: 0 0 14px 20px;
-        }
-        /* Left-floated (page 8) */
-        .img-wrap.img-left {
-            float: left; width: 48%;
-            margin: 0 20px 14px 0;
-        }
-        /* Full-width (page 12) */
-        .img-wrap.img-full { width: 100%; clear: both; margin: 16px 0; }
+/* ── NUMBERED STEP CARDS (Framework / Implementation) ──────────── */
+.steps { display:flex; flex-direction:column; gap:7px; margin:8px 0; }
+.step-card {
+  display:flex; align-items:flex-start; gap:10px;
+  background:var(--CR); border-radius:3px; padding:10px 12px;
+  border-left:3px solid var(--P);
+}
+.step-num {
+  font-family:var(--fd); font-size:20px; font-weight:900;
+  color:var(--P); line-height:1; flex-shrink:0; min-width:22px;
+}
+.step-body { flex:1; }
+.step-title {
+  font-family:var(--fs); font-size:9.5px; font-weight:700;
+  color:var(--I); margin-bottom:3px;
+}
+.step-text { font-size:9px; color:var(--I2); line-height:1.5; }
 
-        .img-wrap .img-inner {
-            position: relative; overflow: hidden;
-            border-radius: 3px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-        }
-        .img-wrap img {
-            width: 100%; display: block; object-fit: cover;
-        }
-        .img-wrap.img-right img,
-        .img-wrap.img-left  img { height: 220px; }
-        .img-wrap.img-full  img { height: 200px; }
+/* ── RISK CARDS ────────────────────────────────────────────────── */
+.risk-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0; }
+.risk-card {
+  background:var(--CR); border-radius:3px; padding:10px 12px;
+  border-top:3px solid var(--P);
+}
+.risk-title {
+  font-family:var(--fs); font-size:9px; font-weight:700;
+  color:var(--P); margin-bottom:5px; text-transform:uppercase; letter-spacing:.05em;
+}
+.risk-label {
+  font-family:var(--fm); font-size:6.5px; text-transform:uppercase;
+  letter-spacing:.18em; color:var(--I3); margin-bottom:2px;
+}
+.risk-text { font-size:8.5px; color:var(--I2); line-height:1.45; margin-bottom:5px; }
 
-        /* Navy accent bar at bottom of image */
-        .img-wrap .img-inner::after {
-            content: '';
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 4px; background: var(--navy);
-        }
+/* ── CHECKLIST ─────────────────────────────────────────────────── */
+.ck-group { margin-bottom:10px; }
+.ck-title {
+  font-family:var(--fm); font-size:7px; text-transform:uppercase;
+  letter-spacing:.22em; color:var(--P); margin-bottom:5px;
+  padding-bottom:4px; border-bottom:1px solid var(--R);
+}
+.ck-item {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:4px 0; border-bottom:1px solid var(--R2);
+}
+.ck-box {
+  width:12px; height:12px; border:1.5px solid var(--P);
+  border-radius:2px; flex-shrink:0; margin-top:1px;
+}
+.ck-text { font-size:9px; color:var(--I2); line-height:1.45; }
 
-        .img-cap {
-            font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.12em;
-            text-transform: uppercase; color: var(--navy);
-            margin-top: 6px; display: block; text-align: right;
-        }
+/* ── IMAGE BLOCKS ──────────────────────────────────────────────── */
+.img-wrap { margin:10px 0; break-inside:avoid; }
+.img-wrap.img-right { float:right; width:46%; margin:0 0 12px 16px; }
+.img-wrap.img-left  { float:left;  width:46%; margin:0 16px 12px 0; }
+.img-wrap.img-full  { width:100%; clear:both; margin:14px 0; }
+.img-inner { position:relative; overflow:hidden; border-radius:4px;
+  box-shadow:0 6px 24px rgba(0,0,0,.18); }
+.img-wrap img { width:100%; display:block; object-fit:cover; }
+.img-wrap.img-right img,
+.img-wrap.img-left  img { height:200px; }
+.img-wrap.img-full  img { height:190px; }
+.img-inner::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:5px; background:var(--P);
+}
+.img-cap {
+  font-family:var(--fm); font-size:6.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--P);
+  margin-top:5px; display:block; text-align:right;
+}
+.cf::after { content:""; display:table; clear:both; }
 
-        .cf::after { content: ""; display: table; clear: both; }
+/* ── PAGE FOOTER ───────────────────────────────────────────────── */
+.pg-foot {
+  margin-top:auto; flex-shrink:0;
+  padding:8px 16mm 10px 18mm;
+  border-top:1px solid var(--R);
+  display:flex; justify-content:space-between; align-items:center;
+  background:var(--CR);
+}
+.pg-foot-l { font-size:7px; color:var(--I3); font-style:italic; }
+.pg-foot-r { font-family:var(--fm); font-size:6.5px; color:var(--P); letter-spacing:.1em; }
 
-        /* ── CALLOUT ─────────────────────────────────────────────────── */
-        .callout {
-            background: var(--off2); border-left: 3px solid var(--navy);
-            padding: 12px 16px; margin: 12px 0; break-inside: avoid;
-        }
-        .callout-title { font-family: var(--fd); font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
-        .callout-body  { font-family: var(--fs); font-size: 10px; color: var(--mid); line-height: 1.5; }
+/* ════════════════════════════════════════════════════════════════ */
+/* COVER PAGE                                                       */
+/* ════════════════════════════════════════════════════════════════ */
+.cover {
+  background:var(--P); min-height:297mm;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.cover::before { display:none; }
+.cover::after  { display:none; }
 
-        /* ── COVER PAGE ──────────────────────────────────────────────── */
-        .cover {
-            background: var(--navy);
-            min-height: 297mm;
-            display: flex; flex-direction: column;
-            padding: 0 18mm;
-        }
-        .cv-top        { padding-top: 40px; text-align: center; }
-        .cv-name       { font-family: var(--fm); font-size: 8.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
-        .cv-type-badge {
-            display: inline-block; margin-top: 12px;
-            font-family: var(--fm); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase;
-            color: rgba(255,255,255,0.35); border: 0.5px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 2px;
-        }
-        .cv-body       { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .cv-aud-text   { font-family: var(--fm); font-size: 7.5px; letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.42); margin-bottom: 20px; }
-        .cv-title-bold { font-family: var(--fd); font-size: 64px; font-weight: 900; line-height: 0.9; color: var(--cover-text); }
-        .cv-title-italic{ font-family: var(--fd); font-size: 50px; font-weight: 400; font-style: italic; color: rgba(255,255,255,0.42); }
-        .cv-divider    { width: 40px; height: 2px; background: rgba(255,255,255,0.3); margin: 28px 0; }
-        .cv-summary    { font-family: var(--fs); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.55); max-width: 420px; }
-        .cv-foot       { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
-        .cv-foot span  { font-family: var(--fm); font-size: 7.5px; color: rgba(255,255,255,0.32); }
+.cv-topbar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:20px 18mm; border-bottom:1px solid rgba(255,255,255,.12);
+}
+.cv-company {
+  font-family:var(--fm); font-size:9px; letter-spacing:.32em;
+  text-transform:uppercase; color:rgba(255,255,255,.6);
+}
+.cv-badge {
+  font-family:var(--fm); font-size:7px; letter-spacing:.28em;
+  text-transform:uppercase; color:rgba(255,255,255,.35);
+  border:1px solid rgba(255,255,255,.2); padding:4px 12px; border-radius:2px;
+}
 
-        /* ── TABLE OF CONTENTS ───────────────────────────────────────── */
-        .toc-grid  { margin-top: 16px; }
-        .toc-item  { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--rule); }
-        .toc-num   { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 28px; font-weight: 700; }
-        .toc-title { font-family: var(--fd); font-size: 12px; font-weight: 700; color: var(--ink); flex: 1; }
-        .toc-label { font-family: var(--fm); font-size: 7.5px; color: var(--ltgrey); letter-spacing: 0.15em; text-transform: uppercase; }
-        .toc-pg    { font-family: var(--fm); font-size: 9px; color: var(--navy); min-width: 22px; text-align: right; }
+.cv-hero {
+  flex:1; display:flex; flex-direction:column;
+  justify-content:center; padding:0 18mm;
+}
+.cv-eyebrow {
+  font-family:var(--fm); font-size:7px; letter-spacing:.3em;
+  text-transform:uppercase; color:rgba(255,255,255,.45);
+  margin-bottom:18px;
+}
+.cv-title {
+  font-family:var(--fd); font-size:60px; font-weight:900;
+  line-height:.95; color:var(--CT); letter-spacing:-1px;
+  margin-bottom:10px;
+}
+.cv-subtitle {
+  font-family:var(--fd); font-size:22px; font-weight:700;
+  font-style:italic; color:rgba(255,255,255,.45); margin-bottom:28px;
+}
+.cv-rule { width:56px; height:3px; background:rgba(255,255,255,.3); margin-bottom:24px; }
+.cv-summary {
+  font-size:12px; line-height:1.65; color:rgba(255,255,255,.55);
+  max-width:380px;
+}
 
-        /* ── CTA BLOCK ───────────────────────────────────────────────── */
-        .cta-navy-box    { background: var(--navy); padding: 22px 26px; margin: 18px 0 0; break-inside: avoid; }
-        .cta-box-eyebrow { font-family: var(--fm); font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
-        .cta-box-title   { font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--cover-text); margin-bottom: 10px; }
-        .cta-box-body    { font-family: var(--fs); font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.6; }
-        .contact-grid {
-            display: grid; grid-template-columns: 1fr 1fr 1fr;
-            gap: 18px; margin-top: 16px; padding-top: 16px;
-            border-top: 0.5px solid var(--rule); break-inside: avoid;
-        }
-        .contact-lbl { font-family: var(--fm); font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ltgrey); margin-bottom: 4px; display: block; }
-        .contact-val { font-family: var(--fs); font-size: 10px; color: var(--mid); }
+.cv-bottom {
+  padding:18px 18mm; border-top:1px solid rgba(255,255,255,.1);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.cv-bottom-l { font-size:7.5px; color:rgba(255,255,255,.3); }
+.cv-bottom-r { font-family:var(--fm); font-size:7px; color:rgba(255,255,255,.3); letter-spacing:.1em; }
 
-        @media print {
-            body  { background: white; padding: 0; }
-            .page { box-shadow: none; margin-bottom: 0; }
-        }
-    </style>
+/* Diagonal accent band on cover */
+.cv-accent-band {
+  position:absolute; bottom:-30px; right:-60px;
+  width:280px; height:280px;
+  background:rgba(255,255,255,.04);
+  transform:rotate(45deg); border-radius:12px;
+  pointer-events:none;
+}
+.cv-accent-band2 {
+  position:absolute; bottom:60px; right:40px;
+  width:120px; height:120px;
+  background:rgba(255,255,255,.06);
+  transform:rotate(25deg); border-radius:8px;
+  pointer-events:none;
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* TABLE OF CONTENTS                                                */
+/* ════════════════════════════════════════════════════════════════ */
+.toc-header {
+  background:var(--P); padding:24px 18mm 20px;
+  margin-bottom:0;
+}
+.toc-header-label {
+  font-family:var(--fm); font-size:7px; letter-spacing:.3em;
+  text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:6px;
+}
+.toc-header-title {
+  font-family:var(--fd); font-size:38px; font-weight:900;
+  color:#fff; line-height:1;
+}
+
+.toc-body { padding:14px 18mm 14px; flex:1; }
+.toc-item {
+  display:grid; grid-template-columns:28px 1fr auto 28px;
+  align-items:center; gap:8px;
+  padding:8px 0; border-bottom:1px solid var(--R2);
+}
+.toc-item:last-child { border-bottom:none; }
+.toc-n {
+  font-family:var(--fm); font-size:8.5px; font-weight:500;
+  color:var(--P); text-align:right;
+}
+.toc-t {
+  font-family:var(--fd); font-size:12px; font-weight:700; color:var(--I);
+}
+.toc-l {
+  font-family:var(--fm); font-size:6px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--I3);
+  background:var(--R2); padding:2px 7px; border-radius:2px;
+  white-space:nowrap;
+}
+.toc-p {
+  font-family:var(--fm); font-size:8.5px; color:var(--P);
+  text-align:right;
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* CTA BLOCK                                                        */
+/* ════════════════════════════════════════════════════════════════ */
+.cta-block {
+  background:var(--P); border-radius:4px;
+  padding:18px 20px; margin-top:14px;
+}
+.cta-eyebrow {
+  font-family:var(--fm); font-size:6.5px; letter-spacing:.28em;
+  text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:6px;
+}
+.cta-title {
+  font-family:var(--fd); font-size:18px; font-weight:700;
+  color:#fff; margin-bottom:8px; line-height:1.2;
+}
+.cta-body { font-size:9.5px; color:rgba(255,255,255,.6); line-height:1.55; }
+.contact-row {
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:12px; margin-top:14px; padding-top:14px;
+  border-top:1px solid var(--R);
+}
+.contact-lbl {
+  font-family:var(--fm); font-size:6.5px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--I3); display:block; margin-bottom:3px;
+}
+.contact-val { font-size:9px; color:var(--I2); }
+
+@media print {
+  body { background:#fff; padding:0; }
+  .page { box-shadow:none; margin-bottom:0; }
+}
+</style>
 </head>
 <body>
 <div class="book">
 
-{# ══════════════════════════════════════════════════════════════════════ #}
-{# PAGE 1 — COVER                                                         #}
-{# ══════════════════════════════════════════════════════════════════════ #}
+{# ══ PAGE 1 — COVER ════════════════════════════════════════════════════════ #}
 <div class="page cover">
-    <div class="cv-top">
-        <div class="cv-name">{{companyName | default('Strategic Advisory')}}</div>
-        <div class="cv-type-badge">{{documentTypeLabel | default('Strategic Guide')}}</div>
-    </div>
-    <div class="cv-body">
-        <div class="cv-aud-text">{{summary | default('Institutional Advisory Report')}}</div>
-        <div class="cv-title-bold">{{mainTitle | default('Strategic Report')}}</div>
-        <div class="cv-title-italic">{{documentSubtitle | default('')}}</div>
-        <div class="cv-divider"></div>
-        <div class="cv-summary">{{summary | default('')}}</div>
-    </div>
-    <div class="cv-foot">
-        <span>{{footerText | default('© Strategic Report')}}</span>
-        <span>{{documentTypeLabel | default('STRATEGIC REPORT') | upper}}</span>
-    </div>
+  <div class="cv-accent-band"></div>
+  <div class="cv-accent-band2"></div>
+  <div class="cv-topbar">
+    <span class="cv-company">{{companyName | default('Strategic Advisory')}}</span>
+    <span class="cv-badge">{{documentTypeLabel | default('Strategic Guide')}}</span>
+  </div>
+  <div class="cv-hero">
+    <div class="cv-eyebrow">{{summary | default('Professional Insights Report')}}</div>
+    <div class="cv-title">{{mainTitle | default('Strategic Report')}}</div>
+    <div class="cv-subtitle">{{documentSubtitle | default('')}}</div>
+    <div class="cv-rule"></div>
+    <div class="cv-summary">{{summary | default('')}}</div>
+  </div>
+  <div class="cv-bottom">
+    <span class="cv-bottom-l">{{footerText | default('© Strategic Advisory')}}</span>
+    <span class="cv-bottom-r">{{documentTypeLabel | upper}}</span>
+  </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════════════ #}
-{# PAGE 2 — TABLE OF CONTENTS                                             #}
-{# ══════════════════════════════════════════════════════════════════════ #}
-<div class="page">
-    <div class="pg-head">
-        <div class="pg-head-row">
-            <span class="pg-label">CONTENT</span>
-            <span class="pg-num">02</span>
-        </div>
+{# ══ PAGE 2 — TABLE OF CONTENTS ════════════════════════════════════════════ #}
+<div class="page" style="overflow:hidden;">
+  <div class="toc-header">
+    <div class="toc-header-label">Contents</div>
+    <div class="toc-header-title">Table of<br>Contents</div>
+  </div>
+  <div class="toc-body">
+    {% for s in toc_sections %}
+    <div class="toc-item">
+      <span class="toc-n">{{s.page_num}}</span>
+      <span class="toc-t">{{s.title}}</span>
+      <span class="toc-l">{{s.label}}</span>
+      <span class="toc-p">{{s.page_num}}</span>
     </div>
-    <div class="bw">
-        <h1 class="ch-h1" style="font-size: 46px; border-bottom: none; margin-bottom: 4px;">Table of<br>Contents</h1>
-        <div class="toc-grid">
-            {% for section in toc_sections %}
-            <div class="toc-item">
-                <span class="toc-num">{{section.page_num}}</span>
-                <span class="toc-title">{{section.title}}</span>
-                <span class="toc-label">{{section.label}}</span>
-                <span class="toc-pg">{{section.page_num}}</span>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="pg-foot">
-        <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
-        <span class="pg-foot-r">PAGE 02</span>
-    </div>
+    {% endfor %}
+  </div>
+  <div class="pg-foot">
+    <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
+    <span class="pg-foot-r">PAGE 02</span>
+  </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════════════ #}
-{# PAGES 3–17 — CONTENT SECTIONS                                          #}
-{#                                                                        #}
-{# NO drop-cap span — avoids the "H" bug where Groq's first character    #}
-{# in the content (from an <h3> tag) gets pulled as the drop letter.     #}
-{#                                                                        #}
-{# Images: larger, styled with navy accent bar and shadow                 #}
-{# ══════════════════════════════════════════════════════════════════════ #}
+{# ══ PAGES 3+ — CONTENT SECTIONS ══════════════════════════════════════════ #}
 {% for section in content_sections %}
 <div class="page">
 
-    <div class="pg-head">
-        <div class="pg-head-row">
-            <span class="pg-label">{{section.label}}</span>
-            <span class="pg-num">{{section.page_num}}</span>
+  <div class="pg-head">
+    <div class="pg-head-row">
+      <span class="pg-label">{{section.label}}</span>
+      <span class="pg-num">{{section.page_num}}</span>
+    </div>
+  </div>
+
+  <div class="bw">
+    <div class="eyebrow">
+      <span class="eyebrow-tag">{{section.label}}</span>
+      <span class="eyebrow-line"></span>
+    </div>
+    <h1 class="ch-h1">{{section.title}}</h1>
+
+    {# ── EXECUTIVE SUMMARY — stat cards + image right ───────────── #}
+    {% if loop.index0 == 0 %}
+    <div class="body">{{section.content | safe}}</div>
+
+    {# ── KEY CHALLENGES — image right ───────────────────────────── #}
+    {% elif loop.index0 == 1 and image_1_url %}
+    <div class="cf">
+      <div class="img-wrap img-right">
+        <div class="img-inner">
+          <img src="{{image_1_url}}" alt="{{image_1_caption}}">
         </div>
+        <span class="img-cap">{{image_1_caption}}</span>
+      </div>
+      <div class="body">{{section.content | safe}}</div>
     </div>
 
-    <div class="bw">
-        <div class="ch-eyebrow">
-            <span class="ch-eyebrow-label">{{section.label}}</span>
-            <span class="ch-eyebrow-rule"></span>
+    {# ── STRATEGIC FRAMEWORK — image left ────────────────────────── #}
+    {% elif loop.index0 == 2 and image_2_url %}
+    <div class="cf">
+      <div class="img-wrap img-left">
+        <div class="img-inner">
+          <img src="{{image_2_url}}" alt="{{image_2_caption}}">
         </div>
-        <h1 class="ch-h1">{{section.title | safe}}</h1>
-
-        {# ── IMAGE SLOT 1 — index 2 (page 5), float RIGHT ────────────── #}
-        {% if loop.index0 == 2 and image_1_url %}
-        <div class="cf">
-            <div class="img-wrap img-right">
-                <div class="img-inner">
-                    <img src="{{image_1_url}}" alt="{{image_1_caption | default('Strategic Context')}}">
-                </div>
-                <span class="img-cap">{{image_1_caption | default('Strategic Context')}}</span>
-            </div>
-            <div class="body">{{section.content | safe}}</div>
-        </div>
-
-        {# ── IMAGE SLOT 2 — index 5 (page 8), float LEFT ─────────────── #}
-        {% elif loop.index0 == 5 and image_2_url %}
-        <div class="cf">
-            <div class="img-wrap img-left">
-                <div class="img-inner">
-                    <img src="{{image_2_url}}" alt="{{image_2_caption | default('Technical Framework')}}">
-                </div>
-                <span class="img-cap">{{image_2_caption | default('Technical Framework')}}</span>
-            </div>
-            <div class="body">{{section.content | safe}}</div>
-        </div>
-
-        {# ── IMAGE SLOT 3 — index 9 (page 12), full-width ────────────── #}
-        {% elif loop.index0 == 9 and image_3_url %}
-        <div class="img-wrap img-full">
-            <div class="img-inner">
-                <img src="{{image_3_url}}" alt="{{image_3_caption | default('Implementation Overview')}}">
-            </div>
-            <span class="img-cap">{{image_3_caption | default('Implementation Overview')}}</span>
-        </div>
-        <div class="body">{{section.content | safe}}</div>
-
-        {# ── STANDARD — no image ──────────────────────────────────────── #}
-        {% else %}
-        <div class="body">{{section.content | safe}}</div>
-        {% endif %}
-
-        {# ── LAST SECTION — CTA ───────────────────────────────────────── #}
-        {% if loop.last %}
-        <div class="cta-navy-box">
-            <span class="cta-box-eyebrow">Strategic Engagement</span>
-            <div class="cta-box-title">Ready to implement this framework?</div>
-            <p class="cta-box-body">{{cta | default('Contact us to begin your strategic engagement.')}}</p>
-        </div>
-        <div class="contact-grid">
-            {% if emailAddress %}
-            <div>
-                <span class="contact-lbl">EMAIL</span>
-                <div class="contact-val">{{emailAddress}}</div>
-            </div>
-            {% endif %}
-            {% if phoneNumber %}
-            <div>
-                <span class="contact-lbl">PHONE</span>
-                <div class="contact-val">{{phoneNumber}}</div>
-            </div>
-            {% endif %}
-            {% if website %}
-            <div>
-                <span class="contact-lbl">WEBSITE</span>
-                <div class="contact-val">{{website}}</div>
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-
+        <span class="img-cap">{{image_2_caption}}</span>
+      </div>
+      <div class="body">{{section.content | safe}}</div>
     </div>
 
-    <div class="pg-foot">
-        <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
-        <span class="pg-foot-r">PAGE {{section.page_num}}</span>
+    {# ── RISK MANAGEMENT — full-width image above content ────────── #}
+    {% elif loop.index0 == 4 and image_3_url %}
+    <div class="img-wrap img-full">
+      <div class="img-inner">
+        <img src="{{image_3_url}}" alt="{{image_3_caption}}">
+      </div>
+      <span class="img-cap">{{image_3_caption}}</span>
     </div>
+    <div class="body">{{section.content | safe}}</div>
+
+    {# ── ALL OTHER SECTIONS ──────────────────────────────────────── #}
+    {% else %}
+    <div class="body">{{section.content | safe}}</div>
+    {% endif %}
+
+    {# ── CONCLUSION — CTA block + contacts ──────────────────────── #}
+    {% if loop.last %}
+    <div class="cta-block">
+      <div class="cta-eyebrow">Strategic Engagement</div>
+      <div class="cta-title">Ready to implement this framework?</div>
+      <p class="cta-body">{{cta | default('Contact us to begin your strategic engagement.')}}</p>
+    </div>
+    <div class="contact-row">
+      {% if emailAddress %}
+      <div>
+        <span class="contact-lbl">Email</span>
+        <div class="contact-val">{{emailAddress}}</div>
+      </div>
+      {% endif %}
+      {% if phoneNumber %}
+      <div>
+        <span class="contact-lbl">Phone</span>
+        <div class="contact-val">{{phoneNumber}}</div>
+      </div>
+      {% endif %}
+      {% if website %}
+      <div>
+        <span class="contact-lbl">Website</span>
+        <div class="contact-val">{{website}}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+
+  <div class="pg-foot">
+    <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
+    <span class="pg-foot-r">PAGE {{section.page_num}}</span>
+  </div>
 
 </div>
 {% endfor %}
 
-</div>{# .book #}
+</div>
 </body>
 </html>

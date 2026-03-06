@@ -414,7 +414,7 @@ class GroqClient:
                 ],
                 temperature=self.temperature,
                 max_tokens=tokens,
-                response_format={"type": "json_object"},
+                # NO response_format json_object — it rejects valid HTML inside JSON strings
             )
         except Exception as e:
             logger.error(f"❌ Groq API: {type(e).__name__}: {e}\n{_tb.format_exc()}")
@@ -429,13 +429,28 @@ class GroqClient:
         if not raw_text.strip():
             raise ValueError(f"Groq empty response. finish={finish}")
 
+        # Strip markdown fences if Groq wrapped in ```json ... ```
+        cleaned = raw_text.strip()
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+        cleaned = cleaned.strip()
+
         try:
-            parsed = json.loads(raw_text)
+            parsed = json.loads(cleaned)
             logger.info(f"✅ parsed | keys={list(parsed.keys())}")
             return parsed
-        except json.JSONDecodeError as je:
-            logger.error(f"❌ JSON parse failed: {je}\nRaw:\n{raw_text}")
-            raise ValueError(f"Invalid JSON from Groq: {je}. Raw: {raw_text[:300]}") from je
+        except json.JSONDecodeError:
+            # Try extracting JSON object with regex as last resort
+            m = re.search(r"\{[\s\S]+\}", cleaned)
+            if m:
+                try:
+                    parsed = json.loads(m.group(0))
+                    logger.warning(f"⚠️ parsed via regex extraction | keys={list(parsed.keys())}")
+                    return parsed
+                except json.JSONDecodeError:
+                    pass
+            logger.error(f"❌ JSON parse failed\nRaw:\n{raw_text}")
+            raise ValueError(f"Invalid JSON from Groq. Raw: {raw_text[:300]}")
 
     def _ensure_closed_tags(self, html: str) -> str:
         void = {"br", "hr", "img", "input", "link", "meta"}
