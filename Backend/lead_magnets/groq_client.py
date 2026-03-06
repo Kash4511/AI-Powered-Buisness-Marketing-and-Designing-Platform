@@ -467,6 +467,34 @@ Return JSON:
 
         return results
 
+    def _extract_content(self, result: Dict, key: str) -> str:
+        """
+        Extract section content from Groq's response.
+        Tries the exact key first, then 'content', then any long string value.
+        Logs exactly what it finds so failures are visible in the debugger.
+        """
+        if not result:
+            logger.error(f"❌ _extract_content: result is empty for key='{key}'")
+            return ""
+        # 1. Exact key match
+        if key in result and isinstance(result[key], str) and len(result[key]) > 50:
+            return result[key]
+        # 2. Generic 'content' key
+        if "content" in result and isinstance(result["content"], str) and len(result["content"]) > 50:
+            logger.warning(f"⚠️ Key '{key}' not found — fell back to 'content' key")
+            return result["content"]
+        # 3. First long string value in the dict
+        for k, v in result.items():
+            if isinstance(v, str) and len(v) > 100:
+                logger.warning(f"⚠️ Key '{key}' not found — fell back to key '{k}'")
+                return v
+        logger.error(
+            f"❌ _extract_content FAILED for key='{key}'. "
+            f"Available keys: {list(result.keys())}. "
+            f"Values preview: { {k: str(v)[:80] for k, v in result.items()} }"
+        )
+        return ""
+
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:
         import traceback as _tb
         start  = time.time()
