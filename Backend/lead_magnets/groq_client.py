@@ -104,18 +104,20 @@ SECTIONS = [
         )
     ),
     (
-        "action_checklist",
-        "Action Checklist",
-        "CHECKLIST",
+        "key_takeaways",
+        "Key Takeaways",
+        "TAKEAWAYS",
         (
-            "Write the Action Checklist section for {audience} working on {topic}.\n"
-            "Structure as 3 named groups using <h3> headings:\n"
-            "<h3>Before You Start</h3> — 6 items specific to {topic} preparation\n"
-            "<h3>During Implementation</h3> — 6 items specific to {topic} execution\n"
-            "<h3>Measuring Success</h3> — 6 items with {topic}-specific KPIs and metrics\n"
-            "Each item: use <ul><li> tags. Each <li> must be 2-3 full sentences — action + why it matters + measurable outcome.\n"
-            "Every item must be specific to {topic} and {audience}, not generic.\n"
-            "Bad: 'Engage stakeholders'. Good: 'Conduct a stakeholder mapping session identifying all landowners within 500m — this prevents late objections that cause 3-6 month delays.'\n"
+            "Write the Key Takeaways section for {audience} working on {topic}.\n"
+            "Structure as exactly 3 themes, each as a named <h3> subsection:\n"
+            "Each theme must:\n"
+            "- Have a specific name drawn from {topic} domain vocabulary\n"
+            "- Open with a <p> stating the core insight in 1-2 sentences\n"
+            "- Follow with a <ul> of 3-4 concrete takeaway points, each 2 full sentences\n"
+            "- Each bullet must reference specific evidence, metric, or scenario from {topic}\n"
+            "- At least 2 themes must directly connect to [{pain_points}]\n"
+            "Do NOT use generic theme names like 'Planning', 'Communication', 'Success'.\n"
+            "Good example for urban placemaking: 'Community Activation Economics', 'Regulatory Sequencing Logic'\n"
             "Total 380-430 words."
         )
     ),
@@ -273,7 +275,7 @@ class GroqClient:
                 "label":        label,
                 "page_num":     page_num,
                 "content":      raw_content,
-                "is_checklist": key == "action_checklist",
+                "is_takeaways": key == "key_takeaways",
                 "is_framework": key == "strategic_framework",
                 "is_risk":      key == "risk_management",
                 "is_conclusion":key == "conclusion",
@@ -286,6 +288,9 @@ class GroqClient:
         )
         if primary_color and not str(primary_color).startswith("#"):
             primary_color = "#" + primary_color
+
+        # Auto-compute cover text color: dark bg -> white, light bg -> black
+        cover_text_color = firm_profile.get("cover_text_color") or self._contrast_color(primary_color)
 
         return {
             "mainTitle":         ai_content.get("title"),
@@ -307,7 +312,7 @@ class GroqClient:
             "inkLightColor":     firm_profile.get("ink_light_color") or "",
             "ruleColor":         firm_profile.get("rule_color") or "",
             "ruleLightColor":    firm_profile.get("rule_light_color") or "",
-            "coverTextColor":    firm_profile.get("cover_text_color") or "",
+            "coverTextColor":    cover_text_color,
             "coverLogoFilter":   firm_profile.get("cover_logo_filter") or "brightness(0) invert(1)",
             "summary":           ai_content.get("summary", ""),
             "content_sections":  content_sections,
@@ -375,7 +380,7 @@ class GroqClient:
             f'  "implementation_strategy":{{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
             f'  "risk_management":   {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
             f'  "best_practices":    {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "action_checklist":  {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
+            f'  "key_takeaways":     {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
             f'  "conclusion":        {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}}\n'
             f'}}}}'
         )
@@ -499,6 +504,18 @@ class GroqClient:
         html = re.sub(r'(?:^)"(?=<)', '', html)
         html = re.sub(r'(?<=>)"(?:$)', '', html)
         return self._ensure_closed_tags(html).strip()
+
+    def _contrast_color(self, hex_color: str) -> str:
+        """Return #fff or #000 depending on which is more legible on hex_color."""
+        try:
+            h = hex_color.lstrip("#")
+            if len(h) == 3:
+                h = "".join(c*2 for c in h)
+            r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+            brightness = (r * 299 + g * 587 + b * 114) / 1000
+            return "#000000" if brightness > 128 else "#ffffff"
+        except Exception:
+            return "#ffffff"
 
     def _call_ai(self, system_prompt: str, user_prompt: str, max_tokens: int = None) -> Dict:
         import traceback as _tb
