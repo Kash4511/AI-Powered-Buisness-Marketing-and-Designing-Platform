@@ -13,130 +13,152 @@ SECTIONS = [
         "executive_summary",
         "Executive Summary",
         "OVERVIEW",
+        "text-only",
         (
             "Write the Executive Summary for a professional guide on {topic} for {audience}.\n"
-            "REQUIRED elements (all must appear):\n"
-            "1. One crisp paragraph explaining what {topic} is in the context of {audience} work — "
-            "not a dictionary definition, but why it matters operationally.\n"
-            "2. A paragraph explaining the current landscape: what is changing in {topic} right now "
-            "and why {audience} cannot afford to ignore it.\n"
-            "3. For EACH pain point in [{pain_points}]: one sentence stating the specific consequence "
-            "of this pain point for {audience} in {topic} work.\n"
-            "4. A closing paragraph: what this guide delivers and the tangible outcome the reader gets.\n"
-            "350-420 words. Dense, specific, no filler. Write 4 solid paragraphs minimum."
+            "STRUCTURE — produce exactly these HTML elements in this order:\n"
+            "<p> — 2-3 sentences: what {topic} means operationally for {audience} (not a definition).\n"
+            "<p> — 2-3 sentences: what is changing right now in {topic} that {audience} cannot ignore.\n"
+            "<h3>Why This Matters Now</h3>\n"
+            "<ul> — exactly one <li> per pain point in [{pain_points}]. "
+            "Each <li>: pain point name in <strong>, then 1 sentence on its specific consequence for {audience}.\n"
+            "<p> — 2 sentences: what this guide delivers and the tangible outcome.\n"
+            "Total 180-220 words. Every sentence must be specific to {topic}."
         )
     ),
     (
         "key_challenges",
         "Key Challenges",
         "CHALLENGES",
+        "image-right",
         (
             "Write the Key Challenges section for {audience} in {topic}.\n"
-            "For EACH pain point in [{pain_points}] write a named <h3> subsection containing:\n"
-            "- Root cause: WHY does this specific challenge occur in {topic}? (be mechanistic)\n"
-            "- Impact: concrete operational or financial consequence for {audience}\n"
-            "- Real scenario: 2-3 sentences describing a realistic situation where this plays out\n"
-            "Every subsection must be grounded in {topic} specifically.\n"
-            "Each pain point subsection: 80-100 words minimum. Total 380-430 words."
+            "STRUCTURE — for EACH pain point in [{pain_points}] produce:\n"
+            "<h3>[Pain point name]</h3>\n"
+            "<p><strong>Root Cause:</strong> 1 sentence — WHY this occurs mechanically in {topic}.</p>\n"
+            "<p><strong>Consequence:</strong> 1 sentence — specific financial or operational impact on {audience}.</p>\n"
+            "<p><strong>Real Scenario:</strong> 2 sentences — a realistic situation in {topic} work.</p>\n"
+            "Every subsection must name {topic} explicitly. No generic language.\n"
+            "Total 180-220 words."
         )
     ),
     (
         "strategic_framework",
         "Strategic Framework",
         "FRAMEWORK",
+        "image-left",
         (
             "Write a Strategic Framework section for {topic} for {audience}.\n"
-            "Invent a NAMED framework (3-5 steps) that is genuinely specific to {topic}.\n"
-            "RULES:\n"
-            "- Step names must use vocabulary from {topic} domain\n"
-            "- Each step: name + 2-3 sentences on what practitioners actually DO in this step\n"
-            "- At least 2 steps must directly address pain points from: {pain_points}\n"
-            "- Include one concrete example of the framework applied to a real-world {topic} scenario\n"
-            "- DO NOT use generic steps like 'Define Goals', 'Plan', 'Execute', 'Review'\n"
-            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
+            "STRUCTURE:\n"
+            "<p> — 2 sentences introducing your named framework. Give it a specific name using {topic} vocabulary.\n"
+            "<h3>[Step 1 name — from {topic} domain vocabulary, NOT generic]</h3>\n"
+            "<p> — 2-3 sentences: what practitioners specifically DO. Name a tool or method.\n"
+            "<h3>[Step 2 name — ties to one of {pain_points}]</h3>\n"
+            "<p> — 2-3 sentences: what practitioners DO. Show how it resolves a pain point.\n"
+            "<h3>[Step 3 name — includes a real-world {topic} example]</h3>\n"
+            "<p> — 2-3 sentences: what practitioners DO. Include a concrete example.\n"
+            "<h3>[Step 4 name — optional but adds value]</h3>\n"
+            "<p> — 2 sentences if included.\n"
+            "NO steps named Define/Plan/Execute/Review.\n"
+            "Total 200-240 words."
         )
     ),
     (
         "implementation_strategy",
         "Implementation Strategy",
         "IMPLEMENTATION",
+        "text-only",
         (
             "Write an Implementation Strategy for {audience} applying {topic}.\n"
-            "Structure as THREE phases with specific {topic}-domain actions in each:\n"
-            "Phase 1 (weeks 1-4): discovery/diagnosis actions unique to {topic}\n"
-            "Phase 2 (weeks 5-12): design/coordination actions unique to {topic}\n"
-            "Phase 3 (weeks 13+): delivery/activation actions unique to {topic}\n"
-            "For each phase include:\n"
-            "- 2-3 specific tasks practitioners do in {topic} (not 'hold meetings')\n"
-            "- One decision point {audience} will face and how to navigate it\n"
-            "- How one pain point from [{pain_points}] surfaces in this phase and what to do\n"
-            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
+            "STRUCTURE — three phases, each as <h3> + <ul>:\n"
+            "<p> — 1 sentence framing the phased approach.\n"
+            "<h3>Phase 1 — [Domain-specific name] (Weeks 1-4)</h3>\n"
+            "<ul>\n"
+            "  <li><strong>Task 1:</strong> specific {topic} action — 1 sentence</li>\n"
+            "  <li><strong>Task 2:</strong> specific {topic} action — 1 sentence</li>\n"
+            "  <li><strong>Decision point:</strong> key choice {audience} faces and how to navigate it</li>\n"
+            "  <li><strong>Pain point watch:</strong> how [{pain_points}] surfaces here and what to do</li>\n"
+            "</ul>\n"
+            "<h3>Phase 2 — [Domain-specific name] (Weeks 5-12)</h3>\n"
+            "<ul> — same 4-item structure </ul>\n"
+            "<h3>Phase 3 — [Domain-specific name] (Weeks 13+)</h3>\n"
+            "<ul> — same 4-item structure </ul>\n"
+            "Phase names must use {topic} vocabulary. Total 220-260 words."
         )
     ),
     (
         "risk_management",
         "Risk Management",
         "RISK",
+        "image-above",
         (
-            "Write a Risk Management section for {audience} working on {topic}.\n"
-            "Identify exactly 4 risks SPECIFIC to {topic} — not 'scope creep' or 'budget overrun'.\n"
-            "For each risk use this structure:\n"
-            "<h3>[Risk Name specific to {topic}]</h3>\n"
-            "<p><strong>Cause:</strong> [what triggers this in {topic} work]</p>\n"
-            "<p><strong>Impact on {audience}:</strong> [specific consequence]</p>\n"
-            "<p><strong>Mitigation:</strong> [what expert practitioners actually do]</p>\n"
-            "At least 2 risks must be directly caused by pain points in [{pain_points}].\n"
-            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
+            "Write a Risk Management section for {audience} in {topic}.\n"
+            "STRUCTURE — exactly 4 risks:\n"
+            "<h3>[Risk name — specific to {topic}, not 'scope creep' or 'budget overrun']</h3>\n"
+            "<p><strong>Cause:</strong> 1 sentence on what triggers this in {topic} work.</p>\n"
+            "<p><strong>Impact on {audience}:</strong> 1 sentence on the specific consequence.</p>\n"
+            "<p><strong>Mitigation:</strong> 1-2 sentences on what expert practitioners actually do.</p>\n"
+            "At least 2 of the 4 risks must be caused by pain points in [{pain_points}].\n"
+            "Total 200-240 words."
         )
     ),
     (
         "best_practices",
         "Best Practices",
         "METHODS",
+        "text-only",
         (
             "Write a Best Practices section for {audience} in {topic}.\n"
-            "Provide exactly 4 best practices. Each must:\n"
-            "- Have a specific name (not 'Communicate Well' or 'Plan Ahead')\n"
-            "- Explain the METHOD: how expert {audience} actually implement this in {topic}\n"
-            "- Give one concrete example from {topic} practice\n"
-            "- Reference how it addresses one of [{pain_points}]\n"
-            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
+            "STRUCTURE — exactly 4 named practices:\n"
+            "<h3>[Practice name — domain-specific, not 'Communicate Well' or 'Plan Ahead']</h3>\n"
+            "<p> — 2 sentences: the METHOD — how expert {audience} implement this specifically in {topic}.</p>\n"
+            "<p> — 1 sentence: a concrete real-world example from {topic}.</p>\n"
+            "<p> — 1 sentence: which of [{pain_points}] this addresses and the measurable outcome.</p>\n"
+            "Repeat pattern for all 4 practices.\n"
+            "Total 200-240 words."
         )
     ),
     (
         "key_takeaways",
         "Key Takeaways",
         "TAKEAWAYS",
+        "text-only",
         (
-            "Write the Key Takeaways section for {audience} working on {topic}.\n"
-            "Structure as exactly 3 themes, each as a named <h3> subsection:\n"
-            "Each theme must:\n"
-            "- Have a specific name drawn from {topic} domain vocabulary\n"
-            "- Open with a <p> stating the core insight in 1-2 sentences\n"
-            "- Follow with a <ul> of 3-4 concrete takeaway points, each 2 full sentences\n"
-            "- Each bullet must reference specific evidence, metric, or scenario from {topic}\n"
-            "- At least 2 themes must directly connect to [{pain_points}]\n"
-            "Do NOT use generic theme names like 'Planning', 'Communication', 'Success'.\n"
-            "Good example for urban placemaking: 'Community Activation Economics', 'Regulatory Sequencing Logic'\n"
-            "Total 380-430 words."
+            "Write the Key Takeaways section for {audience} on {topic}.\n"
+            "STRUCTURE — exactly 3 themed groups:\n"
+            "<h3>[Theme name — use {topic} domain vocabulary, NOT generic names like Planning/Communication]</h3>\n"
+            "<p> — 1-2 sentences: the core insight for this theme.</p>\n"
+            "<ul>\n"
+            "  <li>Takeaway 1: 2 sentences with a specific fact, metric, or scenario from {topic}</li>\n"
+            "  <li>Takeaway 2: 2 sentences with a specific fact, metric, or scenario from {topic}</li>\n"
+            "  <li>Takeaway 3: 2 sentences connecting to [{pain_points}]</li>\n"
+            "</ul>\n"
+            "Repeat for all 3 themes. At least 2 themes must connect directly to [{pain_points}].\n"
+            "Total 200-240 words."
         )
     ),
     (
         "conclusion",
         "Conclusion & Next Steps",
         "CONCLUSION",
+        "text-only",
         (
             "Write the Conclusion & Next Steps for this {topic} guide for {audience}.\n"
-            "Structure:\n"
-            "1. One paragraph: the single most important insight from this guide specific to {topic}\n"
-            "2. Three numbered next steps — each must be a specific action in {topic}\n"
-            "3. One forward-looking paragraph: what {audience} who master {topic} will achieve\n"
-            "4. One closing sentence that is a direct call to action.\n"
-            "380-430 words total. Make every element substantial and specific."
+            "STRUCTURE:\n"
+            "<p> — 2-3 sentences: the single most important insight, specific to {topic}.\n"
+            "<h3>Your Next Steps</h3>\n"
+            "<ol>\n"
+            "  <li>Step 1: specific {topic} action, 1-2 sentences</li>\n"
+            "  <li>Step 2: specific {topic} action, 1-2 sentences</li>\n"
+            "  <li>Step 3: specific {topic} action, 1-2 sentences</li>\n"
+            "</ol>\n"
+            "<p> — 2 sentences: what {audience} who master {topic} will achieve in 2-3 years, "
+            "tied to resolving [{pain_points}].\n"
+            "<p> — 1 sentence: a direct, specific call to action (not 'take the next step').\n"
+            "Total 180-220 words."
         )
     ),
 ]
-
 DOC_TYPE_LABELS = {
     "guide":            "Strategic Guide",
     "case_study":       "Case Study Report",
@@ -167,6 +189,9 @@ _TYPE_MAP = {
 }
 
 ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br"}
+
+# Section key → layout type mapping (used by map_to_template_vars)
+SECTION_LAYOUT = {key: layout for key, _, _, layout, _ in SECTIONS}
 
 
 class GroqClient:
@@ -215,13 +240,13 @@ class GroqClient:
 
         # ── Layer 2: Build per-section writing blueprint (~800 tokens, 1 call)
         logger.info("📐 Layer 2 — Framework Generation")
-        section_keys = [key for key, *_ in SECTIONS]
+        section_keys = [key for key, _, _, _, _ in SECTIONS]
         self._framework = self._generate_framework(self._analysis, section_keys, signals)
 
         # ── Layer 3: Title + 8 sections, each with full context (~1800 tokens × 9)
         title_data = self._generate_title(signals, type_label)
         expansions: Dict[str, str] = {}
-        for key, title, label, brief in SECTIONS:
+        for key, title, label, _layout, brief in SECTIONS:
             logger.info(f"✍️  Layer 3 — {key}")
             expansions[key] = self._generate_section(key, title, brief, signals)
 
@@ -248,7 +273,7 @@ class GroqClient:
             "document_type_label": raw.get("document_type_label") or "",
             "sections_config":     SECTIONS,
         }
-        for key, *_ in SECTIONS:
+        for key, *_ in SECTIONS:  # key, title, label, layout, brief
             content = exp.get(key, "")
             if isinstance(content, dict):
                 content = json.dumps(content)
@@ -265,7 +290,7 @@ class GroqClient:
     ) -> Dict[str, Any]:
         content_sections: List[Dict] = []
         toc_sections:     List[Dict] = []
-        for idx, (key, title, label, _) in enumerate(SECTIONS):
+        for idx, (key, title, label, layout_type, _) in enumerate(SECTIONS):
             page_num = f"{idx + 3:02d}"
             raw_content = ai_content.get(key, "")
 
@@ -275,12 +300,10 @@ class GroqClient:
                 "label":        label,
                 "page_num":     page_num,
                 "content":      raw_content,
-                "is_takeaways": key == "key_takeaways",
-                "is_framework": key == "strategic_framework",
-                "is_risk":      key == "risk_management",
+                "layout_type":  layout_type,
                 "is_conclusion":key == "conclusion",
             })
-            toc_sections.append({"title": title, "label": label, "page_num": page_num})
+            toc_sections.append({"title": title, "label": label, "page_num": page_num, "idx": idx})
 
         primary_color = (
             firm_profile.get("primary_brand_color")
@@ -447,10 +470,11 @@ class GroqClient:
             f"3. Write for: {signals['audience']}\n"
             f"4. BANNED: 'leverage', 'synergies', 'optimize solutions', 'unlock value', "
             f"'drive innovation', 'holistic approach', 'best-in-class'\n"
-            f"5. HTML only: <p>, <strong>, <h3>, <h4>, <ul>, <li>. No <div>, <span>, <table>.\n"
-            f"6. DO NOT write the section title — it already renders above your content.\n"
-            f"7. First element MUST be <p>, never <h3>.\n"
-            f"8. Return valid JSON only. No markdown.\n"
+            f"5. HTML ONLY: <p> <strong> <em> <h3> <h4> <ul> <ol> <li> <br>. NEVER <div> <span> <table> <img>.\n"
+            f"6. DO NOT write the section title — it renders above your content automatically.\n"
+            f"7. STRUCTURE RULE: follow the SECTION BRIEF structure exactly — use the HTML elements specified.\n"
+            f"8. CONTENT DENSITY: prefer 3-5 shorter paragraphs over 1-2 long ones. Break at every logical point.\n"
+            f"9. Return valid JSON only. No markdown. No text outside the JSON.\n"
         )
 
         prompt = (
@@ -462,12 +486,12 @@ class GroqClient:
         )
 
         logger.info(f"🔵 Layer 3 — '{key}'")
-        raw     = self._call_ai(system, prompt, max_tokens=2500)
+        raw     = self._call_ai(system, prompt, max_tokens=1800)
         content = self._extract_content(raw, key)
         words   = len(content.split()) if content else 0
         logger.info(f"✅ '{key}': {words} words | angle='{angle[:40]}...' " if angle else f"✅ '{key}': {words} words")
 
-        if words < 200:
+        if words < 100:
             raise ValueError(f"Section '{key}' too short ({words} words — need 200+). Keys: {list(raw.keys())}. Snippet: {str(raw)[:200]}")
 
         return self._sanitize_html(content)

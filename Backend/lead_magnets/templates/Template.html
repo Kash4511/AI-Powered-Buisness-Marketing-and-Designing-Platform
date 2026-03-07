@@ -5,11 +5,8 @@
 <title>{{mainTitle}}</title>
 <style>
 /*
-  FONT STRATEGY: 100% system fonts — no network calls, renders identically
-  in every PDF engine (WeasyPrint, Puppeteer, wkhtmltopdf, Chrome headless).
-  Georgia   → serif headings
-  Arial     → body copy
-  Courier New → mono labels
+  FONTS: 100% system — Georgia (serif), Arial (sans), Courier New (mono)
+  No external calls. Renders identically in all PDF engines.
 */
 :root {
   --P:    {{primaryColor}};
@@ -37,16 +34,16 @@
 
 body {
   font-family: var(--sans);
-  background: #555d6b;
+  background: #4a5568;
   padding: 20px 14px;
-  /* NO letter-spacing on body — causes the spaced-out text rendering bug */
+  /* NO letter-spacing on body — causes spaced glyph rendering in PDF */
 }
 
 .book { width: 210mm; margin: 0 auto; }
 
-/* ═══════════════════════════════════════════════════════
-   PAGE SHELL — fixed 297mm, content clipped, never spills
-   ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   PAGE — fixed A4, content always clipped
+   ═══════════════════════════════════════════════════ */
 .page {
   width: 210mm;
   height: 297mm;
@@ -55,304 +52,322 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  margin-bottom: 22px;
-  box-shadow: 0 18px 54px rgba(0,0,0,.32);
+  margin-bottom: 20px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.3);
 }
 
 @media print {
   body  { background: #fff; padding: 0; }
-  .page {
-    box-shadow: none; margin-bottom: 0;
-    page-break-before: always; break-before: page;
-  }
+  .page { box-shadow: none; margin-bottom: 0; page-break-before: always; break-before: page; }
   .page:first-child { page-break-before: auto; break-before: auto; }
 }
 
-/* Left primary-colour spine */
+/* Left spine */
 .page::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0;
   width: 5px; background: var(--P); z-index: 10;
 }
-/* Top-right corner triangle */
+/* Top-right triangle */
 .page::after {
   content: ''; position: absolute; top: 0; right: 0;
-  width: 40px; height: 40px;
+  width: 38px; height: 38px;
   background: var(--P); clip-path: polygon(100% 0, 0 0, 100% 100%);
   z-index: 10;
 }
 
-/* ═══════════════════════════════════════════════════════
-   TOP ACCENT STRIPE
-   ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   TOP STRIPE
+   ═══════════════════════════════════════════════════ */
 .pg-stripe {
   width: 100%; height: 4px; flex-shrink: 0;
-  background: linear-gradient(90deg, var(--P) 0%, var(--P3) 60%, transparent 100%);
+  background: linear-gradient(90deg, var(--P) 0%, var(--P3) 55%, transparent 100%);
 }
 
-/* ═══════════════════════════════════════════════════════
-   PAGE HEADER — label left / page-num right, separated by
-   primary-colour rule. NO letter-spacing on label text —
-   prevents the "K A A S H I F" spaced-out rendering bug.
-   ═══════════════════════════════════════════════════════ */
-.pg-head { flex-shrink: 0; padding: 9px 14mm 0 17mm; }
+/* ═══════════════════════════════════════════════════
+   PAGE HEADER — label only (no letter-spacing)
+   ═══════════════════════════════════════════════════ */
+.pg-head { flex-shrink: 0; padding: 8px 13mm 0 16mm; }
 .pg-head-row {
   display: flex; justify-content: space-between; align-items: center;
   padding-bottom: 5px; border-bottom: 1.5px solid var(--P);
 }
 .pg-label {
-  font-family: var(--sans); font-size: 6.5px;
-  /* letter-spacing deliberately omitted — PDF engines space each glyph */
-  text-transform: uppercase; color: var(--P); font-weight: bold;
+  font-family: var(--sans); font-size: 6.5px; font-weight: 700;
+  text-transform: uppercase; color: var(--P);
+  /* NO letter-spacing — PDF engines space glyphs making text unreadable */
 }
-.pg-num {
-  font-family: var(--mono); font-size: 7px; color: var(--I3);
-}
+.pg-num { font-family: var(--mono); font-size: 6.5px; color: var(--I3); }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    BODY WRAPPER
-   ═══════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════ */
 .bw {
   flex: 1; min-height: 0; overflow: hidden;
-  padding: 7px 14mm 7px 17mm;
+  padding: 7px 13mm 7px 16mm;
   display: flex; flex-direction: column;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    EYEBROW + SECTION TITLE
-   Single title render — no duplication possible because
-   the title is only in .ch-h1, never in .pg-label.
-   ═══════════════════════════════════════════════════════ */
-.eyebrow { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+   ═══════════════════════════════════════════════════ */
+.eyebrow {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-shrink: 0;
+}
 .eyebrow-tag {
-  font-family: var(--sans); font-size: 6px;
+  font-family: var(--sans); font-size: 6px; font-weight: 700;
   text-transform: uppercase; background: var(--P); color: #fff;
-  padding: 3px 8px; border-radius: 2px;
-  /* NO letter-spacing */
+  padding: 2px 8px; border-radius: 2px;
 }
 .eyebrow-line { flex: 1; height: 1px; background: var(--R); }
 
 .ch-h1 {
-  font-family: var(--serif); font-size: 23px; font-weight: bold;
-  color: var(--INK); line-height: 1.05;
-  letter-spacing: -0.3px; /* small negative — tight not spaced */
-  margin-bottom: 7px; padding-bottom: 7px; position: relative;
+  font-family: var(--serif); font-size: 26px; font-weight: 700;
+  color: var(--INK); line-height: 1; letter-spacing: -0.5px;
+  margin-bottom: 8px; padding-bottom: 6px; position: relative; flex-shrink: 0;
 }
 .ch-h1::after {
   content: ''; position: absolute; bottom: 0; left: 0;
-  width: 38px; height: 3px; background: var(--P); border-radius: 2px;
+  width: 36px; height: 3px; background: var(--P); border-radius: 2px;
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    BODY CONTENT
-   ═══════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════ */
 .body {
-  font-family: var(--sans); font-size: 8.5px; line-height: 1.68;
+  font-family: var(--sans); font-size: 9px; line-height: 1.65;
   color: var(--I2); overflow: hidden;
   /* NO letter-spacing */
 }
-.body p {
-  margin-bottom: 7px; text-align: justify; hyphens: auto;
-}
+.body p { margin-bottom: 7px; text-align: justify; }
 .body p:last-child { margin-bottom: 0; }
-.body strong { font-weight: bold; color: var(--INK); }
+.body strong { font-weight: 700; color: var(--INK); }
 .body em     { font-style: italic; color: var(--P); }
 
 .body h3 {
-  font-family: var(--serif); font-size: 11px; font-weight: bold;
+  font-family: var(--serif); font-size: 12px; font-weight: 700;
   color: var(--P); background: var(--A);
   border-left: 3px solid var(--P);
-  padding: 5px 9px; margin: 10px 0 4px;
+  padding: 5px 10px; margin: 11px 0 5px;
   border-radius: 0 3px 3px 0;
   /* NO letter-spacing */
 }
 .body h4 {
-  font-family: var(--sans); font-size: 7.5px; font-weight: bold;
-  text-transform: uppercase; color: var(--P3); margin: 8px 0 3px;
+  font-family: var(--sans); font-size: 8px; font-weight: 700;
+  text-transform: uppercase; color: var(--P3); margin: 9px 0 3px;
 }
-.body ul  { list-style: none; padding: 0; margin: 4px 0 7px; }
+.body ul, .body ol { margin: 4px 0 8px; }
+.body ul { list-style: none; padding: 0; }
 .body ul li {
   position: relative; padding: 4px 0 4px 15px;
-  font-size: 8.5px; line-height: 1.6; color: var(--I2);
+  font-size: 9px; line-height: 1.55; color: var(--I2);
   border-bottom: 1px solid var(--R2);
 }
 .body ul li:last-child { border-bottom: none; }
 .body ul li::before {
-  content: ''; position: absolute; left: 0; top: 12px;
-  width: 6px; height: 6px; border-radius: 50%; background: var(--P); opacity: .8;
+  content: ''; position: absolute; left: 0; top: 11px;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--P); opacity: .75;
 }
-.body ol  { padding-left: 16px; margin: 4px 0 7px; }
+.body ol { padding-left: 18px; }
 .body ol li {
-  font-size: 8.5px; line-height: 1.6; color: var(--I2);
-  padding: 3px 0; border-bottom: 1px solid var(--R2);
+  font-size: 9px; line-height: 1.55; color: var(--I2);
+  padding: 4px 0; border-bottom: 1px solid var(--R2);
 }
-.body ol li::marker { color: var(--P); font-weight: bold; }
 .body ol li:last-child { border-bottom: none; }
+.body ol li::marker { color: var(--P); font-weight: 700; font-size: 9.5px; }
 
-/* ═══════════════════════════════════════════════════════
-   IMAGES — flex layout, never floated (floats cause the
-   "glued on" look in PDF renderers)
-   ═══════════════════════════════════════════════════════ */
-.with-img-r { display: flex; gap: 12px; align-items: flex-start; flex: 1; }
-.with-img-l { display: flex; flex-direction: row-reverse; gap: 12px; align-items: flex-start; flex: 1; }
+/* ═══════════════════════════════════════════════════
+   IMAGE BLOCKS — deterministic layouts, never floated.
+   Floats cause the "glued on" look in PDF renderers.
 
-.img-col { flex-shrink: 0; width: 40%; display: flex; flex-direction: column; }
-.img-col img {
-  width: 100%; height: 165px; object-fit: cover; display: block;
-  border-radius: 3px; box-shadow: 0 3px 14px rgba(0,0,0,.18);
+   layout-type="image-right"  → text left 55%, image right 42%
+   layout-type="image-left"   → image left 42%, text right 55%
+   layout-type="image-above"  → image full-width above text
+   layout-type="text-only"    → no image slot
+   ═══════════════════════════════════════════════════ */
+
+/* Shared image styles */
+.sec-img {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 0;
+}
+.sec-img img {
+  display: block; object-fit: cover;
+  border-radius: 3px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.18);
   border-bottom: 3px solid var(--P);
 }
-.img-cap {
+.sec-img-cap {
   font-family: var(--sans); font-size: 5.5px; text-transform: uppercase;
-  color: var(--I3); margin-top: 4px; text-align: center;
+  color: var(--I3); margin-top: 3px; text-align: center; display: block;
 }
-.img-txt { flex: 1; min-width: 0; }
 
-.img-full { width: 100%; margin-bottom: 8px; flex-shrink: 0; }
-.img-full img {
-  width: 100%; height: 145px; object-fit: cover; display: block;
-  border-radius: 3px; box-shadow: 0 3px 14px rgba(0,0,0,.18);
-  border-bottom: 3px solid var(--P);
+/* image-right: text (55%) | image (42%) */
+.layout-image-right {
+  display: flex; gap: 12px; align-items: flex-start; flex: 1; min-height: 0; overflow: hidden;
 }
-.img-full .img-cap { text-align: right; }
+.layout-image-right .sec-img { width: 42%; }
+.layout-image-right .sec-img img { width: 100%; height: 180px; }
+.layout-image-right .sec-text { flex: 1; min-width: 0; overflow: hidden; }
 
-/* ═══════════════════════════════════════════════════════
+/* image-left: image (42%) | text (55%) */
+.layout-image-left {
+  display: flex; flex-direction: row-reverse; gap: 12px;
+  align-items: flex-start; flex: 1; min-height: 0; overflow: hidden;
+}
+.layout-image-left .sec-img { width: 42%; }
+.layout-image-left .sec-img img { width: 100%; height: 180px; }
+.layout-image-left .sec-text { flex: 1; min-width: 0; overflow: hidden; }
+
+/* image-above: image full-width, then text below */
+.layout-image-above { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+.layout-image-above .sec-img { width: 100%; margin-bottom: 8px; }
+.layout-image-above .sec-img img { width: 100%; height: 150px; }
+.layout-image-above .sec-img-cap { text-align: right; }
+.layout-image-above .sec-text { flex: 1; overflow: hidden; }
+
+/* text-only */
+.layout-text-only { flex: 1; overflow: hidden; }
+
+/* ═══════════════════════════════════════════════════
    CTA BLOCK — conclusion page only
-   Plain text only in {{cta}}, never raw HTML
-   ═══════════════════════════════════════════════════════ */
+   {{cta}} is plain text — HTML stripped server-side
+   ═══════════════════════════════════════════════════ */
 .cta-block {
   background: var(--P); border-radius: 4px;
-  padding: 13px 15px; margin-top: 9px; flex-shrink: 0;
+  padding: 13px 14px; margin-top: 10px; flex-shrink: 0;
 }
 .cta-eyebrow {
   font-family: var(--sans); font-size: 6px; text-transform: uppercase;
-  color: rgba(255,255,255,.4); margin-bottom: 4px;
+  color: rgba(255,255,255,.38); margin-bottom: 4px;
 }
 .cta-title {
-  font-family: var(--serif); font-size: 14px; font-weight: bold;
-  color: #fff; margin-bottom: 5px; line-height: 1.2;
+  font-family: var(--serif); font-size: 15px; font-weight: 700;
+  color: #fff; margin-bottom: 5px; line-height: 1.15;
 }
-.cta-body { font-size: 8px; color: rgba(255,255,255,.6); line-height: 1.55; }
-
+.cta-body { font-size: 8.5px; color: rgba(255,255,255,.58); line-height: 1.55; }
 .contacts {
-  display: flex; gap: 0; margin-top: 9px; padding-top: 9px;
+  display: flex; margin-top: 9px; padding-top: 9px;
   border-top: 1px solid rgba(255,255,255,.14);
 }
 .contact-cell { flex: 1; }
 .c-lbl {
   font-family: var(--sans); font-size: 5.5px; text-transform: uppercase;
-  color: rgba(255,255,255,.32); display: block; margin-bottom: 2px;
+  color: rgba(255,255,255,.3); display: block; margin-bottom: 2px;
 }
-.c-val { font-size: 7.5px; color: rgba(255,255,255,.7); word-break: break-all; }
+.c-val { font-size: 8px; color: rgba(255,255,255,.68); word-break: break-all; }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    PAGE FOOTER
-   ═══════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════ */
 .pg-foot {
-  flex-shrink: 0; padding: 6px 14mm 7px 17mm;
+  flex-shrink: 0; padding: 5px 13mm 6px 16mm;
   border-top: 1px solid var(--R); background: var(--CR);
   display: flex; justify-content: space-between; align-items: center;
 }
 .pf-l { font-size: 6.5px; color: var(--I3); font-style: italic; }
 .pf-r { font-family: var(--mono); font-size: 6px; color: var(--P); }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    COVER PAGE
-   --CT (coverTextColor) is set server-side via contrast
-   detection so text is always legible on any brand colour.
-   rgba(255,255,255,X) overlays are safe on dark backgrounds;
-   on light backgrounds the server sets --CT to dark.
-   ═══════════════════════════════════════════════════════ */
+   --CT is server-computed contrast color:
+     dark primary bg  → --CT = #ffffff
+     light primary bg → --CT = #000000
+   ═══════════════════════════════════════════════════ */
 .cover {
   background: var(--P); height: 297mm; overflow: hidden;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; position: relative;
 }
-/* Cover has no spine or corner triangle */
 .cover::before { display: none; }
 .cover::after  { display: none; }
 
-/* Decorative geometric shapes */
-.cv-shape1 {
-  position: absolute; bottom: -40px; right: -60px;
-  width: 280px; height: 280px;
-  background: rgba(255,255,255,.04); transform: rotate(45deg); border-radius: 14px;
+/* Geometric decoration */
+.cv-deco {
+  position: absolute; pointer-events: none;
 }
-.cv-shape2 {
-  position: absolute; bottom: 80px; right: 60px;
-  width: 110px; height: 110px;
+.cv-deco-1 {
+  bottom: -50px; right: -70px; width: 300px; height: 300px;
+  background: rgba(255,255,255,.04); transform: rotate(45deg); border-radius: 16px;
+}
+.cv-deco-2 {
+  bottom: 90px; right: 60px; width: 120px; height: 120px;
   background: rgba(255,255,255,.06); transform: rotate(22deg); border-radius: 8px;
 }
-.cv-shape3 {
-  position: absolute; top: 60px; right: 30px;
-  width: 60px; height: 60px;
-  background: rgba(255,255,255,.05); transform: rotate(15deg); border-radius: 5px;
+.cv-deco-3 {
+  top: 50px; right: 25px; width: 55px; height: 55px;
+  background: rgba(255,255,255,.05); transform: rotate(12deg); border-radius: 5px;
+}
+.cv-deco-4 {
+  top: 120px; left: -20px; width: 80px; height: 80px;
+  background: rgba(255,255,255,.03); transform: rotate(30deg); border-radius: 6px;
 }
 
 .cv-top {
-  padding: 20px 17mm 16px;
+  padding: 20px 16mm 16px;
   display: flex; justify-content: space-between; align-items: center;
   border-bottom: 1px solid rgba(255,255,255,.1);
-  flex-shrink: 0; z-index: 1;
+  flex-shrink: 0; z-index: 1; position: relative;
 }
 .cv-co {
-  font-family: var(--sans); font-size: 8.5px;
-  text-transform: uppercase; color: var(--CT); opacity: .55;
-  /* NO letter-spacing — avoids spaced text rendering bug */
+  font-family: var(--sans); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; color: var(--CT); opacity: .5;
+  /* NO letter-spacing */
 }
 .cv-badge {
   font-family: var(--sans); font-size: 6.5px; text-transform: uppercase;
-  color: var(--CT); opacity: .3;
-  border: 1px solid rgba(255,255,255,.18); padding: 4px 11px; border-radius: 2px;
+  color: var(--CT); opacity: .28;
+  border: 1px solid rgba(255,255,255,.16); padding: 4px 11px; border-radius: 2px;
 }
 
 .cv-mid {
   flex: 1; display: flex; flex-direction: column;
-  justify-content: center; padding: 0 17mm; z-index: 1;
+  justify-content: center; padding: 0 16mm;
+  z-index: 1; position: relative;
 }
 .cv-doc-type {
   font-family: var(--sans); font-size: 7px; text-transform: uppercase;
-  color: var(--CT); opacity: .35; margin-bottom: 14px;
+  color: var(--CT); opacity: .32; margin-bottom: 14px;
 }
 .cv-title {
-  font-family: var(--serif); font-size: 48px; font-weight: bold;
-  line-height: .95; color: var(--CT); letter-spacing: -1px; margin-bottom: 10px;
+  font-family: var(--serif); font-size: 50px; font-weight: 700;
+  line-height: .94; color: var(--CT); letter-spacing: -1px; margin-bottom: 12px;
 }
-.cv-sub {
-  font-family: var(--serif); font-size: 17px;
-  font-style: italic; color: var(--CT); opacity: .4;
-  margin-bottom: 24px; line-height: 1.3; max-width: 340px;
+.cv-subtitle {
+  font-family: var(--serif); font-size: 17px; font-style: italic;
+  color: var(--CT); opacity: .38; margin-bottom: 22px; line-height: 1.35; max-width: 320px;
 }
-.cv-rule { width: 44px; height: 3px; background: var(--CT); opacity: .22; border-radius: 2px; margin-bottom: 18px; }
-.cv-summary { font-family: var(--sans); font-size: 10px; line-height: 1.7; color: var(--CT); opacity: .45; max-width: 340px; }
+.cv-rule { width: 40px; height: 3px; background: var(--CT); opacity: .2; border-radius: 2px; margin-bottom: 16px; }
+.cv-summary {
+  font-family: var(--sans); font-size: 10px; line-height: 1.7;
+  color: var(--CT); opacity: .42; max-width: 330px;
+}
 
 .cv-bottom {
-  padding: 13px 17mm; border-top: 1px solid rgba(255,255,255,.1);
+  padding: 13px 16mm; border-top: 1px solid rgba(255,255,255,.1);
   display: flex; justify-content: space-between; align-items: center;
-  flex-shrink: 0; z-index: 1;
+  flex-shrink: 0; z-index: 1; position: relative;
 }
-.cvb-l { font-family: var(--sans); font-size: 7px; color: var(--CT); opacity: .25; }
-.cvb-r { font-family: var(--mono); font-size: 6.5px; color: var(--CT); opacity: .25; }
+.cvb-l { font-size: 7px; color: var(--CT); opacity: .22; }
+.cvb-r { font-family: var(--mono); font-size: 6.5px; color: var(--CT); opacity: .22; }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    TABLE OF CONTENTS
-   ═══════════════════════════════════════════════════════ */
-.toc-hdr {
-  background: var(--P); padding: 18px 17mm 14px; flex-shrink: 0;
-}
-.toc-hdr-lbl {
+   ═══════════════════════════════════════════════════ */
+.toc-hdr { background: var(--P); padding: 18px 16mm 14px; flex-shrink: 0; }
+.toc-hdr-sub {
   font-family: var(--sans); font-size: 6.5px; text-transform: uppercase;
-  color: #fff; opacity: .38; margin-bottom: 4px;
+  color: #fff; opacity: .36; margin-bottom: 5px;
 }
 .toc-hdr-title {
-  font-family: var(--serif); font-size: 32px; font-weight: bold; color: #fff; line-height: 1;
+  font-family: var(--serif); font-size: 32px; font-weight: 700; color: #fff; line-height: 1;
 }
-.toc-body { flex: 1; padding: 8px 17mm; overflow: hidden; }
+.toc-body { flex: 1; padding: 8px 16mm; overflow: hidden; }
 .toc-row {
   display: flex; align-items: center; padding: 8px 0; gap: 9px;
   border-bottom: 1px solid var(--R2);
 }
 .toc-row:last-child { border-bottom: none; }
-.toc-pg  { font-family: var(--mono); font-size: 9px; color: var(--P); font-weight: bold; width: 22px; text-align: right; flex-shrink: 0; }
-.toc-t   { font-family: var(--serif); font-size: 11.5px; font-weight: bold; color: var(--INK); flex: 1; }
+.toc-pg  { font-family: var(--mono); font-size: 9px; color: var(--P); font-weight: 700; width: 22px; text-align: right; flex-shrink: 0; }
+.toc-t   { font-family: var(--serif); font-size: 12px; font-weight: 700; color: var(--INK); flex: 1; }
 .toc-lbl {
   font-family: var(--sans); font-size: 5.5px; text-transform: uppercase;
   color: var(--I3); background: var(--R2); padding: 2px 6px; border-radius: 2px; flex-shrink: 0;
@@ -362,41 +377,40 @@ body {
 <body>
 <div class="book">
 
-{# ═══════════════════════════════════════════════════════
+{# ═══════════════════════════════════════════════════
    PAGE 1 — COVER
-   --CT is computed server-side for contrast: dark bg → white,
-   light bg → black. No JS needed in the template.
-   ═══════════════════════════════════════════════════════ #}
+   Cover text color (--CT) is server-computed for contrast:
+   any dark brand color → white text, light → black text.
+   ═══════════════════════════════════════════════════ #}
 <div class="page cover">
-  <div class="cv-shape1"></div>
-  <div class="cv-shape2"></div>
-  <div class="cv-shape3"></div>
+  <div class="cv-deco cv-deco-1"></div>
+  <div class="cv-deco cv-deco-2"></div>
+  <div class="cv-deco cv-deco-3"></div>
+  <div class="cv-deco cv-deco-4"></div>
 
   <div class="cv-top">
     <span class="cv-co">{{companyName}}</span>
     <span class="cv-badge">{{documentTypeLabel}}</span>
   </div>
-
   <div class="cv-mid">
     <div class="cv-doc-type">{{documentTypeLabel}}</div>
     <div class="cv-title">{{mainTitle}}</div>
-    <div class="cv-sub">{{documentSubtitle}}</div>
+    <div class="cv-subtitle">{{documentSubtitle}}</div>
     <div class="cv-rule"></div>
     <div class="cv-summary">{{summary}}</div>
   </div>
-
   <div class="cv-bottom">
     <span class="cvb-l">{{footerText}}</span>
     <span class="cvb-r">{{documentTypeLabel}}</span>
   </div>
 </div>
 
-{# ═══════════════════════════════════════════════════════
+{# ═══════════════════════════════════════════════════
    PAGE 2 — TABLE OF CONTENTS
-   ═══════════════════════════════════════════════════════ #}
+   ═══════════════════════════════════════════════════ #}
 <div class="page">
   <div class="toc-hdr">
-    <div class="toc-hdr-lbl">Contents</div>
+    <div class="toc-hdr-sub">Contents</div>
     <div class="toc-hdr-title">Table of<br>Contents</div>
   </div>
   <div class="toc-body">
@@ -414,12 +428,15 @@ body {
   </div>
 </div>
 
-{# ═══════════════════════════════════════════════════════
+{# ═══════════════════════════════════════════════════
    PAGES 3-10 — CONTENT SECTIONS
-   - .pg-label shows section LABEL (e.g. "OVERVIEW"), NOT the title
-   - .ch-h1 shows section TITLE (e.g. "Executive Summary")
-   - These are two different things — no duplication
-   ═══════════════════════════════════════════════════════ #}
+   Each section has layout_type from groq_client.py:
+     "text-only"   → .layout-text-only
+     "image-right" → .layout-image-right (text | image)
+     "image-left"  → .layout-image-left  (image | text)
+     "image-above" → .layout-image-above (image / text)
+   Images only render if the URL is set in firm_profile.
+   ═══════════════════════════════════════════════════ #}
 {% for section in content_sections %}
 <div class="page">
 
@@ -433,49 +450,49 @@ body {
   </div>
 
   <div class="bw">
-
     <div class="eyebrow">
       <span class="eyebrow-tag">{{section.label}}</span>
       <span class="eyebrow-line"></span>
     </div>
     <h1 class="ch-h1">{{section.title}}</h1>
 
-    {# KEY CHALLENGES (index 1) — image right ───────────────── #}
-    {% if loop.index0 == 1 and image_1_url %}
-    <div class="with-img-r">
-      <div class="img-txt body">{{section.content | safe}}</div>
-      <div class="img-col">
+    {# image-right: text left, image right ──────────── #}
+    {% if section.layout_type == "image-right" and image_1_url %}
+    <div class="layout-image-right">
+      <div class="sec-text body">{{section.content | safe}}</div>
+      <div class="sec-img">
         <img src="{{image_1_url}}" alt="">
-        <span class="img-cap">{{image_1_caption}}</span>
+        <span class="sec-img-cap">{{image_1_caption}}</span>
       </div>
     </div>
 
-    {# STRATEGIC FRAMEWORK (index 2) — image left ───────────── #}
-    {% elif loop.index0 == 2 and image_2_url %}
-    <div class="with-img-l">
-      <div class="img-txt body">{{section.content | safe}}</div>
-      <div class="img-col">
+    {# image-left: image left, text right ───────────── #}
+    {% elif section.layout_type == "image-left" and image_2_url %}
+    <div class="layout-image-left">
+      <div class="sec-text body">{{section.content | safe}}</div>
+      <div class="sec-img">
         <img src="{{image_2_url}}" alt="">
-        <span class="img-cap">{{image_2_caption}}</span>
+        <span class="sec-img-cap">{{image_2_caption}}</span>
       </div>
     </div>
 
-    {# RISK MANAGEMENT (index 4) — full-width image above ───── #}
-    {% elif loop.index0 == 4 and image_3_url %}
-    <div class="img-full">
-      <img src="{{image_3_url}}" alt="">
-      <span class="img-cap">{{image_3_caption}}</span>
+    {# image-above: full-width image, text below ─────── #}
+    {% elif section.layout_type == "image-above" and image_3_url %}
+    <div class="layout-image-above">
+      <div class="sec-img">
+        <img src="{{image_3_url}}" alt="">
+        <span class="sec-img-cap sec-img-cap--right">{{image_3_caption}}</span>
+      </div>
+      <div class="sec-text body">{{section.content | safe}}</div>
     </div>
-    <div class="body">{{section.content | safe}}</div>
 
-    {# ALL OTHER SECTIONS ────────────────────────────────────── #}
+    {# text-only OR no image available ──────────────── #}
     {% else %}
-    <div class="body">{{section.content | safe}}</div>
+    <div class="layout-text-only body">{{section.content | safe}}</div>
     {% endif %}
 
-    {# CONCLUSION: CTA box — {{cta}} is plain text only,
-       HTML stripped server-side before passing to template ─── #}
-    {% if loop.last %}
+    {# CONCLUSION only: CTA box + contacts ─────────── #}
+    {% if section.is_conclusion %}
     <div class="cta-block">
       <div class="cta-eyebrow">Strategic Engagement</div>
       <div class="cta-title">Ready to implement this framework?</div>
