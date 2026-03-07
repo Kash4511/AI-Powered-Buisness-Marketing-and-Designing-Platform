@@ -23,7 +23,7 @@ SECTIONS = [
             "3. For EACH pain point in [{pain_points}]: one sentence stating the specific consequence "
             "of this pain point for {audience} in {topic} work.\n"
             "4. A closing paragraph: what this guide delivers and the tangible outcome the reader gets.\n"
-            "150-200 words. Dense, specific, no filler."
+            "350-420 words. Dense, specific, no filler. Write 4 solid paragraphs minimum."
         )
     ),
     (
@@ -37,7 +37,7 @@ SECTIONS = [
             "- Impact: concrete operational or financial consequence for {audience}\n"
             "- Real scenario: 2-3 sentences describing a realistic situation where this plays out\n"
             "Every subsection must be grounded in {topic} specifically.\n"
-            "180-220 words total."
+            "Each pain point subsection: 80-100 words minimum. Total 380-430 words."
         )
     ),
     (
@@ -53,7 +53,7 @@ SECTIONS = [
             "- At least 2 steps must directly address pain points from: {pain_points}\n"
             "- Include one concrete example of the framework applied to a real-world {topic} scenario\n"
             "- DO NOT use generic steps like 'Define Goals', 'Plan', 'Execute', 'Review'\n"
-            "180-220 words."
+            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
         )
     ),
     (
@@ -70,7 +70,7 @@ SECTIONS = [
             "- 2-3 specific tasks practitioners do in {topic} (not 'hold meetings')\n"
             "- One decision point {audience} will face and how to navigate it\n"
             "- How one pain point from [{pain_points}] surfaces in this phase and what to do\n"
-            "180-220 words."
+            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
         )
     ),
     (
@@ -86,7 +86,7 @@ SECTIONS = [
             "<p><strong>Impact on {audience}:</strong> [specific consequence]</p>\n"
             "<p><strong>Mitigation:</strong> [what expert practitioners actually do]</p>\n"
             "At least 2 risks must be directly caused by pain points in [{pain_points}].\n"
-            "180-220 words."
+            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
         )
     ),
     (
@@ -100,7 +100,7 @@ SECTIONS = [
             "- Explain the METHOD: how expert {audience} actually implement this in {topic}\n"
             "- Give one concrete example from {topic} practice\n"
             "- Reference how it addresses one of [{pain_points}]\n"
-            "180-220 words."
+            "Write 70-90 words per step/phase/risk/practice. Total 380-430 words."
         )
     ),
     (
@@ -108,14 +108,15 @@ SECTIONS = [
         "Action Checklist",
         "CHECKLIST",
         (
-            "Write a practical Action Checklist for {audience} working on {topic}.\n"
-            "Create exactly 3 groups of checklist items:\n"
-            "Group 1 — <h3>Before You Start</h3>: 4-5 items specific to {topic} preparation\n"
-            "Group 2 — <h3>During Implementation</h3>: 4-5 items specific to {topic} execution\n"
-            "Group 3 — <h3>Measuring Success</h3>: 4-5 items with {topic}-specific KPIs/metrics\n"
-            "Each item must be a concrete action, not a vague instruction.\n"
-            "Bad: 'Engage stakeholders'. Good: 'Map all landowners within 500m of the site'\n"
-            "150-180 words."
+            "Write the Action Checklist section for {audience} working on {topic}.\n"
+            "Structure as 3 named groups using <h3> headings:\n"
+            "<h3>Before You Start</h3> — 6 items specific to {topic} preparation\n"
+            "<h3>During Implementation</h3> — 6 items specific to {topic} execution\n"
+            "<h3>Measuring Success</h3> — 6 items with {topic}-specific KPIs and metrics\n"
+            "Each item: use <ul><li> tags. Each <li> must be 2-3 full sentences — action + why it matters + measurable outcome.\n"
+            "Every item must be specific to {topic} and {audience}, not generic.\n"
+            "Bad: 'Engage stakeholders'. Good: 'Conduct a stakeholder mapping session identifying all landowners within 500m — this prevents late objections that cause 3-6 month delays.'\n"
+            "Total 380-430 words."
         )
     ),
     (
@@ -129,7 +130,7 @@ SECTIONS = [
             "2. Three numbered next steps — each must be a specific action in {topic}\n"
             "3. One forward-looking paragraph: what {audience} who master {topic} will achieve\n"
             "4. One closing sentence that is a direct call to action.\n"
-            "130-160 words. Punchy, specific, no filler."
+            "380-430 words total. Make every element substantial and specific."
         )
     ),
 ]
@@ -265,8 +266,7 @@ class GroqClient:
         for idx, (key, title, label, _) in enumerate(SECTIONS):
             page_num = f"{idx + 3:02d}"
             raw_content = ai_content.get(key, "")
-            if key == "action_checklist":
-                raw_content = self._enrich_checklist(raw_content)
+
             content_sections.append({
                 "key":          key,
                 "title":        title,
@@ -457,13 +457,13 @@ class GroqClient:
         )
 
         logger.info(f"🔵 Layer 3 — '{key}'")
-        raw     = self._call_ai(system, prompt, max_tokens=1800)
+        raw     = self._call_ai(system, prompt, max_tokens=2500)
         content = self._extract_content(raw, key)
         words   = len(content.split()) if content else 0
         logger.info(f"✅ '{key}': {words} words | angle='{angle[:40]}...' " if angle else f"✅ '{key}': {words} words")
 
-        if words < 50:
-            raise ValueError(f"Section '{key}' too short ({words} words). Keys: {list(raw.keys())}. Snippet: {str(raw)[:200]}")
+        if words < 200:
+            raise ValueError(f"Section '{key}' too short ({words} words — need 200+). Keys: {list(raw.keys())}. Snippet: {str(raw)[:200]}")
 
         return self._sanitize_html(content)
 
@@ -483,37 +483,6 @@ class GroqClient:
         logger.error(f"❌ extract FAILED '{key}' | keys={list(result.keys())}")
         return ""
 
-    def _enrich_checklist(self, html: str) -> str:
-        """Wraps <li> items in styled checkbox divs and keeps <h3> group headers."""
-        result        = []
-        current_group = False
-        parts         = re.split(r'(<h3>[^<]*</h3>|<li>[\s\S]*?</li>)', html)
-        for part in parts:
-            part = part.strip()
-            if not part:
-                continue
-            if part.startswith('<h3>'):
-                if current_group:
-                    result.append('</div>')
-                title_text = re.sub(r'<[^>]+>', '', part)
-                result.append(f'<div class="ck-group"><div class="ck-title">{title_text}</div>')
-                current_group = True
-            elif part.startswith('<li>'):
-                inner = re.sub(r'</?li>', '', part).strip()
-                result.append(
-                    f'<div class="ck-item">'
-                    f'<div class="ck-box"></div>'
-                    f'<div class="ck-text">{inner}</div>'
-                    f'</div>'
-                )
-            elif part.startswith('<p>'):
-                if current_group:
-                    result.append('</div>')
-                    current_group = False
-                result.append(part)
-        if current_group:
-            result.append('</div>')
-        return ''.join(result) if result else html
 
     def _sanitize_html(self, html: str) -> str:
         if not html:

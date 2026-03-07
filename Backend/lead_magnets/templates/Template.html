@@ -3,479 +3,410 @@
 <head>
 <meta charset="UTF-8">
 <title>{{mainTitle}}</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* ─── ALL SYSTEM FONTS — guaranteed to render in any PDF engine ─────────── */
 :root {
-  --P:  {{primaryColor}};
-  --P2: {{secondaryColor}};
-  --P3: {{tertiaryColor | default('#4F7A8B')}};
-  --A:  {{accentColor   | default('#E8F1F4')}};
-  --CR: {{creamColor    | default('#F7F4EF')}};
-  --C2: {{creamDarkColor| default('#EBE6DA')}};
-  --I:  {{inkColor      | default('#111111')}};
-  --I2: {{inkMidColor   | default('#3A3A3A')}};
-  --I3: {{inkLightColor | default('#777777')}};
-  --R:  {{ruleColor     | default('#D8D8D8')}};
-  --R2: {{ruleLightColor| default('#EDEDED')}};
-  --CT: {{coverTextColor| default('#FFFFFF')}};
-  --fd: 'Playfair Display', serif;
-  --fs: 'Inter', sans-serif;
-  --fm: 'JetBrains Mono', monospace;
+  --P:   {{primaryColor}};
+  --P3:  {{tertiaryColor}};
+  --A:   {{accentColor}};
+  --CR:  {{creamColor}};
+  --C2:  {{creamDarkColor}};
+  --INK: {{inkColor}};
+  --I2:  {{inkMidColor}};
+  --I3:  {{inkLightColor}};
+  --R:   {{ruleColor}};
+  --R2:  {{ruleLightColor}};
+  --CT:  {{coverTextColor}};
+  /* Serif — for headings. Georgia ships on Windows, Mac, Linux, iOS, Android */
+  --serif: Georgia, "Times New Roman", Times, serif;
+  /* Sans  — for body copy */
+  --sans: Arial, Helvetica, "Liberation Sans", sans-serif;
+  /* Mono  — for labels / codes */
+  --mono: "Courier New", Courier, monospace;
 }
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box;
-  -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
-@page { size:A4; margin:0; }
-body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(--I); }
-.book { width:210mm; margin:0 auto; }
 
-/* ── PAGE SHELL ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+@page { size: A4; margin: 0; }
+
+body {
+  font-family: var(--sans);
+  background: #6b7280;
+  padding: 24px 16px;
+}
+
+/* ── BOOK WRAPPER ─────────────────────────────────────────────────────────── */
+.book { width: 210mm; margin: 0 auto; }
+
+/* ── EVERY PAGE ───────────────────────────────────────────────────────────── */
 .page {
-  width:210mm; min-height:297mm; background:#fff;
-  margin-bottom:24px; break-inside:avoid; page-break-inside:avoid;
-  box-shadow:0 24px 80px rgba(0,0,0,.32);
-  display:flex; flex-direction:column; position:relative; overflow:hidden;
-}
-.page + .page { break-before:page; page-break-before:always; }
-
-/* ── DECORATIVE LEFT SPINE ─────────────────────────────────────── */
-.page::before {
-  content:''; position:absolute; left:0; top:0; bottom:0;
-  width:5px; background:var(--P);
-}
-
-/* ── TOP CORNER ACCENT ─────────────────────────────────────────── */
-.page::after {
-  content:''; position:absolute; top:0; right:0;
-  width:48px; height:48px;
-  background:var(--P); clip-path:polygon(100% 0,0 0,100% 100%);
-}
-
-/* ── PAGE HEADER ───────────────────────────────────────────────── */
-.pg-head {
-  flex-shrink:0; padding:14px 16mm 0 18mm;
-}
-.pg-head-row {
-  display:flex; justify-content:space-between; align-items:center;
-  padding-bottom:7px; border-bottom:1.5px solid var(--P);
-}
-.pg-label {
-  font-family:var(--fm); font-size:6.5px; letter-spacing:.28em;
-  text-transform:uppercase; color:var(--P); font-weight:500;
-}
-.pg-num {
-  font-family:var(--fm); font-size:7px; color:var(--I3);
-}
-
-/* ── BODY WRAPPER ──────────────────────────────────────────────── */
-.bw { padding:10px 16mm 14px 18mm; flex:1; display:flex; flex-direction:column; }
-
-/* ── SECTION EYEBROW ───────────────────────────────────────────── */
-.eyebrow { display:flex; align-items:center; gap:8px; margin-bottom:6px; margin-top:4px; }
-.eyebrow-tag {
-  font-family:var(--fm); font-size:6px; letter-spacing:.3em; text-transform:uppercase;
-  color:#fff; background:var(--P); padding:3px 9px; border-radius:2px;
-}
-.eyebrow-line { flex:1; height:1px; background:var(--R); }
-
-/* ── SECTION TITLE ─────────────────────────────────────────────── */
-.ch-h1 {
-  font-family:var(--fd); font-size:28px; font-weight:900; line-height:1.05;
-  color:var(--I); letter-spacing:-.5px; margin-bottom:12px;
-  padding-bottom:10px; position:relative;
-}
-.ch-h1::after {
-  content:''; position:absolute; bottom:0; left:0;
-  width:48px; height:3px; background:var(--P); border-radius:2px;
-}
-
-/* ── BODY TEXT ─────────────────────────────────────────────────── */
-.body { font-size:10px; line-height:1.6; color:var(--I2); flex:1; }
-.body p      { margin-bottom:9px; text-align:justify; }
-.body strong { color:var(--I); font-weight:600; }
-.body em     { color:var(--P); font-style:normal; font-weight:500; }
-
-/* Styled h3 subheadings with left accent */
-.body h3 {
-  font-family:var(--fd); font-size:13px; font-weight:700; color:var(--P);
-  margin:14px 0 5px; padding:6px 10px;
-  background:var(--A); border-left:3px solid var(--P);
-  border-radius:0 3px 3px 0;
-}
-.body h4 {
-  font-family:var(--fs); font-size:9px; font-weight:700;
-  letter-spacing:.12em; text-transform:uppercase;
-  color:var(--P3); margin:10px 0 4px;
-}
-
-/* Styled lists */
-.body ul { list-style:none; padding:0; margin:6px 0 10px; }
-.body ul li {
-  font-size:9.5px; line-height:1.5; color:var(--I2);
-  padding:5px 0 5px 20px; position:relative;
-  border-bottom:1px solid var(--R2);
-}
-.body ul li::before {
-  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
-  width:8px; height:8px; border-radius:50%; background:var(--P); opacity:.7;
-}
-.body ol { padding-left:18px; margin:6px 0 10px; }
-.body ol li {
-  font-size:9.5px; line-height:1.6; color:var(--I2);
-  padding:3px 0; border-bottom:1px solid var(--R2);
-}
-.body ol li::marker { color:var(--P); font-weight:700; font-size:10px; }
-
-/* ── STAT CALLOUT (used in Executive Summary) ──────────────────── */
-.stat-row {
-  display:grid; grid-template-columns:1fr 1fr 1fr;
-  gap:8px; margin:12px 0;
-}
-.stat-card {
-  background:var(--P); padding:12px 10px;
-  text-align:center; border-radius:3px;
-}
-.stat-num {
-  font-family:var(--fd); font-size:22px; font-weight:900;
-  color:#fff; line-height:1; display:block; margin-bottom:3px;
-}
-.stat-lbl {
-  font-family:var(--fs); font-size:7px; color:rgba(255,255,255,.7);
-  text-transform:uppercase; letter-spacing:.15em;
-}
-
-/* ── HIGHLIGHT BOX ─────────────────────────────────────────────── */
-.highlight-box {
-  background:var(--A); border:1px solid var(--P);
-  border-radius:4px; padding:12px 14px; margin:10px 0;
-}
-.highlight-box-title {
-  font-family:var(--fm); font-size:7px; text-transform:uppercase;
-  letter-spacing:.22em; color:var(--P); margin-bottom:5px;
-}
-.highlight-box p {
-  font-size:9.5px; color:var(--I2); line-height:1.55; margin:0; text-align:left;
-}
-
-/* ── NUMBERED STEP CARDS (Framework / Implementation) ──────────── */
-.steps { display:flex; flex-direction:column; gap:7px; margin:8px 0; }
-.step-card {
-  display:flex; align-items:flex-start; gap:10px;
-  background:var(--CR); border-radius:3px; padding:10px 12px;
-  border-left:3px solid var(--P);
-}
-.step-num {
-  font-family:var(--fd); font-size:20px; font-weight:900;
-  color:var(--P); line-height:1; flex-shrink:0; min-width:22px;
-}
-.step-body { flex:1; }
-.step-title {
-  font-family:var(--fs); font-size:9.5px; font-weight:700;
-  color:var(--I); margin-bottom:3px;
-}
-.step-text { font-size:9px; color:var(--I2); line-height:1.5; }
-
-/* ── RISK CARDS ────────────────────────────────────────────────── */
-.risk-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0; }
-.risk-card {
-  background:var(--CR); border-radius:3px; padding:10px 12px;
-  border-top:3px solid var(--P);
-}
-.risk-title {
-  font-family:var(--fs); font-size:9px; font-weight:700;
-  color:var(--P); margin-bottom:5px; text-transform:uppercase; letter-spacing:.05em;
-}
-.risk-label {
-  font-family:var(--fm); font-size:6.5px; text-transform:uppercase;
-  letter-spacing:.18em; color:var(--I3); margin-bottom:2px;
-}
-.risk-text { font-size:8.5px; color:var(--I2); line-height:1.45; margin-bottom:5px; }
-
-/* ── CHECKLIST ─────────────────────────────────────────────────── */
-.ck-group { margin-bottom:10px; }
-.ck-title {
-  font-family:var(--fm); font-size:7px; text-transform:uppercase;
-  letter-spacing:.22em; color:var(--P); margin-bottom:5px;
-  padding-bottom:4px; border-bottom:1px solid var(--R);
-}
-.ck-item {
-  display:flex; align-items:flex-start; gap:8px;
-  padding:4px 0; border-bottom:1px solid var(--R2);
-}
-.ck-box {
-  width:12px; height:12px; border:1.5px solid var(--P);
-  border-radius:2px; flex-shrink:0; margin-top:1px;
-}
-.ck-text { font-size:9px; color:var(--I2); line-height:1.45; }
-
-/* ── IMAGE BLOCKS ──────────────────────────────────────────────── */
-.img-wrap { margin:10px 0; break-inside:avoid; }
-.img-wrap.img-right { float:right; width:46%; margin:0 0 12px 16px; }
-.img-wrap.img-left  { float:left;  width:46%; margin:0 16px 12px 0; }
-.img-wrap.img-full  { width:100%; clear:both; margin:14px 0; }
-.img-inner { position:relative; overflow:hidden; border-radius:4px;
-  box-shadow:0 6px 24px rgba(0,0,0,.18); }
-.img-wrap img { width:100%; display:block; object-fit:cover; }
-.img-wrap.img-right img,
-.img-wrap.img-left  img { height:200px; }
-.img-wrap.img-full  img { height:190px; }
-.img-inner::after {
-  content:''; position:absolute; bottom:0; left:0; right:0;
-  height:5px; background:var(--P);
-}
-.img-cap {
-  font-family:var(--fm); font-size:6.5px; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--P);
-  margin-top:5px; display:block; text-align:right;
-}
-.cf::after { content:""; display:table; clear:both; }
-
-/* ── PAGE FOOTER ───────────────────────────────────────────────── */
-.pg-foot {
-  margin-top:auto; flex-shrink:0;
-  padding:8px 16mm 10px 18mm;
-  border-top:1px solid var(--R);
-  display:flex; justify-content:space-between; align-items:center;
-  background:var(--CR);
-}
-.pg-foot-l { font-size:7px; color:var(--I3); font-style:italic; }
-.pg-foot-r { font-family:var(--fm); font-size:6.5px; color:var(--P); letter-spacing:.1em; }
-
-/* ════════════════════════════════════════════════════════════════ */
-/* COVER PAGE                                                       */
-/* ════════════════════════════════════════════════════════════════ */
-.cover {
-  background:var(--P); min-height:297mm;
-  display:flex; flex-direction:column; overflow:hidden;
-}
-.cover::before { display:none; }
-.cover::after  { display:none; }
-
-.cv-topbar {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:20px 18mm; border-bottom:1px solid rgba(255,255,255,.12);
-}
-.cv-company {
-  font-family:var(--fm); font-size:9px; letter-spacing:.32em;
-  text-transform:uppercase; color:rgba(255,255,255,.6);
-}
-.cv-badge {
-  font-family:var(--fm); font-size:7px; letter-spacing:.28em;
-  text-transform:uppercase; color:rgba(255,255,255,.35);
-  border:1px solid rgba(255,255,255,.2); padding:4px 12px; border-radius:2px;
-}
-
-.cv-hero {
-  flex:1; display:flex; flex-direction:column;
-  justify-content:center; padding:0 18mm;
-}
-.cv-eyebrow {
-  font-family:var(--fm); font-size:7px; letter-spacing:.3em;
-  text-transform:uppercase; color:rgba(255,255,255,.45);
-  margin-bottom:18px;
-}
-.cv-title {
-  font-family:var(--fd); font-size:60px; font-weight:900;
-  line-height:.95; color:var(--CT); letter-spacing:-1px;
-  margin-bottom:10px;
-}
-.cv-subtitle {
-  font-family:var(--fd); font-size:22px; font-weight:700;
-  font-style:italic; color:rgba(255,255,255,.45); margin-bottom:28px;
-}
-.cv-rule { width:56px; height:3px; background:rgba(255,255,255,.3); margin-bottom:24px; }
-.cv-summary {
-  font-size:12px; line-height:1.65; color:rgba(255,255,255,.55);
-  max-width:380px;
-}
-
-.cv-bottom {
-  padding:18px 18mm; border-top:1px solid rgba(255,255,255,.1);
-  display:flex; justify-content:space-between; align-items:center;
-}
-.cv-bottom-l { font-size:7.5px; color:rgba(255,255,255,.3); }
-.cv-bottom-r { font-family:var(--fm); font-size:7px; color:rgba(255,255,255,.3); letter-spacing:.1em; }
-
-/* Diagonal accent band on cover */
-.cv-accent-band {
-  position:absolute; bottom:-30px; right:-60px;
-  width:280px; height:280px;
-  background:rgba(255,255,255,.04);
-  transform:rotate(45deg); border-radius:12px;
-  pointer-events:none;
-}
-.cv-accent-band2 {
-  position:absolute; bottom:60px; right:40px;
-  width:120px; height:120px;
-  background:rgba(255,255,255,.06);
-  transform:rotate(25deg); border-radius:8px;
-  pointer-events:none;
-}
-
-/* ════════════════════════════════════════════════════════════════ */
-/* TABLE OF CONTENTS                                                */
-/* ════════════════════════════════════════════════════════════════ */
-.toc-header {
-  background:var(--P); padding:24px 18mm 20px;
-  margin-bottom:0;
-}
-.toc-header-label {
-  font-family:var(--fm); font-size:7px; letter-spacing:.3em;
-  text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:6px;
-}
-.toc-header-title {
-  font-family:var(--fd); font-size:38px; font-weight:900;
-  color:#fff; line-height:1;
-}
-
-.toc-body { padding:14px 18mm 14px; flex:1; }
-.toc-item {
-  display:grid; grid-template-columns:28px 1fr auto 28px;
-  align-items:center; gap:8px;
-  padding:8px 0; border-bottom:1px solid var(--R2);
-}
-.toc-item:last-child { border-bottom:none; }
-.toc-n {
-  font-family:var(--fm); font-size:8.5px; font-weight:500;
-  color:var(--P); text-align:right;
-}
-.toc-t {
-  font-family:var(--fd); font-size:12px; font-weight:700; color:var(--I);
-}
-.toc-l {
-  font-family:var(--fm); font-size:6px; letter-spacing:.18em;
-  text-transform:uppercase; color:var(--I3);
-  background:var(--R2); padding:2px 7px; border-radius:2px;
-  white-space:nowrap;
-}
-.toc-p {
-  font-family:var(--fm); font-size:8.5px; color:var(--P);
-  text-align:right;
-}
-
-/* ════════════════════════════════════════════════════════════════ */
-/* CTA BLOCK                                                        */
-/* ════════════════════════════════════════════════════════════════ */
-.cta-block {
-  background:var(--P); border-radius:4px;
-  padding:18px 20px; margin-top:14px;
-}
-.cta-eyebrow {
-  font-family:var(--fm); font-size:6.5px; letter-spacing:.28em;
-  text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:6px;
-}
-.cta-title {
-  font-family:var(--fd); font-size:18px; font-weight:700;
-  color:#fff; margin-bottom:8px; line-height:1.2;
-}
-.cta-body { font-size:9.5px; color:rgba(255,255,255,.6); line-height:1.55; }
-.contact-row {
-  display:grid; grid-template-columns:1fr 1fr 1fr;
-  gap:12px; margin-top:14px; padding-top:14px;
-  border-top:1px solid var(--R);
-}
-.contact-lbl {
-  font-family:var(--fm); font-size:6.5px; letter-spacing:.2em;
-  text-transform:uppercase; color:var(--I3); display:block; margin-bottom:3px;
-}
-.contact-val { font-size:9px; color:var(--I2); }
-
-/* ── PER-PAGE TOP ACCENT STRIPE ────────────────────────────────── */
-.pg-accent-stripe {
-  height:4px; width:100%;
-  background:linear-gradient(90deg, var(--P) 0%, var(--P3) 60%, transparent 100%);
-  flex-shrink:0;
-}
-
-/* ── FRAMEWORK PAGE — slightly warm background ──────────────────── */
-.pg-framework .bw { background:var(--CR); }
-
-/* ── CHECKLIST WRAP ─────────────────────────────────────────────── */
-.checklist-wrap { flex:1; }
-.checklist-wrap .ck-group { margin-bottom:12px; }
-.checklist-wrap .ck-title {
-  font-family:var(--fm); font-size:7px; font-weight:500;
-  text-transform:uppercase; letter-spacing:.22em;
-  color:#fff; background:var(--P);
-  padding:5px 10px; margin-bottom:4px; border-radius:2px;
-}
-.checklist-wrap .ck-item {
-  display:flex; align-items:flex-start; gap:9px;
-  padding:5px 8px; background:#fff; margin-bottom:3px;
-  border:1px solid var(--R2); border-radius:2px;
-  border-left:3px solid var(--P);
-}
-.checklist-wrap .ck-box {
-  width:13px; height:13px; border:1.5px solid var(--P);
-  border-radius:2px; flex-shrink:0; margin-top:1px; background:#fff;
-}
-.checklist-wrap .ck-text {
-  font-size:9px; line-height:1.45; color:var(--I2);
-}
-/* Also style body ul/li inside checklist page */
-.pg-checklist .body ul li {
-  background:#fff; border:1px solid var(--R2);
-  border-left:3px solid var(--P); border-radius:2px;
-  padding:5px 8px 5px 28px; margin-bottom:3px;
+  width: 210mm;
+  height: 297mm;          /* FIXED — always exactly one A4 page */
+  overflow: hidden;       /* content that overflows is cut, not leaked */
+  background: #ffffff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
 }
 
 @media print {
-  body { background:#fff; padding:0; }
-  .page { box-shadow:none; margin-bottom:0; }
+  body  { background: #fff; padding: 0; }
+  .page {
+    box-shadow: none; margin-bottom: 0;
+    page-break-before: always; break-before: page;
+  }
+  .page:first-child { page-break-before: auto; break-before: auto; }
+}
+
+/* Left spine bar */
+.page::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+  background: var(--P);
+  z-index: 10;
+}
+/* Top-right triangle accent */
+.page::after {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 42px; height: 42px;
+  background: var(--P);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  z-index: 10;
+}
+
+/* ── TOP STRIPE ───────────────────────────────────────────────────────────── */
+.pg-stripe {
+  width: 100%; height: 4px; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--P) 0%, var(--P3) 60%, transparent 100%);
+}
+
+/* ── PAGE HEADER ──────────────────────────────────────────────────────────── */
+.pg-head {
+  flex-shrink: 0;
+  padding: 10px 14mm 0 18mm;
+}
+.pg-head-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--P);
+}
+.pg-label {
+  font-family: var(--mono); font-size: 6px; letter-spacing: .3em;
+  text-transform: uppercase; color: var(--P); font-weight: bold;
+}
+.pg-num { font-family: var(--mono); font-size: 7px; color: var(--I3); }
+
+/* ── BODY WRAPPER ─────────────────────────────────────────────────────────── */
+.bw {
+  flex: 1;
+  min-height: 0;          /* lets flex child shrink within fixed page height */
+  overflow: hidden;
+  padding: 8px 14mm 8px 18mm;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── EYEBROW + SECTION TITLE ─────────────────────────────────────────────── */
+.eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.eyebrow-tag {
+  font-family: var(--mono); font-size: 6px; letter-spacing: .28em;
+  text-transform: uppercase; background: var(--P); color: #fff;
+  padding: 3px 9px; border-radius: 2px;
+}
+.eyebrow-line { flex: 1; height: 1px; background: var(--R); }
+
+.ch-h1 {
+  font-family: var(--serif); font-size: 24px; font-weight: bold;
+  color: var(--INK); line-height: 1.05; letter-spacing: -.3px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  position: relative;
+}
+.ch-h1::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0;
+  width: 40px; height: 3px;
+  background: var(--P); border-radius: 2px;
+}
+
+/* ── BODY CONTENT AREA ────────────────────────────────────────────────────── */
+.body {
+  font-family: var(--sans);
+  font-size: 8.8px;
+  line-height: 1.68;
+  color: var(--I2);
+  overflow: hidden;
+}
+.body p {
+  margin-bottom: 8px;
+  text-align: justify;
+  hyphens: auto;
+}
+.body p:last-child { margin-bottom: 0; }
+.body strong { font-weight: bold; color: var(--INK); }
+.body em     { font-style: italic; color: var(--P); }
+
+.body h3 {
+  font-family: var(--serif); font-size: 11.5px; font-weight: bold;
+  color: var(--P);
+  background: var(--A);
+  border-left: 3px solid var(--P);
+  padding: 5px 9px;
+  margin: 12px 0 5px;
+  border-radius: 0 3px 3px 0;
+}
+.body h4 {
+  font-family: var(--sans); font-size: 8px; font-weight: bold;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--P3); margin: 9px 0 3px;
+}
+.body ul {
+  list-style: none; padding: 0; margin: 4px 0 8px;
+}
+.body ul li {
+  position: relative;
+  padding: 5px 0 5px 16px;
+  font-size: 8.8px; line-height: 1.6; color: var(--I2);
+  border-bottom: 1px solid var(--R2);
+}
+.body ul li:last-child { border-bottom: none; }
+.body ul li::before {
+  content: '';
+  position: absolute; left: 0; top: 13px;
+  width: 6px; height: 6px;
+  border-radius: 50%; background: var(--P); opacity: .8;
+}
+.body ol {
+  padding-left: 18px; margin: 4px 0 8px;
+}
+.body ol li {
+  font-size: 8.8px; line-height: 1.6; color: var(--I2);
+  padding: 3px 0; border-bottom: 1px solid var(--R2);
+}
+.body ol li::marker { color: var(--P); font-weight: bold; }
+.body ol li:last-child { border-bottom: none; }
+
+/* ── IMAGE INTEGRATION ───────────────────────────────────────────────────── */
+.with-image-right { display: flex; gap: 14px; align-items: flex-start; }
+.with-image-left  { display: flex; flex-direction: row-reverse; gap: 14px; align-items: flex-start; }
+
+.img-col { flex-shrink: 0; width: 42%; }
+.img-col img {
+  width: 100%; height: 170px;
+  object-fit: cover; display: block;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  border-bottom: 3px solid var(--P);
+}
+.img-col .img-cap {
+  font-family: var(--mono); font-size: 6px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--P);
+  margin-top: 4px; text-align: center; display: block;
+}
+
+.img-full { width: 100%; margin-bottom: 10px; }
+.img-full img {
+  width: 100%; height: 155px;
+  object-fit: cover; display: block;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  border-bottom: 3px solid var(--P);
+}
+.img-full .img-cap {
+  font-family: var(--mono); font-size: 6px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--P);
+  margin-top: 4px; text-align: right; display: block;
+}
+.img-text-col { flex: 1; min-width: 0; }
+
+/* ── CTA BLOCK (conclusion page) ─────────────────────────────────────────── */
+.cta-block {
+  background: var(--P); border-radius: 4px;
+  padding: 14px 16px; margin-top: 10px;
+  flex-shrink: 0;
+}
+.cta-lbl {
+  font-family: var(--mono); font-size: 6px; letter-spacing: .26em;
+  text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 4px;
+}
+.cta-title {
+  font-family: var(--serif); font-size: 15px; font-weight: bold;
+  color: #fff; margin-bottom: 6px; line-height: 1.2;
+}
+.cta-text { font-size: 8.5px; color: rgba(255,255,255,.6); line-height: 1.55; }
+
+.contact-row {
+  display: flex; gap: 0;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.15);
+}
+.contact-cell { flex: 1; padding-right: 12px; }
+.contact-lbl {
+  font-family: var(--mono); font-size: 5.5px; letter-spacing: .2em;
+  text-transform: uppercase; color: rgba(255,255,255,.35); display: block; margin-bottom: 2px;
+}
+.contact-val { font-size: 8px; color: rgba(255,255,255,.7); word-break: break-all; }
+
+/* ── PAGE FOOTER ──────────────────────────────────────────────────────────── */
+.pg-foot {
+  flex-shrink: 0;
+  padding: 6px 14mm 8px 18mm;
+  border-top: 1px solid var(--R);
+  background: var(--CR);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.pg-foot-l { font-size: 7px; color: var(--I3); font-style: italic; }
+.pg-foot-r { font-family: var(--mono); font-size: 6.5px; color: var(--P); letter-spacing: .1em; }
+
+/* ══ COVER PAGE ════════════════════════════════════════════════════════════ */
+.cover {
+  background: var(--P);
+  height: 297mm;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.cover::before { display: none; }
+.cover::after  { display: none; }
+
+.cv-top {
+  padding: 22px 18mm 18px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  flex-shrink: 0;
+}
+.cv-co {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .3em;
+  text-transform: uppercase; color: rgba(255,255,255,.55);
+}
+.cv-badge {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .2em;
+  text-transform: uppercase; color: rgba(255,255,255,.3);
+  border: 1px solid rgba(255,255,255,.18); padding: 4px 12px; border-radius: 2px;
+}
+
+.cv-mid {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; padding: 0 18mm;
+}
+.cv-eyebrow {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .28em;
+  text-transform: uppercase; color: rgba(255,255,255,.35); margin-bottom: 16px;
+}
+.cv-title {
+  font-family: var(--serif); font-size: 52px; font-weight: bold;
+  line-height: .95; color: var(--CT); letter-spacing: -1.5px; margin-bottom: 12px;
+}
+.cv-sub {
+  font-family: var(--serif); font-size: 18px;
+  font-style: italic; color: rgba(255,255,255,.38); margin-bottom: 26px; line-height: 1.3;
+}
+.cv-rule { width: 48px; height: 3px; background: rgba(255,255,255,.25); border-radius: 2px; margin-bottom: 20px; }
+.cv-desc { font-size: 11px; line-height: 1.7; color: rgba(255,255,255,.45); max-width: 360px; }
+
+.cv-bottom {
+  padding: 14px 18mm;
+  border-top: 1px solid rgba(255,255,255,.1);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
+}
+.cv-bot-l { font-size: 7.5px; color: rgba(255,255,255,.25); }
+.cv-bot-r { font-family: var(--mono); font-size: 7px; color: rgba(255,255,255,.25); letter-spacing: .1em; }
+
+/* ══ TABLE OF CONTENTS ══════════════════════════════════════════════════════ */
+.toc-header {
+  background: var(--P);
+  padding: 20px 18mm 16px;
+  flex-shrink: 0;
+}
+.toc-hdr-lbl {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .3em;
+  text-transform: uppercase; color: rgba(255,255,255,.38); margin-bottom: 5px;
+}
+.toc-hdr-title {
+  font-family: var(--serif); font-size: 34px; font-weight: bold; color: #fff; line-height: 1;
+}
+
+.toc-body {
+  flex: 1; padding: 10px 18mm 8px; overflow: hidden;
+}
+.toc-row {
+  display: flex; align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--R2);
+  gap: 10px;
+}
+.toc-row:last-child { border-bottom: none; }
+.toc-pg  { font-family: var(--mono); font-size: 9px; color: var(--P); font-weight: bold; width: 24px; text-align: right; flex-shrink: 0; }
+.toc-t   { font-family: var(--serif); font-size: 12px; font-weight: bold; color: var(--INK); flex: 1; }
+.toc-lbl {
+  font-family: var(--mono); font-size: 6px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--I3);
+  background: var(--R2); padding: 2px 7px; border-radius: 2px;
+  flex-shrink: 0;
 }
 </style>
 </head>
 <body>
 <div class="book">
 
-{# ══ PAGE 1 — COVER ════════════════════════════════════════════════════════ #}
+{# ══════════════════════════════════════════════════════════════
+   PAGE 1 — COVER
+   ══════════════════════════════════════════════════════════════ #}
 <div class="page cover">
-  <div class="cv-accent-band"></div>
-  <div class="cv-accent-band2"></div>
-  <div class="cv-topbar">
-    <span class="cv-company">{{companyName | default('Strategic Advisory')}}</span>
-    <span class="cv-badge">{{documentTypeLabel | default('Strategic Guide')}}</span>
+  <div class="cv-top">
+    <span class="cv-co">{{companyName}}</span>
+    <span class="cv-badge">{{documentTypeLabel}}</span>
   </div>
-  <div class="cv-hero">
-    <div class="cv-eyebrow">{{summary | default('Professional Insights Report')}}</div>
-    <div class="cv-title">{{mainTitle | default('Strategic Report')}}</div>
-    <div class="cv-subtitle">{{documentSubtitle | default('')}}</div>
+  <div class="cv-mid">
+    <div class="cv-eyebrow">{{documentTypeLabel}}</div>
+    <div class="cv-title">{{mainTitle}}</div>
+    <div class="cv-sub">{{documentSubtitle}}</div>
     <div class="cv-rule"></div>
-    <div class="cv-summary">{{summary | default('')}}</div>
+    <div class="cv-desc">{{summary}}</div>
   </div>
   <div class="cv-bottom">
-    <span class="cv-bottom-l">{{footerText | default('© Strategic Advisory')}}</span>
-    <span class="cv-bottom-r">{{documentTypeLabel | upper}}</span>
+    <span class="cv-bot-l">{{footerText}}</span>
+    <span class="cv-bot-r">{{documentTypeLabel}}</span>
   </div>
 </div>
 
-{# ══ PAGE 2 — TABLE OF CONTENTS ════════════════════════════════════════════ #}
-<div class="page" style="overflow:hidden;">
+{# ══════════════════════════════════════════════════════════════
+   PAGE 2 — TABLE OF CONTENTS
+   ══════════════════════════════════════════════════════════════ #}
+<div class="page">
   <div class="toc-header">
-    <div class="toc-header-label">Contents</div>
-    <div class="toc-header-title">Table of<br>Contents</div>
+    <div class="toc-hdr-lbl">Contents</div>
+    <div class="toc-hdr-title">Table of<br>Contents</div>
   </div>
   <div class="toc-body">
     {% for s in toc_sections %}
-    <div class="toc-item">
-      <span class="toc-n">{{s.page_num}}</span>
+    <div class="toc-row">
+      <span class="toc-pg">{{s.page_num}}</span>
       <span class="toc-t">{{s.title}}</span>
-      <span class="toc-l">{{s.label}}</span>
-      <span class="toc-p">{{s.page_num}}</span>
+      <span class="toc-lbl">{{s.label}}</span>
     </div>
     {% endfor %}
   </div>
   <div class="pg-foot">
-    <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
+    <span class="pg-foot-l">{{footerText}}</span>
     <span class="pg-foot-r">PAGE 02</span>
   </div>
 </div>
 
-{# ══ PAGES 3+ — CONTENT SECTIONS ══════════════════════════════════════════ #}
+{# ══════════════════════════════════════════════════════════════
+   PAGES 3–10 — CONTENT SECTIONS
+   ══════════════════════════════════════════════════════════════ #}
 {% for section in content_sections %}
-<div class="page {% if section.is_framework %}pg-framework{% elif section.is_risk %}pg-risk{% elif section.is_checklist %}pg-checklist{% endif %}">
+<div class="page">
 
-  {# Per-section top accent stripe #}
-  <div class="pg-accent-stripe"></div>
+  <div class="pg-stripe"></div>
 
   <div class="pg-head">
     <div class="pg-head-row">
@@ -485,79 +416,73 @@ body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(-
   </div>
 
   <div class="bw">
+
     <div class="eyebrow">
       <span class="eyebrow-tag">{{section.label}}</span>
       <span class="eyebrow-line"></span>
     </div>
     <h1 class="ch-h1">{{section.title}}</h1>
 
-    {# ── EXECUTIVE SUMMARY (index 0) ─────────────────────────────── #}
-    {% if loop.index0 == 0 %}
-    <div class="body">{{section.content | safe}}</div>
-
-    {# ── KEY CHALLENGES (index 1) — image floated right ──────────── #}
-    {% elif loop.index0 == 1 %}
-    {% if image_1_url %}
-    <div class="cf">
-      <div class="img-wrap img-right">
-        <div class="img-inner"><img src="{{image_1_url}}" alt="{{image_1_caption}}"></div>
+    {# KEY CHALLENGES — image on right side ───────────────────── #}
+    {% if loop.index0 == 1 and image_1_url %}
+    <div class="with-image-right">
+      <div class="img-text-col body">{{section.content | safe}}</div>
+      <div class="img-col">
+        <img src="{{image_1_url}}" alt="{{image_1_caption}}">
         <span class="img-cap">{{image_1_caption}}</span>
       </div>
-      <div class="body">{{section.content | safe}}</div>
     </div>
-    {% else %}
-    <div class="body">{{section.content | safe}}</div>
-    {% endif %}
 
-    {# ── STRATEGIC FRAMEWORK (index 2) — image floated left ──────── #}
-    {% elif loop.index0 == 2 %}
-    {% if image_2_url %}
-    <div class="cf">
-      <div class="img-wrap img-left">
-        <div class="img-inner"><img src="{{image_2_url}}" alt="{{image_2_caption}}"></div>
+    {# STRATEGIC FRAMEWORK — image on left side ───────────────── #}
+    {% elif loop.index0 == 2 and image_2_url %}
+    <div class="with-image-left">
+      <div class="img-text-col body">{{section.content | safe}}</div>
+      <div class="img-col">
+        <img src="{{image_2_url}}" alt="{{image_2_caption}}">
         <span class="img-cap">{{image_2_caption}}</span>
       </div>
-      <div class="body">{{section.content | safe}}</div>
     </div>
-    {% else %}
-    <div class="body">{{section.content | safe}}</div>
-    {% endif %}
 
-    {# ── RISK MANAGEMENT (index 4) — full-width image then content ── #}
-    {% elif loop.index0 == 4 %}
-    {% if image_3_url %}
-    <div class="img-wrap img-full">
-      <div class="img-inner"><img src="{{image_3_url}}" alt="{{image_3_caption}}"></div>
+    {# RISK MANAGEMENT — full width image above ───────────────── #}
+    {% elif loop.index0 == 4 and image_3_url %}
+    <div class="img-full">
+      <img src="{{image_3_url}}" alt="{{image_3_caption}}">
       <span class="img-cap">{{image_3_caption}}</span>
     </div>
-    {% endif %}
     <div class="body">{{section.content | safe}}</div>
 
-    {# ── ACTION CHECKLIST (index 6) — styled check boxes ─────────── #}
-    {% elif section.is_checklist %}
-    <div class="checklist-wrap">{{section.content | safe}}</div>
-
-    {# ── ALL OTHER SECTIONS ──────────────────────────────────────── #}
+    {# ALL OTHER SECTIONS — plain content ─────────────────────── #}
     {% else %}
     <div class="body">{{section.content | safe}}</div>
     {% endif %}
 
-    {# ── CONCLUSION — CTA + contacts ─────────────────────────────── #}
+    {# CONCLUSION PAGE ONLY — CTA + contacts ──────────────────── #}
     {% if loop.last %}
     <div class="cta-block">
-      <div class="cta-eyebrow">Strategic Engagement</div>
+      <div class="cta-lbl">Strategic Engagement</div>
       <div class="cta-title">Ready to implement this framework?</div>
-      <p class="cta-body">{{cta | default('Contact us to begin your strategic engagement.')}}</p>
-    </div>
-    <div class="contact-row">
-      {% if emailAddress %}
-      <div><span class="contact-lbl">Email</span><div class="contact-val">{{emailAddress}}</div></div>
-      {% endif %}
-      {% if phoneNumber %}
-      <div><span class="contact-lbl">Phone</span><div class="contact-val">{{phoneNumber}}</div></div>
-      {% endif %}
-      {% if website %}
-      <div><span class="contact-lbl">Website</span><div class="contact-val">{{website}}</div></div>
+      <p class="cta-text">{{cta}}</p>
+      {% if emailAddress or phoneNumber or website %}
+      <div class="contact-row">
+        {% if emailAddress %}
+        <div class="contact-cell">
+          <span class="contact-lbl">Email</span>
+          <div class="contact-val">{{emailAddress}}</div>
+        </div>
+        {% endif %}
+        {% if phoneNumber %}
+        <div class="contact-cell">
+          <span class="contact-lbl">Phone</span>
+          <div class="contact-val">{{phoneNumber}}</div>
+        </div>
+        {% endif %}
+        {% if website %}
+        <div class="contact-cell">
+          <span class="contact-lbl">Website</span>
+          <div class="contact-val">{{website}}</div>
+        </div>
+        {% endif %}
+      </div>
       {% endif %}
     </div>
     {% endif %}
@@ -565,7 +490,7 @@ body { font-family:var(--fs); background:#8a8a92; padding:24px 16px; color:var(-
   </div>
 
   <div class="pg-foot">
-    <span class="pg-foot-l">{{footerText | default('© Strategic Report')}}</span>
+    <span class="pg-foot-l">{{footerText}}</span>
     <span class="pg-foot-r">PAGE {{section.page_num}}</span>
   </div>
 
