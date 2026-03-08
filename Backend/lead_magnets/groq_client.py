@@ -16,14 +16,14 @@ SECTIONS = [
         "text-only",
         (
             "Write the Executive Summary for a professional guide on {topic} for {audience}.\n"
-            "STRUCTURE — produce exactly these HTML elements in this order:\n"
-            "<p> — 2-3 sentences: what {topic} means operationally for {audience} (not a definition).\n"
-            "<p> — 2-3 sentences: what is changing right now in {topic} that {audience} cannot ignore.\n"
-            "<h3>Why This Matters Now</h3>\n"
-            "<ul> — exactly one <li> per pain point in [{pain_points}]. "
-            "Each <li>: pain point name in <strong>, then 1 sentence on its specific consequence for {audience}.\n"
-            "<p> — 2 sentences: what this guide delivers and the tangible outcome.\n"
-            "Total 180-220 words. Every sentence must be specific to {topic}."
+            "REQUIRED: Use at least 2 specific industry metrics with context (e.g. 'average lifecycle cost reduction of 18% in LGSF projects').\n"
+            "STRUCTURE:\n"
+            "<p> — 2-3 sentences: what {topic} means operationally for {audience}.\n"
+            "<p> — 2-3 sentences: current industry shifts in {topic}.\n"
+            "<h3>Strategic Drivers</h3>\n"
+            "<ul> — exactly one <li> per pain point in [{pain_points}]. Use <strong> for the pain point.\n"
+            "<p> — final outcome statement.\n"
+            "BANNED: vague percentages like '25% increase' without a source or baseline."
         )
     ),
     (
@@ -32,14 +32,14 @@ SECTIONS = [
         "CHALLENGES",
         "image-right",
         (
-            "Write the Key Challenges section for {audience} in {topic}.\n"
-            "STRUCTURE — for EACH pain point in [{pain_points}] produce:\n"
+            "Write the Key Challenges for {audience} in {topic}.\n"
+            "REQUIRED: Name specific failure modes (e.g. 'BIM data siloed in Revit 2024') and technical blockers.\n"
+            "STRUCTURE — for EACH pain point in [{pain_points}]:\n"
             "<h3>[Pain point name]</h3>\n"
-            "<p><strong>Root Cause:</strong> 1 sentence — WHY this occurs mechanically in {topic}.</p>\n"
-            "<p><strong>Consequence:</strong> 1 sentence — specific financial or operational impact on {audience}.</p>\n"
-            "<p><strong>Real Scenario:</strong> 2 sentences — a realistic situation in {topic} work.</p>\n"
-            "Every subsection must name {topic} explicitly. No generic language.\n"
-            "Total 180-220 words."
+            "<p><strong>Technical Root Cause:</strong> 1-2 sentences on the mechanical/software reason this fails.</p>\n"
+            "<p><strong>Operational Impact:</strong> 1-2 sentences with a specific metric (e.g. 'man-hour loss', 'waste percentage').</p>\n"
+            "<p><strong>Real-World Scenario:</strong> A realistic {topic} situation involving specific tools or roles.\n"
+            "BANNED: generic advice, 'leverage', 'unlock'."
         )
     ),
     (
@@ -48,18 +48,16 @@ SECTIONS = [
         "FRAMEWORK",
         "image-left",
         (
-            "Write a Strategic Framework section for {topic} for {audience}.\n"
+            "Define a Strategic Framework for {topic} for {audience}.\n"
+            "REQUIRED: Name a specific proprietary-sounding framework (e.g. 'The Modular Synthesis Protocol').\n"
             "STRUCTURE:\n"
-            "<p> — 2 sentences introducing your named framework. Give it a specific name using {topic} vocabulary.\n"
-            "<h3>[Step 1 name — from {topic} domain vocabulary, NOT generic]</h3>\n"
-            "<p> — 2-3 sentences: what practitioners specifically DO. Name a tool or method.\n"
-            "<h3>[Step 2 name — ties to one of {pain_points}]</h3>\n"
-            "<p> — 2-3 sentences: what practitioners DO. Show how it resolves a pain point.\n"
-            "<h3>[Step 3 name — includes a real-world {topic} example]</h3>\n"
-            "<p> — 2-3 sentences: what practitioners DO. Include a concrete example.\n"
-            "<h3>[Step 4 name — optional but adds value]</h3>\n"
-            "<p> — 2 sentences if included.\n"
-            "NO steps named Define/Plan/Execute/Review.\n"
+            "<p> — Intro to the framework logic.\n"
+            "<h3>[Step 1: Domain-Specific Name]</h3>\n"
+            "<p> — What practitioners DO. Name specific software (e.g. Procore, Autodesk Construction Cloud) or hardware.\n"
+            "<h3>[Step 2: Technical Integration]</h3>\n"
+            "<p> — How it resolves one of [{pain_points}]. Use a real-world metric.\n"
+            "<h3>[Step 3: Optimization]</h3>\n"
+            "<p> — Advanced workflow step (e.g. 'DFMA analysis', 'carbon sequestration metrics').\n"
             "Total 200-240 words."
         )
     ),
@@ -69,21 +67,17 @@ SECTIONS = [
         "IMPLEMENTATION",
         "text-only",
         (
-            "Write an Implementation Strategy for {audience} applying {topic}.\n"
-            "STRUCTURE — three phases, each as <h3> + <ul>:\n"
-            "<p> — 1 sentence framing the phased approach.\n"
-            "<h3>Phase 1 — [Domain-specific name] (Weeks 1-4)</h3>\n"
+            "Write a detailed Implementation Strategy for {topic}.\n"
+            "REQUIRED: This must be a narrative roadmap, NOT just a list of tasks. Connect tasks to outcomes.\n"
+            "STRUCTURE — 3 Phases, each with <h3> + narrative <p> + <ul>:\n"
+            "<h3>Phase 1: [Technical Kickoff Name]</h3>\n"
+            "<p>Explain the goal of this phase in 3 sentences, referencing specific {topic} standards.</p>\n"
             "<ul>\n"
-            "  <li><strong>Task 1:</strong> specific {topic} action — 1 sentence</li>\n"
-            "  <li><strong>Task 2:</strong> specific {topic} action — 1 sentence</li>\n"
-            "  <li><strong>Decision point:</strong> key choice {audience} faces and how to navigate it</li>\n"
-            "  <li><strong>Pain point watch:</strong> how [{pain_points}] surfaces here and what to do</li>\n"
+            "  <li><strong>Milestone:</strong> specific technical achievement.</li>\n"
+            "  <li><strong>Risk Factor:</strong> how to avoid a [{pain_points}] failure here.</li>\n"
             "</ul>\n"
-            "<h3>Phase 2 — [Domain-specific name] (Weeks 5-12)</h3>\n"
-            "<ul> — same 4-item structure </ul>\n"
-            "<h3>Phase 3 — [Domain-specific name] (Weeks 13+)</h3>\n"
-            "<ul> — same 4-item structure </ul>\n"
-            "Phase names must use {topic} vocabulary. Total 220-260 words."
+            "Repeat for Phase 2 (Mid-scale) and Phase 3 (Steady State).\n"
+            "BANNED: skeletal bullet points without context."
         )
     ),
     (
@@ -92,14 +86,13 @@ SECTIONS = [
         "RISK",
         "image-above",
         (
-            "Write a Risk Management section for {audience} in {topic}.\n"
-            "STRUCTURE — exactly 4 risks:\n"
-            "<h3>[Risk name — specific to {topic}, not 'scope creep' or 'budget overrun']</h3>\n"
-            "<p><strong>Cause:</strong> 1 sentence on what triggers this in {topic} work.</p>\n"
-            "<p><strong>Impact on {audience}:</strong> 1 sentence on the specific consequence.</p>\n"
-            "<p><strong>Mitigation:</strong> 1-2 sentences on what expert practitioners actually do.</p>\n"
-            "At least 2 of the 4 risks must be caused by pain points in [{pain_points}].\n"
-            "Total 200-240 words."
+            "Write a Risk Management profile for {topic}.\n"
+            "REQUIRED: Identify 4 high-stakes risks. Use specific industry terminology (e.g. 'clash detection errors', 'off-site tolerances').\n"
+            "STRUCTURE — 4 risks, each with:\n"
+            "<h3>[Technical Risk Name]</h3>\n"
+            "<p><strong>Trigger:</strong> specific event in {topic} workflow.</p>\n"
+            "<p><strong>Mitigation:</strong> exactly how expert {audience} use tools or protocols to fix it.\n"
+            "BANNED: 'scope creep', 'budget overrun'."
         )
     ),
     (
@@ -108,14 +101,63 @@ SECTIONS = [
         "METHODS",
         "text-only",
         (
-            "Write a Best Practices section for {audience} in {topic}.\n"
-            "STRUCTURE — exactly 4 named practices:\n"
-            "<h3>[Practice name — domain-specific, not 'Communicate Well' or 'Plan Ahead']</h3>\n"
-            "<p> — 2 sentences: the METHOD — how expert {audience} implement this specifically in {topic}.</p>\n"
-            "<p> — 1 sentence: a concrete real-world example from {topic}.</p>\n"
-            "<p> — 1 sentence: which of [{pain_points}] this addresses and the measurable outcome.</p>\n"
-            "Repeat pattern for all 4 practices.\n"
-            "Total 200-240 words."
+            "Write Best Practices for {audience} in {topic}.\n"
+            "REQUIRED: Name at least 2 specific tools, platforms, or standards (e.g. Revit, LGSF panels, SIPs, PassiveHouse, ISO 19650).\n"
+            "STRUCTURE — 4 practices, each with:\n"
+            "<h3>[Practice Name]</h3>\n"
+            "<p>The METHOD: how to implement this specifically using [named tool/standard].</p>\n"
+            "<p>The METRIC: specific improvement (e.g. '22% reduction in RFI cycles').</p>\n"
+            "BANNED: vague advice like 'Plan Ahead'."
+        )
+    ),
+    (
+        "key_statistics",
+        "Key Statistics & Market Data",
+        "DATA",
+        "text-only",
+        (
+            "Provide critical market data and statistics for {topic}.\n"
+            "REQUIRED: Use credible-sounding (or real) data points. Attribute them to 'Industry Benchmarks', 'Market Research', or 'Historical Project Data'.\n"
+            "STRUCTURE:\n"
+            "<h3>Industry Benchmarks</h3>\n"
+            "<p>Provide 3-4 specific data points (e.g. 'Modular construction adoption in {industry} is projected to grow by 12.4% CAGR through 2028').</p>\n"
+            "<h3>Comparative Efficiency</h3>\n"
+            "<ul>\n"
+            "  <li>Metric 1: Specific comparison (e.g. 'Off-site vs On-site waste reduction').</li>\n"
+            "  <li>Metric 2: Time-to-market reduction.</li>\n"
+            "</ul>\n"
+            "BANNED: fabricated percentages without a clear baseline."
+        )
+    ),
+    (
+        "process_steps",
+        "Technical Process Steps",
+        "PROCESS",
+        "text-only",
+        (
+            "Break down the technical process for {topic}.\n"
+            "REQUIRED: Use technical verbs and name specific workflow stages (e.g. 'Schematic Design', 'BIM Coordination', 'Factory Fabrication').\n"
+            "STRUCTURE — 5 numbered steps using <h3>:\n"
+            "<h3>Step 1: [Technical Stage Name]</h3>\n"
+            "<p>Explain the inputs, tools used, and the specific output for {audience}.</p>\n"
+            "Repeat for 5 steps."
+        )
+    ),
+    (
+        "comparison_table",
+        "Strategic Comparison",
+        "COMPARISON",
+        "text-only",
+        (
+            "Write a comparative analysis between traditional methods and {topic}.\n"
+            "REQUIRED: Use specific criteria (e.g. 'Embodied Carbon', 'Precision Tolerances', 'Site Disruption').\n"
+            "STRUCTURE:\n"
+            "<p>Intro sentence.</p>\n"
+            "<h3>[Criteria 1]</h3>\n"
+            "<p>Contrast the two approaches with specific metrics.</p>\n"
+            "<h3>[Criteria 2]</h3>\n"
+            "<p>Contrast with focus on {audience} pain points.</p>\n"
+            "Repeat for 3 criteria."
         )
     ),
     (
@@ -124,37 +166,33 @@ SECTIONS = [
         "TAKEAWAYS",
         "text-only",
         (
-            "Write the Key Takeaways section for {audience} on {topic}.\n"
-            "STRUCTURE — exactly 3 themed groups:\n"
-            "<h3>[Theme name — use {topic} domain vocabulary, NOT generic names like Planning/Communication]</h3>\n"
-            "<p> — 1-2 sentences: the core insight for this theme.</p>\n"
+            "Summarize the most important insights for {audience}.\n"
+            "REQUIRED: Focus on high-level strategic pivots. Name specific shifts in {topic}.\n"
+            "STRUCTURE — 3 themes, each with <h3> + narrative <p> + <ul>:\n"
+            "<h3>[Theme Name]</h3>\n"
+            "<p>The core strategic insight.</p>\n"
             "<ul>\n"
-            "  <li>Takeaway 1: 2 sentences with a specific fact, metric, or scenario from {topic}</li>\n"
-            "  <li>Takeaway 2: 2 sentences with a specific fact, metric, or scenario from {topic}</li>\n"
-            "  <li>Takeaway 3: 2 sentences connecting to [{pain_points}]</li>\n"
+            "  <li>Specific takeaway with a metric or tool reference.</li>\n"
             "</ul>\n"
-            "Repeat for all 3 themes. At least 2 themes must connect directly to [{pain_points}].\n"
-            "Total 200-240 words."
+            "Repeat for 3 themes."
         )
     ),
     (
         "conclusion",
-        "Conclusion & Next Steps",
+        "Conclusion & Roadmap",
         "CONCLUSION",
         "text-only",
         (
-            "Write the Conclusion & Next Steps for this {topic} guide for {audience}.\n"
+            "Final conclusion and next steps for {topic}.\n"
+            "REQUIRED: A strong, specific call to action tailored to {audience}.\n"
             "STRUCTURE:\n"
-            "<p> — 2-3 sentences: the single most important insight, specific to {topic}.\n"
-            "<h3>Your Next Steps</h3>\n"
+            "<p>Final summary of the value of {topic}.</p>\n"
+            "<h3>Your 90-Day Roadmap</h3>\n"
             "<ol>\n"
-            "  <li>Step 1: specific {topic} action, 1-2 sentences</li>\n"
-            "  <li>Step 2: specific {topic} action, 1-2 sentences</li>\n"
-            "  <li>Step 3: specific {topic} action, 1-2 sentences</li>\n"
+            "  <li>Immediate action: specific {topic} audit.</li>\n"
+            "  <li>Tool implementation: name a specific software/method.</li>\n"
+            "  <li>Metric verification.</li>\n"
             "</ol>\n"
-            "<p> — 2 sentences: what {audience} who master {topic} will achieve in 2-3 years, "
-            "tied to resolving [{pain_points}].\n"
-            "<p> — 1 sentence: a direct, specific call to action (not 'take the next step').\n"
             "Total 180-220 words."
         )
     ),
@@ -200,7 +238,7 @@ class GroqClient:
         if not api_key:
             raise ValueError("GROQ_API_KEY is required.")
         self.client      = Groq(api_key=api_key)
-        self.model       = "llama-3.1-8b-instant"   # swap to llama-3.3-70b-versatile for production
+        self.model       = "llama-3.3-70b-versatile"   # swap to llama-3.3-70b-versatile for production
         self.temperature = 0.45
         self.max_tokens  = 4096
         self._analysis   = None   # Layer 1 cache
@@ -315,15 +353,21 @@ class GroqClient:
         # Auto-compute cover text color: dark bg -> white, light bg -> black
         cover_text_color = firm_profile.get("cover_text_color") or self._contrast_color(primary_color)
 
+        company_name = (
+            firm_profile.get("firm_name")
+            or firm_profile.get("company_name")
+            or "Your Company"
+        )
+
         return {
             "mainTitle":         ai_content.get("title"),
             "documentSubtitle":  ai_content.get("subtitle"),
             "documentTypeLabel": ai_content.get("document_type_label") or "",
-            "companyName":       firm_profile.get("firm_name", ""),
+            "companyName":       company_name,
             "emailAddress":      firm_profile.get("work_email", ""),
             "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
-            "footerText":        f"© {firm_profile.get('firm_name') or ''}",
+            "footerText":        f"© {company_name}",
             "primaryColor":      primary_color,
             "secondaryColor":    firm_profile.get("secondary_brand_color") or "",
             "tertiaryColor":     firm_profile.get("tertiary_brand_color") or "",
@@ -347,7 +391,7 @@ class GroqClient:
             "image_2_caption":   firm_profile.get("image_2_caption") or "",
             "image_3_caption":   firm_profile.get("image_3_caption") or "",
             "cta":               re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion") or "").strip(),
-            "logoPlaceholder":   (firm_profile.get("firm_name") or "L")[0].upper(),
+            "logoPlaceholder":   company_name[0].upper(),
             "checkmarkIcon":     "✓",
         }
 
@@ -397,17 +441,9 @@ class GroqClient:
             f"  angle: 1-sentence editorial angle specific to this topic + audience\n"
             f"  key_points: exactly 3 specific points the writer MUST cover (domain-specific, not generic)\n"
             f"  pain_point_tie: which pain point from [{signals['pain_points']}] this section resolves\n\n"
-            f"Return ONLY:\n"
-            f'{{"sections": {{\n'
-            f'  "executive_summary": {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "key_challenges":    {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "strategic_framework":{{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "implementation_strategy":{{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "risk_management":   {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "best_practices":    {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "key_takeaways":     {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}},\n'
-            f'  "conclusion":        {{"angle": "...", "key_points": ["...", "...", "..."], "pain_point_tie": "..."}}\n'
-            f'}}}}'
+            f"Return ONLY a JSON object where the 'sections' key contains all requested section keys.\n"
+            f"Example structure:\n"
+            f'{{"sections": {{ "executive_summary": {{"angle": "...", "key_points": [], "pain_point_tie": "..."}} }} }}'
         )
         logger.info(f"🔵 Layer 2 | {len(section_keys)} sections")
         result = self._call_ai(system, prompt, max_tokens=1500)
