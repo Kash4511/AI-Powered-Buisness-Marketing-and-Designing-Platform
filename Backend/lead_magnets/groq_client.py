@@ -347,6 +347,8 @@ class GroqClient:
             "image_2_caption":   firm_profile.get("image_2_caption") or "",
             "image_3_caption":   firm_profile.get("image_3_caption") or "",
             "cta":               re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion") or "").strip(),
+            "logoPlaceholder":   (firm_profile.get("firm_name") or "L")[0].upper(),
+            "checkmarkIcon":     "✓",
         }
 
     def ensure_section_content(self, sections, signals, firm_profile):
