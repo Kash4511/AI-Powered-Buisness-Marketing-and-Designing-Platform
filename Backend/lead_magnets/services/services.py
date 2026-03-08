@@ -126,6 +126,16 @@ class DocRaptorService:
             loader=FileSystemLoader(self.templates_dir),
             autoescape=select_autoescape(['html'])
         )
+        
+        # Add custom filters to the environment
+        def zfill_filter(value, width=2):
+            try:
+                return str(int(value)).zfill(width)
+            except (ValueError, TypeError):
+                return str(value).zfill(width)
+        
+        env.filters['zfill'] = zfill_filter
+        
         template_name = 'Template.html'
         if str(template_id).lower() in ('brand-assets', 'brand_assets', 'brand-assets-preview'):
             template_name = 'BrandAssetsPreview.html'
@@ -425,6 +435,21 @@ def render_template(template_html: str, ai_data: Dict[str, Any]) -> str:
     Fills Template.html with AI-generated data dynamically using Jinja2.
     Expects ai_data keys to match placeholders in the HTML.
     """
-    template = Template(template_html)
-    filled_html = template.render(**ai_data)
-    return clean_rendered_html(filled_html, ai_data)
+    env = Environment(autoescape=select_autoescape(['html']))
+    
+    # Add custom filters to the environment
+    def zfill_filter(value, width=2):
+        try:
+            return str(int(value)).zfill(width)
+        except (ValueError, TypeError):
+            return str(value).zfill(width)
+    
+    env.filters['zfill'] = zfill_filter
+    
+    try:
+        template = env.from_string(template_html)
+        filled_html = template.render(**ai_data)
+        return clean_rendered_html(filled_html, ai_data)
+    except Exception as e:
+        logger.error(f"render_template: Jinja2 rendering failed: {e}", exc_info=True)
+        raise ValueError(f"Template rendering failed: {str(e)}")

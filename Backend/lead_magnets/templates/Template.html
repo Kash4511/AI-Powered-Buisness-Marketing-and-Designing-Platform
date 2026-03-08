@@ -205,7 +205,7 @@
             <div class="pg-head">
                 <div class="pg-head-row">
                     <span class="pg-label">CONTACT</span>
-                    <div class="pg-num-badge">{{ (content_sections|length + 4)|string|zfill(2) }}</div>
+                    <div class="pg-num-badge">{{ (content_sections|length + 4) | zfill }}</div>
                 </div>
             </div>
             <div class="bw" style="justify-content: center; text-align: center;">
@@ -222,7 +222,7 @@
             </div>
             <div class="pg-foot">
                 <span class="pf-l">{{footerText}}</span>
-                <span class="pf-r">PAGE {{ (content_sections|length + 4)|string|zfill(2) }}</span>
+                <span class="pf-r">PAGE {{ (content_sections|length + 4) | zfill }}</span>
             </div>
         </div>
     </div>
