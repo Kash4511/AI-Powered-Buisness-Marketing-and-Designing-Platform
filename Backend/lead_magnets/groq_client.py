@@ -512,7 +512,8 @@ class GroqClient:
             f"6. DO NOT write the section title — it renders above your content automatically.\n"
             f"7. STRUCTURE RULE: follow the SECTION BRIEF structure exactly — use the HTML elements specified.\n"
             f"8. CONTENT DENSITY: prefer 3-5 shorter paragraphs over 1-2 long ones. Break at every logical point.\n"
-            f"9. Return valid JSON only. No markdown. No text outside the JSON.\n"
+            f"9. MINIMUM WORD COUNT: Every section MUST be at least 180-220 words. If you are naturally concise, expand with specific technical details, real-world analogies, or workflow metrics.\n"
+            f"10. Return valid JSON only. No markdown. No text outside the JSON.\n"
         )
 
         prompt = (
@@ -529,8 +530,10 @@ class GroqClient:
         words   = len(content.split()) if content else 0
         logger.info(f"✅ '{key}': {words} words | angle='{angle[:40]}...' " if angle else f"✅ '{key}': {words} words")
 
-        if words < 100:
-            raise ValueError(f"Section '{key}' too short ({words} words — need 200+). Keys: {list(raw.keys())}. Snippet: {str(raw)[:200]}")
+        # Thresholds: conclusion can be shorter (80), others need 100+
+        min_words = 80 if key == "conclusion" else 100
+        if words < min_words:
+            raise ValueError(f"Section '{key}' too short ({words} words — need {min_words}+). Keys: {list(raw.keys())}. Snippet: {str(raw)[:200]}")
 
         return self._sanitize_html(content)
 
