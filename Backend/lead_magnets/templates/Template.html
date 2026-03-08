@@ -46,18 +46,56 @@
         .cover-footer { position: absolute; bottom: 30mm; left: 0; right: 0; padding: 0 20mm; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; }
         .cover-company { font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* ── HEADER & FOOTER ────────────────────────────── */
-        .pg-head { padding: 12mm 16mm 0 20mm; flex-shrink: 0; }
-        .pg-head-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--R2); }
-        .pg-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--I3); }
-        .pg-num-badge { width: 24px; height: 24px; background: var(--P); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px; font-weight: 700; }
+        /* ── HEADER & FOOTER ENHANCED ────────────────────── */
+        .page-header-enhanced {
+            background: var(--P3);
+            color: white;
+            padding: 10mm 16mm 6mm 20mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .page-title-enhanced {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .page-number-enhanced {
+            width: 28px;
+            height: 28px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 700;
+        }
 
-        .pg-foot { padding: 5mm 16mm 8mm 20mm; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--I3); }
-        .pf-l { font-style: italic; }
-        .pf-r { font-family: var(--mono); font-weight: 700; color: var(--P); }
+        .footer-enhanced {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 8mm 16mm 10mm 20mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: var(--I3);
+            border-top: 1px solid var(--R2);
+        }
+        .footer-logo-placeholder {
+            font-family: var(--mono);
+            font-weight: 700;
+            color: var(--P);
+            font-size: 14px;
+        }
 
         /* ── CONTENT AREA ───────────────────────────────── */
-        .bw { flex: 1; padding: 16px 16mm 12px 20mm; display: flex; flex-direction: column; min-height: 0; }
+        .bw { flex: 1; padding: 16px 16mm 12px 20mm; display: flex; flex-direction: column; min-height: 0; padding-bottom: 30mm; }
         
         .ch-h1 { font-family: var(--serif); font-size: 34px; font-weight: 700; color: var(--I); line-height: 1.1; margin-bottom: 14px; }
         .body { font-size: 11px; line-height: 1.8; color: var(--I2); }
@@ -67,12 +105,45 @@
         .body ul li { position: relative; padding-left: 20px; margin-bottom: 8px; }
         .body ul li::before { content: ''; position: absolute; left: 0; top: 10px; width: 5px; height: 5px; border-radius: 50%; background: var(--P); opacity: 0.6; }
         
-        .two-columns { display: flex; gap: 20px; margin: 20px 0; }
-        .column { flex: 1; }
+        /* Issue 1: Two-column CSS Grid layout */
+        .grid-layout {
+            display: grid;
+            gap: 20px;
+            align-items: start;
+            margin: 20px 0;
+        }
+        .image-right-grid { grid-template-columns: 55% 45%; }
+        .image-left-grid { grid-template-columns: 45% 55%; }
         
-        .sec-img { margin: 20px 0; }
-        .sec-img img { width: 100%; border-radius: 6px; box-shadow: 0 8px 28px rgba(0,0,0,.12); }
+        .img-col { width: 100%; overflow: hidden; }
+        .text-col { width: 100%; }
+        
+        .sec-img { width: 100%; }
+        .sec-img img { 
+            width: 100%; 
+            height: 220px; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            box-shadow: 0 8px 28px rgba(0,0,0,.12); 
+        }
         .img-cap { font-size: 9px; color: var(--I3); margin-top: 8px; text-align: center; font-style: italic; }
+
+        /* Placeholder logic */
+        .image-placeholder {
+            width: 100%;
+            height: 220px;
+            background: var(--A);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--P3);
+            font-family: var(--mono);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px dashed var(--P3);
+        }
 
         blockquote { background: #fafafa; border-left: 4px solid var(--P); padding: 15px 20px; margin: 20px 0; font-style: italic; color: var(--I2); }
 
@@ -151,63 +222,74 @@
 
         <!-- CONTENT PAGES -->
         {% for section in content_sections %}
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">{{section.label}}</span>
-                    <div class="pg-num-badge">{{section.page_num}}</div>
-                </div>
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <span class="page-title-enhanced">{{ section.label }}</span>
+                <div class="page-number-enhanced">{{ section.page_num }}</div>
             </div>
+
             <div class="bw">
-                <h1 class="ch-h1">{{section.title}}</h1>
+                <h1 class="ch-h1">{{ section.title }}</h1>
                 
                 <div class="body">
                     {% if section.layout_type == 'image-right' %}
-                        <div class="two-columns">
-                            <div class="column">{{ section.content | safe }}</div>
-                            <div class="column">
+                        <div class="grid-layout image-right-grid">
+                            <div class="text-col">{{ section.content | safe }}</div>
+                            <div class="img-col">
                                 <div class="sec-img">
-                                    <img src="{{ image_1_url }}" alt="Section Image">
+                                    {% if image_1_url %}
+                                        <img src="{{ image_1_url }}" alt="Section Image">
+                                    {% else %}
+                                        <div class="image-placeholder">PROJECT IMAGE</div>
+                                    {% endif %}
                                     <div class="img-cap">{{ image_1_caption }}</div>
                                 </div>
                             </div>
                         </div>
                     {% elif section.layout_type == 'image-left' %}
-                        <div class="two-columns">
-                            <div class="column">
+                        <div class="grid-layout image-left-grid">
+                            <div class="img-col">
                                 <div class="sec-img">
-                                    <img src="{{ image_2_url }}" alt="Section Image">
+                                    {% if image_2_url %}
+                                        <img src="{{ image_2_url }}" alt="Section Image">
+                                    {% else %}
+                                        <div class="image-placeholder">PROJECT IMAGE</div>
+                                    {% endif %}
                                     <div class="img-cap">{{ image_2_caption }}</div>
                                 </div>
                             </div>
-                            <div class="column">{{ section.content | safe }}</div>
+                            <div class="text-col">{{ section.content | safe }}</div>
                         </div>
                     {% elif section.layout_type == 'image-above' %}
-                        <div class="sec-img" style="height: 180px; overflow: hidden;">
-                            <img src="{{ image_3_url }}" alt="Header Image" style="height: 100%; object-fit: cover;">
+                        <div class="sec-img" style="height: 180px; overflow: hidden; margin-bottom: 20px;">
+                            {% if image_3_url %}
+                                <img src="{{ image_3_url }}" alt="Header Image" style="height: 100%; object-fit: cover;">
+                            {% else %}
+                                <div class="image-placeholder" style="height: 180px;">HEADER IMAGE</div>
+                            {% endif %}
+                            <div class="img-cap" style="margin-top: 8px;">{{ image_3_caption }}</div>
                         </div>
-                        <div class="img-cap" style="margin-top: -10px; margin-bottom: 20px;">{{ image_3_caption }}</div>
                         {{ section.content | safe }}
                     {% else %}
                         {{ section.content | safe }}
                     {% endif %}
                 </div>
             </div>
-            <div class="pg-foot">
-                <span class="pf-l">{{footerText}}</span>
-                <span class="pf-r">PAGE {{section.page_num}}</span>
+            
+            <div class="footer-enhanced">
+                <div class="footer-logo-placeholder">{{ logoPlaceholder }}</div>
+                <div>{{ website }}</div>
             </div>
         </div>
         {% endfor %}
 
         <!-- CONTACT PAGE -->
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">CONTACT</span>
-                    <div class="pg-num-badge">{{ (content_sections|length + 4) | zfill }}</div>
-                </div>
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <span class="page-title-enhanced">CONTACT</span>
+                <div class="page-number-enhanced">{{ (content_sections|length + 4) | zfill }}</div>
             </div>
+
             <div class="bw" style="justify-content: center; text-align: center;">
                 <h1 class="ch-h1">Ready to Master {{mainTitle}}?</h1>
                 <div class="body">
@@ -220,9 +302,10 @@
                     </div>
                 </div>
             </div>
-            <div class="pg-foot">
-                <span class="pf-l">{{footerText}}</span>
-                <span class="pf-r">PAGE {{ (content_sections|length + 4) | zfill }}</span>
+            
+            <div class="footer-enhanced">
+                <div class="footer-logo-placeholder">{{ logoPlaceholder }}</div>
+                <div>{{ website }}</div>
             </div>
         </div>
     </div>
