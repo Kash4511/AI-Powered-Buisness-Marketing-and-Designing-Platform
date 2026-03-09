@@ -288,8 +288,21 @@ def _run_generation_job(job_id, body, user_id):
 
                 _set_job(job_id, status="processing", progress=65, message="Structuring content for PDF...")
 
+                # ── FIX: Ensure ai_content has a valid sections structure for mapping ──
+                # Requirement 4: Confirm extraction matches actual structure
+                # In GroqClient, normalize_ai_output puts content into keys directly.
+                # If 'sections' key is expected but missing, we log an error.
+                if not any(key in ai_content for key, *_ in getattr(ai_client, 'SECTIONS', [])):
+                    print("[ERROR] ai_content has no section data — check normalize_ai_output() output")
+                    _set_job(job_id, status="failed", error="AI content generation produced no sections")
+                    return
+
                 # ── FIX 3: map_to_template_vars builds content_sections + toc_sections ──
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
+                
+                # DEBUG 1: Verify template_vars (build_flat_vars equivalent) (Requirement 1)
+                print(f"[DEBUG] flat vars count: {len(template_vars)}")
+                print(f"[DEBUG] sample vars: { {k: str(v)[:40] for k, v in list(template_vars.items())[:10]} }")
 
                 # Ensure critical fields are never empty
                 template_vars['companyName']  = template_vars.get('companyName')  or firm_profile.get('firm_name') or 'Your Company'

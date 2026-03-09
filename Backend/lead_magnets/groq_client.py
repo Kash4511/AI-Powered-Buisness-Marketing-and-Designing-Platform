@@ -377,9 +377,10 @@ class GroqClient:
             gold_color = "#" + gold_color
 
         company_name = (
-            firm_profile.get("firm_name")
-            or firm_profile.get("company_name")
-            or "Your Company"
+            firm_profile.get("firm_name") or
+            firm_profile.get("company_name") or
+            firm_profile.get("name") or
+            "Your Company"   # never fall back to email
         )
 
         # Base mapping
@@ -398,7 +399,7 @@ class GroqClient:
             "emailAddress":      firm_profile.get("work_email", ""),
             "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
-            "logoPlaceholder":   company_name[0].upper(),
+            "logoPlaceholder":   company_name[:2].upper(),
             "footerText":        f"© {company_name}",
         }
 
