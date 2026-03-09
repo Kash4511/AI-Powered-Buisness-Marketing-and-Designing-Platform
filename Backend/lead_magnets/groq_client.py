@@ -315,9 +315,36 @@ class GroqClient:
             content = exp.get(key, "")
             if isinstance(content, dict):
                 content = json.dumps(content)
-            normalized[key] = self._sanitize_html(
+            
+            sanitized = self._sanitize_html(
                 content if isinstance(content, str) else str(content)
             )
+            normalized[key] = sanitized
+            
+            # Extract specific components for the new magazine layout
+            if key == "key_statistics":
+                self._extract_stats(sanitized, normalized)
+                self._extract_strip(sanitized, normalized, 1)
+            elif key == "process_steps":
+                self._extract_steps(sanitized, normalized)
+            elif key == "comparison_table":
+                self._extract_table(sanitized, normalized)
+                self._extract_quote(sanitized, normalized, 3)
+            elif key == "key_takeaways":
+                self._extract_icons(sanitized, normalized)
+            elif key == "implementation_strategy":
+                self._extract_timeline(sanitized, normalized)
+            elif key == "best_practices":
+                self._extract_checklists(sanitized, normalized, "extListItem", 6)
+                self._extract_strip(sanitized, normalized, 2)
+            elif key == "key_challenges":
+                self._extract_checklists(sanitized, normalized, "listItem", 4)
+            elif key == "risk_management":
+                self._extract_checklists(sanitized, normalized, "numberedItem", 4)
+                self._extract_quote(sanitized, normalized, 2)
+            elif key == "conclusion":
+                self._extract_cta(sanitized, normalized)
+
         return normalized
 
     def map_to_template_vars(
@@ -326,32 +353,28 @@ class GroqClient:
         firm_profile: Dict[str, Any],
         signals: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        content_sections: List[Dict] = []
-        toc_sections:     List[Dict] = []
-        for idx, (key, title, label, layout_type, _) in enumerate(SECTIONS):
-            page_num = f"{idx + 3:02d}"
-            raw_content = ai_content.get(key, "")
-
-            content_sections.append({
-                "key":          key,
-                "title":        title,
-                "label":        label,
-                "page_num":     page_num,
-                "content":      raw_content,
-                "layout_type":  layout_type,
-                "is_conclusion":key == "conclusion",
-            })
-            toc_sections.append({"title": title, "label": label, "page_num": page_num, "idx": idx})
-
         primary_color = (
             firm_profile.get("primary_brand_color")
-            or (signals or {}).get("primary_color") or ""
+            or (signals or {}).get("primary_color") or "#1a1a1a"
         )
         if primary_color and not str(primary_color).startswith("#"):
             primary_color = "#" + primary_color
 
-        # Auto-compute cover text color: dark bg -> white, light bg -> black
-        cover_text_color = firm_profile.get("cover_text_color") or self._contrast_color(primary_color)
+        secondary_color = firm_profile.get("secondary_brand_color") or "#2a2a2a"
+        if secondary_color and not str(secondary_color).startswith("#"):
+            secondary_color = "#" + secondary_color
+
+        accent_color = firm_profile.get("accent_color") or "#3a3a3a"
+        if accent_color and not str(accent_color).startswith("#"):
+            accent_color = "#" + accent_color
+
+        highlight_color = firm_profile.get("highlight_color") or "#4a4a4a"
+        if highlight_color and not str(highlight_color).startswith("#"):
+            highlight_color = "#" + highlight_color
+
+        gold_color = firm_profile.get("gold_color") or "#c5a059"
+        if gold_color and not str(gold_color).startswith("#"):
+            gold_color = "#" + gold_color
 
         company_name = (
             firm_profile.get("firm_name")
@@ -359,41 +382,208 @@ class GroqClient:
             or "Your Company"
         )
 
-        return {
+        # Base mapping
+        vars = {
+            "documentTitle":     ai_content.get("title"),
+            "primaryColor":      primary_color,
+            "secondaryColor":    secondary_color,
+            "accentColor":       accent_color,
+            "highlightColor":    highlight_color,
+            "goldColor":         gold_color,
+            "documentTypeLabel": ai_content.get("document_type_label"),
             "mainTitle":         ai_content.get("title"),
+            "mainTitleAccent":   "", # AI usually generates this in subtitle or we can split title
             "documentSubtitle":  ai_content.get("subtitle"),
-            "documentTypeLabel": ai_content.get("document_type_label") or "",
             "companyName":       company_name,
             "emailAddress":      firm_profile.get("work_email", ""),
             "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
-            "footerText":        f"© {company_name}",
-            "primaryColor":      primary_color,
-            "secondaryColor":    firm_profile.get("secondary_brand_color") or "",
-            "tertiaryColor":     firm_profile.get("tertiary_brand_color") or "",
-            "accentColor":       firm_profile.get("accent_color") or "",
-            "creamColor":        firm_profile.get("cream_color") or "",
-            "creamDarkColor":    firm_profile.get("cream_dark_color") or "",
-            "inkColor":          firm_profile.get("ink_color") or "",
-            "inkMidColor":       firm_profile.get("ink_mid_color") or "",
-            "inkLightColor":     firm_profile.get("ink_light_color") or "",
-            "ruleColor":         firm_profile.get("rule_color") or "",
-            "ruleLightColor":    firm_profile.get("rule_light_color") or "",
-            "coverTextColor":    cover_text_color,
-            "coverLogoFilter":   firm_profile.get("cover_logo_filter") or "brightness(0) invert(1)",
-            "summary":           ai_content.get("summary", ""),
-            "content_sections":  content_sections,
-            "toc_sections":      toc_sections,
-            "image_1_url":       firm_profile.get("image_1_url", ""),
-            "image_2_url":       firm_profile.get("image_2_url", ""),
-            "image_3_url":       firm_profile.get("image_3_url", ""),
-            "image_1_caption":   firm_profile.get("image_1_caption") or "",
-            "image_2_caption":   firm_profile.get("image_2_caption") or "",
-            "image_3_caption":   firm_profile.get("image_3_caption") or "",
-            "cta":               re.sub(r'<[^>]+>', ' ', ai_content.get("conclusion") or "").strip(),
             "logoPlaceholder":   company_name[0].upper(),
-            "checkmarkIcon":     "✓",
+            "footerText":        f"© {company_name}",
         }
+
+        # Split title for accent if possible
+        title = vars["mainTitle"]
+        if ":" in title:
+            parts = title.split(":", 1)
+            vars["mainTitle"] = parts[0].strip()
+            vars["mainTitleAccent"] = parts[1].strip()
+
+        # Section Titles and Page Numbers
+        for idx, (key, title, label, _, _) in enumerate(SECTIONS):
+            vars[f"sectionTitle{idx+1}"] = label
+            vars[f"pageNumberHeader{idx+1}"] = f"{idx+2:02d}" # Starting from page 2 (Terms)
+            vars[f"contentItem{idx+1}"] = title
+            vars[f"pageNumber{idx+4}"] = f"{idx+4:02d}" # Starting from page 4 (Content)
+
+        # Terms Page (Page 2)
+        vars.update({
+            "sectionTitle1": "LEGAL NOTICE",
+            "pageNumberHeader2": "02",
+            "termsTitle": "Terms of Use",
+            "termsSummary": "This report is provided for informational purposes only. The contents are based on AI-assisted analysis and should be verified by professional consultants before implementation.",
+            "termsParagraph1": f"© {company_name}. All rights reserved. No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the publisher.",
+            "termsParagraph2": "The information contained in this document is for general guidance on matters of interest only. The application and impact of laws can vary widely based on the specific facts involved.",
+            "termsParagraph3": "Given the changing nature of laws, rules and regulations, and the inherent hazards of electronic communication, there may be delays, omissions or inaccuracies in information contained in this document.",
+            "termsParagraph4": "While we have made every attempt to ensure that the information contained in this document has been obtained from reliable sources, we are not responsible for any errors or omissions, or for the results obtained from the use of this information.",
+            "termsParagraph5": "This AI-generated content is intended to support, not replace, professional architectural and engineering advice. Consult with qualified professionals for project-specific requirements.",
+        })
+
+        # TOC Page (Page 3)
+        vars.update({
+            "sectionTitle2": "CONTENTS",
+            "pageNumberHeader3": "03",
+            "contentsTitle": "Table of Contents",
+        })
+
+        # Content Sections (Pages 4-13)
+        for idx, (key, title, label, _, _) in enumerate(SECTIONS):
+            s_idx = idx + 1
+            content = ai_content.get(key, "")
+            
+            vars[f"customTitle{s_idx}"] = title
+            vars[f"customContent{s_idx}"] = self._extract_intro(content)
+            
+            # Subheadings and Subcontent
+            sub_h = self._extract_subheadings(content)
+            for h_idx, h_text in enumerate(sub_h):
+                if h_idx < 1: # Usually one main subheading per page in this layout
+                    vars[f"subheading{s_idx}"] = h_text
+                    vars[f"subcontent{s_idx}"] = self._extract_subcontent(content, h_text)
+
+            # Box Content (Callouts)
+            boxes = self._extract_boxes(content)
+            for b_idx, (b_title, b_content) in enumerate(boxes):
+                v_idx = b_idx + 1
+                if v_idx <= 4:
+                    vars[f"boxTitle{v_idx}"] = b_title
+                    vars[f"boxContent{v_idx}"] = b_content
+                # Also map to accentBox for specific pages
+                if s_idx == 5: vars[f"accentBoxTitle3"] = b_title; vars[f"accentBoxContent3"] = b_content
+                if s_idx == 8: vars[f"accentBoxTitle4"] = b_title; vars[f"accentBoxContent4"] = b_content
+
+        # Include extracted specialized components (Stats, Steps, Table, Icons, Timeline)
+        # These were added to the ai_content dict by normalize_ai_output
+        vars.update({k: v for k, v in ai_content.items() if k not in ["title", "subtitle", "summary", "document_type", "document_type_label", "sections_config"]})
+
+        # Images
+        vars.update({
+            "image1Html": self._get_image_html(firm_profile.get("image_1_url")),
+            "image2Html": self._get_image_html(firm_profile.get("image_2_url")),
+            "image3Html": self._get_image_html(firm_profile.get("image_3_url")),
+            "architecturalImageCaption1": firm_profile.get("image_1_caption") or "Executive Summary Overview",
+            "architecturalImageCaption2": firm_profile.get("image_2_caption") or "Key Challenges Analysis",
+            "architecturalImageCaption3": firm_profile.get("image_3_caption") or "Strategic Framework Model",
+        })
+
+        # CTA Page (Page 14)
+        vars.update({
+            "sectionTitle8": "CONTACT",
+            "pageNumberHeader9": f"{len(SECTIONS)+3:02d}",
+            "ctaHeadline": ai_content.get("cta_headline") or f"Ready to Master {vars['mainTitle']}?",
+            "contactDescription": ai_content.get("contact_description") or "Let's discuss how we can apply these strategies to your specific business challenges.",
+            "whyChooseUsTitle": "Why Choose Us",
+            "differentiator": ai_content.get("differentiator") or f"We combine industry expertise with cutting-edge {vars['mainTitle']} methodologies to deliver measurable results.",
+            "ctaText": ai_content.get("cta_text") or "Book a Strategic Audit",
+            "differentiatorTitle": ai_content.get("differentiator_title") or "Expert Guidance for Modern Construction",
+        })
+
+        return vars
+
+    # ── EXTRACTION HELPERS ───────────────────────────────────────────────────
+
+    def _extract_intro(self, html: str) -> str:
+        match = re.search(r'<p>(.*?)</p>', html, re.S)
+        return match.group(1).strip() if match else ""
+
+    def _extract_subheadings(self, html: str) -> List[str]:
+        return re.findall(r'<h3>(.*?)</h3>', html)
+
+    def _extract_subcontent(self, html: str, subheading: str) -> str:
+        pattern = rf'<h3>{re.escape(subheading)}</h3>\s*(.*?)(?:<h3>|$)', html
+        match = re.search(pattern, html, re.S)
+        return match.group(1).strip() if match else ""
+
+    def _extract_boxes(self, html: str) -> List[tuple]:
+        # Look for <h3> followed by <p> or <ul> as potential box content
+        matches = re.findall(r'<h3>(.*?)</h3>\s*(<p>.*?</p>|<ul>.*?</ul>)', html, re.S)
+        return [(m[0], m[1]) for m in matches]
+
+    def _extract_stats(self, html: str, data: Dict):
+        vals = re.findall(r'<li><strong>(.*?)</strong>\s*:\s*(.*?)</li>', html)
+        for i, (lbl, val) in enumerate(vals):
+            if i < 3:
+                data[f"stat{i+1}Value"] = val
+                data[f"stat{i+1}Label"] = lbl
+
+    def _extract_steps(self, html: str, data: Dict):
+        steps = re.findall(r'<h3>Step \d+:\s*(.*?)</h3>\s*<p>(.*?)</p>', html, re.S)
+        for i, (ttl, cnt) in enumerate(steps):
+            if i < 5:
+                data[f"stepTitle{i+1}"] = ttl
+                data[f"stepContent{i+1}"] = cnt
+
+    def _extract_table(self, html: str, data: Dict):
+        criteria = re.findall(r'<h3>(.*?)</h3>\s*<p>(.*?)</p>', html, re.S)
+        data["tableHeader1"] = "Criteria"
+        data["tableHeader2"] = "Traditional"
+        data["tableHeader3"] = "Modular"
+        data["tableHeader4"] = "Impact"
+        for i, (ttl, cnt) in enumerate(criteria):
+            if i < 3:
+                data[f"tableRow{i+1}Col1"] = ttl
+                # Split content if it has vs or contrast
+                parts = re.split(r' vs | contrast | compared to ', cnt, flags=re.I)
+                data[f"tableRow{i+1}Col2"] = parts[0] if len(parts) > 0 else "Standard"
+                data[f"tableRow{i+1}Col3"] = parts[1] if len(parts) > 1 else "Optimized"
+                data[f"tableRow{i+1}Col4"] = "High"
+
+    def _extract_icons(self, html: str, data: Dict):
+        themes = re.findall(r'<h3>(.*?)</h3>\s*<p>(.*?)</p>', html, re.S)
+        emojis = ["🚀", "🎯", "🛡️", "📈"]
+        for i, (ttl, cnt) in enumerate(themes):
+            if i < 4:
+                data[f"iconCard{i+1}Emoji"] = emojis[i]
+                data[f"iconCard{i+1}Title"] = ttl
+                data[f"iconCard{i+1}Text"] = cnt[:80] + "..." if len(cnt) > 80 else cnt
+
+    def _extract_timeline(self, html: str, data: Dict):
+        phases = re.findall(r'<h3>Phase \d+:\s*(.*?)</h3>\s*<p>(.*?)</p>', html, re.S)
+        for i, (ttl, cnt) in enumerate(phases):
+            if i < 5:
+                data[f"timelineItem{i+1}Title"] = ttl
+                data[f"timelineItem{i+1}"] = cnt
+
+    def _extract_checklists(self, html: str, data: Dict, prefix: str, limit: int):
+        items = re.findall(r'<li>(.*?)</li>', html)
+        for i, itm in enumerate(items):
+            if i < limit:
+                data[f"{prefix}{i+1}"] = itm
+
+    def _extract_quote(self, html: str, data: Dict, idx: int):
+        match = re.search(r'<blockquote>(.*?)</blockquote>', html, re.S)
+        if match:
+            data[f"quoteText{idx}"] = match.group(1).strip()
+            data[f"quoteAuthor{idx}"] = "Industry Insight"
+
+    def _extract_strip(self, html: str, data: Dict, idx: int):
+        # Extract <h3> followed by <p> as a highlight strip
+        match = re.search(r'<h3>(.*?)</h3>\s*<p>(.*?)</p>', html, re.S)
+        if match:
+            data[f"highlightStripTitle{idx}"] = match.group(1)
+            data[f"highlightStripContent{idx}"] = match.group(2)
+
+    def _extract_cta(self, html: str, data: Dict):
+        match = re.search(r'<h3>(.*?)</h3>', html)
+        if match: data["ctaHeadline"] = match.group(1)
+        
+        intro = self._extract_intro(html)
+        if intro: data["contactDescription"] = intro
+
+    def _get_image_html(self, url: str) -> str:
+        if url:
+            return f'<img src="{url}" alt="Project Image">'
+        return '<div class="img-ph"><span class="img-ph-icon">🖼️</span><span class="img-ph-label">Project Image</span></div>'
 
     def ensure_section_content(self, sections, signals, firm_profile):
         return sections
