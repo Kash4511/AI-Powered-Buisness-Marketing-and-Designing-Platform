@@ -349,31 +349,14 @@ def _run_generation_job(job_id, body, user_id):
             start_pdf = time.time()
             logger.info("📄 PDF Generation Start (DocRaptor)")
 
-            # ── FIX 4: docraptor_vars passes the pre-built section lists ──
-            docraptor_vars = {
-                # Colours
+            # ── FIX 4: docraptor_vars passes ALL template_vars plus specific overrides ──
+            docraptor_vars = template_vars.copy()
+            docraptor_vars.update({
+                # Colours (with defaults if missing)
                 'primaryColor':        template_vars.get('primaryColor')  or '#2a5766',
                 'secondaryColor':      template_vars.get('secondaryColor') or '#FFFFFF',
 
-                # Cover / identity
-                'companyName':         template_vars.get('companyName'),
-                'mainTitle':           template_vars.get('mainTitle'),
-                'documentSubtitle':    template_vars.get('documentSubtitle'),
-                'documentTypeLabel':   template_vars.get('documentTypeLabel', 'Strategic Guide'),
-                'summary':             template_vars.get('summary'),
-                'footerText':          template_vars.get('footerText'),
-
-                # Contact
-                'emailAddress':        template_vars.get('emailAddress', ''),
-                'phoneNumber':         template_vars.get('phoneNumber',  ''),
-                'website':             template_vars.get('website',      ''),
-                'cta':                 template_vars.get('cta',          ''),
-
-                # THE KEY FIX: pre-built section lists — no more vars()[key] in template
-                'content_sections':    template_vars.get('content_sections', []),
-                'toc_sections':        template_vars.get('toc_sections',     []),
-
-                # Images
+                # Images (ensure these are explicitly set if not already)
                 'image_1_url':         img_1,
                 'image_2_url':         img_2,
                 'image_3_url':         img_3,
@@ -383,14 +366,7 @@ def _run_generation_job(job_id, body, user_id):
 
                 # Legacy compat
                 'architecturalImages': architectural_images,
-
-                # Page number labels
-                'pageNumber2': '02', 'pageNumber3': '03', 'pageNumber4': '04',
-                'pageNumber5': '05', 'pageNumber6': '06', 'pageNumber7': '07',
-                'pageNumber8': '08', 'pageNumber9': '09', 'pageNumber10': '10',
-                'pageNumber11': '11', 'pageNumber12': '12', 'pageNumber13': '13',
-                'pageNumber14': '14', 'pageNumber15': '15',
-            }
+            })
 
             logger.info(f"🚀 Submitting to DocRaptor for Lead Magnet {lead_magnet_id}")
             _set_job(job_id, status="processing", progress=82, message="DocRaptor is now rendering your professional PDF...")
