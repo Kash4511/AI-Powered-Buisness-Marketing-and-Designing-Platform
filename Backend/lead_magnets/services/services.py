@@ -140,16 +140,16 @@ class DocRaptorService:
         if str(template_id).lower() in ('brand-assets', 'brand_assets', 'brand-assets-preview'):
             template_name = 'BrandAssetsPreview.html'
         template = env.get_template(template_name)
-    
-    # ── FIX: Ensure variables are processed correctly before substitution ──
-    # The requirement asks for a custom re.sub replacer with .get() fallback.
-    # Since we are using Jinja2 here, we ensure variables are clean.
-    
-    # DEBUG: Verify variables (build_flat_vars equivalent) (Requirement 1)
-    # logger.info(f"[DEBUG] flat vars count: {len(variables)}")
-    # logger.info(f"[DEBUG] sample vars: { {k: str(v)[:40] for k, v in list(variables.items())[:10]} }")
+        
+        # ── FIX: Ensure variables are processed correctly before substitution ──
+        # The requirement asks for a custom re.sub replacer with .get() fallback.
+        # Since we are using Jinja2 here, we ensure variables are clean.
+        
+        # DEBUG: Verify variables (build_flat_vars equivalent) (Requirement 1)
+        # logger.info(f"[DEBUG] flat vars count: {len(variables)}")
+        # logger.info(f"[DEBUG] sample vars: { {k: str(v)[:40] for k, v in list(variables.items())[:10]} }")
 
-    rendered_html = template.render(**variables)
+        rendered_html = template.render(**variables)
         
         # DEBUG: Log if variables are missing in the template context
         logger.info('DocRaptorService: template rendered', extra={
