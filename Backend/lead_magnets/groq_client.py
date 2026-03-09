@@ -500,7 +500,7 @@ class GroqClient:
         return re.findall(r'<h3>(.*?)</h3>', html)
 
     def _extract_subcontent(self, html: str, subheading: str) -> str:
-        pattern = rf'<h3>{re.escape(subheading)}</h3>\s*(.*?)(?:<h3>|$)', html
+        pattern = rf'<h3>{re.escape(subheading)}</h3>\s*(.*?)(?:<h3>|$)'
         match = re.search(pattern, html, re.S)
         return match.group(1).strip() if match else ""
 
