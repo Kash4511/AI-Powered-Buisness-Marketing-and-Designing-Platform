@@ -3,8 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <title>{{documentTitle}}</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* ══════════════════════════════════════════════════════
+   FONTS & PRINT DEFAULTS
+══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+@page {
+  size: A4;
+  margin: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 /* ══════════════════════════════════════════════════════
    DYNAMIC COLOR SYSTEM — all 5 colors injected at runtime
 ══════════════════════════════════════════════════════ */
@@ -27,12 +38,21 @@
    RESET + BODY
 ══════════════════════════════════════════════════════ */
 *{margin:0;padding:0;box-sizing:border-box;}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 210mm;
+  height: 100%;
+  background: #c8cad2; /* Browser preview bg */
+}
 body{
   font-family:'DM Sans',sans-serif;
-  background:#c8cad2;
-  padding:24px;
   -webkit-print-color-adjust:exact;
   print-color-adjust:exact;
+}
+@media print {
+  body { background: white; }
+  .book { box-shadow: none; width: 210mm; margin: 0; }
 }
 .book{width:210mm;margin:0 auto;box-shadow:0 16px 56px rgba(0,0,0,.28);}
 
@@ -44,7 +64,7 @@ body{
   height:297mm;
   background:var(--white);
   position:relative;
-  overflow:hidden;            /* CRITICAL: nothing spills */
+  overflow:visible;            /* Allow overflow during rendering */
   page-break-after:always;
   page-break-inside:avoid;
   display:flex;
@@ -199,7 +219,6 @@ body{
 .pg-body{
   flex:1;
   padding:15px 22mm 10px;
-  overflow:hidden;      /* HARD CLAMP — zero overflow */
   min-height:0;
 }
 
@@ -683,13 +702,13 @@ body{
   <div class="terms-wrap">
     <div class="terms-inner">
       <div class="terms-kicker">Legal Notice</div>
-      <h1 class="terms-title">{{termsTitle}}</h1>
-      <p class="terms-p">{{termsSummary}}</p>
-      <p class="terms-p">{{termsParagraph1}}</p>
-      <p class="terms-p">{{termsParagraph2}}</p>
-      <p class="terms-p">{{termsParagraph3}}</p>
-      <p class="terms-p">{{termsParagraph4}}</p>
-      <p class="terms-sm">{{termsParagraph5}}</p>
+      <h1 class="terms-title">{{termsTitle | safe}}</h1>
+      <p class="terms-p">{{termsSummary | safe}}</p>
+      <p class="terms-p">{{termsParagraph1 | safe}}</p>
+      <p class="terms-p">{{termsParagraph2 | safe}}</p>
+      <p class="terms-p">{{termsParagraph3 | safe}}</p>
+      <p class="terms-p">{{termsParagraph4 | safe}}</p>
+      <p class="terms-sm">{{termsParagraph5 | safe}}</p>
     </div>
   </div>
 
@@ -756,18 +775,18 @@ body{
 
     <!-- IMAGE CENTER -->
     <div class="img-center">
-      <div class="img-block">{{image1Html}}</div>
+      <div class="img-block">{{image1Html | safe}}</div>
       <div class="img-cap">{{architecturalImageCaption1}}</div>
     </div>
 
-    <p class="pg-intro">{{customContent1}}</p>
+    <p class="pg-intro">{{customContent1 | safe}}</p>
 
     <div class="sec-h">{{subheading1}}</div>
-    <p class="body-p">{{subcontent1}}</p>
+    <p class="body-p">{{subcontent1 | safe}}</p>
 
     <div class="callout">
       <div class="callout-label">{{boxTitle1}}</div>
-      <p>{{boxContent1}}</p>
+      <p>{{boxContent1 | safe}}</p>
     </div>
   </div>
 
@@ -794,7 +813,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle2}}</h2>
-    <p class="pg-intro">{{customContent2}}</p>
+    <p class="pg-intro">{{customContent2 | safe}}</p>
 
     <!-- IMAGE RIGHT — strict CSS grid, no float/clash -->
     <div class="img-right">
@@ -808,7 +827,7 @@ body{
         </ul>
       </div>
       <div>
-        <div class="img-block">{{image2Html}}</div>
+        <div class="img-block">{{image2Html | safe}}</div>
         <div class="img-cap">{{architecturalImageCaption2}}</div>
       </div>
     </div>
@@ -837,12 +856,12 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle3}}</h2>
-    <p class="pg-intro">{{customContent3}}</p>
+    <p class="pg-intro">{{customContent3 | safe}}</p>
 
     <!-- IMAGE LEFT — strict CSS grid -->
     <div class="img-left">
       <div>
-        <div class="img-block">{{image3Html}}</div>
+        <div class="img-block">{{image3Html | safe}}</div>
         <div class="img-cap">{{architecturalImageCaption3}}</div>
       </div>
       <div>
@@ -879,7 +898,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle4}}</h2>
-    <p class="pg-intro">{{customContent4}}</p>
+    <p class="pg-intro">{{customContent4 | safe}}</p>
 
     <div class="sec-h">{{subheading4}}</div>
     <ul class="steps">
@@ -918,7 +937,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle5}}</h2>
-    <p class="pg-intro">{{customContent5}}</p>
+    <p class="pg-intro">{{customContent5 | safe}}</p>
 
     <div class="sec-h">{{subheading5}}</div>
     <ul class="chklist">
@@ -962,7 +981,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle6}}</h2>
-    <p class="pg-intro">{{customContent6}}</p>
+    <p class="pg-intro">{{customContent6 | safe}}</p>
 
     <div class="sec-h">{{subheading6}}</div>
     <div class="stat-grid">
@@ -1011,7 +1030,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle7}}</h2>
-    <p class="pg-intro">{{customContent7}}</p>
+    <p class="pg-intro">{{customContent7 | safe}}</p>
 
     <div class="sec-h">{{subheading7}}</div>
     <ul class="steps">
@@ -1051,7 +1070,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle8}}</h2>
-    <p class="pg-intro">{{customContent8}}</p>
+    <p class="pg-intro">{{customContent8 | safe}}</p>
 
     <div class="sec-h">{{subheading8}}</div>
     <table class="cmp-tbl">
@@ -1104,7 +1123,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle9}}</h2>
-    <p class="pg-intro">{{customContent9}}</p>
+    <p class="pg-intro">{{customContent9 | safe}}</p>
 
     <div class="icon-row">
       <div class="icon-card">
@@ -1162,7 +1181,7 @@ body{
 
   <div class="pg-body">
     <h2 class="pg-h1">{{customTitle10}}</h2>
-    <p class="pg-intro">{{customContent10}}</p>
+    <p class="pg-intro">{{customContent10 | safe}}</p>
 
     <div class="sec-h">{{subheading10}}</div>
     <ul class="chklist">
@@ -1205,8 +1224,8 @@ body{
   <div class="pg-body">
     <!-- Hero CTA — specific, not generic -->
     <div class="cta-hero">
-      <h2>{{ctaHeadline}}</h2>
-      <p>{{contactDescription}}</p>
+      <h2>{{ctaHeadline | safe}}</h2>
+      <p>{{contactDescription | safe}}</p>
     </div>
 
     <!-- Contact details grid -->
@@ -1231,8 +1250,8 @@ body{
 
     <!-- Why choose us -->
     <div class="why-box">
-      <h4>{{whyChooseUsTitle}}</h4>
-      <p>{{differentiator}}</p>
+      <h4>{{whyChooseUsTitle | safe}}</h4>
+      <p>{{differentiator | safe}}</p>
     </div>
 
     <!-- Named offer hook — Image 4 fix: specific > generic -->

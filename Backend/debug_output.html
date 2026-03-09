@@ -1,420 +1,1276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Modular &amp; Prefab Guide</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --P:  #3f1d4e;
-            --P2: #100909;
-            --P3: #4F7A8B;
-            --A:  #E8F1F4;
-            --CR: #F7F4EF;
-            --C2: #EBE6DA;
-            --I:  #111111;
-            --I2: #444444;
-            --I3: #888888;
-            --R:  #EEEEEE;
-            --R2: #F5F5F5;
-            --cover-text: #FFFFFF;
-            
-            --serif: 'Playfair Display', serif;
-            --sans: 'Inter', sans-serif;
-            --mono: 'JetBrains Mono', monospace;
-        }
+<meta charset="UTF-8">
+<title>Test Modular Guide</title>
+<style>
+/* ══════════════════════════════════════════════════════
+   FONTS & PRINT DEFAULTS
+══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; }
+@page {
+  size: A4;
+  margin: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
 
-        @page { size: A4; margin: 0; }
-        body { font-family: var(--sans); background: #a0a0a8; padding: 20mm 0; }
+/* ══════════════════════════════════════════════════════
+   DYNAMIC COLOR SYSTEM — all 5 colors injected at runtime
+══════════════════════════════════════════════════════ */
+:root{
+  --P:  #3f1d4e;      /* Primary — headers, cover bg, footer bg     */
+  --S:  #4F7A8B;    /* Secondary — page header bar, stat borders  */
+  --A:  #E8F1F4;       /* Accent — callout borders, dividers, badges */
+  --H:  #4a4a4a;    /* Highlight — strip gradient start           */
+  --G:  #c5a059;         /* Gold — TOC numbers, quote marks, CTA ring  */
 
-        .book { width: 210mm; margin: 0 auto; box-shadow: 0 10px 28px rgba(0,0,0,.15); }
+  /* Derived neutrals (not overridden) */
+  --ink:  #111318;
+  --ink2: #4a4f5e;
+  --bg:   #f5f6f9;
+  --rule: #e0e3ec;
+  --white: #ffffff;
+}
 
-        .page {
-            width: 210mm; height: 297mm;
-            background: white; position: relative;
-            display: flex; flex-direction: column;
-            overflow: hidden; page-break-after: always;
-        }
+/* ══════════════════════════════════════════════════════
+   RESET + BODY
+══════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 210mm;
+  height: 100%;
+  background: #c8cad2; /* Browser preview bg */
+}
+body{
+  font-family:'DM Sans',sans-serif;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+@media print {
+  body { background: white; }
+  .book { box-shadow: none; width: 210mm; margin: 0; }
+}
+.book{width:210mm;margin:0 auto;box-shadow:0 16px 56px rgba(0,0,0,.28);}
 
-        /* ── COVER PAGE ─────────────────────────────────── */
-        .cover { background: var(--P); color: var(--cover-text); justify-content: center; padding: 40mm 20mm; text-align: center; }
-        .cover-logo { width: 60px; height: 60px; border: 2px solid var(--cover-text); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-family: var(--mono); font-weight: 700; font-size: 24px; }
-        .cover-h1 { font-family: var(--serif); font-size: 48px; font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
-        .cover-sub { font-size: 18px; font-weight: 300; opacity: 0.9; max-width: 80%; margin: 0 auto 40px; line-height: 1.6; }
-        .cover-footer { position: absolute; bottom: 30mm; left: 0; right: 0; padding: 0 20mm; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; }
-        .cover-company { font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+/* ══════════════════════════════════════════════════════
+   PAGE BASE — strict A4, no overflow
+══════════════════════════════════════════════════════ */
+.page{
+  width:210mm;
+  height:297mm;
+  background:var(--white);
+  position:relative;
+  overflow:hidden;            /* CRITICAL: nothing spills */
+  page-break-after:always;
+  page-break-inside:avoid;
+  display:flex;
+  flex-direction:column;
+}
 
-        /* ── HEADER & FOOTER ────────────────────────────── */
-        .pg-head { padding: 12mm 16mm 0 20mm; flex-shrink: 0; }
-        .pg-head-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--R2); }
-        .pg-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--I3); }
-        .pg-num-badge { width: 24px; height: 24px; background: var(--P); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px; font-weight: 700; }
+/* ══════════════════════════════════════════════════════
+   PAGE 1 — COVER
+   ✅ Title: LEFT side, vertically centered
+   ✅ Contact block: BOTTOM-LEFT (matches Image 1)
+══════════════════════════════════════════════════════ */
+.cover{
+  background:var(--P);
+  justify-content:flex-start;
+  overflow:hidden;
+}
 
-        .pg-foot { padding: 5mm 16mm 8mm 20mm; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--I3); }
-        .pf-l { font-style: italic; }
-        .pf-r { font-family: var(--mono); font-weight: 700; color: var(--P); }
+/* Geometric art — purely decorative, absolute */
+.cv-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(255,255,255,.1);}
+.cv-ring-1{width:440px;height:440px;top:-140px;right:-120px;background:rgba(255,255,255,.04);}
+.cv-ring-2{width:240px;height:240px;top:80px;right:60px;background:rgba(255,255,255,.02);}
+.cv-ring-3{width:280px;height:280px;bottom:-80px;left:-80px;background:rgba(255,255,255,.03);}
+.cv-diamond{
+  position:absolute;bottom:160px;right:30px;
+  width:120px;height:120px;
+  transform:rotate(45deg);
+  border:2px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.03);
+}
+/* Vertical accent stripe — left edge */
+.cv-stripe{
+  position:absolute;left:0;top:0;bottom:0;
+  width:7px;
+  background:var(--A);
+}
+/* Horizontal separator line */
+.cv-hline{
+  position:absolute;
+  left:45px;bottom:128px;right:0;
+  height:1px;
+  background:rgba(255,255,255,.14);
+}
 
-        /* ── CONTENT AREA ───────────────────────────────── */
-        .bw { flex: 1; padding: 16px 16mm 12px 20mm; display: flex; flex-direction: column; min-height: 0; }
-        
-        .ch-h1 { font-family: var(--serif); font-size: 34px; font-weight: 700; color: var(--I); line-height: 1.1; margin-bottom: 14px; }
-        .body { font-size: 11px; line-height: 1.8; color: var(--I2); }
-        .body p { margin-bottom: 14px; }
-        .body h3 { font-family: var(--serif); font-size: 18px; color: var(--P); margin: 20px 0 10px; }
-        .body ul { list-style: none; margin: 15px 0; }
-        .body ul li { position: relative; padding-left: 20px; margin-bottom: 8px; }
-        .body ul li::before { content: ''; position: absolute; left: 0; top: 10px; width: 5px; height: 5px; border-radius: 50%; background: var(--P); opacity: 0.6; }
-        
-        .two-columns { display: flex; gap: 20px; margin: 20px 0; }
-        .column { flex: 1; }
-        
-        .sec-img { margin: 20px 0; }
-        .sec-img img { width: 100%; border-radius: 6px; box-shadow: 0 8px 28px rgba(0,0,0,.12); }
-        .img-cap { font-size: 9px; color: var(--I3); margin-top: 8px; text-align: center; font-style: italic; }
+/* ── Title block — absolute, left side, vertically centered ── */
+.cv-main{
+  position:absolute;
+  top:50%;left:45px;right:44%;
+  transform:translateY(-52%);
+  z-index:10;
+}
+.cv-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:3.5px;
+  color:var(--A);
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:20px;
+}
+.cv-eyebrow::before{
+  content:'';display:inline-block;
+  width:24px;height:2px;background:var(--A);
+}
+.cv-title{
+  font-family:'DM Serif Display',serif;
+  font-size:38px;font-weight:400;
+  line-height:1.06;letter-spacing:-.5px;
+  color:var(--white);
+  margin-bottom:10px;
+}
+.cv-title-accent{color:var(--A);font-style:italic;display:block;}
+.cv-divider{
+  width:50px;height:4px;
+  background:var(--A);border-radius:2px;
+  margin:18px 0;
+}
+.cv-subtitle{
+  font-size:13px;font-weight:300;line-height:1.75;
+  color:rgba(255,255,255,.72);
+  max-width:360px;
+}
 
-        blockquote { background: #fafafa; border-left: 4px solid var(--P); padding: 15px 20px; margin: 20px 0; font-style: italic; color: var(--I2); }
+/* ── Contact block — BOTTOM-LEFT (exactly like Image 1) ── */
+.cv-contact{
+  position:absolute;
+  bottom:28px;left:45px;
+  z-index:10;
+}
+.cv-contact-name{
+  font-family:'DM Serif Display',serif;
+  font-size:16px;color:var(--white);
+  margin-bottom:7px;letter-spacing:.3px;
+}
+.cv-contact-details{
+  font-size:11px;font-weight:300;
+  color:rgba(255,255,255,.6);
+  line-height:2;
+}
 
-        /* ── TOC ────────────────────────────────────────── */
-        .toc-list { list-style: none; margin-top: 30px; }
-        .toc-item { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--R2); }
-        .toc-title { font-family: var(--serif); font-size: 16px; font-weight: 700; color: var(--I); }
-        .toc-dots { flex: 1; border-bottom: 1px dotted var(--I3); margin: 0 10px; opacity: 0.3; }
-        .toc-pg { font-family: var(--mono); font-weight: 700; color: var(--P); }
+/* Doc-type pill — bottom right */
+.cv-pill{
+  position:absolute;bottom:36px;right:36px;z-index:10;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:20px;padding:6px 16px;
+  font-family:'Space Mono',monospace;
+  font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:2px;
+  color:rgba(255,255,255,.55);
+}
 
-        @media print {
-            body { background: white; padding: 0; }
-            .book { box-shadow: none; }
-        }
-    </style>
+/* ══════════════════════════════════════════════════════
+   CONTENT PAGES — header + footer ALWAYS present
+══════════════════════════════════════════════════════ */
+
+/* ── PAGE HEADER ── */
+.pg-hd{
+  flex-shrink:0;
+  background:var(--S);
+  height:50px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 22mm;
+  position:relative;overflow:hidden;
+}
+.pg-hd::after{
+  content:'';position:absolute;
+  right:-20px;top:-20px;
+  width:100px;height:100px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.1);
+}
+.pg-hd-label{
+  font-family:'Space Mono',monospace;
+  font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:2.5px;
+  color:var(--white);position:relative;z-index:2;
+  padding-left:10px;
+  border-left:3px solid var(--A);
+}
+.pg-hd-num{
+  font-family:'Space Mono',monospace;
+  font-size:10px;font-weight:700;
+  color:var(--white);
+  background:rgba(255,255,255,.15);
+  border-radius:20px;padding:4px 14px;
+  position:relative;z-index:2;
+  letter-spacing:1px;
+}
+
+/* Accent bar below header */
+.pg-bar{flex-shrink:0;height:4px;background:var(--P);}
+
+/* ── CONTENT BODY — flex:1 keeps it between header & footer ── */
+.pg-body{
+  flex:1;
+  padding:15px 22mm 10px;
+  overflow:hidden;      /* HARD CLAMP — zero overflow */
+  min-height:0;
+}
+
+/* ── PAGE FOOTER ── */
+.pg-ft{
+  flex-shrink:0;
+  background:var(--P);
+  height:44px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 22mm;
+  position:relative;overflow:hidden;
+}
+.pg-ft::before{
+  content:'';position:absolute;
+  left:28%;top:-14px;
+  width:56px;height:56px;
+  border-radius:50%;border:2px solid rgba(255,255,255,.1);
+}
+.pg-ft-left{display:flex;align-items:center;gap:9px;position:relative;z-index:2;}
+.pg-ft-logo{
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.18);
+  border:1.5px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:var(--white);
+  flex-shrink:0;
+}
+.pg-ft-co{
+  font-size:10px;font-weight:600;
+  color:rgba(255,255,255,.82);letter-spacing:.4px;
+}
+.pg-ft-right{
+  font-size:10px;color:rgba(255,255,255,.55);
+  position:relative;z-index:2;
+}
+
+/* ══════════════════════════════════════════════════════
+   PAGE 2 — TERMS OF USE (matches Image 2: centred, airy)
+══════════════════════════════════════════════════════ */
+.terms-wrap{
+  flex:1;display:flex;
+  align-items:center;justify-content:center;
+  padding:0 28mm;
+}
+.terms-inner{text-align:center;}
+.terms-kicker{
+  font-family:'Space Mono',monospace;
+  font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:3px;
+  color:var(--A);margin-bottom:10px;
+}
+.terms-title{
+  font-family:'DM Serif Display',serif;
+  font-size:20px;color:var(--P);
+  margin-bottom:24px;position:relative;
+  padding-bottom:16px;
+}
+.terms-title::after{
+  content:'';position:absolute;
+  bottom:0;left:50%;transform:translateX(-50%);
+  width:36px;height:3px;background:var(--A);border-radius:2px;
+}
+.terms-p{
+  font-size:12.5px;line-height:1.9;color:#3a3a4a;
+  margin-bottom:14px;
+}
+.terms-sm{
+  font-size:10.5px;color:#999;margin-top:18px;font-style:italic;
+}
+
+/* ══════════════════════════════════════════════════════
+   TOC — clean dotted leader lines
+══════════════════════════════════════════════════════ */
+.toc-heading{
+  font-family:'DM Serif Display',serif;
+  font-size:20px;color:var(--ink);
+  border-bottom:2px solid var(--rule);
+  padding-bottom:10px;margin-bottom:22px;
+}
+.toc-list{list-style:none;}
+.toc-row{
+  display:flex;align-items:center;
+  padding:9px 0;
+  border-bottom:1px solid var(--rule);
+  gap:10px;
+}
+.toc-n{
+  flex-shrink:0;width:24px;height:24px;border-radius:50%;
+  background:var(--G);color:var(--white);
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;
+}
+.toc-label{flex:1;font-size:12.5px;color:var(--ink);font-weight:500;}
+.toc-dots{
+  flex:1;border-bottom:1.5px dotted var(--rule);
+  margin:0 8px;min-width:20px;
+}
+.toc-pg{
+  font-size:12px;font-weight:700;color:var(--P);
+  min-width:22px;text-align:right;
+  font-family:'Space Mono',monospace;
+}
+
+/* ══════════════════════════════════════════════════════
+   TYPOGRAPHY — magazine-grade
+══════════════════════════════════════════════════════ */
+.pg-h1{
+  font-family:'DM Serif Display',serif;
+  font-size:22px;font-weight:400;color:var(--ink);
+  border-bottom:2px solid var(--S);
+  padding-bottom:6px;margin-bottom:10px;
+  line-height:1.2;
+}
+.pg-intro{
+  font-size:13px;line-height:1.78;color:var(--ink2);
+  margin-bottom:12px;
+}
+.sec-h{
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:700;
+  color:var(--P);
+  margin:12px 0 6px;
+  padding-left:10px;
+  border-left:3px solid var(--A);
+}
+.body-p{font-size:12px;line-height:1.72;color:var(--ink2);margin-bottom:8px;}
+
+/* ══════════════════════════════════════════════════════
+   IMAGE SYSTEM — 3 placements, STRICT CSS GRID (no float)
+══════════════════════════════════════════════════════ */
+
+/* CENTER: full width above content */
+.img-center{display:block;margin:10px 0 6px;}
+.img-center .img-block{width:100%;}
+.img-center .img-block img,
+.img-center .img-ph{height:155px;}
+
+/* RIGHT: text left col, image right col */
+.img-right{
+  display:grid;
+  grid-template-columns:1fr 42%;
+  gap:16px;
+  align-items:start;
+  margin:10px 0;
+}
+/* LEFT: image left col, text right col */
+.img-left{
+  display:grid;
+  grid-template-columns:42% 1fr;
+  gap:16px;
+  align-items:start;
+  margin:10px 0;
+}
+
+.img-block{width:100%;}
+.img-block img{
+  width:100%;height:175px;
+  object-fit:cover;border-radius:8px;display:block;
+}
+.img-ph{
+  width:100%;height:175px;
+  border-radius:8px;
+  background:linear-gradient(135deg,var(--bg) 0%,#dde0ea 100%);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+  position:relative;overflow:hidden;
+}
+.img-ph::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    45deg,transparent,transparent 10px,
+    rgba(0,0,0,.018) 10px,rgba(0,0,0,.018) 20px
+  );
+}
+.img-ph-icon{font-size:26px;position:relative;z-index:1;}
+.img-ph-label{
+  font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--ink2);position:relative;z-index:1;
+}
+.img-cap{
+  font-size:10px;color:var(--ink2);
+  text-align:center;margin-top:4px;font-style:italic;
+}
+
+/* ══════════════════════════════════════════════════════
+   COMPONENT LIBRARY — consultant-grade visual elements
+   (fixes Image 3: visual hierarchy, callouts, tables)
+══════════════════════════════════════════════════════ */
+
+/* Callout box */
+.callout{
+  background:var(--bg);
+  border-left:4px solid var(--S);
+  border-radius:0 8px 8px 0;
+  padding:11px 14px;margin:8px 0;
+}
+.callout-label{
+  font-size:10px;font-weight:800;
+  text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--S);margin-bottom:4px;
+}
+.callout p{font-size:11.5px;line-height:1.62;color:var(--ink2);margin:0;}
+
+/* Highlight strip */
+.strip{
+  background:linear-gradient(120deg,var(--P) 0%,var(--S) 100%);
+  border-radius:8px;padding:13px 16px;margin:8px 0;
+}
+.strip-title{
+  font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  color:rgba(255,255,255,.7);margin-bottom:5px;
+}
+.strip p{font-size:12px;line-height:1.6;color:rgba(255,255,255,.9);margin:0;}
+
+/* Checklist */
+.chklist{list-style:none;margin:8px 0;}
+.chklist li{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:7px 0;border-bottom:1px solid var(--rule);
+  font-size:12px;line-height:1.55;color:var(--ink2);
+}
+.chklist li::before{
+  content:'✓';flex-shrink:0;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--S);color:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;margin-top:1px;
+}
+
+/* Numbered step list (visual, not AI bullet-dump) */
+.steps{list-style:none;counter-reset:stp;margin:8px 0;}
+.steps li{
+  counter-increment:stp;
+  display:flex;align-items:flex-start;gap:12px;
+  padding:8px 0;border-bottom:1px solid var(--rule);
+  font-size:12px;line-height:1.58;color:var(--ink2);
+}
+.steps li::before{
+  content:counter(stp);flex-shrink:0;
+  width:26px;height:26px;border-radius:6px;
+  background:var(--P);color:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;
+  font-family:'Space Mono',monospace;
+}
+.steps li strong{display:block;color:var(--P);font-size:12.5px;margin-bottom:2px;}
+
+/* Stat grid — 3 bold numbers (magazine-grade) */
+.stat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin:10px 0;
+}
+.stat-card{
+  background:var(--bg);
+  border-top:3px solid var(--S);
+  border-radius:6px;padding:13px 8px;text-align:center;
+}
+.stat-val{
+  font-family:'DM Serif Display',serif;
+  font-size:28px;color:var(--P);line-height:1;
+}
+.stat-lbl{
+  font-size:9.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.8px;
+  color:var(--ink2);margin-top:4px;
+}
+
+/* Comparison table */
+.cmp-tbl{
+  width:100%;border-collapse:collapse;
+  font-size:11px;margin:10px 0;
+}
+.cmp-tbl th{
+  background:var(--S);color:var(--white);
+  padding:8px 9px;text-align:left;
+  font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;font-size:10px;
+}
+.cmp-tbl th:first-child{border-radius:6px 0 0 0;}
+.cmp-tbl th:last-child{border-radius:0 6px 0 0;}
+.cmp-tbl td{
+  padding:7px 9px;border-bottom:1px solid var(--rule);
+  color:var(--ink2);line-height:1.4;
+}
+.cmp-tbl tr:nth-child(even) td{background:var(--bg);}
+.cmp-tbl td:first-child{font-weight:700;color:var(--P);}
+
+/* Icon cards — 4 across */
+.icon-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:9px;margin:10px 0;
+}
+.icon-card{
+  background:var(--bg);border-radius:8px;
+  padding:13px 7px;text-align:center;
+}
+.icon-card-emoji{font-size:22px;display:block;margin-bottom:6px;}
+.icon-card-ttl{
+  font-size:10.5px;font-weight:700;color:var(--P);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;
+}
+.icon-card-txt{font-size:10px;color:var(--ink2);line-height:1.4;}
+
+/* Timeline */
+.timeline{list-style:none;padding-left:28px;position:relative;margin:8px 0;}
+.timeline::before{
+  content:'';position:absolute;
+  left:8px;top:4px;bottom:4px;
+  width:3px;
+  background:linear-gradient(to bottom,var(--S),var(--P));
+  border-radius:2px;
+}
+.timeline li{
+  position:relative;padding:6px 0 6px 14px;
+  font-size:11.5px;line-height:1.55;color:var(--ink2);
+  border-bottom:1px solid var(--rule);
+}
+.timeline li::before{
+  content:'';position:absolute;
+  left:-24px;top:10px;
+  width:15px;height:15px;
+  background:var(--S);border-radius:50%;
+  border:3px solid var(--white);
+  box-shadow:0 0 0 2px var(--S);
+}
+.timeline li strong{
+  display:block;font-size:12px;font-weight:700;
+  color:var(--P);margin-bottom:2px;
+}
+
+/* Two-column boxes */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}
+.cbox{background:var(--bg);border-radius:6px;padding:12px;}
+.cbox h4{
+  font-size:11.5px;font-weight:700;color:var(--P);
+  margin-bottom:5px;padding-bottom:5px;
+  border-bottom:1px solid var(--rule);
+}
+.cbox p{font-size:11px;line-height:1.6;color:var(--ink2);margin:0;}
+
+/* Blockquote */
+.bq{
+  border-left:3px solid var(--G);
+  padding:10px 14px;
+  background:var(--bg);font-style:italic;
+  color:var(--ink2);font-size:12.5px;
+  line-height:1.6;margin:8px 0;
+  border-radius:0 6px 6px 0;
+}
+.bq footer{
+  margin-top:5px;font-style:normal;
+  font-weight:700;color:var(--G);font-size:10.5px;
+}
+
+/* ══════════════════════════════════════════════════════
+   CONTACT / CTA PAGE
+   Fixes Image 4: specific offer, not generic "contact us"
+══════════════════════════════════════════════════════ */
+.cta-hero{
+  background:var(--S);border-radius:10px;
+  padding:22px 24px;color:var(--white);
+  text-align:center;margin-bottom:14px;
+}
+.cta-hero h2{
+  font-family:'DM Serif Display',serif;
+  font-size:17px;color:var(--white);margin-bottom:7px;
+}
+.cta-hero p{font-size:12.5px;line-height:1.65;color:rgba(255,255,255,.88);}
+
+.contact-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;margin:12px 0;
+}
+.ci{
+  background:var(--bg);border-radius:6px;
+  padding:11px 14px;border-top:3px solid var(--A);
+}
+.ci-lbl{
+  font-size:9.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  color:var(--S);margin-bottom:3px;
+}
+.ci-val{font-size:12px;color:var(--ink);font-weight:500;}
+
+.why-box{
+  background:linear-gradient(120deg,var(--P),var(--S));
+  border-radius:8px;padding:14px 18px;color:var(--white);
+  margin-bottom:12px;
+}
+.why-box h4{
+  font-family:'DM Serif Display',serif;
+  font-size:13px;color:var(--white);margin-bottom:6px;
+}
+.why-box p{font-size:11.5px;line-height:1.65;color:rgba(255,255,255,.88);margin:0;}
+
+/* Specific CTA offer box — fixes Image 4 "generic CTA" issue */
+.cta-offer{
+  border:2px solid var(--G);border-radius:8px;
+  padding:12px 16px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.cta-offer::before{
+  content:'⭐';position:absolute;
+  left:14px;top:50%;transform:translateY(-50%);
+  font-size:18px;
+}
+.cta-offer-title{
+  font-family:'DM Serif Display',serif;
+  font-size:14px;color:var(--P);margin-bottom:4px;
+}
+.cta-offer p{
+  font-size:11.5px;color:var(--ink2);line-height:1.5;margin:0;
+}
+
+/* ══════════════════════════════════════════════════════
+   PRINT
+══════════════════════════════════════════════════════ */
+@media print{
+  body{background:white;padding:0;}
+  .book{box-shadow:none;}
+  @page{size:A4;margin:0;}
+}
+</style>
 </head>
 <body>
-    <div class="book">
-        <!-- COVER -->
-        <div class="page cover">
-            <div class="cover-logo"></div>
-            <h1 class="cover-h1">Modular &amp; Prefab Guide</h1>
-            <p class="cover-sub">Efficiency in Modern Construction</p>
-            <div class="cover-footer">
-                <div class="cover-company">kaashifameen32</div>
-                <div>https://www.kyro.com • kaashifameen32@gmail.com</div>
-            </div>
-        </div>
+<div class="book">
 
-        <!-- TERMS -->
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">LEGAL NOTICE</span>
-                    <div class="pg-num-badge">02</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Terms of Use</h1>
-                <div class="body">
-                    <p>This report is provided for informational purposes only. The contents are based on AI-assisted analysis and should be verified by professional consultants before implementation.</p>
-                    <p>© kaashifameen32. All rights reserved. No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the publisher.</p>
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 02</span>
-            </div>
-        </div>
+<!-- ═══════════════════════════════════════════════
+     PAGE 1 — COVER
+     ✅ Title LEFT + vertically centred
+     ✅ Contact block BOTTOM-LEFT (Image 1 layout)
+═══════════════════════════════════════════════ -->
+<div class="page cover">
+  <div class="cv-stripe"></div>
+  <div class="cv-ring cv-ring-1"></div>
+  <div class="cv-ring cv-ring-2"></div>
+  <div class="cv-ring cv-ring-3"></div>
+  <div class="cv-diamond"></div>
+  <div class="cv-hline"></div>
 
-        <!-- TOC -->
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">CONTENTS</span>
-                    <div class="pg-num-badge">03</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Table of Contents</h1>
-                <div class="toc-list">
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Executive Summary</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">03</span>
-                    </div>
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Key Challenges</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">04</span>
-                    </div>
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Strategic Framework</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">05</span>
-                    </div>
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Implementation Strategy</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">06</span>
-                    </div>
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Risk Management</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">07</span>
-                    </div>
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Best Practices</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">08</span>
-                    </div>
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Key Takeaways</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">09</span>
-                    </div>
-                    
-                    <div class="toc-item">
-                        <span class="toc-title">Conclusion &amp; Next Steps</span>
-                        <span class="toc-dots"></span>
-                        <span class="toc-pg">10</span>
-                    </div>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 03</span>
-            </div>
-        </div>
+  <!-- LEFT-CENTRE title block -->
+  <div class="cv-main">
+    <div class="cv-eyebrow">STRATEGIC GUIDE</div>
+    <h1 class="cv-title">
+      Modular Construction
+      <span class="cv-title-accent">The Future of Building</span>
+    </h1>
+    <div class="cv-divider"></div>
+    <p class="cv-subtitle">Strategic guide for architects and developers.</p>
+  </div>
 
-        <!-- CONTENT PAGES -->
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">OVERVIEW</span>
-                    <div class="pg-num-badge">03</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Executive Summary</h1>
-                
-                <div class="body">
-                    
-                        <p>Modular construction is the future.</p>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 03</span>
-            </div>
-        </div>
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">CHALLENGES</span>
-                    <div class="pg-num-badge">04</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Key Challenges</h1>
-                
-                <div class="body">
-                    
-                        <div class="two-columns">
-                            <div class="column"><h3>Supply Chain</h3><p>Logistics are hard.</p></div>
-                            <div class="column">
-                                <div class="sec-img">
-                                    <img src="" alt="Section Image">
-                                    <div class="img-cap">Strategic Context</div>
-                                </div>
-                            </div>
-                        </div>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 04</span>
-            </div>
-        </div>
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">FRAMEWORK</span>
-                    <div class="pg-num-badge">05</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Strategic Framework</h1>
-                
-                <div class="body">
-                    
-                        <div class="two-columns">
-                            <div class="column">
-                                <div class="sec-img">
-                                    <img src="" alt="Section Image">
-                                    <div class="img-cap">Technical Framework</div>
-                                </div>
-                            </div>
-                            <div class="column"><h3>Framework</h3><p>Step 1: Plan.</p></div>
-                        </div>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 05</span>
-            </div>
-        </div>
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">IMPLEMENTATION</span>
-                    <div class="pg-num-badge">06</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Implementation Strategy</h1>
-                
-                <div class="body">
-                    
-                        <h3>Strategy</h3><p>Phase 1: Build.</p>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 06</span>
-            </div>
-        </div>
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">RISK</span>
-                    <div class="pg-num-badge">07</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Risk Management</h1>
-                
-                <div class="body">
-                    
-                        <div class="sec-img" style="height: 180px; overflow: hidden;">
-                            <img src="" alt="Header Image" style="height: 100%; object-fit: cover;">
-                        </div>
-                        <div class="img-cap" style="margin-top: -10px; margin-bottom: 20px;">Implementation Overview</div>
-                        <h3>Risk</h3><p>Mitigate delays.</p>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 07</span>
-            </div>
-        </div>
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">METHODS</span>
-                    <div class="pg-num-badge">08</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Best Practices</h1>
-                
-                <div class="body">
-                    
-                        <h3>Practice</h3><p>Standardize designs.</p>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 08</span>
-            </div>
-        </div>
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">TAKEAWAYS</span>
-                    <div class="pg-num-badge">09</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Key Takeaways</h1>
-                
-                <div class="body">
-                    
-                        <h3>Takeaways</h3><p>Efficiency wins.</p>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 09</span>
-            </div>
-        </div>
-        
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">CONCLUSION</span>
-                    <div class="pg-num-badge">10</div>
-                </div>
-            </div>
-            <div class="bw">
-                <h1 class="ch-h1">Conclusion &amp; Next Steps</h1>
-                
-                <div class="body">
-                    
-                        <p>Contact us today.</p>
-                    
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 10</span>
-            </div>
-        </div>
-        
-
-        <!-- CONTACT PAGE -->
-        <div class="page">
-            <div class="pg-head">
-                <div class="pg-head-row">
-                    <span class="pg-label">CONTACT</span>
-                    <div class="pg-num-badge">12</div>
-                </div>
-            </div>
-            <div class="bw" style="justify-content: center; text-align: center;">
-                <h1 class="ch-h1">Ready to Master Modular &amp; Prefab Guide?</h1>
-                <div class="body">
-                    <p>Let's discuss how we can apply these strategies to your specific business challenges.</p>
-                    <div style="margin-top: 40px; padding: 30px; border: 1px solid var(--R2); border-radius: 12px; background: #fafafa;">
-                        <h3 style="margin-top: 0;">kaashifameen32</h3>
-                        <p style="font-family: var(--mono); color: var(--P); font-weight: 700; margin-bottom: 5px;">https://www.kyro.com</p>
-                        <p>kaashifameen32@gmail.com</p>
-                        <p>3423131</p>
-                    </div>
-                </div>
-            </div>
-            <div class="pg-foot">
-                <span class="pf-l">© kaashifameen32</span>
-                <span class="pf-r">PAGE 12</span>
-            </div>
-        </div>
+  <!-- BOTTOM-LEFT contact (Image 1 style) -->
+  <div class="cv-contact">
+    <div class="cv-contact-name">Test Company</div>
+    <div class="cv-contact-details">
+      test@example.com<br>
+      www.test.com<br>
+      123-456-7890
     </div>
+  </div>
+
+  <!-- Bottom-right pill label -->
+  <div class="cv-pill">STRATEGIC GUIDE</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 2 — TERMS OF USE
+     ✅ Centred, airy, matching Image 2
+     ✅ Header + Footer present
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">LEGAL</span>
+    <span class="pg-hd-num">02</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="terms-wrap">
+    <div class="terms-inner">
+      <div class="terms-kicker">Legal Notice</div>
+      <h1 class="terms-title">Terms of Use</h1>
+      <p class="terms-p">Information only.</p>
+      <p class="terms-p">Paragraph 1</p>
+      <p class="terms-p">Paragraph 2</p>
+      <p class="terms-p">Paragraph 3</p>
+      <p class="terms-p">Paragraph 4</p>
+      <p class="terms-sm">Paragraph 5</p>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 3 — TABLE OF CONTENTS
+     ✅ Header + Footer
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">CONTENTS</span>
+    <span class="pg-hd-num">03</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <div class="toc-heading">Table of Contents</div>
+    <ul class="toc-list">
+      <li class="toc-row"><span class="toc-n">1</span><span class="toc-label">Executive Summary</span><span class="toc-dots"></span><span class="toc-pg">04</span></li>
+      <li class="toc-row"><span class="toc-n">2</span><span class="toc-label">Key Challenges</span><span class="toc-dots"></span><span class="toc-pg">05</span></li>
+      <li class="toc-row"><span class="toc-n">3</span><span class="toc-label">Strategic Framework</span><span class="toc-dots"></span><span class="toc-pg">06</span></li>
+      <li class="toc-row"><span class="toc-n">4</span><span class="toc-label">Implementation</span><span class="toc-dots"></span><span class="toc-pg">07</span></li>
+      <li class="toc-row"><span class="toc-n">5</span><span class="toc-label">Risk Management</span><span class="toc-dots"></span><span class="toc-pg">08</span></li>
+      <li class="toc-row"><span class="toc-n">6</span><span class="toc-label">Key Statistics</span><span class="toc-dots"></span><span class="toc-pg">09</span></li>
+      <li class="toc-row"><span class="toc-n">7</span><span class="toc-label">Process Steps</span><span class="toc-dots"></span><span class="toc-pg">10</span></li>
+      <li class="toc-row"><span class="toc-n">8</span><span class="toc-label">Comparison</span><span class="toc-dots"></span><span class="toc-pg">11</span></li>
+      <li class="toc-row"><span class="toc-n">9</span><span class="toc-label">Takeaways</span><span class="toc-dots"></span><span class="toc-pg">12</span></li>
+      <li class="toc-row"><span class="toc-n">10</span><span class="toc-label">Deep Dive</span><span class="toc-dots"></span><span class="toc-pg">13</span></li>
+      <li class="toc-row"><span class="toc-n">11</span><span class="toc-label">Conclusion</span><span class="toc-dots"></span><span class="toc-pg">14</span></li>
+    </ul>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 4 — EXECUTIVE SUMMARY
+     🖼️ IMAGE: CENTER (full-width, above content)
+     ✅ Visual hierarchy: intro → callout box
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">OVERVIEW</span>
+    <span class="pg-hd-num">04</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1">Executive Summary</h2>
+
+    <!-- IMAGE CENTER -->
+    <div class="img-center">
+      <div class="img-block">&lt;div class=&#34;img-ph&#34;&gt;&lt;span class=&#34;img-ph-icon&#34;&gt;🖼️&lt;/span&gt;&lt;span class=&#34;img-ph-label&#34;&gt;Project Image 1&lt;/span&gt;&lt;/div&gt;</div>
+      <div class="img-cap">Site Overview</div>
+    </div>
+
+    <p class="pg-intro">This is the executive summary content.</p>
+
+    <div class="sec-h">Industry Context</div>
+    <p class="body-p">The industry is evolving rapidly.</p>
+
+    <div class="callout">
+      <div class="callout-label">Key Driver</div>
+      <p>Efficiency is paramount.</p>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 5 — KEY CHALLENGES
+     🖼️ IMAGE: RIGHT (text left col, image right col)
+     ✅ Checklist — specific items, not vague bullets
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">CHALLENGES</span>
+    <span class="pg-hd-num">05</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <!-- IMAGE RIGHT — strict CSS grid, no float/clash -->
+    <div class="img-right">
+      <div>
+        <div class="sec-h"></div>
+        <ul class="chklist">
+          
+          
+          
+          
+        </ul>
+      </div>
+      <div>
+        <div class="img-block">&lt;div class=&#34;img-ph&#34;&gt;&lt;span class=&#34;img-ph-icon&#34;&gt;🖼️&lt;/span&gt;&lt;span class=&#34;img-ph-label&#34;&gt;Project Image 2&lt;/span&gt;&lt;/div&gt;</div>
+        <div class="img-cap">Factory Line</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 6 — STRATEGIC FRAMEWORK
+     🖼️ IMAGE: LEFT (image left col, text right col)
+     ✅ Named tools, specific framework steps
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">FRAMEWORK</span>
+    <span class="pg-hd-num">06</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <!-- IMAGE LEFT — strict CSS grid -->
+    <div class="img-left">
+      <div>
+        <div class="img-block">&lt;div class=&#34;img-ph&#34;&gt;&lt;span class=&#34;img-ph-icon&#34;&gt;🖼️&lt;/span&gt;&lt;span class=&#34;img-ph-label&#34;&gt;Project Image 3&lt;/span&gt;&lt;/div&gt;</div>
+        <div class="img-cap">Final Assembly</div>
+      </div>
+      <div>
+        <div class="sec-h"></div>
+        <p class="body-p"></p>
+        <div class="callout">
+          <div class="callout-label"></div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 7 — IMPLEMENTATION STRATEGY
+     No image — numbered steps + two content boxes
+     ✅ Structured phases, no AI repetition
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">STRATEGY</span>
+    <span class="pg-hd-num">07</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <div class="sec-h"></div>
+    <ul class="steps">
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+    </ul>
+
+    <div class="two-col" style="margin-top:10px;">
+      <div class="cbox"><h4></h4></div>
+      <div class="cbox"><h4></h4></div>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 8 — RISK MANAGEMENT
+     No image — checklist + callout + quote
+     ✅ Specific triggers, not generic risks
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">RISK</span>
+    <span class="pg-hd-num">08</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <div class="sec-h"></div>
+    <ul class="chklist">
+      
+      
+      
+      
+    </ul>
+
+    <div class="callout" style="margin-top:10px;">
+      <div class="callout-label"></div>
+      
+    </div>
+
+    <blockquote class="bq">
+      ""
+      <footer>— </footer>
+    </blockquote>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 9 — KEY STATISTICS & DATA
+     Stat grid (3 big numbers) + highlight strip
+     ✅ Visual magazine numbers, not prose stats
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">DATA</span>
+    <span class="pg-hd-num">09</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <div class="sec-h"></div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val"></div>
+        <div class="stat-lbl"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val"></div>
+        <div class="stat-lbl"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val"></div>
+        <div class="stat-lbl"></div>
+      </div>
+    </div>
+
+    <div class="strip">
+      <div class="strip-title"></div>
+      
+    </div>
+
+    <p class="body-p"></p>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 10 — STEP-BY-STEP PROCESS
+     Numbered steps + two boxes
+     ✅ Consultant-grade structure
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">PROCESS</span>
+    <span class="pg-hd-num">10</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <div class="sec-h"></div>
+    <ul class="steps">
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+    </ul>
+
+    <div class="two-col">
+      <div class="cbox"><h4></h4></div>
+      <div class="cbox"><h4></h4></div>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 11 — COMPARISON TABLE
+     Table + callout + quote
+     ✅ Data-driven, architect-friendly layout
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">COMPARISON</span>
+    <span class="pg-hd-num">11</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <div class="sec-h"></div>
+    <table class="cmp-tbl">
+      <thead>
+        <tr>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td></td><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div class="callout-label"></div>
+      
+    </div>
+
+    <blockquote class="bq">
+      ""
+      <footer>— </footer>
+    </blockquote>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 12 — ICON CARDS + TIMELINE
+     4-across icon cards + vertical timeline
+     ✅ Magazine visual hierarchy
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">TAKEAWAYS</span>
+    <span class="pg-hd-num">12</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <div class="icon-row">
+      <div class="icon-card">
+        <span class="icon-card-emoji"></span>
+        <div class="icon-card-ttl"></div>
+        <div class="icon-card-txt"></div>
+      </div>
+      <div class="icon-card">
+        <span class="icon-card-emoji"></span>
+        <div class="icon-card-ttl"></div>
+        <div class="icon-card-txt"></div>
+      </div>
+      <div class="icon-card">
+        <span class="icon-card-emoji"></span>
+        <div class="icon-card-ttl"></div>
+        <div class="icon-card-txt"></div>
+      </div>
+      <div class="icon-card">
+        <span class="icon-card-emoji"></span>
+        <div class="icon-card-ttl"></div>
+        <div class="icon-card-txt"></div>
+      </div>
+    </div>
+
+    <div class="sec-h"></div>
+    <ul class="timeline">
+      <li><strong></strong></li>
+      <li><strong></strong></li>
+      <li><strong></strong></li>
+      <li><strong></strong></li>
+      <li><strong></strong></li>
+    </ul>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 13 — DEEP DIVE
+     6-item checklist + highlight strip
+     ✅ Actionable specifics, not generalizations
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">DEEP DIVE</span>
+    <span class="pg-hd-num">13</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <h2 class="pg-h1"></h2>
+    <p class="pg-intro"></p>
+
+    <div class="sec-h"></div>
+    <ul class="chklist">
+      
+      
+      
+      
+      
+      
+    </ul>
+
+    <div class="strip">
+      <div class="strip-title"></div>
+      
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 14 — CONTACT & CTA
+     ✅ Specific offer box (fixes Image 4)
+     ✅ NOT "Contact us today" — specific named hook
+     ✅ Header + Footer
+═══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <span class="pg-hd-label">CONTACT</span>
+    <span class="pg-hd-num">14</span>
+  </div>
+  <div class="pg-bar"></div>
+
+  <div class="pg-body">
+    <!-- Hero CTA — specific, not generic -->
+    <div class="cta-hero">
+      <h2>Ready to Build?</h2>
+      <p>Contact us today.</p>
+    </div>
+
+    <!-- Contact details grid -->
+    <div class="contact-grid">
+      <div class="ci">
+        <div class="ci-lbl">Company</div>
+        <div class="ci-val">Test Company</div>
+      </div>
+      <div class="ci">
+        <div class="ci-lbl">Email</div>
+        <div class="ci-val">test@example.com</div>
+      </div>
+      <div class="ci">
+        <div class="ci-lbl">Website</div>
+        <div class="ci-val">www.test.com</div>
+      </div>
+      <div class="ci">
+        <div class="ci-lbl">Phone</div>
+        <div class="ci-val">123-456-7890</div>
+      </div>
+    </div>
+
+    <!-- Why choose us -->
+    <div class="why-box">
+      <h4>Why Us?</h4>
+      <p>We are the best.</p>
+    </div>
+
+    <!-- Named offer hook — Image 4 fix: specific > generic -->
+    <div class="cta-offer">
+      <div class="cta-offer-title">Book Audit</div>
+      <p>Our Edge</p>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <div class="pg-ft-left">
+      <div class="pg-ft-logo">T</div>
+      <span class="pg-ft-co">© 2026 Test Company</span>
+    </div>
+    <span class="pg-ft-right">www.test.com</span>
+  </div>
+</div>
+
+</div><!-- /.book -->
 </body>
 </html>
