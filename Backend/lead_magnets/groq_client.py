@@ -613,7 +613,7 @@ class GroqClient:
         )
         logger.info(f"🔵 Layer 1 | {signals['topic']}")
         result = self._call_ai(system, prompt, max_tokens=500)
-        logger.info(f"✅ Layer 1 done | keys={list(result.keys())}")
+        logger.info(f"✅ Layer 1 done | keys={list(result.keys()) if isinstance(result, dict) else 'none'}")
         return result
 
     def _generate_framework(self, analysis: Dict[str, Any], section_keys: List[str], signals: Dict[str, Any]) -> Dict[str, Any]:
@@ -642,7 +642,9 @@ class GroqClient:
             if any(k in result for k in section_keys):
                 result = {"sections": result}
                 logger.warning("⚠️ Layer 2 — wrapped bare dict in 'sections'")
-        logger.info(f"✅ Layer 2 done | section_keys={list(result.get('sections', {}).keys())}")
+        
+        secs = result.get('sections', {})
+        logger.info(f"✅ Layer 2 done | section_keys={list(secs.keys()) if isinstance(secs, dict) else 'none'}")
         return result
 
     def _generate_title(self, signals: Dict, type_label: str) -> Dict:
@@ -673,9 +675,14 @@ class GroqClient:
             raise RuntimeError("Layer 1/2 context missing — _analyze_inputs and _generate_framework must run before _generate_section")
         analysis = self._analysis
         secs     = self._framework.get("sections", {})
+        if not isinstance(secs, dict):
+            logger.error(f"❌ Layer 2 framework 'sections' is not a dict. Got: {type(secs).__name__}")
+            secs = {}
+            
         sec_plan = secs.get(key)
         if not isinstance(sec_plan, dict):
-            raise RuntimeError(f"Layer 2 framework missing plan for section '{key}'. Got keys: {list(secs.keys())}")
+            logger.error(f"❌ Layer 2 framework missing plan for section '{key}'. Got keys: {list(secs.keys()) if isinstance(secs, dict) else 'none'}")
+            raise RuntimeError(f"Layer 2 framework missing plan for section '{key}'.")
 
         pain_tie  = sec_plan.get("pain_point_tie", "")
         solution  = analysis.get("pain_point_solutions", {}).get(pain_tie, "")
@@ -723,7 +730,8 @@ class GroqClient:
         # Thresholds: conclusion can be shorter (80), others need 100+
         min_words = 80 if key == "conclusion" else 100
         if words < min_words:
-            raise ValueError(f"Section '{key}' too short ({words} words — need {min_words}+). Keys: {list(raw.keys())}. Snippet: {str(raw)[:200]}")
+            logger.error(f"❌ Section '{key}' too short ({words} words — need {min_words}+)")
+            raise ValueError(f"Section '{key}' too short ({words} words — need {min_words}+). Keys: {list(raw.keys()) if isinstance(raw, dict) else 'none'}. Snippet: {str(raw)[:200]}")
 
         return self._sanitize_html(content)
 
@@ -740,7 +748,7 @@ class GroqClient:
             if isinstance(v, str) and len(v) > 80:
                 logger.warning(f"⚠️ '{key}' missing — used '{k}'")
                 return v
-        logger.error(f"❌ extract FAILED '{key}' | keys={list(result.keys())}")
+        logger.error(f"❌ extract FAILED '{key}' | keys={list(result.keys()) if isinstance(result, dict) else 'none'}")
         return ""
 
 
@@ -806,8 +814,10 @@ class GroqClient:
 
         try:
             parsed = json.loads(cleaned)
-            logger.info(f"✅ parsed | keys={list(parsed.keys())}")
-            return parsed
+            if isinstance(parsed, dict):
+                logger.info(f"✅ parsed | keys={list(parsed.keys())}")
+                return parsed
+            logger.warning(f"⚠️ Groq returned a {type(parsed).__name__} instead of dict. Attempting repair.")
         except json.JSONDecodeError:
             pass
 
