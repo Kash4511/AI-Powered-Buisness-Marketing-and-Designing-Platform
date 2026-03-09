@@ -290,9 +290,8 @@ def _run_generation_job(job_id, body, user_id):
 
                 # ── FIX: Ensure ai_content has a valid sections structure for mapping ──
                 # Requirement 4: Confirm extraction matches actual structure
-                # In GroqClient, normalize_ai_output puts content into keys directly.
-                # If 'sections' key is expected but missing, we log an error.
-                if not any(key in ai_content for key, *_ in getattr(ai_client, 'SECTIONS', [])):
+                # We check if any of the mandatory sections has content.
+                if not any(ai_content.get(key) for key, *_ in ai_client.SECTIONS):
                     print("[ERROR] ai_content has no section data — check normalize_ai_output() output")
                     _set_job(job_id, status="failed", error="AI content generation produced no sections")
                     return

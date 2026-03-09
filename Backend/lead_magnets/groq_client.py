@@ -228,11 +228,13 @@ _TYPE_MAP = {
 
 ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br"}
 
-# Section key → layout type mapping (used by map_to_template_vars)
-SECTION_LAYOUT = {key: layout for key, _, _, layout, _ in SECTIONS}
-
 
 class GroqClient:
+    SECTIONS = SECTIONS
+    DOC_TYPE_LABELS = DOC_TYPE_LABELS
+    _TYPE_MAP = _TYPE_MAP
+    SECTION_LAYOUT = {key: layout for key, _, _, layout, _ in SECTIONS}
+
     def __init__(self):
         api_key = os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
         if not api_key:
