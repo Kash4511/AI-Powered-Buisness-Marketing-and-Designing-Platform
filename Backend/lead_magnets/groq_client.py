@@ -500,9 +500,15 @@ class GroqClient:
 
         # Images
         vars.update({
-            "image1Html": self._get_image_html(firm_profile.get("image_1_url")),
-            "image2Html": self._get_image_html(firm_profile.get("image_2_url")),
-            "image3Html": self._get_image_html(firm_profile.get("image_3_url")),
+            "image1Html": "", # Will be injected by DocRaptorService._inject_images
+            "image2Html": "",
+            "image3Html": "",
+            "image_1_url": firm_profile.get("image_1_url") or "",
+            "image_2_url": firm_profile.get("image_2_url") or "",
+            "image_3_url": firm_profile.get("image_3_url") or "",
+            "imagePlaceholderText1": firm_profile.get("image_1_caption") or "Executive Summary Overview",
+            "imagePlaceholderText2": firm_profile.get("image_2_caption") or "Key Challenges Analysis",
+            "imagePlaceholderText3": firm_profile.get("image_3_caption") or "Strategic Framework Model",
             "architecturalImageCaption1": firm_profile.get("image_1_caption") or "Executive Summary Overview",
             "architecturalImageCaption2": firm_profile.get("image_2_caption") or "Key Challenges Analysis",
             "architecturalImageCaption3": firm_profile.get("image_3_caption") or "Strategic Framework Model",
@@ -611,11 +617,6 @@ class GroqClient:
         
         intro = self._extract_intro(html)
         if intro: data["contactDescription"] = intro
-
-    def _get_image_html(self, url: str) -> str:
-        if url:
-            return f'<img src="{url}" alt="Project Image">'
-        return '<div class="img-ph"><span class="img-ph-icon">🖼️</span><span class="img-ph-label">Project Image</span></div>'
 
     def ensure_section_content(self, sections, signals, firm_profile):
         return sections

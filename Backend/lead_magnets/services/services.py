@@ -102,6 +102,26 @@ def validate_rendered_html(html: str) -> Dict[str, Any]:
     }
 
 
+def _inject_images(html, template_vars): 
+     placeholders = [ 
+         template_vars.get("imagePlaceholderText1", "Project Overview"), 
+         template_vars.get("imagePlaceholderText2", "Challenges Overview"), 
+         template_vars.get("imagePlaceholderText3", "Framework Diagram"), 
+     ] 
+     for i in range(1, 4): 
+         url   = template_vars.get(f"image_{i}_url", "").strip() 
+         token = "{{" + f"image{i}Html" + "}}" 
+         label = placeholders[i-1] 
+         if url and url.startswith("http") and not any(x in url for x in ["unsplash", "pexels", "placeholder"]): 
+             img_html = f'<img src="{url}" style="width:100%;height:175px;object-fit:cover;border-radius:8px;display:block;">' 
+         else: 
+             img_html = f'''<div class="img-ph"> 
+                 <div class="img-ph-icon">🏗️</div> 
+                 <div class="img-ph-label">{label}</div> 
+             </div>''' 
+         html = html.replace(token, img_html) 
+     return html
+
 class DocRaptorService:
     def __init__(self):
         self.api_key = os.getenv('DOCRAPTOR_API_KEY')
@@ -139,16 +159,17 @@ class DocRaptorService:
         template_name = 'Template.html'
         if str(template_id).lower() in ('brand-assets', 'brand_assets', 'brand-assets-preview'):
             template_name = 'BrandAssetsPreview.html'
-        template = env.get_template(template_name)
         
-        # ── FIX: Ensure variables are processed correctly before substitution ──
-        # The requirement asks for a custom re.sub replacer with .get() fallback.
-        # Since we are using Jinja2 here, we ensure variables are clean.
+        # Load and pre-process images BEFORE Jinja2 rendering (User Requirement)
+        template_path = os.path.join(self.templates_dir, template_name)
+        with open(template_path, 'r', encoding='utf-8') as f:
+            template_source = f.read()
         
-        # DEBUG: Verify variables (build_flat_vars equivalent) (Requirement 1)
-        # logger.info(f"[DEBUG] flat vars count: {len(variables)}")
-        # logger.info(f"[DEBUG] sample vars: { {k: str(v)[:40] for k, v in list(variables.items())[:10]} }")
-
+        # Step 1: Resolve image blocks (Requirement 5)
+        template_source = _inject_images(template_source, variables)
+        
+        # Now render with Jinja2
+        template = env.from_string(template_source)
         rendered_html = template.render(**variables)
         
         # DEBUG: Log if variables are missing in the template context
