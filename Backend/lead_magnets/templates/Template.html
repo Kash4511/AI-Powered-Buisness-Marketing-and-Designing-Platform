@@ -1,1275 +1,1351 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>{{documentTitle}}</title>
-<style>
-/* ══════════════════════════════════════════════════════
-   FONTS & PRINT DEFAULTS
-══════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{documentTitle}} - {{companyName}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: {{primaryColor}};
+            --secondary: {{secondaryColor}};
+            --accent: {{accentColor}};
+            --highlight: {{highlightColor}};
+            --gold: {{goldColor}};
+            --light: #f8f9fa;
+            --text: #2d3436;
+            --text-light: #636e72;
+        }
 
-@page {
-  size: A4;
-  margin: 0;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* ══════════════════════════════════════════════════════
-   DYNAMIC COLOR SYSTEM — all 5 colors injected at runtime
-══════════════════════════════════════════════════════ */
-:root{
-  --P:  {{primaryColor}};      /* Primary — headers, cover bg, footer bg     */
-  --S:  {{secondaryColor}};    /* Secondary — page header bar, stat borders  */
-  --A:  {{accentColor}};       /* Accent — callout borders, dividers, badges */
-  --H:  {{highlightColor}};    /* Highlight — strip gradient start           */
-  --G:  {{goldColor}};         /* Gold — TOC numbers, quote marks, CTA ring  */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #e0e0e0;
+            padding: 20px;
+        }
 
-  /* Derived neutrals (not overridden) */
-  --ink:  #111318;
-  --ink2: #4a4f5e;
-  --bg:   #f5f6f9;
-  --rule: #e0e3ec;
-  --white: #ffffff;
-}
+        .book {
+            width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
 
-/* ══════════════════════════════════════════════════════
-   RESET + BODY
-══════════════════════════════════════════════════════ */
-*{margin:0;padding:0;box-sizing:border-box;}
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 210mm;
-  height: 100%;
-  background: #c8cad2; /* Browser preview bg */
-}
-body{
-  font-family:'DM Sans',sans-serif;
-  -webkit-print-color-adjust:exact;
-  print-color-adjust:exact;
-}
-@media print {
-  body { background: white; }
-  .book { box-shadow: none; width: 210mm; margin: 0; }
-}
-.book{width:210mm;margin:0 auto;box-shadow:0 16px 56px rgba(0,0,0,.28);}
+        .page {
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+        }
 
-/* ══════════════════════════════════════════════════════
-   PAGE BASE — strict A4, no overflow
-══════════════════════════════════════════════════════ */
-.page{
-  width:210mm;
-  height:297mm;
-  background:var(--white);
-  position:relative;
-  overflow:visible;            /* Allow overflow during rendering */
-  page-break-after:always;
-  page-break-inside:avoid;
-  display:flex;
-  flex-direction:column;
-}
+        /* COVER PAGE - SOLID PRIMARY COLOR */
+        .cover {
+            background: var(--primary);
+            position: relative;
+        }
 
-/* ══════════════════════════════════════════════════════
-   PAGE 1 — COVER
-   ✅ Title: LEFT side, vertically centered
-   ✅ Contact block: BOTTOM-LEFT (matches Image 1)
-══════════════════════════════════════════════════════ */
-.cover{
-  background:var(--P);
-  justify-content:flex-start;
-  overflow:hidden;
-}
+        /* Geometric Background Elements */
+        .geo-circle-1 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            top: -150px;
+            right: -100px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
 
-/* Geometric art — purely decorative, absolute */
-.cv-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(255,255,255,.1);}
-.cv-ring-1{width:440px;height:440px;top:-140px;right:-120px;background:rgba(255,255,255,.04);}
-.cv-ring-2{width:240px;height:240px;top:80px;right:60px;background:rgba(255,255,255,.02);}
-.cv-ring-3{width:280px;height:280px;bottom:-80px;left:-80px;background:rgba(255,255,255,.03);}
-.cv-diamond{
-  position:absolute;bottom:160px;right:30px;
-  width:120px;height:120px;
-  transform:rotate(45deg);
-  border:2px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.03);
-}
-/* Vertical accent stripe — left edge */
-.cv-stripe{
-  position:absolute;left:0;top:0;bottom:0;
-  width:7px;
-  background:var(--A);
-}
-/* Horizontal separator line */
-.cv-hline{
-  position:absolute;
-  left:45px;bottom:128px;right:0;
-  height:1px;
-  background:rgba(255,255,255,.14);
-}
+        .geo-circle-2 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            bottom: -100px;
+            left: -80px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+        }
 
-/* ── Title block — absolute, left side, vertically centered ── */
-.cv-main{
-  position:absolute;
-  top:50%;left:45px;right:44%;
-  transform:translateY(-52%);
-  z-index:10;
-}
-.cv-eyebrow{
-  font-family:'Space Mono',monospace;
-  font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:3.5px;
-  color:var(--A);
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:20px;
-}
-.cv-eyebrow::before{
-  content:'';display:inline-block;
-  width:24px;height:2px;background:var(--A);
-}
-.cv-title{
-  font-family:'DM Serif Display',serif;
-  font-size:38px;font-weight:400;
-  line-height:1.06;letter-spacing:-.5px;
-  color:var(--white);
-  margin-bottom:10px;
-}
-.cv-title-accent{color:var(--A);font-style:italic;display:block;}
-.cv-divider{
-  width:50px;height:4px;
-  background:var(--A);border-radius:2px;
-  margin:18px 0;
-}
-.cv-subtitle{
-  font-size:13px;font-weight:300;line-height:1.75;
-  color:rgba(255,255,255,.72);
-  max-width:360px;
-}
+        .geo-square {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.04);
+            transform: rotate(45deg);
+            top: 40%;
+            right: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
 
-/* ── Contact block — BOTTOM-LEFT (exactly like Image 1) ── */
-.cv-contact{
-  position:absolute;
-  bottom:28px;left:45px;
-  z-index:10;
-}
-.cv-contact-name{
-  font-family:'DM Serif Display',serif;
-  font-size:16px;color:var(--white);
-  margin-bottom:7px;letter-spacing:.3px;
-}
-.cv-contact-details{
-  font-size:11px;font-weight:300;
-  color:rgba(255,255,255,.6);
-  line-height:2;
-}
+        .geo-lines {
+            position: absolute;
+            top: 30%;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+        }
 
-/* Doc-type pill — bottom right */
-.cv-pill{
-  position:absolute;bottom:36px;right:36px;z-index:10;
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:20px;padding:6px 16px;
-  font-family:'Space Mono',monospace;
-  font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:2px;
-  color:rgba(255,255,255,.55);
-}
+        .geo-line {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+            transform-origin: left;
+        }
 
-/* ══════════════════════════════════════════════════════
-   CONTENT PAGES — header + footer ALWAYS present
-══════════════════════════════════════════════════════ */
+        .geo-line:nth-child(1) { transform: rotate(-25deg); }
+        .geo-line:nth-child(2) { transform: rotate(-15deg); }
+        .geo-line:nth-child(3) { transform: rotate(-5deg); }
 
-/* ── PAGE HEADER ── */
-.pg-hd{
-  flex-shrink:0;
-  background:var(--S);
-  height:50px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 22mm;
-  position:relative;overflow:hidden;
-}
-.pg-hd::after{
-  content:'';position:absolute;
-  right:-20px;top:-20px;
-  width:100px;height:100px;
-  border-radius:50%;
-  border:2px solid rgba(255,255,255,.1);
-}
-.pg-hd-label{
-  font-family:'Space Mono',monospace;
-  font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:2.5px;
-  color:var(--white);position:relative;z-index:2;
-  padding-left:10px;
-  border-left:3px solid var(--A);
-}
-.pg-hd-num{
-  font-family:'Space Mono',monospace;
-  font-size:10px;font-weight:700;
-  color:var(--white);
-  background:rgba(255,255,255,.15);
-  border-radius:20px;padding:4px 14px;
-  position:relative;z-index:2;
-  letter-spacing:1px;
-}
+        /* Cover Content */
+        .cover-content {
+            position: relative;
+            z-index: 10;
+            padding: 80mm 25mm 25mm 25mm;
+            color: white;
+        }
 
-/* Accent bar below header */
-.pg-bar{flex-shrink:0;height:4px;background:var(--P);}
+        .cover-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            color: white;
+            border-bottom: 3px solid var(--secondary);
+            padding-bottom: 15px;
+            display: inline-block;
+        }
 
-/* ── CONTENT BODY — flex:1 keeps it between header & footer ── */
-.pg-body{
-  flex:1;
-  padding:15px 22mm 10px;
-  min-height:0;
-}
+        .cover-title-accent {
+            color: white;
+            display: block;
+            font-size: 52px;
+        }
 
-/* ── PAGE FOOTER ── */
-.pg-ft{
-  flex-shrink:0;
-  background:var(--P);
-  height:44px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 22mm;
-  position:relative;overflow:hidden;
-}
-.pg-ft::before{
-  content:'';position:absolute;
-  left:28%;top:-14px;
-  width:56px;height:56px;
-  border-radius:50%;border:2px solid rgba(255,255,255,.1);
-}
-.pg-ft-left{display:flex;align-items:center;gap:9px;position:relative;z-index:2;}
-.pg-ft-logo{
-  width:26px;height:26px;border-radius:50%;
-  background:rgba(255,255,255,.18);
-  border:1.5px solid rgba(255,255,255,.3);
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:800;color:var(--white);
-  flex-shrink:0;
-}
-.pg-ft-co{
-  font-size:10px;font-weight:600;
-  color:rgba(255,255,255,.82);letter-spacing:.4px;
-}
-.pg-ft-right{
-  font-size:10px;color:rgba(255,255,255,.55);
-  position:relative;z-index:2;
-}
+        .cover-subtitle {
+            font-size: 18px;
+            font-weight: 300;
+            line-height: 1.6;
+            margin-top: 30px;
+            margin-bottom: 40px;
+            color: white;
+            max-width: 500px;
+        }
 
-/* ══════════════════════════════════════════════════════
-   PAGE 2 — TERMS OF USE (matches Image 2: centred, airy)
-══════════════════════════════════════════════════════ */
-.terms-wrap{
-  flex:1;display:flex;
-  align-items:center;justify-content:center;
-  padding:0 28mm;
-}
-.terms-inner{text-align:center;}
-.terms-kicker{
-  font-family:'Space Mono',monospace;
-  font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:3px;
-  color:var(--A);margin-bottom:10px;
-}
-.terms-title{
-  font-family:'DM Serif Display',serif;
-  font-size:20px;color:var(--P);
-  margin-bottom:24px;position:relative;
-  padding-bottom:16px;
-}
-.terms-title::after{
-  content:'';position:absolute;
-  bottom:0;left:50%;transform:translateX(-50%);
-  width:36px;height:3px;background:var(--A);border-radius:2px;
-}
-.terms-p{
-  font-size:12.5px;line-height:1.9;color:#3a3a4a;
-  margin-bottom:14px;
-}
-.terms-sm{
-  font-size:10.5px;color:#999;margin-top:18px;font-style:italic;
-}
+        .cover-footer {
+            position: absolute;
+            bottom: 25mm;
+            left: 25mm;
+            right: 25mm;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+        }
 
-/* ══════════════════════════════════════════════════════
-   TOC — clean dotted leader lines
-══════════════════════════════════════════════════════ */
-.toc-heading{
-  font-family:'DM Serif Display',serif;
-  font-size:20px;color:var(--ink);
-  border-bottom:2px solid var(--rule);
-  padding-bottom:10px;margin-bottom:22px;
-}
-.toc-list{list-style:none;}
-.toc-row{
-  display:flex;align-items:center;
-  padding:9px 0;
-  border-bottom:1px solid var(--rule);
-  gap:10px;
-}
-.toc-n{
-  flex-shrink:0;width:24px;height:24px;border-radius:50%;
-  background:var(--G);color:var(--white);
-  font-size:10px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Space Mono',monospace;
-}
-.toc-label{flex:1;font-size:12.5px;color:var(--ink);font-weight:500;}
-.toc-dots{
-  flex:1;border-bottom:1.5px dotted var(--rule);
-  margin:0 8px;min-width:20px;
-}
-.toc-pg{
-  font-size:12px;font-weight:700;color:var(--P);
-  min-width:22px;text-align:right;
-  font-family:'Space Mono',monospace;
-}
+        .company-info {
+            line-height: 1.8;
+        }
 
-/* ══════════════════════════════════════════════════════
-   TYPOGRAPHY — magazine-grade
-══════════════════════════════════════════════════════ */
-.pg-h1{
-  font-family:'DM Serif Display',serif;
-  font-size:22px;font-weight:400;color:var(--ink);
-  border-bottom:2px solid var(--S);
-  padding-bottom:6px;margin-bottom:10px;
-  line-height:1.2;
-}
-.pg-intro{
-  font-size:13px;line-height:1.78;color:var(--ink2);
-  margin-bottom:12px;
-}
-.sec-h{
-  font-family:'DM Sans',sans-serif;
-  font-size:13px;font-weight:700;
-  color:var(--P);
-  margin:12px 0 6px;
-  padding-left:10px;
-  border-left:3px solid var(--A);
-}
-.body-p{font-size:12px;line-height:1.72;color:var(--ink2);margin-bottom:8px;}
+        .company-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: white;
+            margin-bottom: 8px;
+        }
 
-/* ══════════════════════════════════════════════════════
-   IMAGE SYSTEM — 3 placements, STRICT CSS GRID (no float)
-══════════════════════════════════════════════════════ */
+        /* ENHANCED CONTENT PAGE HEADER - SECONDARY COLOR */
+        .content-page {
+            padding: 0;
+            padding-bottom: 20mm;
+        }
 
-/* CENTER: full width above content */
-.img-center{display:block;margin:10px 0 6px;}
-.img-center .img-block{width:100%;}
-.img-center .img-block img,
-.img-center .img-ph{height:155px;}
+        .page-header-enhanced {
+            background: var(--secondary);
+            padding: 20px 25mm;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
 
-/* RIGHT: text left col, image right col */
-.img-right{
-  display:grid;
-  grid-template-columns:1fr 42%;
-  gap:16px;
-  align-items:start;
-  margin:10px 0;
-}
-/* LEFT: image left col, text right col */
-.img-left{
-  display:grid;
-  grid-template-columns:42% 1fr;
-  gap:16px;
-  align-items:start;
-  margin:10px 0;
-}
+        /* Decorative elements in header */
+        .header-decoration {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 100%;
+            opacity: 0.1;
+        }
 
-.img-block{width:100%;}
-.img-block img{
-  width:100%;height:175px;
-  object-fit:cover;border-radius:8px;display:block;
-}
-.img-ph{
-  width:100%;height:175px;
-  border-radius:8px;
-  background:linear-gradient(135deg,var(--bg) 0%,#dde0ea 100%);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:6px;
-  position:relative;overflow:hidden;
-}
-.img-ph::before{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(
-    45deg,transparent,transparent 10px,
-    rgba(0,0,0,.018) 10px,rgba(0,0,0,.018) 20px
-  );
-}
-.img-ph-icon{font-size:26px;position:relative;z-index:1;}
-.img-ph-label{
-  font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1.2px;
-  color:var(--ink2);position:relative;z-index:1;
-}
-.img-cap{
-  font-size:10px;color:var(--ink2);
-  text-align:center;margin-top:4px;font-style:italic;
-}
+        .header-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
 
-/* ══════════════════════════════════════════════════════
-   COMPONENT LIBRARY — consultant-grade visual elements
-   (fixes Image 3: visual hierarchy, callouts, tables)
-══════════════════════════════════════════════════════ */
+        .header-circle-1 {
+            width: 120px;
+            height: 120px;
+            top: -40px;
+            right: -20px;
+        }
 
-/* Callout box */
-.callout{
-  background:var(--bg);
-  border-left:4px solid var(--S);
-  border-radius:0 8px 8px 0;
-  padding:11px 14px;margin:8px 0;
-}
-.callout-label{
-  font-size:10px;font-weight:800;
-  text-transform:uppercase;letter-spacing:1.2px;
-  color:var(--S);margin-bottom:4px;
-}
-.callout p{font-size:11.5px;line-height:1.62;color:var(--ink2);margin:0;}
+        .header-circle-2 {
+            width: 80px;
+            height: 80px;
+            top: 10px;
+            right: 80px;
+        }
 
-/* Highlight strip */
-.strip{
-  background:linear-gradient(120deg,var(--P) 0%,var(--S) 100%);
-  border-radius:8px;padding:13px 16px;margin:8px 0;
-}
-.strip-title{
-  font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1px;
-  color:rgba(255,255,255,.7);margin-bottom:5px;
-}
-.strip p{font-size:12px;line-height:1.6;color:rgba(255,255,255,.9);margin:0;}
+        .header-circle-3 {
+            width: 50px;
+            height: 50px;
+            bottom: -10px;
+            right: 40px;
+        }
 
-/* Checklist */
-.chklist{list-style:none;margin:8px 0;}
-.chklist li{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:7px 0;border-bottom:1px solid var(--rule);
-  font-size:12px;line-height:1.55;color:var(--ink2);
-}
-.chklist li::before{
-  content:'✓';flex-shrink:0;
-  width:20px;height:20px;border-radius:50%;
-  background:var(--S);color:var(--white);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;margin-top:1px;
-}
+        .page-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
 
-/* Numbered step list (visual, not AI bullet-dump) */
-.steps{list-style:none;counter-reset:stp;margin:8px 0;}
-.steps li{
-  counter-increment:stp;
-  display:flex;align-items:flex-start;gap:12px;
-  padding:8px 0;border-bottom:1px solid var(--rule);
-  font-size:12px;line-height:1.58;color:var(--ink2);
-}
-.steps li::before{
-  content:counter(stp);flex-shrink:0;
-  width:26px;height:26px;border-radius:6px;
-  background:var(--P);color:var(--white);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:13px;
-  font-family:'Space Mono',monospace;
-}
-.steps li strong{display:block;color:var(--P);font-size:12.5px;margin-bottom:2px;}
+        .page-title-enhanced {
+            font-family: 'Poppins', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+            position: relative;
+            padding-left: 15px;
+        }
 
-/* Stat grid — 3 bold numbers (magazine-grade) */
-.stat-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:10px;margin:10px 0;
-}
-.stat-card{
-  background:var(--bg);
-  border-top:3px solid var(--S);
-  border-radius:6px;padding:13px 8px;text-align:center;
-}
-.stat-val{
-  font-family:'DM Serif Display',serif;
-  font-size:28px;color:var(--P);line-height:1;
-}
-.stat-lbl{
-  font-size:9.5px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.8px;
-  color:var(--ink2);margin-top:4px;
-}
+        .page-title-enhanced:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 35px;
+            background: var(--accent);
+            border-radius: 3px;
+        }
 
-/* Comparison table */
-.cmp-tbl{
-  width:100%;border-collapse:collapse;
-  font-size:11px;margin:10px 0;
-}
-.cmp-tbl th{
-  background:var(--S);color:var(--white);
-  padding:8px 9px;text-align:left;
-  font-weight:700;text-transform:uppercase;
-  letter-spacing:.5px;font-size:10px;
-}
-.cmp-tbl th:first-child{border-radius:6px 0 0 0;}
-.cmp-tbl th:last-child{border-radius:0 6px 0 0;}
-.cmp-tbl td{
-  padding:7px 9px;border-bottom:1px solid var(--rule);
-  color:var(--ink2);line-height:1.4;
-}
-.cmp-tbl tr:nth-child(even) td{background:var(--bg);}
-.cmp-tbl td:first-child{font-weight:700;color:var(--P);}
+        .page-number-enhanced {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
 
-/* Icon cards — 4 across */
-.icon-row{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:9px;margin:10px 0;
-}
-.icon-card{
-  background:var(--bg);border-radius:8px;
-  padding:13px 7px;text-align:center;
-}
-.icon-card-emoji{font-size:22px;display:block;margin-bottom:6px;}
-.icon-card-ttl{
-  font-size:10.5px;font-weight:700;color:var(--P);
-  text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;
-}
-.icon-card-txt{font-size:10px;color:var(--ink2);line-height:1.4;}
+        /* Accent bar below header */
+        .header-accent-bar {
+            height: 6px;
+            background: var(--primary);
+            position: relative;
+        }
 
-/* Timeline */
-.timeline{list-style:none;padding-left:28px;position:relative;margin:8px 0;}
-.timeline::before{
-  content:'';position:absolute;
-  left:8px;top:4px;bottom:4px;
-  width:3px;
-  background:linear-gradient(to bottom,var(--S),var(--P));
-  border-radius:2px;
-}
-.timeline li{
-  position:relative;padding:6px 0 6px 14px;
-  font-size:11.5px;line-height:1.55;color:var(--ink2);
-  border-bottom:1px solid var(--rule);
-}
-.timeline li::before{
-  content:'';position:absolute;
-  left:-24px;top:10px;
-  width:15px;height:15px;
-  background:var(--S);border-radius:50%;
-  border:3px solid var(--white);
-  box-shadow:0 0 0 2px var(--S);
-}
-.timeline li strong{
-  display:block;font-size:12px;font-weight:700;
-  color:var(--P);margin-bottom:2px;
-}
+        .header-accent-bar:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 100px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+        }
 
-/* Two-column boxes */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}
-.cbox{background:var(--bg);border-radius:6px;padding:12px;}
-.cbox h4{
-  font-size:11.5px;font-weight:700;color:var(--P);
-  margin-bottom:5px;padding-bottom:5px;
-  border-bottom:1px solid var(--rule);
-}
-.cbox p{font-size:11px;line-height:1.6;color:var(--ink2);margin:0;}
+        /* Main content area */
+        .page-content-area {
+            padding: 25mm 25mm 0 25mm;
+        }
 
-/* Blockquote */
-.bq{
-  border-left:3px solid var(--G);
-  padding:10px 14px;
-  background:var(--bg);font-style:italic;
-  color:var(--ink2);font-size:12.5px;
-  line-height:1.6;margin:8px 0;
-  border-radius:0 6px 6px 0;
-}
-.bq footer{
-  margin-top:5px;font-style:normal;
-  font-weight:700;color:var(--G);font-size:10.5px;
-}
+        /* IMAGE PLACEHOLDERS */
+        .image-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+            border: none;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 25px 0;
+            position: relative;
+            overflow: hidden;
+        }
 
-/* ══════════════════════════════════════════════════════
-   CONTACT / CTA PAGE
-   Fixes Image 4: specific offer, not generic "contact us"
-══════════════════════════════════════════════════════ */
-.cta-hero{
-  background:var(--S);border-radius:10px;
-  padding:22px 24px;color:var(--white);
-  text-align:center;margin-bottom:14px;
-}
-.cta-hero h2{
-  font-family:'DM Serif Display',serif;
-  font-size:17px;color:var(--white);margin-bottom:7px;
-}
-.cta-hero p{font-size:12.5px;line-height:1.65;color:rgba(255,255,255,.88);}
+        .image-placeholder:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(0,0,0,0.02) 10px,
+                    rgba(0,0,0,0.02) 20px
+                );
+        }
 
-.contact-grid{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:10px;margin:12px 0;
-}
-.ci{
-  background:var(--bg);border-radius:6px;
-  padding:11px 14px;border-top:3px solid var(--A);
-}
-.ci-lbl{
-  font-size:9.5px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1px;
-  color:var(--S);margin-bottom:3px;
-}
-.ci-val{font-size:12px;color:var(--ink);font-weight:500;}
+        .image-placeholder-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
 
-.why-box{
-  background:linear-gradient(120deg,var(--P),var(--S));
-  border-radius:8px;padding:14px 18px;color:var(--white);
-  margin-bottom:12px;
-}
-.why-box h4{
-  font-family:'DM Serif Display',serif;
-  font-size:13px;color:var(--white);margin-bottom:6px;
-}
-.why-box p{font-size:11.5px;line-height:1.65;color:rgba(255,255,255,.88);margin:0;}
+        .image-placeholder-icon:after {
+            content: '🏗️';
+            font-size: 30px;
+        }
 
-/* Specific CTA offer box — fixes Image 4 "generic CTA" issue */
-.cta-offer{
-  border:2px solid var(--G);border-radius:8px;
-  padding:12px 16px;text-align:center;
-  position:relative;overflow:hidden;
-}
-.cta-offer::before{
-  content:'⭐';position:absolute;
-  left:14px;top:50%;transform:translateY(-50%);
-  font-size:18px;
-}
-.cta-offer-title{
-  font-family:'DM Serif Display',serif;
-  font-size:14px;color:var(--P);margin-bottom:4px;
-}
-.cta-offer p{
-  font-size:11.5px;color:var(--ink2);line-height:1.5;margin:0;
-}
+        .image-placeholder-text {
+            font-size: 14px;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 2;
+        }
 
-/* ══════════════════════════════════════════════════════
-   PRINT
-══════════════════════════════════════════════════════ */
-@media print{
-  body{background:white;padding:0;}
-  .book{box-shadow:none;}
-  @page{size:A4;margin:0;}
-}
-</style>
+        .image-placeholder-subtext {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Small image placeholder for content boxes */
+        .image-placeholder-small {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-placeholder-small:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(0,0,0,0.02) 10px,
+                    rgba(0,0,0,0.02) 20px
+                );
+        }
+
+        .image-placeholder-small .image-placeholder-icon {
+            width: 45px;
+            height: 45px;
+        }
+
+        .image-placeholder-small .image-placeholder-icon:after {
+            font-size: 22px;
+        }
+
+        .image-placeholder-small .image-placeholder-text {
+            font-size: 12px;
+        }
+
+        /* ENHANCED FOOTER - PRIMARY COLOR WITH LOGO */
+        .footer-enhanced {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary);
+            padding: 18px 25mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Footer decorative elements */
+        .footer-decoration {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .footer-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+        }
+
+        .footer-wave path {
+            fill: rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-circles {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+        }
+
+        .footer-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .footer-circle-1 {
+            width: 60px;
+            height: 60px;
+            top: -20px;
+            left: 30%;
+        }
+
+        .footer-circle-2 {
+            width: 40px;
+            height: 40px;
+            top: -10px;
+            right: 25%;
+        }
+
+        .footer-circle-3 {
+            width: 30px;
+            height: 30px;
+            bottom: -5px;
+            left: 60%;
+        }
+
+        /* LOGO PLACEHOLDER IN FOOTER */
+        .footer-logo-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-logo {
+            width: 45px;
+            height: 45px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .footer-logo-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .footer-content-left {
+            position: relative;
+            z-index: 2;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-icon {
+            width: 18px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            margin-right: 8px;
+        }
+
+        .footer-content-right {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* STYLED SECTION TITLE WITH LEFT BAR */
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 30px 0 15px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .section-title:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 30px;
+            background: var(--secondary);
+            border-radius: 3px;
+        }
+
+        .content-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        /* TICK CIRCLE CHECKLIST - SECONDARY COLOR */
+        .checklist {
+            list-style: none;
+            margin: 20px 0;
+            padding: 0;
+        }
+
+        .checklist li {
+            padding: 12px 0 12px 40px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.6;
+            border-bottom: 1px solid #e0e0e0;
+            color: var(--text);
+        }
+
+        .checklist li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* INFO BOXES */
+        .info-box {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid var(--secondary);
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-box p {
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* CTA SECTION - SECONDARY COLOR */
+        .cta-section {
+            background: var(--secondary);
+            padding: 40px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .cta-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .cta-text {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: white;
+            line-height: 1.6;
+        }
+
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 26px;
+            color: var(--primary);
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 20px;
+            color: var(--secondary);
+            margin: 18px 0 8px;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 16px;
+            color: var(--primary);
+            margin: 15px 0 8px;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 14px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        ul, ol {
+            margin: 12px 0 12px 20px;
+            font-size: 14px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        /* Regular UL with tick circles - SECONDARY COLOR */
+        ul:not(.checklist) {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        ul:not(.checklist) li {
+            padding: 12px 0 12px 40px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.6;
+            border-bottom: 1px solid #e0e0e0;
+            color: var(--text);
+        }
+
+        ul:not(.checklist) li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        blockquote {
+            border-left: 3px solid var(--secondary);
+            padding: 12px 16px;
+            background: var(--light);
+            font-style: italic;
+            color: var(--text-light);
+            margin: 15px 0;
+        }
+
+        blockquote footer {
+            margin-top: 8px;
+            font-style: normal;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .column {
+            width: 100%;
+        }
+
+        .content-box {
+            background: var(--light);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .content-box.accent {
+            background: rgba(139, 69, 19, 0.05);
+            border: 1px solid rgba(139, 69, 19, 0.1);
+        }
+
+        .content-box h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-weight: 600;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .content-box p {
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+            margin: 20px 0;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .book {
+                box-shadow: none;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="book">
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 1 — COVER
-     ✅ Title LEFT + vertically centred
-     ✅ Contact block BOTTOM-LEFT (Image 1 layout)
-═══════════════════════════════════════════════ -->
-<div class="page cover">
-  <div class="cv-stripe"></div>
-  <div class="cv-ring cv-ring-1"></div>
-  <div class="cv-ring cv-ring-2"></div>
-  <div class="cv-ring cv-ring-3"></div>
-  <div class="cv-diamond"></div>
-  <div class="cv-hline"></div>
-
-  <!-- LEFT-CENTRE title block -->
-  <div class="cv-main">
-    <div class="cv-eyebrow">{{documentTypeLabel}}</div>
-    <h1 class="cv-title">
-      {{mainTitle}}
-      <span class="cv-title-accent">{{mainTitleAccent}}</span>
-    </h1>
-    <div class="cv-divider"></div>
-    <p class="cv-subtitle">{{documentSubtitle}}</p>
-  </div>
-
-  <!-- BOTTOM-LEFT contact (Image 1 style) -->
-  <div class="cv-contact">
-    <div class="cv-contact-name">{{companyName}}</div>
-    <div class="cv-contact-details">
-      {{emailAddress}}<br>
-      {{website}}<br>
-      {{phoneNumber}}
-    </div>
-  </div>
-
-  <!-- Bottom-right pill label -->
-  <div class="cv-pill">{{documentTypeLabel}}</div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 2 — TERMS OF USE
-     ✅ Centred, airy, matching Image 2
-     ✅ Header + Footer present
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle1}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader2}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="terms-wrap">
-    <div class="terms-inner">
-      <div class="terms-kicker">{{legalKicker}}</div>
-      <h1 class="terms-title">{{termsTitle | safe}}</h1>
-      <p class="terms-p">{{termsSummary | safe}}</p>
-      <p class="terms-p">{{termsParagraph1 | safe}}</p>
-      <p class="terms-p">{{termsParagraph2 | safe}}</p>
-      <p class="terms-p">{{termsParagraph3 | safe}}</p>
-      <p class="terms-p">{{termsParagraph4 | safe}}</p>
-      <p class="terms-sm">{{termsParagraph5 | safe}}</p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 3 — TABLE OF CONTENTS
-     ✅ Header + Footer
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle2}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader3}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <div class="toc-heading">{{contentsTitle}}</div>
-    <ul class="toc-list">
-      <li class="toc-row"><span class="toc-n">1</span><span class="toc-label">{{contentItem1}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber4}}</span></li>
-      <li class="toc-row"><span class="toc-n">2</span><span class="toc-label">{{contentItem2}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber5}}</span></li>
-      <li class="toc-row"><span class="toc-n">3</span><span class="toc-label">{{contentItem3}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber6}}</span></li>
-      <li class="toc-row"><span class="toc-n">4</span><span class="toc-label">{{contentItem4}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber7}}</span></li>
-      <li class="toc-row"><span class="toc-n">5</span><span class="toc-label">{{contentItem5}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber8}}</span></li>
-      <li class="toc-row"><span class="toc-n">6</span><span class="toc-label">{{contentItem6}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber9}}</span></li>
-      <li class="toc-row"><span class="toc-n">7</span><span class="toc-label">{{contentItem7}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber10}}</span></li>
-      <li class="toc-row"><span class="toc-n">8</span><span class="toc-label">{{contentItem8}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber11}}</span></li>
-      <li class="toc-row"><span class="toc-n">9</span><span class="toc-label">{{contentItem9}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber12}}</span></li>
-      <li class="toc-row"><span class="toc-n">10</span><span class="toc-label">{{contentItem10}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber13}}</span></li>
-      <li class="toc-row"><span class="toc-n">11</span><span class="toc-label">{{contentItem11}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber14}}</span></li>
-    </ul>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 4 — EXECUTIVE SUMMARY
-     🖼️ IMAGE: CENTER (full-width, above content)
-     ✅ Visual hierarchy: intro → callout box
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle3}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader4}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle1}}</h2>
-
-    <!-- IMAGE CENTER -->
-    <div class="img-center">
-      <div class="img-block">{{image1Html | safe}}</div>
-      <div class="img-cap">{{architecturalImageCaption1}}</div>
-    </div>
-
-    <p class="pg-intro">{{customContent1 | safe}}</p>
-
-    <div class="sec-h">{{subheading1}}</div>
-    <p class="body-p">{{subcontent1 | safe}}</p>
-
-    <div class="callout">
-      <div class="callout-label">{{boxTitle1}}</div>
-      <p>{{boxContent1 | safe}}</p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 5 — KEY CHALLENGES
-     🖼️ IMAGE: RIGHT (text left col, image right col)
-     ✅ Checklist — specific items, not vague bullets
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle4}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader5}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle2}}</h2>
-    <p class="pg-intro">{{customContent2 | safe}}</p>
-
-    <!-- IMAGE RIGHT — strict CSS grid, no float/clash -->
-    <div class="img-right">
-      <div>
-        <div class="sec-h">{{subheading2}}</div>
-        <ul class="chklist">
-          <li>{{listItem1}}</li>
-          <li>{{listItem2}}</li>
-          <li>{{listItem3}}</li>
-          <li>{{listItem4}}</li>
-        </ul>
-      </div>
-      <div>
-        <div class="img-block">{{image2Html | safe}}</div>
-        <div class="img-cap">{{architecturalImageCaption2}}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 6 — STRATEGIC FRAMEWORK
-     🖼️ IMAGE: LEFT (image left col, text right col)
-     ✅ Named tools, specific framework steps
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle5}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader6}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle3}}</h2>
-    <p class="pg-intro">{{customContent3 | safe}}</p>
-
-    <!-- IMAGE LEFT — strict CSS grid -->
-    <div class="img-left">
-      <div>
-        <div class="img-block">{{image3Html | safe}}</div>
-        <div class="img-cap">{{architecturalImageCaption3}}</div>
-      </div>
-      <div>
-        <div class="sec-h">{{subheading3}}</div>
-        <p class="body-p">{{subcontent3}}</p>
-        <div class="callout">
-          <div class="callout-label">{{boxTitle2}}</div>
-          <p>{{boxContent2}}</p>
+    <div class="book">
+        <!-- COVER PAGE -->
+        <div class="page cover">
+            <div class="geo-circle-1"></div>
+            <div class="geo-circle-2"></div>
+            <div class="geo-square"></div>
+            <div class="geo-lines">
+                <div class="geo-line"></div>
+                <div class="geo-line"></div>
+                <div class="geo-line"></div>
+            </div>
+            
+            <div class="cover-content">
+                <h1 class="cover-title">
+                    {{mainTitle}}
+                    <span class="cover-title-accent">{{mainTitleAccent}}</span>
+                </h1>
+                
+                <p class="cover-subtitle">
+                    {{documentSubtitle}}
+                </p>
+            </div>
+            
+            <div class="cover-footer">
+                <div class="company-info">
+                    <div class="company-name">{{companyName}} {{companySubtitle}}</div>
+                    <div>{{emailAddress}} • {{website}} • {{phoneNumber}}</div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- PAGE 2: TERMS OF USE -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle1}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader2}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <div style="text-align: center; padding: 30mm 0;">
+                    <h1 style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px; color: var(--primary); border: none;">{{termsTitle}}</h1>
+                    <p style="font-size: 14px; line-height: 1.7; color: black; margin-bottom: 20px;">{{termsSummary}}</p>
+                    <p style="font-size: 14px; line-height: 1.7; color: black; margin-bottom: 20px;">{{termsParagraph1}}</p>
+                    <p style="font-size: 14px; line-height: 1.7; color: black; margin-bottom: 20px;">{{termsParagraph2}}</p>
+                    <p style="font-size: 14px; line-height: 1.7; color: black; margin-bottom: 20px;">{{termsParagraph3}}</p>
+                    <p style="font-size: 14px; line-height: 1.7; color: black; margin-bottom: 20px;">{{termsParagraph4}}</p>
+                    <p style="font-size: 12px; margin-top: 30px; color: black;">{{termsParagraph5}}</p>
+                </div>
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: TABLE OF CONTENTS -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle2}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader3}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <h1 style="font-size: 20px; font-weight: 700; text-transform: uppercase; color: black; margin-bottom: 25mm; letter-spacing: 0.5px; border: none;">{{contentsTitle}}</h1>
+                
+                <ul style="list-style: none; font-size: 14px; line-height: 1.5; padding: 0;">
+                    <li style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start;">
+                        <span style="flex: 0 0 75%; color: black; font-weight: 400;">{{contentItem1}}</span>
+                        <span style="flex: 0 0 25%; text-align: right; color: black; font-weight: 600;">{{pageNumber4}}</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start;">
+                        <span style="flex: 0 0 75%; color: black; font-weight: 400;">{{contentItem2}}</span>
+                        <span style="flex: 0 0 25%; text-align: right; color: black; font-weight: 600;">{{pageNumber5}}</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start;">
+                        <span style="flex: 0 0 75%; color: black; font-weight: 400;">{{contentItem3}}</span>
+                        <span style="flex: 0 0 25%; text-align: right; color: black; font-weight: 600;">{{pageNumber6}}</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start;">
+                        <span style="flex: 0 0 75%; color: black; font-weight: 400;">{{contentItem4}}</span>
+                        <span style="flex: 0 0 25%; text-align: right; color: black; font-weight: 600;">{{pageNumber7}}</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start;">
+                        <span style="flex: 0 0 75%; color: black; font-weight: 400;">{{contentItem5}}</span>
+                        <span style="flex: 0 0 25%; text-align: right; color: black; font-weight: 600;">{{pageNumber8}}</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start;">
+                        <span style="flex: 0 0 75%; color: black; font-weight: 400;">{{contentItem6}}</span>
+                        <span style="flex: 0 0 25%; text-align: right; color: black; font-weight: 600;">{{pageNumber9}}</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 4: CUSTOM CONTENT 1 WITH ARCHITECTURAL IMAGE -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle3}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader4}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <h1>{{customTitle1}}</h1>
+                <p class="content-text">{{customContent1}}</p>
+                
+                <!-- ARCHITECTURAL IMAGE 1 -->
+                {% if architecturalImages and architecturalImages|length > 0 %}
+                <div class="architectural-image">
+                    <img src="{{architecturalImages[0].src}}" alt="{{architecturalImages[0].alt}}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px;">
+                    <div class="image-placeholder-subtext">{{architecturalImageCaption1}}</div>
+                </div>
+                {% else %}
+                <div class="image-placeholder">
+                    <div class="image-placeholder-icon"></div>
+                    <div class="image-placeholder-text">Architectural Image</div>
+                    <div class="image-placeholder-subtext">{{architecturalImageCaption1}}</div>
+                </div>
+                {% endif %}
+                
+                <h3 class="section-title">{{subheading1}}</h3>
+                <p class="content-text">{{subcontent1}}</p>
+                
+                <div class="content-box">
+                    <h3>{{boxTitle1}}</h3>
+                    <p>{{boxContent1}}</p>
+                </div>
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 5: CUSTOM CONTENT 2 WITH CHECKLIST -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle4}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader5}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <h1>{{customTitle2}}</h1>
+                <p class="content-text">{{customContent2}}</p>
+                
+                <h3 class="section-title">{{subheading2}}</h3>
+                <ul class="checklist">
+                    <li>{{listItem1}}</li>
+                    <li>{{listItem2}}</li>
+                    <li>{{listItem3}}</li>
+                    <li>{{listItem4}}</li>
+                </ul>
+                
+                <div style="margin-top: 8mm;"></div>
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 6: CUSTOM CONTENT 3 - FIXED WITH SIMPLE STRUCTURE -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle5}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader6}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <h1>{{customTitle3}}</h1>
+                <p class="content-text">{{customContent3}}</p>
+                
+                <!-- ARCHITECTURAL IMAGE 2 -->
+                {% if architecturalImages and architecturalImages|length > 1 %}
+                <div class="architectural-image">
+                    <img src="{{architecturalImages[1].src}}" alt="{{architecturalImages[1].alt}}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px;">
+                    <div class="image-placeholder-subtext">{{architecturalImageCaption2}}</div>
+                </div>
+                {% else %}
+                <div class="image-placeholder">
+                    <div class="image-placeholder-icon"></div>
+                    <div class="image-placeholder-text">Architectural Image</div>
+                    <div class="image-placeholder-subtext">{{architecturalImageCaption2}}</div>
+                </div>
+                {% endif %}
+                
+                <h3 class="section-title">{{subheading3}}</h3>
+                <p class="content-text">{{subcontent3}}</p>
+                <div class="content-box">
+                    <h3>{{boxTitle2}}</h3>
+                    <p>{{boxContent2}}</p>
+                </div>
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 7: CUSTOM CONTENT 4 WITH SMALL IMAGE PLACEHOLDERS -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle6}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader7}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <h1>{{customTitle4}}</h1>
+                <p class="content-text">{{customContent4}}</p>
+                
+                <h3 class="section-title">{{subheading4}}</h3>
+                <p class="content-text">{{subcontent4}}</p>
+                
+                <!-- TWO COLUMN LAYOUT WITH SMALL IMAGE PLACEHOLDERS -->
+                <div class="two-columns">
+                    <div class="column">
+                        <div class="content-box">
+                            <h3>{{columnBoxTitle1}}</h3>
+                            <!-- ARCHITECTURAL IMAGE 3 (SMALL) -->
+                            {% if architecturalImages and architecturalImages|length > 2 %}
+                            <div class="architectural-image-small">
+                                <img src="{{architecturalImages[2].src}}" alt="{{architecturalImages[2].alt}}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <div class="image-placeholder-subtext">{{architecturalImageCaption3}}</div>
+                            </div>
+                            {% else %}
+                            <div class="image-placeholder-small">
+                                <div class="image-placeholder-icon"></div>
+                                <div class="image-placeholder-text">Detail View</div>
+                                <div class="image-placeholder-subtext">{{architecturalImageCaption3}}</div>
+                            </div>
+                            {% endif %}
+                            <p>{{columnBoxContent1}}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 8: CUSTOM CONTENT 5 -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle7}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader8}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <h1>{{customTitle5}}</h1>
+                <p class="content-text">{{customContent5}}</p>
+                
+                <h3 class="section-title">{{subheading5}}</h3>
+                <ul class="checklist">
+                    <li>{{numberedItem1}}</li>
+                    <li>{{numberedItem2}}</li>
+                    <li>{{numberedItem3}}</li>
+                    <li>{{numberedItem4}}</li>
+                </ul>
+                
+                <div class="info-box">
+                    <div class="info-box-title">{{accentBoxTitle3}}</div>
+                    <p>{{accentBoxContent3}}</p>
+                </div>
+                
+                <blockquote>
+                    "{{quoteText2}}"
+                    <footer>— {{quoteAuthor2}}</footer>
+                </blockquote>
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 9: CONTACT & CTA -->
+        <div class="page content-page">
+            <div class="page-header-enhanced">
+                <div class="header-decoration">
+                    <div class="header-circle header-circle-1"></div>
+                    <div class="header-circle header-circle-2"></div>
+                    <div class="header-circle header-circle-3"></div>
+                </div>
+                <div class="page-header-content">
+                    <h2 class="page-title-enhanced">{{sectionTitle8}}</h2>
+                    <div class="page-number-enhanced">{{pageNumberHeader9}}</div>
+                </div>
+            </div>
+            <div class="header-accent-bar"></div>
+            
+            <div class="page-content-area">
+                <div class="cta-section" style="padding: 50px 40px;">
+                    <p class="cta-text">{{contactDescription}}</p>
+                </div>
+                
+                <h3 class="section-title">{{differentiatorTitle}}</h3>
+                <p class="content-text" style="text-align: center;">
+                    <strong>{{companyName}} {{companySubtitle}}</strong><br>
+                    {{phoneNumber}}<br>
+                    {{emailAddress}}<br>
+                    {{website}}
+                </p>
+                
+                <div class="content-box" style="margin-top: 30px;">
+                    <h3>why choose us</h3>
+                    <p>{{differentiator}}</p>
+                </div>
+                
+                <div style="margin-top: 30px; text-align: center; font-size: 14px; color: var(--text-light);">
+                    <p><strong>{{ctaText}}</strong></p>
+                </div>
+            </div>
+            
+            <div class="footer-enhanced">
+                <div class="footer-decoration">
+                    <div class="footer-circles">
+                        <div class="footer-circle footer-circle-1"></div>
+                        <div class="footer-circle footer-circle-2"></div>
+                        <div class="footer-circle footer-circle-3"></div>
+                    </div>
+                    <svg class="footer-wave" viewBox="0 0 1200 40" preserveAspectRatio="none">
+                        <path d="M0,20 Q300,0 600,20 T1200,20 L1200,40 L0,40 Z"></path>
+                    </svg>
+                </div>
+                <div class="footer-logo-wrapper">
+                    <div class="footer-logo">
+                        <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
+                    </div>
+                    <div class="footer-content-left">
+                        <span>{{footerText}}</span>
+                    </div>
+                </div>
+                <div class="footer-content-right">
+                    <span>{{website}}</span>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 7 — IMPLEMENTATION STRATEGY
-     No image — numbered steps + two content boxes
-     ✅ Structured phases, no AI repetition
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle6}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader7}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle4}}</h2>
-    <p class="pg-intro">{{customContent4 | safe}}</p>
-
-    <div class="sec-h">{{subheading4}}</div>
-    <ul class="steps">
-      <li><div><strong>{{stepTitle1}}</strong>{{stepContent1}}</div></li>
-      <li><div><strong>{{stepTitle2}}</strong>{{stepContent2}}</div></li>
-      <li><div><strong>{{stepTitle3}}</strong>{{stepContent3}}</div></li>
-      <li><div><strong>{{stepTitle4}}</strong>{{stepContent4}}</div></li>
-    </ul>
-
-    <div class="two-col" style="margin-top:10px;">
-      <div class="cbox"><h4>{{boxTitle3}}</h4><p>{{boxContent3}}</p></div>
-      <div class="cbox"><h4>{{boxTitle4}}</h4><p>{{boxContent4}}</p></div>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 8 — RISK MANAGEMENT
-     No image — checklist + callout + quote
-     ✅ Specific triggers, not generic risks
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle7}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader8}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle5}}</h2>
-    <p class="pg-intro">{{customContent5 | safe}}</p>
-
-    <div class="sec-h">{{subheading5}}</div>
-    <ul class="chklist">
-      <li>{{numberedItem1}}</li>
-      <li>{{numberedItem2}}</li>
-      <li>{{numberedItem3}}</li>
-      <li>{{numberedItem4}}</li>
-    </ul>
-
-    <div class="callout" style="margin-top:10px;">
-      <div class="callout-label">{{accentBoxTitle3}}</div>
-      <p>{{accentBoxContent3}}</p>
-    </div>
-
-    <blockquote class="bq">
-      "{{quoteText2}}"
-      <footer>— {{quoteAuthor2}}</footer>
-    </blockquote>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 9 — KEY STATISTICS & DATA
-     Stat grid (3 big numbers) + highlight strip
-     ✅ Visual magazine numbers, not prose stats
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle9}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader10}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle6}}</h2>
-    <p class="pg-intro">{{customContent6 | safe}}</p>
-
-    <div class="sec-h">{{subheading6}}</div>
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-val">{{stat1Value}}</div>
-        <div class="stat-lbl">{{stat1Label}}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">{{stat2Value}}</div>
-        <div class="stat-lbl">{{stat2Label}}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">{{stat3Value}}</div>
-        <div class="stat-lbl">{{stat3Label}}</div>
-      </div>
-    </div>
-
-    <div class="strip">
-      <div class="strip-title">{{highlightStripTitle1}}</div>
-      <p>{{highlightStripContent1}}</p>
-    </div>
-
-    <p class="body-p">{{subcontent6}}</p>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 10 — STEP-BY-STEP PROCESS
-     Numbered steps + two boxes
-     ✅ Consultant-grade structure
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle10}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader11}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle7}}</h2>
-    <p class="pg-intro">{{customContent7 | safe}}</p>
-
-    <div class="sec-h">{{subheading7}}</div>
-    <ul class="steps">
-      <li><div><strong>{{stepTitle1}}</strong>{{stepContent1}}</div></li>
-      <li><div><strong>{{stepTitle2}}</strong>{{stepContent2}}</div></li>
-      <li><div><strong>{{stepTitle3}}</strong>{{stepContent3}}</div></li>
-      <li><div><strong>{{stepTitle4}}</strong>{{stepContent4}}</div></li>
-      <li><div><strong>{{stepTitle5}}</strong>{{stepContent5}}</div></li>
-    </ul>
-
-    <div class="two-col">
-      <div class="cbox"><h4>{{boxTitle3}}</h4><p>{{boxContent3}}</p></div>
-      <div class="cbox"><h4>{{boxTitle4}}</h4><p>{{boxContent4}}</p></div>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 11 — COMPARISON TABLE
-     Table + callout + quote
-     ✅ Data-driven, architect-friendly layout
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle11}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader12}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle8}}</h2>
-    <p class="pg-intro">{{customContent8 | safe}}</p>
-
-    <div class="sec-h">{{subheading8}}</div>
-    <table class="cmp-tbl">
-      <thead>
-        <tr>
-          <th>{{tableHeader1}}</th>
-          <th>{{tableHeader2}}</th>
-          <th>{{tableHeader3}}</th>
-          <th>{{tableHeader4}}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>{{tableRow1Col1}}</td><td>{{tableRow1Col2}}</td><td>{{tableRow1Col3}}</td><td>{{tableRow1Col4}}</td></tr>
-        <tr><td>{{tableRow2Col1}}</td><td>{{tableRow2Col2}}</td><td>{{tableRow2Col3}}</td><td>{{tableRow2Col4}}</td></tr>
-        <tr><td>{{tableRow3Col1}}</td><td>{{tableRow3Col2}}</td><td>{{tableRow3Col3}}</td><td>{{tableRow3Col4}}</td></tr>
-      </tbody>
-    </table>
-
-    <div class="callout">
-      <div class="callout-label">{{accentBoxTitle4}}</div>
-      <p>{{accentBoxContent4}}</p>
-    </div>
-
-    <blockquote class="bq">
-      "{{quoteText3}}"
-      <footer>— {{quoteAuthor3}}</footer>
-    </blockquote>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 12 — ICON CARDS + TIMELINE
-     4-across icon cards + vertical timeline
-     ✅ Magazine visual hierarchy
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle12}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader13}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle9}}</h2>
-    <p class="pg-intro">{{customContent9 | safe}}</p>
-
-    <div class="icon-row">
-      <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard1Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard1Title}}</div>
-        <div class="icon-card-txt">{{iconCard1Text}}</div>
-      </div>
-      <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard2Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard2Title}}</div>
-        <div class="icon-card-txt">{{iconCard2Text}}</div>
-      </div>
-      <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard3Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard3Title}}</div>
-        <div class="icon-card-txt">{{iconCard3Text}}</div>
-      </div>
-      <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard4Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard4Title}}</div>
-        <div class="icon-card-txt">{{iconCard4Text}}</div>
-      </div>
-    </div>
-
-    <div class="sec-h">{{subheading9}}</div>
-    <ul class="timeline">
-      <li><strong>{{timelineItem1Title}}</strong>{{timelineItem1}}</li>
-      <li><strong>{{timelineItem2Title}}</strong>{{timelineItem2}}</li>
-      <li><strong>{{timelineItem3Title}}</strong>{{timelineItem3}}</li>
-      <li><strong>{{timelineItem4Title}}</strong>{{timelineItem4}}</li>
-      <li><strong>{{timelineItem5Title}}</strong>{{timelineItem5}}</li>
-    </ul>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 13 — DEEP DIVE
-     6-item checklist + highlight strip
-     ✅ Actionable specifics, not generalizations
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle13}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader14}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle10}}</h2>
-    <p class="pg-intro">{{customContent10 | safe}}</p>
-
-    <div class="sec-h">{{subheading10}}</div>
-    <ul class="chklist">
-      <li>{{extListItem1}}</li>
-      <li>{{extListItem2}}</li>
-      <li>{{extListItem3}}</li>
-      <li>{{extListItem4}}</li>
-      <li>{{extListItem5}}</li>
-      <li>{{extListItem6}}</li>
-    </ul>
-
-    <div class="strip">
-      <div class="strip-title">{{highlightStripTitle2}}</div>
-      <p>{{highlightStripContent2}}</p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 14 — CONTACT & CTA
-     ✅ Specific offer box (fixes Image 4)
-     ✅ NOT "Contact us today" — specific named hook
-     ✅ Header + Footer
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitleCTA}}</span>
-    <span class="pg-hd-num">{{pageNumberCTA}}</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <!-- Hero CTA — specific, not generic -->
-    <div class="cta-hero">
-      <h2>{{ctaHeadline | safe}}</h2>
-      <p>{{contactDescription | safe}}</p>
-    </div>
-
-    <!-- Contact details grid -->
-    <div class="contact-grid">
-      <div class="ci">
-        <div class="ci-lbl">{{labelCompany}}</div>
-        <div class="ci-val">{{companyName}}</div>
-      </div>
-      <div class="ci">
-        <div class="ci-lbl">{{labelEmail}}</div>
-        <div class="ci-val">{{emailAddress}}</div>
-      </div>
-      <div class="ci">
-        <div class="ci-lbl">{{labelWebsite}}</div>
-        <div class="ci-val">{{website}}</div>
-      </div>
-      <div class="ci">
-        <div class="ci-lbl">{{labelPhone}}</div>
-        <div class="ci-val">{{phoneNumber}}</div>
-      </div>
-    </div>
-
-    <!-- Why choose us -->
-    <div class="why-box">
-      <h4>{{whyChooseUsTitle | safe}}</h4>
-      <p>{{differentiator | safe}}</p>
-    </div>
-
-    <!-- Named offer hook — Image 4 fix: specific > generic -->
-    <div class="cta-offer">
-      <div class="cta-offer-title">{{ctaText}}</div>
-      <p>{{differentiatorTitle}}</p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
-    </div>
-    <span class="pg-ft-right">{{website}}</span>
-  </div>
-</div>
-
-</div><!-- /.book -->
 </body>
 </html>
