@@ -264,12 +264,10 @@ def _run_generation_job(job_id, body, user_id):
             }
 
         # ── FIX 2: resolve image URLs and inject into firm_profile ──
-        img_1 = _resolve_image_url(architectural_images[0]) if len(architectural_images) > 0 else ""
-        img_2 = _resolve_image_url(architectural_images[1]) if len(architectural_images) > 1 else ""
-        img_3 = _resolve_image_url(architectural_images[2]) if len(architectural_images) > 2 else ""
-        firm_profile['image_1_url'] = img_1
-        firm_profile['image_2_url'] = img_2
-        firm_profile['image_3_url'] = img_3
+        for i in range(1, 7):
+            url = _resolve_image_url(architectural_images[i-1]) if len(architectural_images) >= i else ""
+            firm_profile[f'image_{i}_url'] = url
+            firm_profile[f'image_{i}_caption'] = f"Project Insight {i}"
 
         template_vars = {}
 
@@ -352,19 +350,16 @@ def _run_generation_job(job_id, body, user_id):
 
             # ── FIX 4: docraptor_vars passes ALL template_vars plus specific overrides ──
             docraptor_vars = template_vars.copy()
+            
+            # Ensure images are passed through
+            for i in range(1, 7):
+                docraptor_vars[f'image_{i}_url'] = firm_profile.get(f'image_{i}_url', '')
+                docraptor_vars[f'image_{i}_caption'] = firm_profile.get(f'image_{i}_caption', f'Strategic Insight {i}')
+
             docraptor_vars.update({
                 # Colours (with defaults if missing)
                 'primaryColor':        template_vars.get('primaryColor')  or '#2a5766',
                 'secondaryColor':      template_vars.get('secondaryColor') or '#FFFFFF',
-
-                # Images (ensure these are explicitly set if not already)
-                'image_1_url':         img_1,
-                'image_2_url':         img_2,
-                'image_3_url':         img_3,
-                'image_1_caption':     firm_profile.get('image_1_caption', 'Strategic Context'),
-                'image_2_caption':     firm_profile.get('image_2_caption', 'Technical Framework'),
-                'image_3_caption':     firm_profile.get('image_3_caption', 'Implementation Overview'),
-
                 # Legacy compat
                 'architecturalImages': architectural_images,
             })

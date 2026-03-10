@@ -1,1275 +1,1058 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Quantum Computing in Finance</title>
-<style>
-/* ══════════════════════════════════════════════════════
-   FONTS & PRINT DEFAULTS
-══════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future of Modular Construction - BuildSmart AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #c5a059;
+            --accent: #f8fafc;
+            --highlight: #2b6cb0;
+            --gold: #d4af37;
+            --light: #f8fafc;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --white: #ffffff;
+            --black: #0f172a;
+        }
 
-@page {
-  size: A4;
-  margin: 0;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+        }
 
-/* ══════════════════════════════════════════════════════
-   DYNAMIC COLOR SYSTEM — all 5 colors injected at runtime
-══════════════════════════════════════════════════════ */
-:root{
-  --P:  #000000;      /* Primary — headers, cover bg, footer bg     */
-  --S:  #ffffff;    /* Secondary — page header bar, stat borders  */
-  --A:  #3a3a3a;       /* Accent — callout borders, dividers, badges */
-  --H:  #4a4a4a;    /* Highlight — strip gradient start           */
-  --G:  #c5a059;         /* Gold — TOC numbers, quote marks, CTA ring  */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #e2e8f0;
+            color: var(--text);
+            line-height: 1.6;
+        }
 
-  /* Derived neutrals (not overridden) */
-  --ink:  #111318;
-  --ink2: #4a4f5e;
-  --bg:   #f5f6f9;
-  --rule: #e0e3ec;
-  --white: #ffffff;
-}
+        .book {
+            width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
 
-/* ══════════════════════════════════════════════════════
-   RESET + BODY
-══════════════════════════════════════════════════════ */
-*{margin:0;padding:0;box-sizing:border-box;}
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 210mm;
-  height: 100%;
-  background: #c8cad2; /* Browser preview bg */
-}
-body{
-  font-family:'DM Sans',sans-serif;
-  -webkit-print-color-adjust:exact;
-  print-color-adjust:exact;
-}
-@media print {
-  body { background: white; }
-  .book { box-shadow: none; width: 210mm; margin: 0; }
-}
-.book{width:210mm;margin:0 auto;box-shadow:0 16px 56px rgba(0,0,0,.28);}
+        .page {
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+            padding: 30mm 25mm 20mm 25mm;
+        }
 
-/* ══════════════════════════════════════════════════════
-   PAGE BASE — strict A4, no overflow
-══════════════════════════════════════════════════════ */
-.page{
-  width:210mm;
-  height:297mm;
-  background:var(--white);
-  position:relative;
-  overflow:visible;            /* Allow overflow during rendering */
-  page-break-after:always;
-  page-break-inside:avoid;
-  display:flex;
-  flex-direction:column;
-}
+        /* --- DECORATIVE ELEMENTS --- */
+        .geometric-accent {
+            position: absolute;
+            background: var(--primary);
+            opacity: 0.03;
+            z-index: 0;
+        }
 
-/* ══════════════════════════════════════════════════════
-   PAGE 1 — COVER
-   ✅ Title: LEFT side, vertically centered
-   ✅ Contact block: BOTTOM-LEFT (matches Image 1)
-══════════════════════════════════════════════════════ */
-.cover{
-  background:var(--P);
-  justify-content:flex-start;
-  overflow:hidden;
-}
+        .circle-1 { width: 400px; height: 400px; border-radius: 50%; top: -150px; right: -100px; }
+        .circle-2 { width: 300px; height: 300px; border-radius: 50%; bottom: -100px; left: -80px; }
+        .square-1 { width: 200px; height: 200px; transform: rotate(45deg); top: 40%; right: -50px; }
 
-/* Geometric art — purely decorative, absolute */
-.cv-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(255,255,255,.1);}
-.cv-ring-1{width:440px;height:440px;top:-140px;right:-120px;background:rgba(255,255,255,.04);}
-.cv-ring-2{width:240px;height:240px;top:80px;right:60px;background:rgba(255,255,255,.02);}
-.cv-ring-3{width:280px;height:280px;bottom:-80px;left:-80px;background:rgba(255,255,255,.03);}
-.cv-diamond{
-  position:absolute;bottom:160px;right:30px;
-  width:120px;height:120px;
-  transform:rotate(45deg);
-  border:2px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.03);
-}
-/* Vertical accent stripe — left edge */
-.cv-stripe{
-  position:absolute;left:0;top:0;bottom:0;
-  width:7px;
-  background:var(--A);
-}
-/* Horizontal separator line */
-.cv-hline{
-  position:absolute;
-  left:45px;bottom:128px;right:0;
-  height:1px;
-  background:rgba(255,255,255,.14);
-}
+        /* --- COVER PAGE --- */
+        .cover {
+            background: var(--black);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0;
+        }
 
-/* ── Title block — absolute, left side, vertically centered ── */
-.cv-main{
-  position:absolute;
-  top:50%;left:45px;right:44%;
-  transform:translateY(-52%);
-  z-index:10;
-}
-.cv-eyebrow{
-  font-family:'Space Mono',monospace;
-  font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:3.5px;
-  color:var(--A);
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:20px;
-}
-.cv-eyebrow::before{
-  content:'';display:inline-block;
-  width:24px;height:2px;background:var(--A);
-}
-.cv-title{
-  font-family:'DM Serif Display',serif;
-  font-size:38px;font-weight:400;
-  line-height:1.06;letter-spacing:-.5px;
-  color:var(--white);
-  margin-bottom:10px;
-}
-.cv-title-accent{color:var(--A);font-style:italic;display:block;}
-.cv-divider{
-  width:50px;height:4px;
-  background:var(--A);border-radius:2px;
-  margin:18px 0;
-}
-.cv-subtitle{
-  font-size:13px;font-weight:300;line-height:1.75;
-  color:rgba(255,255,255,.72);
-  max-width:360px;
-}
+        .cover-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--black) 0%, #1e293b 100%);
+            z-index: 1;
+        }
 
-/* ── Contact block — BOTTOM-LEFT (exactly like Image 1) ── */
-.cv-contact{
-  position:absolute;
-  bottom:28px;left:45px;
-  z-index:10;
-}
-.cv-contact-name{
-  font-family:'DM Serif Display',serif;
-  font-size:16px;color:var(--white);
-  margin-bottom:7px;letter-spacing:.3px;
-}
-.cv-contact-details{
-  font-size:11px;font-weight:300;
-  color:rgba(255,255,255,.6);
-  line-height:2;
-}
+        .cover-accent-line {
+            position: absolute;
+            top: 0;
+            right: 15%;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--secondary), transparent);
+            z-index: 2;
+            opacity: 0.5;
+        }
 
-/* Doc-type pill — bottom right */
-.cv-pill{
-  position:absolute;bottom:36px;right:36px;z-index:10;
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:20px;padding:6px 16px;
-  font-family:'Space Mono',monospace;
-  font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:2px;
-  color:rgba(255,255,255,.55);
-}
+        .cover-top {
+            position: relative;
+            z-index: 10;
+            padding: 40mm 25mm 0 25mm;
+        }
 
-/* ══════════════════════════════════════════════════════
-   CONTENT PAGES — header + footer ALWAYS present
-══════════════════════════════════════════════════════ */
+        .cover-type-badge {
+            display: inline-block;
+            background: var(--secondary);
+            color: var(--black);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 12px;
+            padding: 6px 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            border-radius: 2px;
+        }
 
-/* ── PAGE HEADER ── */
-.pg-hd{
-  flex-shrink:0;
-  background:var(--S);
-  height:50px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 22mm;
-  position:relative;overflow:hidden;
-}
-.pg-hd::after{
-  content:'';position:absolute;
-  right:-20px;top:-20px;
-  width:100px;height:100px;
-  border-radius:50%;
-  border:2px solid rgba(255,255,255,.1);
-}
-.pg-hd-label{
-  font-family:'Space Mono',monospace;
-  font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:2.5px;
-  color:var(--white);position:relative;z-index:2;
-  padding-left:10px;
-  border-left:3px solid var(--A);
-}
-.pg-hd-num{
-  font-family:'Space Mono',monospace;
-  font-size:10px;font-weight:700;
-  color:var(--white);
-  background:rgba(255,255,255,.15);
-  border-radius:20px;padding:4px 14px;
-  position:relative;z-index:2;
-  letter-spacing:1px;
-}
+        .cover-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 52px;
+            font-weight: 900;
+            line-height: 1.05;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
 
-/* Accent bar below header */
-.pg-bar{flex-shrink:0;height:4px;background:var(--P);}
+        .cover-title span {
+            color: var(--secondary);
+        }
 
-/* ── CONTENT BODY — flex:1 keeps it between header & footer ── */
-.pg-body{
-  flex:1;
-  padding:15px 22mm 10px;
-  min-height:0;
-}
+        .cover-subtitle {
+            font-size: 20px;
+            font-weight: 300;
+            max-width: 500px;
+            opacity: 0.8;
+            border-left: 3px solid var(--secondary);
+            padding-left: 25px;
+            margin-top: 30px;
+        }
 
-/* ── PAGE FOOTER ── */
-.pg-ft{
-  flex-shrink:0;
-  background:var(--P);
-  height:44px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 22mm;
-  position:relative;overflow:hidden;
-}
-.pg-ft::before{
-  content:'';position:absolute;
-  left:28%;top:-14px;
-  width:56px;height:56px;
-  border-radius:50%;border:2px solid rgba(255,255,255,.1);
-}
-.pg-ft-left{display:flex;align-items:center;gap:9px;position:relative;z-index:2;}
-.pg-ft-logo{
-  width:26px;height:26px;border-radius:50%;
-  background:rgba(255,255,255,.18);
-  border:1.5px solid rgba(255,255,255,.3);
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:800;color:var(--white);
-  flex-shrink:0;
-}
-.pg-ft-co{
-  font-size:10px;font-weight:600;
-  color:rgba(255,255,255,.82);letter-spacing:.4px;
-}
-.pg-ft-right{
-  font-size:10px;color:rgba(255,255,255,.55);
-  position:relative;z-index:2;
-}
+        .cover-bottom {
+            position: relative;
+            z-index: 10;
+            padding: 0 25mm 40mm 25mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
 
-/* ══════════════════════════════════════════════════════
-   PAGE 2 — TERMS OF USE (matches Image 2: centred, airy)
-══════════════════════════════════════════════════════ */
-.terms-wrap{
-  flex:1;display:flex;
-  align-items:center;justify-content:center;
-  padding:0 28mm;
-}
-.terms-inner{text-align:center;}
-.terms-kicker{
-  font-family:'Space Mono',monospace;
-  font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:3px;
-  color:var(--A);margin-bottom:10px;
-}
-.terms-title{
-  font-family:'DM Serif Display',serif;
-  font-size:20px;color:var(--P);
-  margin-bottom:24px;position:relative;
-  padding-bottom:16px;
-}
-.terms-title::after{
-  content:'';position:absolute;
-  bottom:0;left:50%;transform:translateX(-50%);
-  width:36px;height:3px;background:var(--A);border-radius:2px;
-}
-.terms-p{
-  font-size:12.5px;line-height:1.9;color:#3a3a4a;
-  margin-bottom:14px;
-}
-.terms-sm{
-  font-size:10.5px;color:#999;margin-top:18px;font-style:italic;
-}
+        .cover-logo-area {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
 
-/* ══════════════════════════════════════════════════════
-   TOC — clean dotted leader lines
-══════════════════════════════════════════════════════ */
-.toc-heading{
-  font-family:'DM Serif Display',serif;
-  font-size:20px;color:var(--ink);
-  border-bottom:2px solid var(--rule);
-  padding-bottom:10px;margin-bottom:22px;
-}
-.toc-list{list-style:none;}
-.toc-row{
-  display:flex;align-items:center;
-  padding:9px 0;
-  border-bottom:1px solid var(--rule);
-  gap:10px;
-}
-.toc-n{
-  flex-shrink:0;width:24px;height:24px;border-radius:50%;
-  background:var(--G);color:var(--white);
-  font-size:10px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Space Mono',monospace;
-}
-.toc-label{flex:1;font-size:12.5px;color:var(--ink);font-weight:500;}
-.toc-dots{
-  flex:1;border-bottom:1.5px dotted var(--rule);
-  margin:0 8px;min-width:20px;
-}
-.toc-pg{
-  font-size:12px;font-weight:700;color:var(--P);
-  min-width:22px;text-align:right;
-  font-family:'Space Mono',monospace;
-}
+        .cover-logo-box {
+            width: 70px;
+            height: 70px;
+            border: 2px solid var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: var(--secondary);
+        }
 
-/* ══════════════════════════════════════════════════════
-   TYPOGRAPHY — magazine-grade
-══════════════════════════════════════════════════════ */
-.pg-h1{
-  font-family:'DM Serif Display',serif;
-  font-size:22px;font-weight:400;color:var(--ink);
-  border-bottom:2px solid var(--S);
-  padding-bottom:6px;margin-bottom:10px;
-  line-height:1.2;
-}
-.pg-intro{
-  font-size:13px;line-height:1.78;color:var(--ink2);
-  margin-bottom:12px;
-}
-.sec-h{
-  font-family:'DM Sans',sans-serif;
-  font-size:13px;font-weight:700;
-  color:var(--P);
-  margin:12px 0 6px;
-  padding-left:10px;
-  border-left:3px solid var(--A);
-}
-.body-p{font-size:12px;line-height:1.72;color:var(--ink2);margin-bottom:8px;}
+        .cover-firm-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
 
-/* ══════════════════════════════════════════════════════
-   IMAGE SYSTEM — 3 placements, STRICT CSS GRID (no float)
-══════════════════════════════════════════════════════ */
+        .cover-date {
+            font-size: 12px;
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-/* CENTER: full width above content */
-.img-center{display:block;margin:10px 0 6px;}
-.img-center .img-block{width:100%;}
-.img-center .img-block img,
-.img-center .img-ph{height:155px;}
+        /* --- STANDARD HEADERS & FOOTERS --- */
+        .page-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 25mm;
+            padding: 0 25mm;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding-bottom: 8mm;
+            z-index: 10;
+        }
 
-/* RIGHT: text left col, image right col */
-.img-right{
-  display:grid;
-  grid-template-columns:1fr 42%;
-  gap:16px;
-  align-items:start;
-  margin:10px 0;
-}
-/* LEFT: image left col, text right col */
-.img-left{
-  display:grid;
-  grid-template-columns:42% 1fr;
-  gap:16px;
-  align-items:start;
-  margin:10px 0;
-}
+        .header-line {
+            position: absolute;
+            bottom: 0;
+            left: 25mm;
+            right: 25mm;
+            height: 1px;
+            background: #e2e8f0;
+        }
 
-.img-block{width:100%;}
-.img-block img{
-  width:100%;height:175px;
-  object-fit:cover;border-radius:8px;display:block;
-}
-.img-ph{
-  width:100%;height:175px;
-  border-radius:8px;
-  background:linear-gradient(135deg,var(--bg) 0%,#dde0ea 100%);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:6px;
-  position:relative;overflow:hidden;
-}
-.img-ph::before{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(
-    45deg,transparent,transparent 10px,
-    rgba(0,0,0,.018) 10px,rgba(0,0,0,.018) 20px
-  );
-}
-.img-ph-icon{font-size:26px;position:relative;z-index:1;}
-.img-ph-label{
-  font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1.2px;
-  color:var(--ink2);position:relative;z-index:1;
-}
-.img-cap{
-  font-size:10px;color:var(--ink2);
-  text-align:center;margin-top:4px;font-style:italic;
-}
+        .header-label {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--secondary);
+        }
 
-/* ══════════════════════════════════════════════════════
-   COMPONENT LIBRARY — consultant-grade visual elements
-   (fixes Image 3: visual hierarchy, callouts, tables)
-══════════════════════════════════════════════════════ */
+        .header-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-light);
+        }
 
-/* Callout box */
-.callout{
-  background:var(--bg);
-  border-left:4px solid var(--S);
-  border-radius:0 8px 8px 0;
-  padding:11px 14px;margin:8px 0;
-}
-.callout-label{
-  font-size:10px;font-weight:800;
-  text-transform:uppercase;letter-spacing:1.2px;
-  color:var(--S);margin-bottom:4px;
-}
-.callout p{font-size:11.5px;line-height:1.62;color:var(--ink2);margin:0;}
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20mm;
+            padding: 0 25mm;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 9px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 10;
+        }
 
-/* Highlight strip */
-.strip{
-  background:linear-gradient(120deg,var(--P) 0%,var(--S) 100%);
-  border-radius:8px;padding:13px 16px;margin:8px 0;
-}
-.strip-title{
-  font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1px;
-  color:rgba(255,255,255,.7);margin-bottom:5px;
-}
-.strip p{font-size:12px;line-height:1.6;color:rgba(255,255,255,.9);margin:0;}
+        .page-num {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 12px;
+            color: var(--black);
+        }
 
-/* Checklist */
-.chklist{list-style:none;margin:8px 0;}
-.chklist li{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:7px 0;border-bottom:1px solid var(--rule);
-  font-size:12px;line-height:1.55;color:var(--ink2);
-}
-.chklist li::before{
-  content:'✓';flex-shrink:0;
-  width:20px;height:20px;border-radius:50%;
-  background:var(--S);color:var(--white);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;margin-top:1px;
-}
+        /* --- CONTENT TYPOGRAPHY --- */
+        .section-kicker {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 11px;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+            display: block;
+        }
 
-/* Numbered step list (visual, not AI bullet-dump) */
-.steps{list-style:none;counter-reset:stp;margin:8px 0;}
-.steps li{
-  counter-increment:stp;
-  display:flex;align-items:flex-start;gap:12px;
-  padding:8px 0;border-bottom:1px solid var(--rule);
-  font-size:12px;line-height:1.58;color:var(--ink2);
-}
-.steps li::before{
-  content:counter(stp);flex-shrink:0;
-  width:26px;height:26px;border-radius:6px;
-  background:var(--P);color:var(--white);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:13px;
-  font-family:'Space Mono',monospace;
-}
-.steps li strong{display:block;color:var(--P);font-size:12.5px;margin-bottom:2px;}
+        .section-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 38px;
+            font-weight: 900;
+            color: var(--black);
+            margin-bottom: 25px;
+            line-height: 1.1;
+            letter-spacing: -1px;
+        }
 
-/* Stat grid — 3 bold numbers (magazine-grade) */
-.stat-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:10px;margin:10px 0;
-}
-.stat-card{
-  background:var(--bg);
-  border-top:3px solid var(--S);
-  border-radius:6px;padding:13px 8px;text-align:center;
-}
-.stat-val{
-  font-family:'DM Serif Display',serif;
-  font-size:28px;color:var(--P);line-height:1;
-}
-.stat-lbl{
-  font-size:9.5px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.8px;
-  color:var(--ink2);margin-top:4px;
-}
+        .intro-lead {
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 30px;
+            font-weight: 500;
+            line-height: 1.5;
+            border-bottom: 1px solid var(--accent);
+            padding-bottom: 25px;
+        }
 
-/* Comparison table */
-.cmp-tbl{
-  width:100%;border-collapse:collapse;
-  font-size:11px;margin:10px 0;
-}
-.cmp-tbl th{
-  background:var(--S);color:var(--white);
-  padding:8px 9px;text-align:left;
-  font-weight:700;text-transform:uppercase;
-  letter-spacing:.5px;font-size:10px;
-}
-.cmp-tbl th:first-child{border-radius:6px 0 0 0;}
-.cmp-tbl th:last-child{border-radius:0 6px 0 0;}
-.cmp-tbl td{
-  padding:7px 9px;border-bottom:1px solid var(--rule);
-  color:var(--ink2);line-height:1.4;
-}
-.cmp-tbl tr:nth-child(even) td{background:var(--bg);}
-.cmp-tbl td:first-child{font-weight:700;color:var(--P);}
+        h3.subheading {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--black);
+            margin-top: 35px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
-/* Icon cards — 4 across */
-.icon-row{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:9px;margin:10px 0;
-}
-.icon-card{
-  background:var(--bg);border-radius:8px;
-  padding:13px 7px;text-align:center;
-}
-.icon-card-emoji{font-size:22px;display:block;margin-bottom:6px;}
-.icon-card-ttl{
-  font-size:10.5px;font-weight:700;color:var(--P);
-  text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;
-}
-.icon-card-txt{font-size:10px;color:var(--ink2);line-height:1.4;}
+        h3.subheading::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: var(--accent);
+        }
 
-/* Timeline */
-.timeline{list-style:none;padding-left:28px;position:relative;margin:8px 0;}
-.timeline::before{
-  content:'';position:absolute;
-  left:8px;top:4px;bottom:4px;
-  width:3px;
-  background:linear-gradient(to bottom,var(--S),var(--P));
-  border-radius:2px;
-}
-.timeline li{
-  position:relative;padding:6px 0 6px 14px;
-  font-size:11.5px;line-height:1.55;color:var(--ink2);
-  border-bottom:1px solid var(--rule);
-}
-.timeline li::before{
-  content:'';position:absolute;
-  left:-24px;top:10px;
-  width:15px;height:15px;
-  background:var(--S);border-radius:50%;
-  border:3px solid var(--white);
-  box-shadow:0 0 0 2px var(--S);
-}
-.timeline li strong{
-  display:block;font-size:12px;font-weight:700;
-  color:var(--P);margin-bottom:2px;
-}
+        p.body-text {
+            font-size: 14px;
+            margin-bottom: 18px;
+            color: var(--text);
+            text-align: justify;
+        }
 
-/* Two-column boxes */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}
-.cbox{background:var(--bg);border-radius:6px;padding:12px;}
-.cbox h4{
-  font-size:11.5px;font-weight:700;color:var(--P);
-  margin-bottom:5px;padding-bottom:5px;
-  border-bottom:1px solid var(--rule);
-}
-.cbox p{font-size:11px;line-height:1.6;color:var(--ink2);margin:0;}
+        /* --- COMPONENTS --- */
+        .magazine-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
 
-/* Blockquote */
-.bq{
-  border-left:3px solid var(--G);
-  padding:10px 14px;
-  background:var(--bg);font-style:italic;
-  color:var(--ink2);font-size:12.5px;
-  line-height:1.6;margin:8px 0;
-  border-radius:0 6px 6px 0;
-}
-.bq footer{
-  margin-top:5px;font-style:normal;
-  font-weight:700;color:var(--G);font-size:10.5px;
-}
+        .feature-box {
+            background: var(--accent);
+            padding: 30px;
+            border-radius: 4px;
+            position: relative;
+        }
 
-/* ══════════════════════════════════════════════════════
-   CONTACT / CTA PAGE
-   Fixes Image 4: specific offer, not generic "contact us"
-══════════════════════════════════════════════════════ */
-.cta-hero{
-  background:var(--S);border-radius:10px;
-  padding:22px 24px;color:var(--white);
-  text-align:center;margin-bottom:14px;
-}
-.cta-hero h2{
-  font-family:'DM Serif Display',serif;
-  font-size:17px;color:var(--white);margin-bottom:7px;
-}
-.cta-hero p{font-size:12.5px;line-height:1.65;color:rgba(255,255,255,.88);}
+        .feature-box h4 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--black);
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
 
-.contact-grid{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:10px;margin:12px 0;
-}
-.ci{
-  background:var(--bg);border-radius:6px;
-  padding:11px 14px;border-top:3px solid var(--A);
-}
-.ci-lbl{
-  font-size:9.5px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1px;
-  color:var(--S);margin-bottom:3px;
-}
-.ci-val{font-size:12px;color:var(--ink);font-weight:500;}
+        .feature-box p { font-size: 13px; line-height: 1.7; }
 
-.why-box{
-  background:linear-gradient(120deg,var(--P),var(--S));
-  border-radius:8px;padding:14px 18px;color:var(--white);
-  margin-bottom:12px;
-}
-.why-box h4{
-  font-family:'DM Serif Display',serif;
-  font-size:13px;color:var(--white);margin-bottom:6px;
-}
-.why-box p{font-size:11.5px;line-height:1.65;color:rgba(255,255,255,.88);margin:0;}
+        .pull-quote {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-style: italic;
+            color: var(--black);
+            padding: 30px 0;
+            border-top: 2px solid var(--secondary);
+            border-bottom: 2px solid var(--secondary);
+            margin: 40px 0;
+            text-align: center;
+            line-height: 1.4;
+        }
 
-/* Specific CTA offer box — fixes Image 4 "generic CTA" issue */
-.cta-offer{
-  border:2px solid var(--G);border-radius:8px;
-  padding:12px 16px;text-align:center;
-  position:relative;overflow:hidden;
-}
-.cta-offer::before{
-  content:'⭐';position:absolute;
-  left:14px;top:50%;transform:translateY(-50%);
-  font-size:18px;
-}
-.cta-offer-title{
-  font-family:'DM Serif Display',serif;
-  font-size:14px;color:var(--P);margin-bottom:4px;
-}
-.cta-offer p{
-  font-size:11.5px;color:var(--ink2);line-height:1.5;margin:0;
-}
+        .pull-quote cite {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 15px;
+            color: var(--secondary);
+        }
 
-/* ══════════════════════════════════════════════════════
-   PRINT
-══════════════════════════════════════════════════════ */
-@media print{
-  body{background:white;padding:0;}
-  .book{box-shadow:none;}
-  @page{size:A4;margin:0;}
-}
-</style>
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: var(--secondary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-light);
+        }
+
+        .checklist-modern {
+            list-style: none;
+            margin: 30px 0;
+        }
+
+        .checklist-modern li {
+            position: relative;
+            padding-left: 35px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .checklist-modern li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-weight: 900;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 200px;
+            margin: 30px 0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* --- TOC PAGE --- */
+        .toc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .toc-num {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 14px;
+            color: var(--secondary);
+            min-width: 30px;
+        }
+
+        .toc-content {
+            flex-grow: 1;
+        }
+
+        .toc-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--black);
+            display: block;
+        }
+
+        .toc-kicker {
+            font-size: 10px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- PRINT ADJUSTMENTS --- */
+        @media print {
+            body { background: white; padding: 0; }
+            .book { box-shadow: none; width: 100%; }
+            .page { box-shadow: none; border: none; margin: 0; }
+            @page { size: A4; margin: 0; }
+        }
+    </style>
 </head>
 <body>
-<div class="book">
+    <div class="book">
+        
+        <!-- PAGE 01: COVER -->
+        <div class="page cover">
+            <div class="cover-bg"></div>
+            <div class="cover-accent-line"></div>
+            
+            <div class="cover-top">
+                <div class="cover-type-badge">STRATEGIC GUIDE</div>
+                <h1 class="cover-title">Future of Modular Construction<span>.</span></h1>
+                <div class="cover-subtitle">Strategic Guide 2026</div>
+            </div>
 
-<!-- ═══════════════════════════════════════════════
-     PAGE 1 — COVER
-     ✅ Title LEFT + vertically centred
-     ✅ Contact block BOTTOM-LEFT (Image 1 layout)
-═══════════════════════════════════════════════ -->
-<div class="page cover">
-  <div class="cv-stripe"></div>
-  <div class="cv-ring cv-ring-1"></div>
-  <div class="cv-ring cv-ring-2"></div>
-  <div class="cv-ring cv-ring-3"></div>
-  <div class="cv-diamond"></div>
-  <div class="cv-hline"></div>
-
-  <!-- LEFT-CENTRE title block -->
-  <div class="cv-main">
-    <div class="cv-eyebrow">TECHNICAL GUIDE</div>
-    <h1 class="cv-title">
-      Quantum Computing in Finance
-      <span class="cv-title-accent"></span>
-    </h1>
-    <div class="cv-divider"></div>
-    <p class="cv-subtitle">A technical roadmap for quantitative analysis.</p>
-  </div>
-
-  <!-- BOTTOM-LEFT contact (Image 1 style) -->
-  <div class="cv-contact">
-    <div class="cv-contact-name">Quantum Computing</div>
-    <div class="cv-contact-details">
-      test@quantum.com<br>
-      www.quantum.com<br>
-      123
-    </div>
-  </div>
-
-  <!-- Bottom-right pill label -->
-  <div class="cv-pill">TECHNICAL GUIDE</div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 2 — TERMS OF USE
-     ✅ Centred, airy, matching Image 2
-     ✅ Header + Footer present
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">OVERVIEW</span>
-    <span class="pg-hd-num">02</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="terms-wrap">
-    <div class="terms-inner">
-      <div class="terms-kicker">Legal Notice</div>
-      <h1 class="terms-title">Terms of Use</h1>
-      <p class="terms-p">This is not financial advice.</p>
-      <p class="terms-p">© Quantum Computing. All rights reserved. No part of this publication may be reproduced without the prior written permission of the publisher.</p>
-      <p class="terms-p">The information contained in this document is for general guidance on Quantum Computing only.</p>
-      <p class="terms-p">Given the changing nature of laws and regulations, there may be delays, omissions or inaccuracies in information contained in this document.</p>
-      <p class="terms-p">While we have made every attempt to ensure that the information in this document has been obtained from reliable sources, we are not responsible for any errors or omissions.</p>
-      <p class="terms-sm">This AI-generated content is intended to support, not replace, professional advice in Quantum Computing.</p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 3 — TABLE OF CONTENTS
-     ✅ Header + Footer
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">CHALLENGES</span>
-    <span class="pg-hd-num">03</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <div class="toc-heading">Table of Contents</div>
-    <ul class="toc-list">
-      <li class="toc-row"><span class="toc-n">1</span><span class="toc-label">Executive Summary</span><span class="toc-dots"></span><span class="toc-pg">04</span></li>
-      <li class="toc-row"><span class="toc-n">2</span><span class="toc-label">Key Challenges</span><span class="toc-dots"></span><span class="toc-pg">05</span></li>
-      <li class="toc-row"><span class="toc-n">3</span><span class="toc-label">Strategic Framework</span><span class="toc-dots"></span><span class="toc-pg">06</span></li>
-      <li class="toc-row"><span class="toc-n">4</span><span class="toc-label">Implementation Strategy</span><span class="toc-dots"></span><span class="toc-pg">07</span></li>
-      <li class="toc-row"><span class="toc-n">5</span><span class="toc-label">Risk Management</span><span class="toc-dots"></span><span class="toc-pg">08</span></li>
-      <li class="toc-row"><span class="toc-n">6</span><span class="toc-label">Best Practices</span><span class="toc-dots"></span><span class="toc-pg">09</span></li>
-      <li class="toc-row"><span class="toc-n">7</span><span class="toc-label">Key Statistics &amp; Market Data</span><span class="toc-dots"></span><span class="toc-pg">10</span></li>
-      <li class="toc-row"><span class="toc-n">8</span><span class="toc-label">Technical Process Steps</span><span class="toc-dots"></span><span class="toc-pg">11</span></li>
-      <li class="toc-row"><span class="toc-n">9</span><span class="toc-label">Strategic Comparison</span><span class="toc-dots"></span><span class="toc-pg">12</span></li>
-      <li class="toc-row"><span class="toc-n">10</span><span class="toc-label">Key Takeaways</span><span class="toc-dots"></span><span class="toc-pg">13</span></li>
-      <li class="toc-row"><span class="toc-n">11</span><span class="toc-label">Conclusion &amp; Roadmap</span><span class="toc-dots"></span><span class="toc-pg">14</span></li>
-    </ul>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 4 — EXECUTIVE SUMMARY
-     🖼️ IMAGE: CENTER (full-width, above content)
-     ✅ Visual hierarchy: intro → callout box
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">FRAMEWORK</span>
-    <span class="pg-hd-num">05</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Executive Summary</h2>
-
-    <!-- IMAGE CENTER -->
-    <div class="img-center">
-      <div class="img-block"><img src="http://image.com/1" alt="Project Image"></div>
-      <div class="img-cap">Executive Summary Overview</div>
-    </div>
-
-    <p class="pg-intro">Content for executive_summary</p>
-
-    <div class="sec-h">executive_summary</div>
-    <p class="body-p"><p>Content for executive_summary</p></p>
-
-    <div class="callout">
-      <div class="callout-label">conclusion</div>
-      <p><p>Content for conclusion</p></p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 5 — KEY CHALLENGES
-     🖼️ IMAGE: RIGHT (text left col, image right col)
-     ✅ Checklist — specific items, not vague bullets
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">IMPLEMENTATION</span>
-    <span class="pg-hd-num">06</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Key Challenges</h2>
-    <p class="pg-intro">Content for key_challenges</p>
-
-    <!-- IMAGE RIGHT — strict CSS grid, no float/clash -->
-    <div class="img-right">
-      <div>
-        <div class="sec-h">key_challenges</div>
-        <ul class="chklist">
-          
-          
-          
-          
-        </ul>
-      </div>
-      <div>
-        <div class="img-block"><img src="http://image.com/2" alt="Project Image"></div>
-        <div class="img-cap">Key Challenges Analysis</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 6 — STRATEGIC FRAMEWORK
-     🖼️ IMAGE: LEFT (image left col, text right col)
-     ✅ Named tools, specific framework steps
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">RISK</span>
-    <span class="pg-hd-num">07</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Strategic Framework</h2>
-    <p class="pg-intro">Content for strategic_framework</p>
-
-    <!-- IMAGE LEFT — strict CSS grid -->
-    <div class="img-left">
-      <div>
-        <div class="img-block"><img src="http://image.com/3" alt="Project Image"></div>
-        <div class="img-cap">Strategic Framework Model</div>
-      </div>
-      <div>
-        <div class="sec-h">strategic_framework</div>
-        <p class="body-p">&lt;p&gt;Content for strategic_framework&lt;/p&gt;</p>
-        <div class="callout">
-          <div class="callout-label"></div>
-          
+            <div class="cover-bottom">
+                <div class="cover-logo-area">
+                    <div class="cover-logo-box">BU</div>
+                    <div class="cover-firm-name">BuildSmart AI</div>
+                </div>
+                <div class="cover-date">March 2026 / Institutional Report</div>
+            </div>
         </div>
-      </div>
+
+        <!-- PAGE 02: LEGAL & ABOUT -->
+        <div class="page">
+            <div class="geometric-accent circle-1"></div>
+            <div class="page-header">
+                <span class="header-label">Legal Framework</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+            
+            <div class="page-body">
+                <span class="section-kicker">Compliance & Terms</span>
+                <h1 class="section-title">Institutional Notice</h1>
+                <p class="intro-lead">Test legal notice.</p>
+                
+                <div class="magazine-grid">
+                    <div>
+                        <p class="body-text">© BuildSmart AI. All rights reserved.</p>
+                        <p class="body-text">The information contained in this document is for general guidance on Modular Construction only.</p>
+                        <p class="body-text">Given the changing nature of laws and regulations, there may be delays, omissions or inaccuracies in information contained in this document.</p>
+                    </div>
+                    <div class="feature-box">
+                        <h4>Strategic Disclaimer</h4>
+                        <p>While we have made every attempt to ensure that the information in this document has been obtained from reliable sources, we are not responsible for any errors or omissions.</p>
+                        <p style="margin-top: 15px; font-weight: 700; color: var(--secondary);">This AI-generated content is intended to support, not replace, professional advice in Modular Construction.</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid var(--accent);">
+                    <h3 class="subheading" style="font-size: 16px;">About BuildSmart AI</h3>
+                    <p class="body-text" style="font-style: italic; color: var(--text-light);">
+                        Leading experts in Modular Construction.
+                    </p>
+                </div>
+            </div>
+
+            <div class="page-footer">
+                <span>© 2026 BuildSmart AI</span>
+                <span class="page-num">02</span>
+            </div>
+        </div>
+
+        <!-- PAGE 03: CONTENTS -->
+        <div class="page">
+            <div class="geometric-accent square-1"></div>
+            <div class="page-header">
+                <span class="header-label">Navigation</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Overview</span>
+                <h1 class="section-title">Table of Contents</h1>
+                
+                <div class="toc-grid">
+                    <div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">04</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Strategic Executive Overview</span>
+                                <span class="toc-kicker">OVERVIEW</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">05</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Critical Industry Challenges</span>
+                                <span class="toc-kicker">CHALLENGES</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">06</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Strategic Implementation Framework</span>
+                                <span class="toc-kicker">FRAMEWORK</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">07</span>
+                            <div class="toc-content">
+                                <span class="toc-title">High-Fidelity Roadmap</span>
+                                <span class="toc-kicker">IMPLEMENTATION</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">08</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Institutional Risk Management</span>
+                                <span class="toc-kicker">RISK</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">09</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Professional Standards &amp; Best Practices</span>
+                                <span class="toc-kicker">METHODS</span>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">10</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Market Intelligence &amp; Data Analysis</span>
+                                <span class="toc-kicker">DATA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">11</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Technical Workflow Stages</span>
+                                <span class="toc-kicker">PROCESS</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">12</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Strategic Comparative Analysis</span>
+                                <span class="toc-kicker">COMPARISON</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">13</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Strategic Takeaways &amp; Pivots</span>
+                                <span class="toc-kicker">TAKEAWAYS</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">14</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Conclusion &amp; 90-Day Roadmap</span>
+                                <span class="toc-kicker">CONCLUSION</span>
+                            </div>
+                        </div>
+                        
+                        <div class="toc-item">
+                            <span class="toc-num">15</span>
+                            <div class="toc-content">
+                                <span class="toc-title">Ready to scale?</span>
+                                <span class="toc-kicker">Action Roadmap</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-footer">
+                <span>Strategic Navigation</span>
+                <span class="page-num">03</span>
+            </div>
+        </div>
+
+        <!-- CONTENT PAGES 04-14 -->
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">OVERVIEW</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 01</span>
+                <h1 class="section-title">Strategic Overview</h1>
+                <p class="intro-lead">Intro for executive_summary.</p>
+
+                
+                    <div class="image-container"><img src="https://example.com/img1.jpg" style="width:100%;height:175px;object-fit:cover;border-radius:8px;display:block;"></div>
+                    <h3 class="subheading">Strategic Executive Overview</h3>
+                    <p class="body-text"><p>Intro for executive_summary.</p></p>
+                    <div class="feature-box">
+                        <h4>Strategic Callout</h4>
+                        <p><p>Intro for executive_summary.</p></p>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: OVERVIEW</span>
+                <span class="page-num">04</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">CHALLENGES</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 02</span>
+                <h1 class="section-title">Critical Industry Challenges</h1>
+                <p class="intro-lead">Intro for key_challenges.</p>
+
+                
+                    <div class="magazine-grid">
+                        <div>
+                            <h3 class="subheading">Critical Industry Challenges</h3>
+                            <p class="body-text"><p>Intro for key_challenges.</p></p>
+                            <ul class="checklist-modern">
+                                
+                                
+                                
+                            </ul>
+                        </div>
+                        <div class="image-container" style="height: 350px;"><img src="https://example.com/img2.jpg" style="width:100%;height:175px;object-fit:cover;border-radius:8px;display:block;"></div>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: CHALLENGES</span>
+                <span class="page-num">05</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">FRAMEWORK</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 03</span>
+                <h1 class="section-title">Strategic Implementation Framework</h1>
+                <p class="intro-lead">Intro for strategic_framework.</p>
+
+                
+                    <p class="body-text"><p>Intro for strategic_framework.</p></p>
+                    <div class="magazine-grid">
+                        <div class="feature-box">
+                            <h4>Executive Insight</h4>
+                            <p><p>Intro for strategic_framework.</p></p>
+                        </div>
+                        <div class="image-container" style="height: 180px;">
+                            <div class="img-ph" style="background: #f1f5f9; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;"> 
+                 <div class="img-ph-icon" style="font-size: 40px; margin-bottom: 10px;">🏗️</div> 
+                 <div class="img-ph-label" style="font-family: Montserrat; font-weight: 800; text-transform: uppercase; font-size: 10px; color: #64748b; letter-spacing: 1px;">Framework Diagram</div> 
+             </div>
+                            
+                        </div>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: FRAMEWORK</span>
+                <span class="page-num">06</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">IMPLEMENTATION</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 04</span>
+                <h1 class="section-title">High-Fidelity Roadmap</h1>
+                <p class="intro-lead">Intro for implementation_strategy.</p>
+
+                
+                    <div class="pull-quote">
+                        "Innovation is the catalyst that transforms complex industry challenges into scalable strategic opportunities."
+                        <cite>— Industry Strategic Analysis</cite>
+                    </div>
+                    <h3 class="subheading">High-Fidelity Roadmap</h3>
+                    <p class="body-text"><p>Intro for implementation_strategy.</p></p>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: IMPLEMENTATION</span>
+                <span class="page-num">07</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">RISK</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 05</span>
+                <h1 class="section-title">Institutional Risk Management</h1>
+                <p class="intro-lead">Intro for risk_management.</p>
+
+                
+                    <p class="body-text"><p>Intro for risk_management.</p></p>
+                    <div class="magazine-grid">
+                        <div class="feature-box">
+                            <h4>Executive Insight</h4>
+                            <p><p>Intro for risk_management.</p></p>
+                        </div>
+                        <div class="image-container" style="height: 180px;">
+                            <div class="img-ph" style="background: #f1f5f9; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;"> 
+                 <div class="img-ph-icon" style="font-size: 40px; margin-bottom: 10px;">🏗️</div> 
+                 <div class="img-ph-label" style="font-family: Montserrat; font-weight: 800; text-transform: uppercase; font-size: 10px; color: #64748b; letter-spacing: 1px;">Implementation Roadmap</div> 
+             </div>
+                            
+                        </div>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: RISK</span>
+                <span class="page-num">08</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">METHODS</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 06</span>
+                <h1 class="section-title">Professional Standards &amp; Best Practices</h1>
+                <p class="intro-lead">Intro for best_practices.</p>
+
+                
+                    <p class="body-text"><p>Intro for best_practices.</p></p>
+                    <div class="magazine-grid">
+                        <div class="feature-box">
+                            <h4>Executive Insight</h4>
+                            <p><p>Intro for best_practices.</p></p>
+                        </div>
+                        <div class="image-container" style="height: 180px;">
+                            <div style="background: var(--accent); width: 100%; height: 100%;"></div>
+                            
+                        </div>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: METHODS</span>
+                <span class="page-num">09</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">DATA</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 07</span>
+                <h1 class="section-title">Market Intelligence &amp; Data Analysis</h1>
+                <p class="intro-lead">Intro for key_statistics.</p>
+
+                
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <span class="stat-value">85%</span>
+                            <span class="stat-label">Efficiency</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-value">2.4x</span>
+                            <span class="stat-label">ROI Multiplier</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-value">12mo</span>
+                            <span class="stat-label">Payback Period</span>
+                        </div>
+                    </div>
+                    <h3 class="subheading">Market Intelligence &amp; Data Analysis</h3>
+                    <p class="body-text"><p>Intro for key_statistics.</p></p>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: DATA</span>
+                <span class="page-num">10</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">PROCESS</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 08</span>
+                <h1 class="section-title">Technical Workflow Stages</h1>
+                <p class="intro-lead">Intro for process_steps.</p>
+
+                
+                    <p class="body-text"><p>Intro for process_steps.</p></p>
+                    <div class="magazine-grid">
+                        <div class="feature-box">
+                            <h4>Executive Insight</h4>
+                            <p><p>Intro for process_steps.</p></p>
+                        </div>
+                        <div class="image-container" style="height: 180px;">
+                            <div class="img-ph" style="background: #f1f5f9; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;"> 
+                 <div class="img-ph-icon" style="font-size: 40px; margin-bottom: 10px;">🏗️</div> 
+                 <div class="img-ph-label" style="font-family: Montserrat; font-weight: 800; text-transform: uppercase; font-size: 10px; color: #64748b; letter-spacing: 1px;">Risk Assessment</div> 
+             </div>
+                            
+                        </div>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: PROCESS</span>
+                <span class="page-num">11</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">COMPARISON</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 09</span>
+                <h1 class="section-title">Strategic Comparative Analysis</h1>
+                <p class="intro-lead">Intro for comparison_table.</p>
+
+                
+                    <p class="body-text"><p>Intro for comparison_table.</p></p>
+                    <div class="magazine-grid">
+                        <div class="feature-box">
+                            <h4>Executive Insight</h4>
+                            <p><p>Intro for comparison_table.</p></p>
+                        </div>
+                        <div class="image-container" style="height: 180px;">
+                            <div style="background: var(--accent); width: 100%; height: 100%;"></div>
+                            
+                        </div>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: COMPARISON</span>
+                <span class="page-num">12</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">TAKEAWAYS</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 10</span>
+                <h1 class="section-title">Strategic Takeaways &amp; Pivots</h1>
+                <p class="intro-lead">Intro for key_takeaways.</p>
+
+                
+                    <p class="body-text"><p>Intro for key_takeaways.</p></p>
+                    <div class="magazine-grid">
+                        <div class="feature-box">
+                            <h4>Executive Insight</h4>
+                            <p><p>Intro for key_takeaways.</p></p>
+                        </div>
+                        <div class="image-container" style="height: 180px;">
+                            <div style="background: var(--accent); width: 100%; height: 100%;"></div>
+                            
+                        </div>
+                    </div>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: TAKEAWAYS</span>
+                <span class="page-num">13</span>
+            </div>
+        </div>
+        
+        <div class="page">
+            <div class="page-header">
+                <span class="header-label">CONCLUSION</span>
+                <span class="header-title">Future of Modular Construction</span>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="page-body">
+                <span class="section-kicker">Section 11</span>
+                <h1 class="section-title">Conclusion &amp; 90-Day Roadmap</h1>
+                <p class="intro-lead">Intro for conclusion.</p>
+
+                
+                    <div class="feature-box" style="background: var(--black); color: white;">
+                        <h4 style="color: var(--secondary);">Operational Roadmap</h4>
+                        <p><p>Intro for conclusion.</p></p>
+                    </div>
+                    <h3 class="subheading">Conclusion &amp; 90-Day Roadmap</h3>
+                    <p class="body-text"><p>Intro for conclusion.</p></p>
+                
+            </div>
+
+            <div class="page-footer">
+                <span>Section Analysis: CONCLUSION</span>
+                <span class="page-num">14</span>
+            </div>
+        </div>
+        
+
+        <!-- PAGE 15: BACK COVER / CTA -->
+        <div class="page cover" style="background: var(--black);">
+            <div class="cover-bg"></div>
+            <div class="cover-accent-line"></div>
+
+            <div class="cover-top" style="text-align: center; padding-top: 60mm;">
+                <span class="section-kicker">Next Steps</span>
+                <h1 class="section-title" style="color: white;">Ready to Begin?<span>.</span></h1>
+                <p class="intro-lead" style="color: rgba(255,255,255,0.7); border: none;">Ready to scale?</p>
+                
+                <div style="display: inline-block; border: 2px solid var(--secondary); padding: 20px 40px; margin-top: 30px;">
+                    <span style="font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--secondary); text-transform: uppercase; letter-spacing: 3px;">Contact Us</span>
+                </div>
+            </div>
+
+            <div class="cover-bottom" style="flex-direction: column; align-items: center; gap: 30px;">
+                <div style="text-align: center; color: rgba(255,255,255,0.6); font-size: 14px;">
+                    <strong>BuildSmart AI</strong><br>
+                     | info@buildsmart.ai<br>
+                    
+                </div>
+                <div class="cover-logo-box" style="width: 50px; height: 50px; font-size: 20px;">BU</div>
+            </div>
+        </div>
+
     </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 7 — IMPLEMENTATION STRATEGY
-     No image — numbered steps + two content boxes
-     ✅ Structured phases, no AI repetition
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">METHODS</span>
-    <span class="pg-hd-num">08</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Implementation Strategy</h2>
-    <p class="pg-intro">Content for implementation_strategy</p>
-
-    <div class="sec-h">implementation_strategy</div>
-    <ul class="steps">
-      <li><div><strong></strong></div></li>
-      <li><div><strong></strong></div></li>
-      <li><div><strong></strong></div></li>
-      <li><div><strong></strong></div></li>
-    </ul>
-
-    <div class="two-col" style="margin-top:10px;">
-      <div class="cbox"><h4></h4></div>
-      <div class="cbox"><h4></h4></div>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 8 — RISK MANAGEMENT
-     No image — checklist + callout + quote
-     ✅ Specific triggers, not generic risks
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">DATA</span>
-    <span class="pg-hd-num">09</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Risk Management</h2>
-    <p class="pg-intro">Content for risk_management</p>
-
-    <div class="sec-h">risk_management</div>
-    <ul class="chklist">
-      
-      
-      
-      
-    </ul>
-
-    <div class="callout" style="margin-top:10px;">
-      <div class="callout-label">risk_management</div>
-      <p>&lt;p&gt;Content for risk_management&lt;/p&gt;</p>
-    </div>
-
-    <blockquote class="bq">
-      ""
-      <footer>— </footer>
-    </blockquote>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 9 — KEY STATISTICS & DATA
-     Stat grid (3 big numbers) + highlight strip
-     ✅ Visual magazine numbers, not prose stats
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">COMPARISON</span>
-    <span class="pg-hd-num">11</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Best Practices</h2>
-    <p class="pg-intro">Content for best_practices</p>
-
-    <div class="sec-h">best_practices</div>
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-val"></div>
-        <div class="stat-lbl"></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val"></div>
-        <div class="stat-lbl"></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val"></div>
-        <div class="stat-lbl"></div>
-      </div>
-    </div>
-
-    <div class="strip">
-      <div class="strip-title">key_statistics</div>
-      <p>Content for key_statistics</p>
-    </div>
-
-    <p class="body-p">&lt;p&gt;Content for best_practices&lt;/p&gt;</p>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 10 — STEP-BY-STEP PROCESS
-     Numbered steps + two boxes
-     ✅ Consultant-grade structure
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">TAKEAWAYS</span>
-    <span class="pg-hd-num">12</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Key Statistics &amp; Market Data</h2>
-    <p class="pg-intro">Content for key_statistics</p>
-
-    <div class="sec-h">key_statistics</div>
-    <ul class="steps">
-      <li><div><strong></strong></div></li>
-      <li><div><strong></strong></div></li>
-      <li><div><strong></strong></div></li>
-      <li><div><strong></strong></div></li>
-      <li><div><strong></strong></div></li>
-    </ul>
-
-    <div class="two-col">
-      <div class="cbox"><h4></h4></div>
-      <div class="cbox"><h4></h4></div>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 11 — COMPARISON TABLE
-     Table + callout + quote
-     ✅ Data-driven, architect-friendly layout
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">CONCLUSION</span>
-    <span class="pg-hd-num"></span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Technical Process Steps</h2>
-    <p class="pg-intro">Content for process_steps</p>
-
-    <div class="sec-h">process_steps</div>
-    <table class="cmp-tbl">
-      <thead>
-        <tr>
-          <th>Criteria</th>
-          <th>Traditional</th>
-          <th>Modular</th>
-          <th>Impact</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>comparison_table</td><td>Content for comparison_table</td><td>Optimized</td><td>High</td></tr>
-        <tr><td></td><td></td><td></td><td></td></tr>
-        <tr><td></td><td></td><td></td><td></td></tr>
-      </tbody>
-    </table>
-
-    <div class="callout">
-      <div class="callout-label">process_steps</div>
-      <p>&lt;p&gt;Content for process_steps&lt;/p&gt;</p>
-    </div>
-
-    <blockquote class="bq">
-      ""
-      <footer>— </footer>
-    </blockquote>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 12 — ICON CARDS + TIMELINE
-     4-across icon cards + vertical timeline
-     ✅ Magazine visual hierarchy
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label"></span>
-    <span class="pg-hd-num"></span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Strategic Comparison</h2>
-    <p class="pg-intro">Content for comparison_table</p>
-
-    <div class="icon-row">
-      <div class="icon-card">
-        <span class="icon-card-emoji">🚀</span>
-        <div class="icon-card-ttl">key_takeaways</div>
-        <div class="icon-card-txt">Content for key_takeaways</div>
-      </div>
-      <div class="icon-card">
-        <span class="icon-card-emoji"></span>
-        <div class="icon-card-ttl"></div>
-        <div class="icon-card-txt"></div>
-      </div>
-      <div class="icon-card">
-        <span class="icon-card-emoji"></span>
-        <div class="icon-card-ttl"></div>
-        <div class="icon-card-txt"></div>
-      </div>
-      <div class="icon-card">
-        <span class="icon-card-emoji"></span>
-        <div class="icon-card-ttl"></div>
-        <div class="icon-card-txt"></div>
-      </div>
-    </div>
-
-    <div class="sec-h">comparison_table</div>
-    <ul class="timeline">
-      <li><strong></strong></li>
-      <li><strong></strong></li>
-      <li><strong></strong></li>
-      <li><strong></strong></li>
-      <li><strong></strong></li>
-    </ul>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 13 — DEEP DIVE
-     6-item checklist + highlight strip
-     ✅ Actionable specifics, not generalizations
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label"></span>
-    <span class="pg-hd-num"></span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <h2 class="pg-h1">Key Takeaways</h2>
-    <p class="pg-intro">Content for key_takeaways</p>
-
-    <div class="sec-h">key_takeaways</div>
-    <ul class="chklist">
-      
-      
-      
-      
-      
-      
-    </ul>
-
-    <div class="strip">
-      <div class="strip-title">best_practices</div>
-      <p>Content for best_practices</p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     PAGE 14 — CONTACT & CTA
-     ✅ Specific offer box (fixes Image 4)
-     ✅ NOT "Contact us today" — specific named hook
-     ✅ Header + Footer
-═══════════════════════════════════════════════ -->
-<div class="page">
-  <div class="pg-hd">
-    <span class="pg-hd-label">PROCESS</span>
-    <span class="pg-hd-num">14</span>
-  </div>
-  <div class="pg-bar"></div>
-
-  <div class="pg-body">
-    <!-- Hero CTA — specific, not generic -->
-    <div class="cta-hero">
-      <h2>Optimize your portfolio</h2>
-      <p>Learn more about how Quantum Computing can help you achieve your goals.</p>
-    </div>
-
-    <!-- Contact details grid -->
-    <div class="contact-grid">
-      <div class="ci">
-        <div class="ci-lbl">Company</div>
-        <div class="ci-val">Quantum Computing</div>
-      </div>
-      <div class="ci">
-        <div class="ci-lbl">Email</div>
-        <div class="ci-val">test@quantum.com</div>
-      </div>
-      <div class="ci">
-        <div class="ci-lbl">Website</div>
-        <div class="ci-val">www.quantum.com</div>
-      </div>
-      <div class="ci">
-        <div class="ci-lbl">Phone</div>
-        <div class="ci-val">123</div>
-      </div>
-    </div>
-
-    <!-- Why choose us -->
-    <div class="why-box">
-      <h4>Why Partner With Us</h4>
-      <p>We provide specialized expertise in Quantum Computing to ensure your success.</p>
-    </div>
-
-    <!-- Named offer hook — Image 4 fix: specific > generic -->
-    <div class="cta-offer">
-      <div class="cta-offer-title">Schedule Audit</div>
-      <p>Our Strategic Advantage</p>
-    </div>
-  </div>
-
-  <div class="pg-ft">
-    <div class="pg-ft-left">
-      <div class="pg-ft-logo">QU</div>
-      <span class="pg-ft-co">© Quantum Computing</span>
-    </div>
-    <span class="pg-ft-right">www.quantum.com</span>
-  </div>
-</div>
-
-</div><!-- /.book -->
 </body>
 </html>

@@ -113,14 +113,14 @@ def _inject_images(html, template_vars):
      ] 
      for i in range(1, 7): 
          url   = template_vars.get(f"image_{i}_url", "").strip() 
-         token = "{{" + f"image{i}Html" + "}}" 
+         token = f"{{{{image{i}Html | safe}}}}" 
          label = placeholders[i-1] 
          if url and url.startswith("http") and not any(x in url for x in ["unsplash", "pexels", "placeholder"]): 
              img_html = f'<img src="{url}" style="width:100%;height:175px;object-fit:cover;border-radius:8px;display:block;">' 
          else: 
-             img_html = f'''<div class="img-ph"> 
-                 <div class="img-ph-icon">🏗️</div> 
-                 <div class="img-ph-label">{label}</div> 
+             img_html = f'''<div class="img-ph" style="background: #f1f5f9; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;"> 
+                 <div class="img-ph-icon" style="font-size: 40px; margin-bottom: 10px;">🏗️</div> 
+                 <div class="img-ph-label" style="font-family: Montserrat; font-weight: 800; text-transform: uppercase; font-size: 10px; color: #64748b; letter-spacing: 1px;">{label}</div> 
              </div>''' 
          html = html.replace(token, img_html) 
      return html
