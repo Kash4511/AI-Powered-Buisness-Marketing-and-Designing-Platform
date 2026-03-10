@@ -84,12 +84,12 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         val = vars_dict.get(key, "")
         if val is None:
             val = ""
-        # Keys that contain pre-rendered HTML must NOT be escaped
-        html_keys = {k for k in vars_dict if k.startswith("section_") and k.endswith("_html")}
-        if key in html_keys:
-            return str(val)
-        return str(val).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") \
-            if not str(val).startswith("<") else str(val)
+        val_str = str(val)
+        # section_*_html keys contain pre-rendered HTML — inject raw, no escaping
+        if key.startswith("section_") and key.endswith("_html"):
+            return val_str
+        # All other values are plain text — must be HTML-escaped
+        return val_str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     html = _re.sub(r'\{\{(\w+)\}\}', _replace_var, html)
     return html
