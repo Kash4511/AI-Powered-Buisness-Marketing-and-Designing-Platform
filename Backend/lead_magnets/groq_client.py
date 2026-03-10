@@ -15,14 +15,14 @@ SECTIONS = [
         "OVERVIEW",
         "text-only",
         (
-            "Write the Executive Summary for a professional guide on {topic} for {audience}.\n"
+            "Write a high-level Executive Summary for a professional guide on {topic} for {audience}.\n"
+            "The tone must be authoritative, strategic, and persuasive.\n"
             "REQUIRED: Use at least 2 specific industry metrics with context (e.g. 'average lifecycle cost reduction of 18% in LGSF projects').\n"
             "STRUCTURE:\n"
-            "<p> — 2-3 sentences: what {topic} means operationally for {audience}.\n"
-            "<p> — 2-3 sentences: current industry shifts in {topic}.\n"
+            "<p> — 3-4 sentences: A compelling overview of what {topic} means for {audience} and why it's critical NOW.\n"
             "<h3>Strategic Drivers</h3>\n"
-            "<ul> — exactly one <li> per pain point in [{pain_points}]. Use <strong> for the pain point.\n"
-            "<p> — final outcome statement.\n"
+            "<ul> — 3 specific drivers linked to the pain points: {pain_points}. Use <strong> for technical terms.\n"
+            "<p> — A powerful closing statement on the expected outcome of adopting these strategies.\n"
             "BANNED: vague percentages like '25% increase' without a source or baseline."
         )
     ),
@@ -32,13 +32,13 @@ SECTIONS = [
         "CHALLENGES",
         "image-right",
         (
-            "Write the Key Challenges for {audience} in {topic}.\n"
+            "Identify the most critical technical and operational challenges for {audience} in {topic}.\n"
             "REQUIRED: Name specific failure modes (e.g. 'BIM data siloed in Revit 2024') and technical blockers.\n"
             "STRUCTURE — for EACH pain point in [{pain_points}]:\n"
-            "<h3>[Pain point name]</h3>\n"
-            "<p><strong>Technical Root Cause:</strong> 1-2 sentences on the mechanical/software reason this fails.</p>\n"
-            "<p><strong>Operational Impact:</strong> 1-2 sentences with a specific metric (e.g. 'man-hour loss', 'waste percentage').</p>\n"
-            "<p><strong>Real-World Scenario:</strong> A realistic {topic} situation involving specific tools or roles.\n"
+            "<h3>[Challenge Name]</h3>\n"
+            "<p><strong>Technical Root Cause:</strong> Explain the underlying software/mechanical reason this occurs.\n"
+            "<p><strong>Operational Impact:</strong> Describe the downstream cost or delay using specific metrics.\n"
+            "<p><strong>Real-World Scenario:</strong> A realistic industry situation where this challenge disrupts the workflow.\n"
             "BANNED: generic advice, 'leverage', 'unlock'."
         )
     ),
@@ -48,16 +48,16 @@ SECTIONS = [
         "FRAMEWORK",
         "image-left",
         (
-            "Define a Strategic Framework for {topic} for {audience}.\n"
-            "REQUIRED: Name a specific proprietary-sounding framework (e.g. 'The Modular Synthesis Protocol').\n"
+            "Define a comprehensive Strategic Framework for {topic} tailored to {audience}.\n"
+            "REQUIRED: Name a unique, proprietary-sounding framework (e.g. 'The Modular Synthesis Protocol').\n"
             "STRUCTURE:\n"
-            "<p> — Intro to the framework logic.\n"
+            "<p> — An introduction to the framework's methodology and philosophy.\n"
             "<h3>[Step 1: Domain-Specific Name]</h3>\n"
-            "<p> — What practitioners DO. Name specific software (e.g. Procore, Autodesk Construction Cloud) or hardware.\n"
+            "<p> — Actionable details: what practitioners DO, naming specific software (e.g. Procore, Autodesk Construction Cloud) or hardware.\n"
             "<h3>[Step 2: Technical Integration]</h3>\n"
-            "<p> — How it resolves one of [{pain_points}]. Use a real-world metric.\n"
+            "<p> — How it resolves one of [{pain_points}]. Use a real-world metric or benchmark.\n"
             "<h3>[Step 3: Optimization]</h3>\n"
-            "<p> — Advanced workflow step (e.g. 'DFMA analysis', 'carbon sequestration metrics').\n"
+            "<p> — Advanced optimization (e.g. 'DFMA analysis', 'carbon sequestration metrics').\n"
             "Total 200-240 words."
         )
     ),
@@ -67,14 +67,14 @@ SECTIONS = [
         "IMPLEMENTATION",
         "text-only",
         (
-            "Write a detailed Implementation Strategy for {topic}.\n"
-            "REQUIRED: This must be a narrative roadmap, NOT just a list of tasks. Connect tasks to outcomes.\n"
+            "Provide a high-fidelity Implementation Strategy for {topic}.\n"
+            "REQUIRED: This must be a narrative roadmap, NOT just a list of tasks. Connect actions to long-term outcomes.\n"
             "STRUCTURE — 3 Phases, each with <h3> + narrative <p> + <ul>:\n"
             "<h3>Phase 1: [Technical Kickoff Name]</h3>\n"
-            "<p>Explain the goal of this phase in 3 sentences, referencing specific {topic} standards.</p>\n"
+            "<p>Detail the kickoff requirements in 3-4 sentences, referencing specific {topic} standards or protocols.</p>\n"
             "<ul>\n"
-            "  <li><strong>Milestone:</strong> specific technical achievement.</li>\n"
-            "  <li><strong>Risk Factor:</strong> how to avoid a [{pain_points}] failure here.</li>\n"
+            "  <li><strong>Milestone:</strong> A specific technical achievement.</li>\n"
+            "  <li><strong>Risk Factor:</strong> How to proactively mitigate a [{pain_points}] failure at this stage.</li>\n"
             "</ul>\n"
             "Repeat for Phase 2 (Mid-scale) and Phase 3 (Steady State).\n"
             "BANNED: skeletal bullet points without context."
@@ -86,12 +86,12 @@ SECTIONS = [
         "RISK",
         "image-above",
         (
-            "Write a Risk Management profile for {topic}.\n"
-            "REQUIRED: Identify 4 high-stakes risks. Use specific industry terminology (e.g. 'clash detection errors', 'off-site tolerances').\n"
+            "Create a professional Risk Management profile for {topic} projects.\n"
+            "REQUIRED: Identify 4 high-stakes risks using specific industry terminology (e.g. 'clash detection errors', 'off-site tolerances').\n"
             "STRUCTURE — 4 risks, each with:\n"
             "<h3>[Technical Risk Name]</h3>\n"
-            "<p><strong>Trigger:</strong> specific event in {topic} workflow.</p>\n"
-            "<p><strong>Mitigation:</strong> exactly how expert {audience} use tools or protocols to fix it.\n"
+            "<p><strong>Trigger:</strong> The specific event or condition in the {topic} workflow that causes the risk.</p>\n"
+            "<p><strong>Mitigation:</strong> Detailed protocols or tools experts use to neutralize this risk.\n"
             "BANNED: 'scope creep', 'budget overrun'."
         )
     ),
@@ -101,12 +101,12 @@ SECTIONS = [
         "METHODS",
         "text-only",
         (
-            "Write Best Practices for {audience} in {topic}.\n"
+            "Outline professional Best Practices for {audience} in the {topic} domain.\n"
             "REQUIRED: Name at least 2 specific tools, platforms, or standards (e.g. Revit, LGSF panels, SIPs, PassiveHouse, ISO 19650).\n"
             "STRUCTURE — 4 practices, each with:\n"
             "<h3>[Practice Name]</h3>\n"
-            "<p>The METHOD: how to implement this specifically using [named tool/standard].</p>\n"
-            "<p>The METRIC: specific improvement (e.g. '22% reduction in RFI cycles').</p>\n"
+            "<p>The METHOD: Detailed implementation steps using [named tool/standard].</p>\n"
+            "<p>The METRIC: The specific performance improvement (e.g. '22% reduction in RFI cycles').</p>\n"
             "BANNED: vague advice like 'Plan Ahead'."
         )
     ),
@@ -116,15 +116,15 @@ SECTIONS = [
         "DATA",
         "text-only",
         (
-            "Provide critical market data and statistics for {topic}.\n"
-            "REQUIRED: Use credible-sounding (or real) data points. Attribute them to 'Industry Benchmarks', 'Market Research', or 'Historical Project Data'.\n"
+            "Provide critical market data and statistics relevant to {topic}.\n"
+            "REQUIRED: Use credible-sounding (or real) data points attributed to 'Industry Benchmarks' or 'Market Research'.\n"
             "STRUCTURE:\n"
             "<h3>Industry Benchmarks</h3>\n"
             "<p>Provide 3-4 specific data points (e.g. 'Modular construction adoption in {industry} is projected to grow by 12.4% CAGR through 2028').</p>\n"
             "<h3>Comparative Efficiency</h3>\n"
             "<ul>\n"
-            "  <li>Metric 1: Specific comparison (e.g. 'Off-site vs On-site waste reduction').</li>\n"
-            "  <li>Metric 2: Time-to-market reduction.</li>\n"
+            "  <li><strong>Metric 1:</strong> Specific comparison (e.g. waste reduction vs traditional methods).</li>\n"
+            "  <li><strong>Metric 2:</strong> Time-to-market reduction benchmarks.</li>\n"
             "</ul>\n"
             "BANNED: fabricated percentages without a clear baseline."
         )
@@ -135,7 +135,7 @@ SECTIONS = [
         "PROCESS",
         "text-only",
         (
-            "Break down the technical process for {topic}.\n"
+            "Break down the technical process for implementing {topic}.\n"
             "REQUIRED: Use technical verbs and name specific workflow stages (e.g. 'Schematic Design', 'BIM Coordination', 'Factory Fabrication').\n"
             "STRUCTURE — 5 numbered steps using <h3>:\n"
             "<h3>Step 1: [Technical Stage Name]</h3>\n"
@@ -149,12 +149,12 @@ SECTIONS = [
         "COMPARISON",
         "text-only",
         (
-            "Write a comparative analysis between traditional methods and {topic}.\n"
+            "Provide a strategic comparative analysis between traditional methods and {topic}.\n"
             "REQUIRED: Use specific criteria (e.g. 'Embodied Carbon', 'Precision Tolerances', 'Site Disruption').\n"
             "STRUCTURE:\n"
-            "<p>Intro sentence.</p>\n"
+            "<p>Intro sentence: Contextualize the shift from legacy to modern approaches.</p>\n"
             "<h3>[Criteria 1]</h3>\n"
-            "<p>Contrast the two approaches with specific metrics.</p>\n"
+            "<p>Contrast the two approaches with specific metrics and technical benefits.</p>\n"
             "<h3>[Criteria 2]</h3>\n"
             "<p>Contrast with focus on {audience} pain points.</p>\n"
             "Repeat for 3 criteria."
@@ -166,13 +166,13 @@ SECTIONS = [
         "TAKEAWAYS",
         "text-only",
         (
-            "Summarize the most important insights for {audience}.\n"
+            "Summarize the most important strategic insights for {audience}.\n"
             "REQUIRED: Focus on high-level strategic pivots. Name specific shifts in {topic}.\n"
             "STRUCTURE — 3 themes, each with <h3> + narrative <p> + <ul>:\n"
             "<h3>[Theme Name]</h3>\n"
-            "<p>The core strategic insight.</p>\n"
+            "<p>The core strategic insight in 2-3 sentences.</p>\n"
             "<ul>\n"
-            "  <li>Specific takeaway with a metric or tool reference.</li>\n"
+            "  <li>Specific actionable takeaway with a metric or tool reference.</li>\n"
             "</ul>\n"
             "Repeat for 3 themes."
         )
@@ -183,15 +183,15 @@ SECTIONS = [
         "CONCLUSION",
         "text-only",
         (
-            "Final conclusion and next steps for {topic}.\n"
+            "Final conclusion and professional roadmap for adopting {topic}.\n"
             "REQUIRED: A strong, specific call to action tailored to {audience}.\n"
             "STRUCTURE:\n"
-            "<p>Final summary of the value of {topic}.</p>\n"
+            "<p>Final summary of the strategic value and ROI of {topic}.</p>\n"
             "<h3>Your 90-Day Roadmap</h3>\n"
             "<ol>\n"
-            "  <li>Immediate action: specific {topic} audit.</li>\n"
-            "  <li>Tool implementation: name a specific software/method.</li>\n"
-            "  <li>Metric verification.</li>\n"
+            "  <li><strong>Phase 1 (Day 1-30):</strong> Immediate technical audit and tool assessment.</li>\n"
+            "  <li><strong>Phase 2 (Day 31-60):</strong> Workflow integration and pilot program.</li>\n"
+            "  <li><strong>Phase 3 (Day 61-90):</strong> Metric verification and scaling.</li>\n"
             "</ol>\n"
             "Total 180-220 words."
         )
@@ -503,12 +503,21 @@ class GroqClient:
             "image1Html": "", # Will be injected by DocRaptorService._inject_images
             "image2Html": "",
             "image3Html": "",
+            "image4Html": "",
+            "image5Html": "",
+            "image6Html": "",
             "image_1_url": firm_profile.get("image_1_url") or "",
             "image_2_url": firm_profile.get("image_2_url") or "",
             "image_3_url": firm_profile.get("image_3_url") or "",
+            "image_4_url": firm_profile.get("image_4_url") or "",
+            "image_5_url": firm_profile.get("image_5_url") or "",
+            "image_6_url": firm_profile.get("image_6_url") or "",
             "imagePlaceholderText1": firm_profile.get("image_1_caption") or "Executive Summary Overview",
             "imagePlaceholderText2": firm_profile.get("image_2_caption") or "Key Challenges Analysis",
             "imagePlaceholderText3": firm_profile.get("image_3_caption") or "Strategic Framework Model",
+            "imagePlaceholderText4": firm_profile.get("image_4_caption") or "Implementation Strategy Roadmap",
+            "imagePlaceholderText5": firm_profile.get("image_5_caption") or "Risk Management Assessment",
+            "imagePlaceholderText6": firm_profile.get("image_6_caption") or "Technical Specification View",
             "architecturalImageCaption1": firm_profile.get("image_1_caption") or "Executive Summary Overview",
             "architecturalImageCaption2": firm_profile.get("image_2_caption") or "Key Challenges Analysis",
             "architecturalImageCaption3": firm_profile.get("image_3_caption") or "Strategic Framework Model",

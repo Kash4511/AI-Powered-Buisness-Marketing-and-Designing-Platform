@@ -107,8 +107,11 @@ def _inject_images(html, template_vars):
          template_vars.get("imagePlaceholderText1", "Project Overview"), 
          template_vars.get("imagePlaceholderText2", "Challenges Overview"), 
          template_vars.get("imagePlaceholderText3", "Framework Diagram"), 
+         template_vars.get("imagePlaceholderText4", "Implementation Roadmap"), 
+         template_vars.get("imagePlaceholderText5", "Risk Assessment"), 
+         template_vars.get("imagePlaceholderText6", "Technical Detail"), 
      ] 
-     for i in range(1, 4): 
+     for i in range(1, 7): 
          url   = template_vars.get(f"image_{i}_url", "").strip() 
          token = "{{" + f"image{i}Html" + "}}" 
          label = placeholders[i-1] 
