@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>{{documentTitle}}</title>
+<title>Quantum Computing in Finance</title>
 <style>
 /* ══════════════════════════════════════════════════════
    FONTS & PRINT DEFAULTS
@@ -20,11 +20,11 @@
    DYNAMIC COLOR SYSTEM — all 5 colors injected at runtime
 ══════════════════════════════════════════════════════ */
 :root{
-  --P:  {{primaryColor}};      /* Primary — headers, cover bg, footer bg     */
-  --S:  {{secondaryColor}};    /* Secondary — page header bar, stat borders  */
-  --A:  {{accentColor}};       /* Accent — callout borders, dividers, badges */
-  --H:  {{highlightColor}};    /* Highlight — strip gradient start           */
-  --G:  {{goldColor}};         /* Gold — TOC numbers, quote marks, CTA ring  */
+  --P:  #000000;      /* Primary — headers, cover bg, footer bg     */
+  --S:  #ffffff;    /* Secondary — page header bar, stat borders  */
+  --A:  #3a3a3a;       /* Accent — callout borders, dividers, badges */
+  --H:  #4a4a4a;    /* Highlight — strip gradient start           */
+  --G:  #c5a059;         /* Gold — TOC numbers, quote marks, CTA ring  */
 
   /* Derived neutrals (not overridden) */
   --ink:  #111318;
@@ -664,27 +664,27 @@ body{
 
   <!-- LEFT-CENTRE title block -->
   <div class="cv-main">
-    <div class="cv-eyebrow">{{documentTypeLabel}}</div>
+    <div class="cv-eyebrow">TECHNICAL GUIDE</div>
     <h1 class="cv-title">
-      {{mainTitle}}
-      <span class="cv-title-accent">{{mainTitleAccent}}</span>
+      Quantum Computing in Finance
+      <span class="cv-title-accent"></span>
     </h1>
     <div class="cv-divider"></div>
-    <p class="cv-subtitle">{{documentSubtitle}}</p>
+    <p class="cv-subtitle">A technical roadmap for quantitative analysis.</p>
   </div>
 
   <!-- BOTTOM-LEFT contact (Image 1 style) -->
   <div class="cv-contact">
-    <div class="cv-contact-name">{{companyName}}</div>
+    <div class="cv-contact-name">Quantum Computing</div>
     <div class="cv-contact-details">
-      {{emailAddress}}<br>
-      {{website}}<br>
-      {{phoneNumber}}
+      test@quantum.com<br>
+      www.quantum.com<br>
+      123
     </div>
   </div>
 
   <!-- Bottom-right pill label -->
-  <div class="cv-pill">{{documentTypeLabel}}</div>
+  <div class="cv-pill">TECHNICAL GUIDE</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════
@@ -694,30 +694,30 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle1}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader2}}</span>
+    <span class="pg-hd-label">OVERVIEW</span>
+    <span class="pg-hd-num">02</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="terms-wrap">
     <div class="terms-inner">
-      <div class="terms-kicker">{{legalKicker}}</div>
-      <h1 class="terms-title">{{termsTitle | safe}}</h1>
-      <p class="terms-p">{{termsSummary | safe}}</p>
-      <p class="terms-p">{{termsParagraph1 | safe}}</p>
-      <p class="terms-p">{{termsParagraph2 | safe}}</p>
-      <p class="terms-p">{{termsParagraph3 | safe}}</p>
-      <p class="terms-p">{{termsParagraph4 | safe}}</p>
-      <p class="terms-sm">{{termsParagraph5 | safe}}</p>
+      <div class="terms-kicker">Legal Notice</div>
+      <h1 class="terms-title">Terms of Use</h1>
+      <p class="terms-p">This is not financial advice.</p>
+      <p class="terms-p">© Quantum Computing. All rights reserved. No part of this publication may be reproduced without the prior written permission of the publisher.</p>
+      <p class="terms-p">The information contained in this document is for general guidance on Quantum Computing only.</p>
+      <p class="terms-p">Given the changing nature of laws and regulations, there may be delays, omissions or inaccuracies in information contained in this document.</p>
+      <p class="terms-p">While we have made every attempt to ensure that the information in this document has been obtained from reliable sources, we are not responsible for any errors or omissions.</p>
+      <p class="terms-sm">This AI-generated content is intended to support, not replace, professional advice in Quantum Computing.</p>
     </div>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -727,34 +727,34 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle2}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader3}}</span>
+    <span class="pg-hd-label">CHALLENGES</span>
+    <span class="pg-hd-num">03</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <div class="toc-heading">{{contentsTitle}}</div>
+    <div class="toc-heading">Table of Contents</div>
     <ul class="toc-list">
-      <li class="toc-row"><span class="toc-n">1</span><span class="toc-label">{{contentItem1}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber4}}</span></li>
-      <li class="toc-row"><span class="toc-n">2</span><span class="toc-label">{{contentItem2}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber5}}</span></li>
-      <li class="toc-row"><span class="toc-n">3</span><span class="toc-label">{{contentItem3}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber6}}</span></li>
-      <li class="toc-row"><span class="toc-n">4</span><span class="toc-label">{{contentItem4}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber7}}</span></li>
-      <li class="toc-row"><span class="toc-n">5</span><span class="toc-label">{{contentItem5}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber8}}</span></li>
-      <li class="toc-row"><span class="toc-n">6</span><span class="toc-label">{{contentItem6}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber9}}</span></li>
-      <li class="toc-row"><span class="toc-n">7</span><span class="toc-label">{{contentItem7}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber10}}</span></li>
-      <li class="toc-row"><span class="toc-n">8</span><span class="toc-label">{{contentItem8}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber11}}</span></li>
-      <li class="toc-row"><span class="toc-n">9</span><span class="toc-label">{{contentItem9}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber12}}</span></li>
-      <li class="toc-row"><span class="toc-n">10</span><span class="toc-label">{{contentItem10}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber13}}</span></li>
-      <li class="toc-row"><span class="toc-n">11</span><span class="toc-label">{{contentItem11}}</span><span class="toc-dots"></span><span class="toc-pg">{{pageNumber14}}</span></li>
+      <li class="toc-row"><span class="toc-n">1</span><span class="toc-label">Executive Summary</span><span class="toc-dots"></span><span class="toc-pg">04</span></li>
+      <li class="toc-row"><span class="toc-n">2</span><span class="toc-label">Key Challenges</span><span class="toc-dots"></span><span class="toc-pg">05</span></li>
+      <li class="toc-row"><span class="toc-n">3</span><span class="toc-label">Strategic Framework</span><span class="toc-dots"></span><span class="toc-pg">06</span></li>
+      <li class="toc-row"><span class="toc-n">4</span><span class="toc-label">Implementation Strategy</span><span class="toc-dots"></span><span class="toc-pg">07</span></li>
+      <li class="toc-row"><span class="toc-n">5</span><span class="toc-label">Risk Management</span><span class="toc-dots"></span><span class="toc-pg">08</span></li>
+      <li class="toc-row"><span class="toc-n">6</span><span class="toc-label">Best Practices</span><span class="toc-dots"></span><span class="toc-pg">09</span></li>
+      <li class="toc-row"><span class="toc-n">7</span><span class="toc-label">Key Statistics &amp; Market Data</span><span class="toc-dots"></span><span class="toc-pg">10</span></li>
+      <li class="toc-row"><span class="toc-n">8</span><span class="toc-label">Technical Process Steps</span><span class="toc-dots"></span><span class="toc-pg">11</span></li>
+      <li class="toc-row"><span class="toc-n">9</span><span class="toc-label">Strategic Comparison</span><span class="toc-dots"></span><span class="toc-pg">12</span></li>
+      <li class="toc-row"><span class="toc-n">10</span><span class="toc-label">Key Takeaways</span><span class="toc-dots"></span><span class="toc-pg">13</span></li>
+      <li class="toc-row"><span class="toc-n">11</span><span class="toc-label">Conclusion &amp; Roadmap</span><span class="toc-dots"></span><span class="toc-pg">14</span></li>
     </ul>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -765,37 +765,37 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle3}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader4}}</span>
+    <span class="pg-hd-label">FRAMEWORK</span>
+    <span class="pg-hd-num">05</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle1}}</h2>
+    <h2 class="pg-h1">Executive Summary</h2>
 
     <!-- IMAGE CENTER -->
     <div class="img-center">
-      <div class="img-block">{{image1Html | safe}}</div>
-      <div class="img-cap">{{architecturalImageCaption1}}</div>
+      <div class="img-block"><img src="http://image.com/1" alt="Project Image"></div>
+      <div class="img-cap">Executive Summary Overview</div>
     </div>
 
-    <p class="pg-intro">{{customContent1 | safe}}</p>
+    <p class="pg-intro">Content for executive_summary</p>
 
-    <div class="sec-h">{{subheading1}}</div>
-    <p class="body-p">{{subcontent1 | safe}}</p>
+    <div class="sec-h">executive_summary</div>
+    <p class="body-p"><p>Content for executive_summary</p></p>
 
     <div class="callout">
-      <div class="callout-label">{{boxTitle1}}</div>
-      <p>{{boxContent1 | safe}}</p>
+      <div class="callout-label">conclusion</div>
+      <p><p>Content for conclusion</p></p>
     </div>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -806,39 +806,39 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle4}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader5}}</span>
+    <span class="pg-hd-label">IMPLEMENTATION</span>
+    <span class="pg-hd-num">06</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle2}}</h2>
-    <p class="pg-intro">{{customContent2 | safe}}</p>
+    <h2 class="pg-h1">Key Challenges</h2>
+    <p class="pg-intro">Content for key_challenges</p>
 
     <!-- IMAGE RIGHT — strict CSS grid, no float/clash -->
     <div class="img-right">
       <div>
-        <div class="sec-h">{{subheading2}}</div>
+        <div class="sec-h">key_challenges</div>
         <ul class="chklist">
-          <li>{{listItem1}}</li>
-          <li>{{listItem2}}</li>
-          <li>{{listItem3}}</li>
-          <li>{{listItem4}}</li>
+          
+          
+          
+          
         </ul>
       </div>
       <div>
-        <div class="img-block">{{image2Html | safe}}</div>
-        <div class="img-cap">{{architecturalImageCaption2}}</div>
+        <div class="img-block"><img src="http://image.com/2" alt="Project Image"></div>
+        <div class="img-cap">Key Challenges Analysis</div>
       </div>
     </div>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -849,27 +849,27 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle5}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader6}}</span>
+    <span class="pg-hd-label">RISK</span>
+    <span class="pg-hd-num">07</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle3}}</h2>
-    <p class="pg-intro">{{customContent3 | safe}}</p>
+    <h2 class="pg-h1">Strategic Framework</h2>
+    <p class="pg-intro">Content for strategic_framework</p>
 
     <!-- IMAGE LEFT — strict CSS grid -->
     <div class="img-left">
       <div>
-        <div class="img-block">{{image3Html | safe}}</div>
-        <div class="img-cap">{{architecturalImageCaption3}}</div>
+        <div class="img-block"><img src="http://image.com/3" alt="Project Image"></div>
+        <div class="img-cap">Strategic Framework Model</div>
       </div>
       <div>
-        <div class="sec-h">{{subheading3}}</div>
-        <p class="body-p">{{subcontent3}}</p>
+        <div class="sec-h">strategic_framework</div>
+        <p class="body-p">&lt;p&gt;Content for strategic_framework&lt;/p&gt;</p>
         <div class="callout">
-          <div class="callout-label">{{boxTitle2}}</div>
-          <p>{{boxContent2}}</p>
+          <div class="callout-label"></div>
+          
         </div>
       </div>
     </div>
@@ -877,10 +877,10 @@ body{
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -891,35 +891,35 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle6}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader7}}</span>
+    <span class="pg-hd-label">METHODS</span>
+    <span class="pg-hd-num">08</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle4}}</h2>
-    <p class="pg-intro">{{customContent4 | safe}}</p>
+    <h2 class="pg-h1">Implementation Strategy</h2>
+    <p class="pg-intro">Content for implementation_strategy</p>
 
-    <div class="sec-h">{{subheading4}}</div>
+    <div class="sec-h">implementation_strategy</div>
     <ul class="steps">
-      <li><div><strong>{{stepTitle1}}</strong>{{stepContent1}}</div></li>
-      <li><div><strong>{{stepTitle2}}</strong>{{stepContent2}}</div></li>
-      <li><div><strong>{{stepTitle3}}</strong>{{stepContent3}}</div></li>
-      <li><div><strong>{{stepTitle4}}</strong>{{stepContent4}}</div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
     </ul>
 
     <div class="two-col" style="margin-top:10px;">
-      <div class="cbox"><h4>{{boxTitle3}}</h4><p>{{boxContent3}}</p></div>
-      <div class="cbox"><h4>{{boxTitle4}}</h4><p>{{boxContent4}}</p></div>
+      <div class="cbox"><h4></h4></div>
+      <div class="cbox"><h4></h4></div>
     </div>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -930,40 +930,40 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle7}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader8}}</span>
+    <span class="pg-hd-label">DATA</span>
+    <span class="pg-hd-num">09</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle5}}</h2>
-    <p class="pg-intro">{{customContent5 | safe}}</p>
+    <h2 class="pg-h1">Risk Management</h2>
+    <p class="pg-intro">Content for risk_management</p>
 
-    <div class="sec-h">{{subheading5}}</div>
+    <div class="sec-h">risk_management</div>
     <ul class="chklist">
-      <li>{{numberedItem1}}</li>
-      <li>{{numberedItem2}}</li>
-      <li>{{numberedItem3}}</li>
-      <li>{{numberedItem4}}</li>
+      
+      
+      
+      
     </ul>
 
     <div class="callout" style="margin-top:10px;">
-      <div class="callout-label">{{accentBoxTitle3}}</div>
-      <p>{{accentBoxContent3}}</p>
+      <div class="callout-label">risk_management</div>
+      <p>&lt;p&gt;Content for risk_management&lt;/p&gt;</p>
     </div>
 
     <blockquote class="bq">
-      "{{quoteText2}}"
-      <footer>— {{quoteAuthor2}}</footer>
+      ""
+      <footer>— </footer>
     </blockquote>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -974,45 +974,45 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle9}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader10}}</span>
+    <span class="pg-hd-label">COMPARISON</span>
+    <span class="pg-hd-num">11</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle6}}</h2>
-    <p class="pg-intro">{{customContent6 | safe}}</p>
+    <h2 class="pg-h1">Best Practices</h2>
+    <p class="pg-intro">Content for best_practices</p>
 
-    <div class="sec-h">{{subheading6}}</div>
+    <div class="sec-h">best_practices</div>
     <div class="stat-grid">
       <div class="stat-card">
-        <div class="stat-val">{{stat1Value}}</div>
-        <div class="stat-lbl">{{stat1Label}}</div>
+        <div class="stat-val"></div>
+        <div class="stat-lbl"></div>
       </div>
       <div class="stat-card">
-        <div class="stat-val">{{stat2Value}}</div>
-        <div class="stat-lbl">{{stat2Label}}</div>
+        <div class="stat-val"></div>
+        <div class="stat-lbl"></div>
       </div>
       <div class="stat-card">
-        <div class="stat-val">{{stat3Value}}</div>
-        <div class="stat-lbl">{{stat3Label}}</div>
+        <div class="stat-val"></div>
+        <div class="stat-lbl"></div>
       </div>
     </div>
 
     <div class="strip">
-      <div class="strip-title">{{highlightStripTitle1}}</div>
-      <p>{{highlightStripContent1}}</p>
+      <div class="strip-title">key_statistics</div>
+      <p>Content for key_statistics</p>
     </div>
 
-    <p class="body-p">{{subcontent6}}</p>
+    <p class="body-p">&lt;p&gt;Content for best_practices&lt;/p&gt;</p>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -1023,36 +1023,36 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle10}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader11}}</span>
+    <span class="pg-hd-label">TAKEAWAYS</span>
+    <span class="pg-hd-num">12</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle7}}</h2>
-    <p class="pg-intro">{{customContent7 | safe}}</p>
+    <h2 class="pg-h1">Key Statistics &amp; Market Data</h2>
+    <p class="pg-intro">Content for key_statistics</p>
 
-    <div class="sec-h">{{subheading7}}</div>
+    <div class="sec-h">key_statistics</div>
     <ul class="steps">
-      <li><div><strong>{{stepTitle1}}</strong>{{stepContent1}}</div></li>
-      <li><div><strong>{{stepTitle2}}</strong>{{stepContent2}}</div></li>
-      <li><div><strong>{{stepTitle3}}</strong>{{stepContent3}}</div></li>
-      <li><div><strong>{{stepTitle4}}</strong>{{stepContent4}}</div></li>
-      <li><div><strong>{{stepTitle5}}</strong>{{stepContent5}}</div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
+      <li><div><strong></strong></div></li>
     </ul>
 
     <div class="two-col">
-      <div class="cbox"><h4>{{boxTitle3}}</h4><p>{{boxContent3}}</p></div>
-      <div class="cbox"><h4>{{boxTitle4}}</h4><p>{{boxContent4}}</p></div>
+      <div class="cbox"><h4></h4></div>
+      <div class="cbox"><h4></h4></div>
     </div>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -1063,49 +1063,49 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle11}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader12}}</span>
+    <span class="pg-hd-label">CONCLUSION</span>
+    <span class="pg-hd-num"></span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle8}}</h2>
-    <p class="pg-intro">{{customContent8 | safe}}</p>
+    <h2 class="pg-h1">Technical Process Steps</h2>
+    <p class="pg-intro">Content for process_steps</p>
 
-    <div class="sec-h">{{subheading8}}</div>
+    <div class="sec-h">process_steps</div>
     <table class="cmp-tbl">
       <thead>
         <tr>
-          <th>{{tableHeader1}}</th>
-          <th>{{tableHeader2}}</th>
-          <th>{{tableHeader3}}</th>
-          <th>{{tableHeader4}}</th>
+          <th>Criteria</th>
+          <th>Traditional</th>
+          <th>Modular</th>
+          <th>Impact</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>{{tableRow1Col1}}</td><td>{{tableRow1Col2}}</td><td>{{tableRow1Col3}}</td><td>{{tableRow1Col4}}</td></tr>
-        <tr><td>{{tableRow2Col1}}</td><td>{{tableRow2Col2}}</td><td>{{tableRow2Col3}}</td><td>{{tableRow2Col4}}</td></tr>
-        <tr><td>{{tableRow3Col1}}</td><td>{{tableRow3Col2}}</td><td>{{tableRow3Col3}}</td><td>{{tableRow3Col4}}</td></tr>
+        <tr><td>comparison_table</td><td>Content for comparison_table</td><td>Optimized</td><td>High</td></tr>
+        <tr><td></td><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td><td></td></tr>
       </tbody>
     </table>
 
     <div class="callout">
-      <div class="callout-label">{{accentBoxTitle4}}</div>
-      <p>{{accentBoxContent4}}</p>
+      <div class="callout-label">process_steps</div>
+      <p>&lt;p&gt;Content for process_steps&lt;/p&gt;</p>
     </div>
 
     <blockquote class="bq">
-      "{{quoteText3}}"
-      <footer>— {{quoteAuthor3}}</footer>
+      ""
+      <footer>— </footer>
     </blockquote>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -1116,54 +1116,54 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle12}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader13}}</span>
+    <span class="pg-hd-label"></span>
+    <span class="pg-hd-num"></span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle9}}</h2>
-    <p class="pg-intro">{{customContent9 | safe}}</p>
+    <h2 class="pg-h1">Strategic Comparison</h2>
+    <p class="pg-intro">Content for comparison_table</p>
 
     <div class="icon-row">
       <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard1Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard1Title}}</div>
-        <div class="icon-card-txt">{{iconCard1Text}}</div>
+        <span class="icon-card-emoji">🚀</span>
+        <div class="icon-card-ttl">key_takeaways</div>
+        <div class="icon-card-txt">Content for key_takeaways</div>
       </div>
       <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard2Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard2Title}}</div>
-        <div class="icon-card-txt">{{iconCard2Text}}</div>
+        <span class="icon-card-emoji"></span>
+        <div class="icon-card-ttl"></div>
+        <div class="icon-card-txt"></div>
       </div>
       <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard3Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard3Title}}</div>
-        <div class="icon-card-txt">{{iconCard3Text}}</div>
+        <span class="icon-card-emoji"></span>
+        <div class="icon-card-ttl"></div>
+        <div class="icon-card-txt"></div>
       </div>
       <div class="icon-card">
-        <span class="icon-card-emoji">{{iconCard4Emoji}}</span>
-        <div class="icon-card-ttl">{{iconCard4Title}}</div>
-        <div class="icon-card-txt">{{iconCard4Text}}</div>
+        <span class="icon-card-emoji"></span>
+        <div class="icon-card-ttl"></div>
+        <div class="icon-card-txt"></div>
       </div>
     </div>
 
-    <div class="sec-h">{{subheading9}}</div>
+    <div class="sec-h">comparison_table</div>
     <ul class="timeline">
-      <li><strong>{{timelineItem1Title}}</strong>{{timelineItem1}}</li>
-      <li><strong>{{timelineItem2Title}}</strong>{{timelineItem2}}</li>
-      <li><strong>{{timelineItem3Title}}</strong>{{timelineItem3}}</li>
-      <li><strong>{{timelineItem4Title}}</strong>{{timelineItem4}}</li>
-      <li><strong>{{timelineItem5Title}}</strong>{{timelineItem5}}</li>
+      <li><strong></strong></li>
+      <li><strong></strong></li>
+      <li><strong></strong></li>
+      <li><strong></strong></li>
+      <li><strong></strong></li>
     </ul>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -1174,37 +1174,37 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitle13}}</span>
-    <span class="pg-hd-num">{{pageNumberHeader14}}</span>
+    <span class="pg-hd-label"></span>
+    <span class="pg-hd-num"></span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
-    <h2 class="pg-h1">{{customTitle10}}</h2>
-    <p class="pg-intro">{{customContent10 | safe}}</p>
+    <h2 class="pg-h1">Key Takeaways</h2>
+    <p class="pg-intro">Content for key_takeaways</p>
 
-    <div class="sec-h">{{subheading10}}</div>
+    <div class="sec-h">key_takeaways</div>
     <ul class="chklist">
-      <li>{{extListItem1}}</li>
-      <li>{{extListItem2}}</li>
-      <li>{{extListItem3}}</li>
-      <li>{{extListItem4}}</li>
-      <li>{{extListItem5}}</li>
-      <li>{{extListItem6}}</li>
+      
+      
+      
+      
+      
+      
     </ul>
 
     <div class="strip">
-      <div class="strip-title">{{highlightStripTitle2}}</div>
-      <p>{{highlightStripContent2}}</p>
+      <div class="strip-title">best_practices</div>
+      <p>Content for best_practices</p>
     </div>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 
@@ -1216,57 +1216,57 @@ body{
 ═══════════════════════════════════════════════ -->
 <div class="page">
   <div class="pg-hd">
-    <span class="pg-hd-label">{{sectionTitleCTA}}</span>
-    <span class="pg-hd-num">{{pageNumberCTA}}</span>
+    <span class="pg-hd-label">PROCESS</span>
+    <span class="pg-hd-num">14</span>
   </div>
   <div class="pg-bar"></div>
 
   <div class="pg-body">
     <!-- Hero CTA — specific, not generic -->
     <div class="cta-hero">
-      <h2>{{ctaHeadline | safe}}</h2>
-      <p>{{contactDescription | safe}}</p>
+      <h2>Optimize your portfolio</h2>
+      <p>Learn more about how Quantum Computing can help you achieve your goals.</p>
     </div>
 
     <!-- Contact details grid -->
     <div class="contact-grid">
       <div class="ci">
-        <div class="ci-lbl">{{labelCompany}}</div>
-        <div class="ci-val">{{companyName}}</div>
+        <div class="ci-lbl">Company</div>
+        <div class="ci-val">Quantum Computing</div>
       </div>
       <div class="ci">
-        <div class="ci-lbl">{{labelEmail}}</div>
-        <div class="ci-val">{{emailAddress}}</div>
+        <div class="ci-lbl">Email</div>
+        <div class="ci-val">test@quantum.com</div>
       </div>
       <div class="ci">
-        <div class="ci-lbl">{{labelWebsite}}</div>
-        <div class="ci-val">{{website}}</div>
+        <div class="ci-lbl">Website</div>
+        <div class="ci-val">www.quantum.com</div>
       </div>
       <div class="ci">
-        <div class="ci-lbl">{{labelPhone}}</div>
-        <div class="ci-val">{{phoneNumber}}</div>
+        <div class="ci-lbl">Phone</div>
+        <div class="ci-val">123</div>
       </div>
     </div>
 
     <!-- Why choose us -->
     <div class="why-box">
-      <h4>{{whyChooseUsTitle | safe}}</h4>
-      <p>{{differentiator | safe}}</p>
+      <h4>Why Partner With Us</h4>
+      <p>We provide specialized expertise in Quantum Computing to ensure your success.</p>
     </div>
 
     <!-- Named offer hook — Image 4 fix: specific > generic -->
     <div class="cta-offer">
-      <div class="cta-offer-title">{{ctaText}}</div>
-      <p>{{differentiatorTitle}}</p>
+      <div class="cta-offer-title">Schedule Audit</div>
+      <p>Our Strategic Advantage</p>
     </div>
   </div>
 
   <div class="pg-ft">
     <div class="pg-ft-left">
-      <div class="pg-ft-logo">{{logoPlaceholder}}</div>
-      <span class="pg-ft-co">{{footerText}}</span>
+      <div class="pg-ft-logo">QU</div>
+      <span class="pg-ft-co">© Quantum Computing</span>
     </div>
-    <span class="pg-ft-right">{{website}}</span>
+    <span class="pg-ft-right">www.quantum.com</span>
   </div>
 </div>
 

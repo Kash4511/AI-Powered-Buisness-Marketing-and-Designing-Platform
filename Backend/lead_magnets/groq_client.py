@@ -290,6 +290,9 @@ class GroqClient:
             logger.info(f"✍️  Layer 3 — {key}")
             expansions[key] = self._generate_section(key, title, brief, signals)
 
+        # Capture the framework for titles/kickers
+        framework_data = self._framework.get("sections", {})
+
         # Clear cache
         self._analysis  = None
         self._framework = None
@@ -298,20 +301,29 @@ class GroqClient:
             "title":                   title_data.get("title", signals["topic"]),
             "subtitle":                title_data.get("subtitle", type_label),
             "target_audience_summary": title_data.get("target_audience_summary", ""),
+            "legal_notice_summary":    title_data.get("legal_notice_summary", ""),
+            "cta_headline":            title_data.get("cta_headline", ""),
+            "cta_text":                title_data.get("cta_text", ""),
             "document_type":           doc_type,
             "document_type_label":     type_label,
             "expansions":              expansions,
+            "framework":               framework_data,
         }
 
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
         exp = raw.get("expansions", {})
+        fw  = raw.get("framework", {})
         normalized: Dict[str, Any] = {
-            "title":               raw.get("title") or "",
-            "subtitle":            raw.get("subtitle", ""),
-            "summary":             raw.get("target_audience_summary", ""),
-            "document_type":       raw.get("document_type", "guide"),
-            "document_type_label": raw.get("document_type_label") or "",
-            "sections_config":     SECTIONS,
+            "title":                raw.get("title") or "",
+            "subtitle":             raw.get("subtitle", ""),
+            "summary":              raw.get("target_audience_summary", ""),
+            "legal_notice_summary": raw.get("legal_notice_summary", ""),
+            "cta_headline":         raw.get("cta_headline", ""),
+            "cta_text":             raw.get("cta_text", ""),
+            "document_type":        raw.get("document_type", "guide"),
+            "document_type_label":  raw.get("document_type_label") or "",
+            "sections_config":      self.SECTIONS,
+            "framework":            fw,
         }
         for key, *_ in SECTIONS:  # key, title, label, layout, brief
             content = exp.get(key, "")
@@ -382,28 +394,34 @@ class GroqClient:
             firm_profile.get("firm_name") or
             firm_profile.get("company_name") or
             firm_profile.get("name") or
-            "Your Company"   # never fall back to email
+            (signals.get("topic") if signals else "Strategic Analysis")
         )
 
         # Base mapping
         vars = {
-            "documentTitle":     ai_content.get("title"),
+            "documentTitle":     ai_content.get("title") or signals.get("topic") or "Guide",
             "primaryColor":      primary_color,
             "secondaryColor":    secondary_color,
             "accentColor":       accent_color,
             "highlightColor":    highlight_color,
             "goldColor":         gold_color,
-            "documentTypeLabel": ai_content.get("document_type_label"),
-            "mainTitle":         ai_content.get("title"),
+            "documentTypeLabel": ai_content.get("document_type_label") or "STRATEGIC GUIDE",
+            "mainTitle":         ai_content.get("title") or signals.get("topic") or "Strategic Guide",
             "mainTitleAccent":   "", # AI usually generates this in subtitle or we can split title
-            "documentSubtitle":  ai_content.get("subtitle"),
+            "documentSubtitle":  ai_content.get("subtitle") or f"A comprehensive look into {signals.get('topic', 'industry trends')}.",
             "companyName":       company_name,
             "emailAddress":      firm_profile.get("work_email", ""),
             "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
-            "logoPlaceholder":   company_name[:2].upper(),
-            "footerText":        f"© {company_name}",
-        }
+            "logoPlaceholder":   company_name[:2].upper() if company_name else "AI",
+            "footerText":        f"© {company_name}" if company_name else "",
+            # Dynamic Labels
+            "labelCompany":      "Company",
+            "labelEmail":        "Email",
+            "labelWebsite":      "Website",
+            "labelPhone":        "Phone",
+             "legalKicker":       f"{ai_content.get('document_type_label', 'Document').upper()} NOTICE",
+         }
 
         # Split title for accent if possible
         title = vars["mainTitle"]
@@ -421,30 +439,41 @@ class GroqClient:
 
         # Terms Page (Page 2)
         vars.update({
-            "sectionTitle1": "LEGAL NOTICE",
+            "sectionTitle1":     vars.get("sectionTitle1") or "LEGAL NOTICE",
             "pageNumberHeader2": "02",
-            "termsTitle": "Terms of Use",
-            "termsSummary": "This report is provided for informational purposes only. The contents are based on AI-assisted analysis and should be verified by professional consultants before implementation.",
-            "termsParagraph1": f"© {company_name}. All rights reserved. No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the publisher.",
-            "termsParagraph2": "The information contained in this document is for general guidance on matters of interest only. The application and impact of laws can vary widely based on the specific facts involved.",
-            "termsParagraph3": "Given the changing nature of laws, rules and regulations, and the inherent hazards of electronic communication, there may be delays, omissions or inaccuracies in information contained in this document.",
-            "termsParagraph4": "While we have made every attempt to ensure that the information contained in this document has been obtained from reliable sources, we are not responsible for any errors or omissions, or for the results obtained from the use of this information.",
-            "termsParagraph5": "This AI-generated content is intended to support, not replace, professional architectural and engineering advice. Consult with qualified professionals for project-specific requirements.",
+            "termsTitle":        "Terms of Use",
+            "termsSummary":      ai_content.get("legal_notice_summary") or f"This report on {signals.get('topic', 'industry trends')} is provided for informational purposes only.",
+            "termsParagraph1":   f"© {company_name}. All rights reserved. No part of this publication may be reproduced without the prior written permission of the publisher." if company_name else "All rights reserved.",
+            "termsParagraph2":   f"The information contained in this document is for general guidance on {signals.get('topic', 'matters of interest')} only.",
+            "termsParagraph3":   "Given the changing nature of laws and regulations, there may be delays, omissions or inaccuracies in information contained in this document.",
+            "termsParagraph4":   "While we have made every attempt to ensure that the information in this document has been obtained from reliable sources, we are not responsible for any errors or omissions.",
+            "termsParagraph5":   f"This AI-generated content is intended to support, not replace, professional advice in {signals.get('topic', 'the field')}.",
         })
 
         # TOC Page (Page 3)
         vars.update({
-            "sectionTitle2": "CONTENTS",
+            "sectionTitle2":     vars.get("sectionTitle2") or "CONTENTS",
             "pageNumberHeader3": "03",
-            "contentsTitle": "Table of Contents",
+            "contentsTitle":     "Table of Contents",
         })
 
+        # Framework for dynamic titles/kickers
+        fw = ai_content.get("framework", {})
+
         # Content Sections (Pages 4-13)
-        for idx, (key, title, label, _, _) in enumerate(SECTIONS):
+        for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
+            # Dynamic title/kicker from framework if available
+            section_fw = fw.get(key, {})
+            title = section_fw.get("title") or default_title
+            label = section_fw.get("kicker") or default_label
+
             s_idx = idx + 1
             content = ai_content.get(key, "")
             
+            # Also map to individual vars for sections if Template.html still uses them
             vars[f"customTitle{s_idx}"] = title
+            vars[f"sectionTitle{idx+3}"] = label
+            vars[f"pageNumberHeader{idx+4}"] = f"{idx+4:02d}"
             vars[f"customContent{s_idx}"] = self._extract_intro(content)
             
             # Subheadings and Subcontent
@@ -481,14 +510,14 @@ class GroqClient:
 
         # CTA Page (Page 14)
         vars.update({
-            "sectionTitle8": "CONTACT",
-            "pageNumberHeader9": f"{len(SECTIONS)+3:02d}",
-            "ctaHeadline": ai_content.get("cta_headline") or f"Ready to Master {vars['mainTitle']}?",
-            "contactDescription": ai_content.get("contact_description") or "Let's discuss how we can apply these strategies to your specific business challenges.",
-            "whyChooseUsTitle": "Why Choose Us",
-            "differentiator": ai_content.get("differentiator") or f"We combine industry expertise with cutting-edge {vars['mainTitle']} methodologies to deliver measurable results.",
-            "ctaText": ai_content.get("cta_text") or "Book a Strategic Audit",
-            "differentiatorTitle": ai_content.get("differentiator_title") or "Expert Guidance for Modern Construction",
+            "sectionTitleCTA":   vars.get("sectionTitleCTA") or "CONTACT",
+            "pageNumberCTA":     f"{len(SECTIONS)+3:02d}",
+            "ctaHeadline":       ai_content.get("cta_headline") or f"Next Steps for {vars['mainTitle']}",
+            "contactDescription": ai_content.get("contact_description") or f"Learn more about how {company_name} can help you achieve your goals.",
+            "whyChooseUsTitle":  vars.get("whyChooseUsTitle") or "Why Partner With Us",
+            "differentiator":    ai_content.get("differentiator") or f"We provide specialized expertise in {signals.get('topic', 'this field')} to ensure your success.",
+            "ctaText":           ai_content.get("cta_text") or "Book a Consultation",
+            "differentiatorTitle": ai_content.get("differentiator_title") or "Our Strategic Advantage",
         })
 
         return vars
@@ -631,12 +660,14 @@ class GroqClient:
             f"DOMAIN INSIGHTS:\n{json.dumps(analysis, indent=2)}\n\n"
             f"For EACH of these section keys, define a writing plan:\n{keys_str}\n\n"
             f"For every key return:\n"
+            f"  title: 3-5 word domain-specific heading (e.g. for 'executive_summary' use 'Strategic Overview for {signals['topic']}')\n"
+            f"  kicker: 1-word uppercase label (e.g. 'OVERVIEW', 'DATA', 'RISK')\n"
             f"  angle: 1-sentence editorial angle specific to this topic + audience\n"
             f"  key_points: exactly 3 specific points the writer MUST cover (domain-specific, not generic)\n"
             f"  pain_point_tie: which pain point from [{signals['pain_points']}] this section resolves\n\n"
             f"Return ONLY a JSON object where the 'sections' key contains all requested section keys.\n"
             f"Example structure:\n"
-            f'{{"sections": {{ "executive_summary": {{"angle": "...", "key_points": [], "pain_point_tie": "..."}} }} }}'
+            f'{{"sections": {{ "executive_summary": {{"title": "...", "kicker": "...", "angle": "...", "key_points": [], "pain_point_tie": "..."}} }} }}'
         )
         logger.info(f"🔵 Layer 2 | {len(section_keys)} sections")
         result = self._call_ai(system, prompt, max_tokens=1500)
@@ -653,16 +684,20 @@ class GroqClient:
     def _generate_title(self, signals: Dict, type_label: str) -> Dict:
         system = "You are a senior document strategist. Return valid JSON only. No markdown."
         prompt = (
-            f"Generate a title for a {type_label} on: {signals['topic']}\n"
+            f"Generate document metadata for a {type_label} on: {signals['topic']}\n"
             f"Audience: {signals['audience']}\n"
             f"Pain Points: {signals['pain_points']}\n\n"
-            f"Rules: title = 3-7 words, domain-specific, no 'Ultimate'/'Complete'.\n"
-            f"subtitle = 10-15 words, specific value delivered.\n"
-            f"target_audience_summary = one sentence who this is for + outcome.\n"
-            f'Return ONLY: {{"title":"...","subtitle":"...","target_audience_summary":"..."}}'
+            f"Rules:\n"
+            f"1. title: 3-7 words, domain-specific.\n"
+            f"2. subtitle: 10-15 words, specific value delivered.\n"
+            f"3. target_audience_summary: one sentence who this is for + outcome.\n"
+            f"4. legal_notice_summary: 1-sentence disclaimer specific to {signals['topic']} (e.g. 'This analysis does not constitute engineering advice').\n"
+            f"5. cta_headline: specific call to action related to {signals['topic']}.\n"
+            f"6. cta_text: 3-5 word button text.\n"
+            f'Return ONLY: {{"title":"...","subtitle":"...","target_audience_summary":"...","legal_notice_summary":"...","cta_headline":"...","cta_text":"..."}}'
         )
-        logger.info(f"🔵 title | {signals['topic']}")
-        return self._call_ai(system, prompt, max_tokens=250)
+        logger.info(f"🔵 metadata | {signals['topic']}")
+        return self._call_ai(system, prompt, max_tokens=400)
 
     def _generate_section(self, key: str, title: str, brief: str, signals: Dict) -> str:
         """Layer 3 — write one section with full Layer 1+2 context injected."""

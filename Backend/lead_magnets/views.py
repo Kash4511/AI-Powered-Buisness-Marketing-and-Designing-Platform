@@ -304,7 +304,8 @@ def _run_generation_job(job_id, body, user_id):
                 print(f"[DEBUG] sample vars: { {k: str(v)[:40] for k, v in list(template_vars.items())[:10]} }")
 
                 # Ensure critical fields are never empty
-                template_vars['companyName']  = template_vars.get('companyName')  or firm_profile.get('firm_name') or 'Your Company'
+                topic = signals.get('topic') or 'Industry'
+                template_vars['companyName']  = template_vars.get('companyName')  or firm_profile.get('firm_name') or f"{topic} Experts"
                 template_vars['emailAddress'] = template_vars.get('emailAddress') or firm_profile.get('work_email', '')
                 template_vars['phoneNumber']  = template_vars.get('phoneNumber')  or firm_profile.get('phone_number', '')
                 template_vars['website']      = template_vars.get('website')      or firm_profile.get('firm_website', '')
