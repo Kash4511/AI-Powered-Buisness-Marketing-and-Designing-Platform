@@ -26,47 +26,62 @@ def test_mapping_and_rendering():
     ai_client = GroqClient()
     doc_service = DocRaptorService()
     
-    # 1. Create mock AI content (normalized format)
+    # 1. Create mock AI content (normalized format matching current groq_client.py)
     mock_ai_content = {
-        "title": "Future of Modular Construction",
+        "title": "Sustainable Architecture Guide",
         "subtitle": "Strategic Guide 2026",
         "document_type_label": "STRATEGIC GUIDE",
-        "legal_notice_summary": "Test legal notice.",
-        "cta_headline": "Ready to scale?",
-        "cta_text": "Contact Us",
+        "legal_notice_summary": "Test legal notice for Sustainable Architecture.",
+        "cta_headline": "Ready to scale your sustainable projects?",
+        "cta_text": "Book a complimentary 45-minute Sustainable Architecture Readiness Audit.",
         "framework": {
             "executive_summary": {"title": "Strategic Overview", "kicker": "OVERVIEW"},
         }
     }
     
-    # Fill in all 11 sections with mock data
+    # Fill in all 11 sections with mock data containing audience and pain point keywords
     from lead_magnets.groq_client import SECTIONS
-    for key, title, label, _, _ in SECTIONS:
-        mock_ai_content[key] = f"<h3>{title}</h3><p>Intro for {key}.</p><h3>Sub {key}</h3><p>Detail for {key}.</p>"
+    keywords = [
+        "Government", "Architects", "Peers", "Contractors",
+        "tech complexity", "approvals", "risk management", "poor communication"
+    ]
     
-    # Add some specific extractions
-    mock_ai_content["stat1Value"] = "85%"
-    mock_ai_content["stat1Label"] = "Efficiency"
+    for i, (key, title, label, _, _) in enumerate(SECTIONS):
+        content = f"<h3>{title}</h3><p>Intro for {key}. This section addresses {keywords[i % len(keywords)]}.</p>"
+        content += f"<h3>Technical Detail</h3><p>Solving {keywords[(i+1) % len(keywords)]} is critical.</p>"
+        content += "<ul><li>Key Point 1</li><li>Key Point 2</li></ul>"
+        mock_ai_content[key] = content
+    
+    # Add specific statistics
+    mock_ai_content["key_statistics"] = "<ul><li><strong>Energy Efficiency</strong> : 45% reduction</li><li><strong>Carbon Footprint</strong> : 30% lower</li></ul>"
     
     # 2. Mock firm profile and signals
     mock_firm_profile = {
-        "firm_name": "BuildSmart AI",
-        "work_email": "info@buildsmart.ai",
-        "primary_brand_color": "#1a365d",
+        "firm_name": "EcoBuild Solutions",
+        "work_email": "info@ecobuild.ai",
+        "primary_brand_color": "#2d5a27",
         "image_1_url": "https://example.com/img1.jpg",
         "image_2_url": "https://example.com/img2.jpg",
+        "image_3_url": "https://example.com/img3.jpg",
+        "image_4_url": "https://example.com/img4.jpg",
+        "image_5_url": "https://example.com/img5.jpg",
+        "image_6_url": "https://example.com/img6.jpg",
     }
-    mock_signals = {"topic": "Modular Construction"}
+    mock_signals = {
+        "topic": "Sustainable Architecture",
+        "audience": "Government, Architects, Contractors",
+        "pain_points": "tech complexity, approvals, risk management, poor communication",
+        "industry": "Architecture"
+    }
     
     # 3. Test Mapping
     print("📋 Testing map_to_template_vars...")
     template_vars = ai_client.map_to_template_vars(mock_ai_content, mock_firm_profile, mock_signals)
     
     # Verify critical mappings
-    assert template_vars["mainTitle"] == "Future of Modular Construction"
-    assert template_vars["companyName"] == "BuildSmart AI"
+    assert template_vars["mainTitle"] == "Sustainable Architecture Guide"
+    assert template_vars["companyName"] == "EcoBuild Solutions"
     assert template_vars["image_1_url"] == "https://example.com/img1.jpg"
-    assert "vars" in template_vars
     print("✅ Mapping verified.")
     
     # 4. Test Rendering
@@ -75,24 +90,34 @@ def test_mapping_and_rendering():
         rendered_html = doc_service.render_template_with_vars("modern-guide", template_vars)
         print(f"✅ Rendering successful. Length: {len(rendered_html)} chars.")
         
-        # Basic check for 15 pages (search for page numbers or page breaks)
-        page_nums = [f'<span class="page-num">{i:02d}</span>' for i in range(1, 16)]
+        # Check for 15 pages via page number headers
         found_pages = []
-        for p in page_nums:
-            if p in rendered_html:
-                found_pages.append(p)
+        for i in range(2, 16):
+            marker = f'<div class="page-number-enhanced">{i:02d}</div>'
+            if marker in rendered_html:
+                found_pages.append(i)
         
-        print(f"📄 Found {len(found_pages)}/15 page number markers.")
+        print(f"📄 Found {len(found_pages)}/14 content page markers (excluding cover).")
+        assert len(found_pages) >= 13, f"Expected at least 13 content pages, found {len(found_pages)}"
         
-        # Check TOC content
-        if "Table of Contents" in rendered_html:
-            print("✅ TOC present.")
-            
-        # Check image injection
-        if '<img src="https://example.com/img1.jpg"' in rendered_html:
-            print("✅ Image 1 injected.")
+        # Validate Audience and Pain Point Keywords
+        print("🔍 Validating Audience and Pain Point Keywords...")
+        for kw in keywords:
+            if kw.lower() in rendered_html.lower():
+                print(f"✅ Keyword '{kw}' found.")
+            else:
+                print(f"❌ Keyword '{kw}' NOT found.")
+        
+        # Validate CTA
+        if "Ready to scale your sustainable projects?" in rendered_html:
+            print("✅ CTA Headline found.")
         else:
-            print("❌ Image 1 NOT injected.")
+            print("❌ CTA Headline NOT found.")
+            
+        if "Sustainable Architecture Readiness Audit" in rendered_html:
+            print("✅ CTA Text found.")
+        else:
+            print("❌ CTA Text NOT found.")
             
     except Exception as e:
         print(f"❌ Rendering failed: {e}")

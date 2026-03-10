@@ -237,7 +237,7 @@
 
         <div class="cover-footer">
             <div class="company-name">{{companyName}} {{companySubtitle}}</div>
-            <div>{{emailAddress}}{{#if emailAddress}} • {{/if}}{{website}}{{#if website}} • {{/if}}{{phoneNumber}}</div>
+            <div>{{emailAddress}}{% if emailAddress %} • {% endif %}{{website}}{% if website %} • {% endif %}{{phoneNumber}}</div>
         </div>
     </div>
 
@@ -320,12 +320,12 @@
             <h1>{{customTitle1}}</h1>
 
             <!-- Architectural image 1 if provided -->
-            {{#if image_1_url}}
+            {% if image_1_url %}
             <img class="arch-img" src="{{image_1_url}}" alt="{{architecturalImageCaption1}}">
             <p class="img-caption">{{architecturalImageCaption1}}</p>
-            {{else}}
+            {% else %}
             <div class="image-placeholder"><div class="image-placeholder-icon"></div><div class="image-placeholder-text">Project Reference</div><div class="image-placeholder-subtext">{{architecturalImageCaption1}}</div></div>
-            {{/if}}
+            {% endif %}
 
             <div class="section-html">{{section_executive_summary_html}}</div>
         </div>
@@ -351,10 +351,10 @@
         <div class="page-content-area">
             <h1>{{customTitle2}}</h1>
 
-            {{#if image_2_url}}
+            {% if image_2_url %}
             <img class="arch-img" src="{{image_2_url}}" alt="{{architecturalImageCaption2}}">
             <p class="img-caption">{{architecturalImageCaption2}}</p>
-            {{/if}}
+            {% endif %}
 
             <div class="section-html">{{section_key_challenges_html}}</div>
         </div>
@@ -380,10 +380,10 @@
         <div class="page-content-area">
             <h1>{{customTitle3}}</h1>
 
-            {{#if image_3_url}}
+            {% if image_3_url %}
             <img class="arch-img" src="{{image_3_url}}" alt="{{architecturalImageCaption3}}">
             <p class="img-caption">{{architecturalImageCaption3}}</p>
-            {{/if}}
+            {% endif %}
 
             <div class="section-html">{{section_strategic_framework_html}}</div>
         </div>
@@ -432,9 +432,9 @@
         <div class="page-content-area">
             <h1>{{customTitle5}}</h1>
 
-            {{#if image_4_url}}
+            {% if image_4_url %}
             <img class="arch-img" src="{{image_4_url}}" alt="Risk Management — Project Reference">
-            {{/if}}
+            {% endif %}
 
             <div class="section-html">{{section_risk_management_html}}</div>
         </div>
@@ -484,9 +484,9 @@
             <h1>{{customTitle7}}</h1>
             <div class="section-html">{{section_key_statistics_html}}</div>
 
-            {{#if image_5_url}}
+            {% if image_5_url %}
             <img class="arch-img" src="{{image_5_url}}" alt="Data Reference">
-            {{/if}}
+            {% endif %}
         </div>
         <div class="footer-enhanced">
             <div class="footer-decoration"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div>
@@ -534,9 +534,9 @@
             <h1>{{customTitle9}}</h1>
             <div class="section-html">{{section_comparison_table_html}}</div>
 
-            {{#if image_6_url}}
+            {% if image_6_url %}
             <img class="arch-img" src="{{image_6_url}}" alt="Comparative Reference">
-            {{/if}}
+            {% endif %}
         </div>
         <div class="footer-enhanced">
             <div class="footer-decoration"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div>
