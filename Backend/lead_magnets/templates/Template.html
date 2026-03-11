@@ -165,6 +165,35 @@
         }
         .sh blockquote footer { margin-top:4px; font-style:normal; font-weight:600; color:var(--secondary); font-size:11px; }
 
+        /* ── INLINE IMAGES (conditional, right-floated) ──────── */
+        /* Only rendered when image_N_url is present via {{#if}} */
+        .img-wrap {
+            float: right;
+            width: 88mm;
+            margin: 0 0 10px 14px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e8e8e8;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            flex-shrink: 0;
+        }
+        .img-wrap img {
+            width: 100%;
+            height: 56mm;
+            object-fit: cover;
+            display: block;
+        }
+        .img-caption {
+            font-size: 10px;
+            color: var(--muted);
+            font-style: italic;
+            text-align: center;
+            padding: 5px 8px;
+            background: var(--light);
+            line-height: 1.4;
+        }
+        .clearfix::after { content:''; display:table; clear:both; }
+
         /* ── TABLE OF CONTENTS ────────────────────────────────── */
         .toc-item { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; padding-bottom:8px; border-bottom:1px dotted #ddd; }
         .toc-label { flex:1; color:var(--text); font-size:12.5px; padding-right:10px; }
@@ -263,7 +292,8 @@
         <div class="ph-row"><div class="ph-title">{{sectionTitle3}}</div><div class="ph-num">{{pageNumberHeader4}}</div></div>
     </div>
     <div class="ph-bar"></div>
-    <div class="pc">
+    <div class="pc clearfix">
+        {{#if image_1_url}}<div class="img-wrap"><img src="{{image_1_url}}" alt="{{image_1_caption}}"><div class="img-caption">{{image_1_caption}}</div></div>{{/if}}
         <div class="pg-title">{{customTitle1}}</div>
         <div class="sh">{{section_executive_summary_html}}</div>
     </div>
@@ -281,7 +311,8 @@
         <div class="ph-row"><div class="ph-title">{{sectionTitle4}}</div><div class="ph-num">{{pageNumberHeader5}}</div></div>
     </div>
     <div class="ph-bar"></div>
-    <div class="pc">
+    <div class="pc clearfix">
+        {{#if image_2_url}}<div class="img-wrap"><img src="{{image_2_url}}" alt="{{image_2_caption}}"><div class="img-caption">{{image_2_caption}}</div></div>{{/if}}
         <div class="pg-title">{{customTitle2}}</div>
         <div class="sh">{{section_key_challenges_html}}</div>
     </div>
@@ -299,7 +330,8 @@
         <div class="ph-row"><div class="ph-title">{{sectionTitle5}}</div><div class="ph-num">{{pageNumberHeader6}}</div></div>
     </div>
     <div class="ph-bar"></div>
-    <div class="pc">
+    <div class="pc clearfix">
+        {{#if image_3_url}}<div class="img-wrap"><img src="{{image_3_url}}" alt="{{image_3_caption}}"><div class="img-caption">{{image_3_caption}}</div></div>{{/if}}
         <div class="pg-title">{{customTitle3}}</div>
         <div class="sh">{{section_strategic_framework_html}}</div>
     </div>
@@ -317,7 +349,8 @@
         <div class="ph-row"><div class="ph-title">{{sectionTitle6}}</div><div class="ph-num">{{pageNumberHeader7}}</div></div>
     </div>
     <div class="ph-bar"></div>
-    <div class="pc">
+    <div class="pc clearfix">
+        {{#if image_4_url}}<div class="img-wrap"><img src="{{image_4_url}}" alt="{{image_4_caption}}"><div class="img-caption">{{image_4_caption}}</div></div>{{/if}}
         <div class="pg-title">{{customTitle4}}</div>
         <div class="sh">{{section_implementation_strategy_html}}</div>
     </div>
@@ -335,7 +368,8 @@
         <div class="ph-row"><div class="ph-title">{{sectionTitle7}}</div><div class="ph-num">{{pageNumberHeader8}}</div></div>
     </div>
     <div class="ph-bar"></div>
-    <div class="pc">
+    <div class="pc clearfix">
+        {{#if image_5_url}}<div class="img-wrap"><img src="{{image_5_url}}" alt="{{image_5_caption}}"><div class="img-caption">{{image_5_caption}}</div></div>{{/if}}
         <div class="pg-title">{{customTitle5}}</div>
         <div class="sh">{{section_risk_management_html}}</div>
     </div>
@@ -353,7 +387,8 @@
         <div class="ph-row"><div class="ph-title">{{sectionTitle8}}</div><div class="ph-num">{{pageNumberHeader9}}</div></div>
     </div>
     <div class="ph-bar"></div>
-    <div class="pc">
+    <div class="pc clearfix">
+        {{#if image_6_url}}<div class="img-wrap"><img src="{{image_6_url}}" alt="{{image_6_caption}}"><div class="img-caption">{{image_6_caption}}</div></div>{{/if}}
         <div class="pg-title">{{customTitle6}}</div>
         <div class="sh">{{section_best_practices_html}}</div>
     </div>
