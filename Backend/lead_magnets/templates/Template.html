@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{documentTitle}} - {{companyName}}</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -12,313 +11,480 @@
             --accent:    {{accentColor}};
             --light:     #f8f9fa;
             --text:      #2d3436;
-            --text-light:#636e72;
+            --muted:     #636e72;
         }
+
+        /* ── RESET & BASE ─────────────────────────────────────── */
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; background:#e0e0e0; padding:20px; }
-        .book { width:210mm; margin:0 auto; background:white; box-shadow:0 10px 40px rgba(0,0,0,0.15); }
+        body { font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text); }
 
-        .page { width:210mm; min-height:297mm; background:white; position:relative; page-break-after:always; padding-bottom:25mm; }
-        .cover { background:var(--primary); min-height:297mm; position:relative; overflow:hidden; padding-bottom:0; }
-        .geo-circle-1 { position:absolute; width:400px; height:400px; border-radius:50%; background:rgba(255,255,255,0.05); top:-150px; right:-100px; border:2px solid rgba(255,255,255,0.1); }
-        .geo-circle-2 { position:absolute; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.03); bottom:-100px; left:-80px; border:2px solid rgba(255,255,255,0.08); }
-        .geo-square   { position:absolute; width:150px; height:150px; background:rgba(255,255,255,0.04); transform:rotate(45deg); top:40%; right:50px; border:2px solid rgba(255,255,255,0.1); }
-        .cover-content { position:relative; z-index:10; padding:80mm 25mm 25mm 25mm; color:white; }
-        .cover-title { font-family:'Poppins',sans-serif; font-size:40px; font-weight:900; line-height:1.1; margin-bottom:20px; text-transform:uppercase; letter-spacing:-1px; color:white; border-bottom:3px solid var(--secondary); padding-bottom:15px; display:inline-block; }
-        .cover-title-accent { color:rgba(255,255,255,0.82); display:block; font-size:20px; font-weight:300; margin-top:10px; text-transform:none; letter-spacing:0; }
-        .cover-subtitle { font-size:14px; font-weight:300; line-height:1.7; margin-top:18px; color:rgba(255,255,255,0.82); max-width:460px; }
-        .cover-footer { position:absolute; bottom:20mm; left:25mm; right:25mm; color:rgba(255,255,255,0.88); font-size:12px; }
-        .cover-company { font-weight:700; font-size:14px; color:white; margin-bottom:4px; }
+        /* ── PAGE — strict A4, no overflow ───────────────────── */
+        /* Prince/DocRaptor uses @page for PDF sizing */
+        @page { size: A4; margin: 0; }
 
-        .content-page { padding:0; }
-        .page-header-enhanced { background:var(--secondary); padding:15px 25mm; position:relative; overflow:hidden; }
-        .header-decoration { position:absolute; top:0; right:0; width:200px; height:100%; opacity:0.12; }
-        .header-circle { position:absolute; border-radius:50%; border:2px solid white; }
-        .header-circle-1 { width:120px; height:120px; top:-40px; right:-20px; }
-        .header-circle-2 { width:80px; height:80px; top:10px; right:80px; }
-        .header-circle-3 { width:50px; height:50px; bottom:-10px; right:40px; }
-        .page-header-content { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
-        .page-title-enhanced { font-family:'Poppins',sans-serif; font-size:23px; font-weight:700; color:white; text-transform:uppercase; letter-spacing:1px; margin:0; padding-left:14px; position:relative; }
-        .page-title-enhanced::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:4px; height:26px; background:var(--primary); border-radius:3px; }
-        .page-number-enhanced { background:rgba(255,255,255,0.2); padding:6px 15px; border-radius:20px; font-size:12px; font-weight:600; color:white; letter-spacing:1px; white-space:nowrap; }
-        .header-accent-bar { height:4px; background:var(--primary); }
-
-        .page-content-area { padding:14mm 25mm 0 25mm; }
-
-        /* ── SECTION HTML — these style the RAW HTML from section_*_html vars ── */
-        .section-html { font-size:13px; line-height:1.78; color:var(--text); }
-        .section-html p  { margin-bottom:12px; }
-        .section-html h3 { font-family:'Poppins',sans-serif; font-size:15px; font-weight:700; color:var(--primary); margin:18px 0 8px; padding-left:13px; position:relative; }
-        .section-html h3::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:18px; background:var(--secondary); border-radius:3px; }
-        .section-html h4 { font-size:13.5px; font-weight:600; color:var(--secondary); margin:12px 0 6px; }
-        .section-html ul { list-style:none; padding:0; margin:10px 0; }
-        .section-html ol { list-style:none; padding:0; margin:10px 0; counter-reset:olc; }
-        .section-html ul > li { padding:8px 0 8px 34px; position:relative; font-size:13px; line-height:1.6; border-bottom:1px solid #f0f0f0; color:var(--text); }
-        .section-html ul > li::before { content:'✓'; position:absolute; left:0; top:50%; transform:translateY(-50%); width:22px; height:22px; background:var(--secondary); color:white; border-radius:50%; font-weight:700; font-size:12px; text-align:center; line-height:22px; }
-        .section-html ol > li { counter-increment:olc; padding:8px 0 8px 34px; position:relative; font-size:13px; line-height:1.6; border-bottom:1px solid #f0f0f0; color:var(--text); }
-        .section-html ol > li::before { content:counter(olc); position:absolute; left:0; top:50%; transform:translateY(-50%); width:22px; height:22px; background:var(--primary); color:white; border-radius:50%; font-weight:700; font-size:11px; text-align:center; line-height:22px; }
-        .section-html strong { color:var(--primary); font-weight:600; }
-        .section-html em { color:var(--text-light); font-style:italic; }
-        .section-html blockquote { border-left:4px solid var(--secondary); padding:10px 14px; background:var(--light); font-style:italic; color:var(--text-light); margin:14px 0; border-radius:0 6px 6px 0; }
-        .section-html blockquote footer { margin-top:5px; font-style:normal; font-weight:600; color:var(--secondary); font-size:12px; }
-
-        h1 { font-family:'Poppins',sans-serif; font-size:21px; color:var(--primary); margin-bottom:11px; border-bottom:2px solid var(--secondary); padding-bottom:5px; text-transform:uppercase; font-weight:700; }
-        p  { font-size:13px; margin-bottom:9px; line-height:1.65; color:var(--text); }
-
-        .info-box { background:var(--light); padding:18px; border-radius:9px; border-left:5px solid var(--secondary); margin:18px 0; box-shadow:0 3px 10px rgba(0,0,0,0.05); }
-        .info-box-title { font-weight:700; font-size:12px; color:var(--secondary); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
-        .info-box p { color:var(--text); font-size:13px; line-height:1.65; margin:0; }
-
-        .content-box { background:var(--light); padding:16px; margin:12px 0; border-radius:7px; }
-        .content-box h3 { font-family:'Poppins',sans-serif; margin-top:0; color:var(--primary); font-weight:600; border-bottom:1px solid #e4e4e4; padding-bottom:6px; margin-bottom:8px; font-size:13.5px; padding-left:0; }
-        .content-box h3::before { display:none; }
-        .content-box p { color:var(--text); font-size:13px; line-height:1.65; margin:0; }
-
-        .cta-section { background:var(--primary); padding:32px 36px; border-radius:11px; color:white; text-align:center; margin:22px 0; }
-        .cta-title { font-family:'Poppins',sans-serif; font-size:20px; font-weight:700; margin-bottom:10px; color:white; }
-        .cta-text  { font-size:13.5px; margin-bottom:0; color:rgba(255,255,255,0.88); line-height:1.7; }
-
-        /* Images — only rendered when URL present via {{#if}} guards */
-        .arch-img-wrap { margin:16px 0; }
-        .arch-img { width:100%; height:185px; object-fit:cover; border-radius:9px; display:block; }
-        .img-caption { font-size:11px; color:var(--text-light); text-align:center; margin-top:4px; font-style:italic; }
-
-        .toc-item { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; padding-bottom:9px; border-bottom:1px dotted #ddd; }
-        .toc-title { flex:1; color:var(--text); font-size:13px; padding-right:10px; }
-        .toc-page  { color:var(--primary); font-weight:700; font-size:13.5px; flex-shrink:0; }
-
-        .footer-enhanced { position:absolute; bottom:0; left:0; right:0; background:var(--primary); padding:12px 25mm; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:white; overflow:hidden; }
-        .footer-deco { position:absolute; inset:0; opacity:0.1; pointer-events:none; }
-        .footer-circle { position:absolute; border-radius:50%; border:2px solid rgba(255,255,255,0.15); }
-        .footer-circle-1 { width:60px; height:60px; top:-20px; left:30%; }
-        .footer-circle-2 { width:40px; height:40px; top:-10px; right:25%; }
-        .footer-circle-3 { width:30px; height:30px; bottom:-5px; left:60%; }
-        .footer-logo-wrap { position:relative; z-index:2; display:flex; align-items:center; gap:10px; }
-        .footer-logo { width:36px; height:36px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
-        .footer-logo-ph { width:100%; height:100%; background:linear-gradient(135deg,var(--secondary) 0%,var(--primary) 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:13px; font-weight:700; }
-        .footer-left  { position:relative; z-index:2; font-weight:500; }
-        .footer-right { position:relative; z-index:2; font-weight:500; }
-
-        .divider { height:1px; background:linear-gradient(to right,transparent,#ddd,transparent); margin:14px 0; }
-        .sub-heading { font-family:'Poppins',sans-serif; font-size:16px; font-weight:700; color:var(--primary); margin:20px 0 10px; padding-left:13px; position:relative; }
-        .sub-heading::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:20px; background:var(--secondary); border-radius:3px; }
-
-        @media print {
-            body { background:white; padding:0; }
-            .book { box-shadow:none; }
-            @page { size:A4; margin:0; }
+        .page {
+            width: 210mm;
+            height: 297mm;
+            overflow: hidden;          /* CRITICAL: clips overflowing content */
+            position: relative;
+            page-break-after: always;
+            page-break-inside: avoid;
+            background: white;
+            display: block;
         }
+
+        /* ── COVER ────────────────────────────────────────────── */
+        .cover {
+            background: var(--primary);
+            width: 210mm;
+            height: 297mm;
+            overflow: hidden;
+            position: relative;
+        }
+        .geo-c1 { position:absolute; width:380px; height:380px; border-radius:50%; background:rgba(255,255,255,0.05); top:-140px; right:-90px; border:2px solid rgba(255,255,255,0.1); }
+        .geo-c2 { position:absolute; width:280px; height:280px; border-radius:50%; background:rgba(255,255,255,0.03); bottom:-90px; left:-70px; border:2px solid rgba(255,255,255,0.08); }
+        .geo-sq { position:absolute; width:140px; height:140px; background:rgba(255,255,255,0.04); transform:rotate(45deg); top:42%; right:55px; border:2px solid rgba(255,255,255,0.1); }
+        .cover-body { position:relative; z-index:10; padding:72mm 22mm 0; color:white; }
+        .cover-title {
+            font-family:'Poppins',sans-serif; font-size:36px; font-weight:900;
+            line-height:1.08; text-transform:uppercase; letter-spacing:-1px;
+            border-bottom:3px solid var(--secondary); padding-bottom:12px;
+            display:inline-block; color:white;
+        }
+        .cover-sub { color:rgba(255,255,255,0.8); display:block; font-size:17px; font-weight:300; margin-top:8px; text-transform:none; letter-spacing:0; }
+        .cover-desc { font-size:13px; font-weight:300; line-height:1.65; margin-top:16px; color:rgba(255,255,255,0.8); max-width:440px; }
+        .cover-ft { position:absolute; bottom:18mm; left:22mm; right:22mm; color:rgba(255,255,255,0.85); font-size:11.5px; }
+        .cover-ft-name { font-weight:700; font-size:13px; color:white; margin-bottom:3px; }
+
+        /* ── CONTENT PAGES ────────────────────────────────────── */
+        /* Fixed-height zones so content cannot push past page boundary */
+
+        /* Header zone: ~18mm */
+        .ph {
+            background:var(--secondary);
+            padding:14px 22mm;
+            position:relative;
+            overflow:hidden;
+            flex-shrink:0;
+        }
+        .ph-deco { position:absolute; top:0; right:0; width:180px; height:100%; opacity:0.1; }
+        .ph-c { position:absolute; border-radius:50%; border:2px solid white; }
+        .ph-c1 { width:110px; height:110px; top:-35px; right:-15px; }
+        .ph-c2 { width:70px;  height:70px;  top:8px;   right:72px;  }
+        .ph-c3 { width:44px;  height:44px;  bottom:-8px; right:36px; }
+        .ph-row { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
+        .ph-title {
+            font-family:'Poppins',sans-serif; font-size:20px; font-weight:700;
+            color:white; text-transform:uppercase; letter-spacing:1px;
+            margin:0; padding-left:12px; position:relative;
+        }
+        .ph-title::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:22px; background:var(--primary); border-radius:3px; }
+        .ph-num { background:rgba(255,255,255,0.2); padding:5px 13px; border-radius:18px; font-size:11.5px; font-weight:600; color:white; }
+        .ph-bar { height:3px; background:var(--primary); }
+
+        /* Content zone fills remaining height above footer */
+        .pc {
+            position:absolute;
+            top:60px;          /* header height approx */
+            left:0; right:0;
+            bottom:48px;       /* footer height approx */
+            padding:10mm 22mm 6mm;
+            overflow:hidden;   /* CLIPS excess content */
+        }
+
+        /* Footer zone: fixed at bottom */
+        .pf {
+            position:absolute;
+            bottom:0; left:0; right:0;
+            background:var(--primary);
+            padding:11px 22mm;
+            display:flex; justify-content:space-between; align-items:center;
+            font-size:10.5px; color:white;
+            overflow:hidden;
+        }
+        .pf-deco { position:absolute; inset:0; opacity:0.1; pointer-events:none; }
+        .pf-fc { position:absolute; border-radius:50%; border:2px solid rgba(255,255,255,0.15); }
+        .pf-fc1 { width:50px; height:50px; top:-18px; left:30%; }
+        .pf-fc2 { width:36px; height:36px; top:-8px;  right:25%; }
+        .pf-fc3 { width:26px; height:26px; bottom:-4px; left:60%; }
+        .pf-logo-wrap { position:relative; z-index:2; display:flex; align-items:center; gap:9px; }
+        .pf-logo { width:32px; height:32px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .pf-logo-ph { width:100%; height:100%; background:linear-gradient(135deg,var(--secondary),var(--primary)); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:700; }
+        .pf-left  { position:relative; z-index:2; font-weight:500; }
+        .pf-right { position:relative; z-index:2; font-weight:500; }
+
+        /* ── TYPOGRAPHY ───────────────────────────────────────── */
+        .pg-title {
+            font-family:'Poppins',sans-serif; font-size:18px; color:var(--primary);
+            margin-bottom:9px; border-bottom:2px solid var(--secondary);
+            padding-bottom:4px; text-transform:uppercase; font-weight:700;
+            line-height:1.2;
+        }
+
+        /* ── SECTION HTML ─────────────────────────────────────── */
+        /* Styles raw HTML from section_*_html vars */
+        .sh { font-size:12px; line-height:1.72; color:var(--text); }
+        .sh p  { margin-bottom:9px; }
+        .sh h3 {
+            font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:700;
+            color:var(--primary); margin:13px 0 6px;
+            padding-left:11px; position:relative; line-height:1.3;
+        }
+        .sh h3::before {
+            content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+            width:3px; height:16px; background:var(--secondary); border-radius:2px;
+        }
+        .sh h4 { font-size:12.5px; font-weight:600; color:var(--secondary); margin:10px 0 5px; }
+        .sh ul, .sh ol { list-style:none; padding:0; margin:8px 0; }
+        .sh ol { counter-reset:olc; }
+        .sh ul > li {
+            padding:6px 0 6px 30px; position:relative;
+            font-size:12px; line-height:1.55; border-bottom:1px solid #f2f2f2;
+        }
+        .sh ul > li::before {
+            content:'✓'; position:absolute; left:0; top:50%; transform:translateY(-50%);
+            width:20px; height:20px; background:var(--secondary); color:white;
+            border-radius:50%; font-weight:700; font-size:11px; text-align:center; line-height:20px;
+        }
+        .sh ol > li {
+            counter-increment:olc;
+            padding:6px 0 6px 30px; position:relative;
+            font-size:12px; line-height:1.55; border-bottom:1px solid #f2f2f2;
+        }
+        .sh ol > li::before {
+            content:counter(olc); position:absolute; left:0; top:50%; transform:translateY(-50%);
+            width:20px; height:20px; background:var(--primary); color:white;
+            border-radius:50%; font-weight:700; font-size:11px; text-align:center; line-height:20px;
+        }
+        .sh strong { color:var(--primary); font-weight:600; }
+        .sh em { color:var(--muted); font-style:italic; }
+        .sh blockquote {
+            border-left:3px solid var(--secondary); padding:8px 12px;
+            background:var(--light); font-style:italic; color:var(--muted);
+            margin:10px 0; border-radius:0 5px 5px 0; font-size:12px;
+        }
+        .sh blockquote footer { margin-top:4px; font-style:normal; font-weight:600; color:var(--secondary); font-size:11px; }
+
+        /* ── TABLE OF CONTENTS ────────────────────────────────── */
+        .toc-item { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; padding-bottom:8px; border-bottom:1px dotted #ddd; }
+        .toc-label { flex:1; color:var(--text); font-size:12.5px; padding-right:10px; }
+        .toc-pg { color:var(--primary); font-weight:700; font-size:13px; flex-shrink:0; }
+
+        /* ── CONTACT PAGE ─────────────────────────────────────── */
+        .cta-box { background:var(--primary); padding:26px 30px; border-radius:9px; color:white; text-align:center; margin-bottom:16px; }
+        .cta-h { font-family:'Poppins',sans-serif; font-size:18px; font-weight:700; color:white; margin-bottom:8px; }
+        .cta-p { font-size:12.5px; color:rgba(255,255,255,0.88); line-height:1.65; margin:0; }
+        .sub-h { font-family:'Poppins',sans-serif; font-size:14px; font-weight:700; color:var(--primary); margin:14px 0 8px; padding-left:11px; position:relative; }
+        .sub-h::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:18px; background:var(--secondary); border-radius:2px; }
+        .c-box { background:var(--light); padding:14px; border-radius:6px; margin-bottom:10px; }
+        .c-box h4 { font-family:'Poppins',sans-serif; font-size:12.5px; font-weight:700; color:var(--primary); border-bottom:1px solid #e0e0e0; padding-bottom:5px; margin-bottom:8px; }
+        .c-box p { font-size:12px; line-height:1.6; color:var(--text); margin-bottom:4px; }
+        .n-box { border-left:4px solid var(--secondary); background:var(--light); padding:12px 14px; border-radius:0 6px 6px 0; }
+        .n-box-title { font-weight:700; font-size:11px; color:var(--secondary); margin-bottom:5px; text-transform:uppercase; letter-spacing:1px; }
+        .n-box p { font-size:12px; line-height:1.6; color:var(--text); margin:0; }
+
+        /* ── TERMS PAGE ───────────────────────────────────────── */
+        .terms-wrap { padding:14mm 22mm 0; text-align:center; }
+        .terms-head { font-family:'Poppins',sans-serif; font-size:12px; letter-spacing:2px; color:var(--primary); margin-bottom:18px; font-weight:700; text-transform:uppercase; }
+        .terms-p { font-size:12px; line-height:1.75; color:#333; margin-bottom:12px; }
+        .terms-sm { font-size:10.5px; color:#999; margin-top:16px; }
     </style>
 </head>
 <body>
-<div class="book">
 
-<!-- PAGE 1 — COVER -->
+<!-- ═══════════════════════════════════════════ PAGE 1 — COVER -->
 <div class="page cover">
-    <div class="geo-circle-1"></div><div class="geo-circle-2"></div><div class="geo-square"></div>
-    <div class="cover-content">
-        <div class="cover-title">{{mainTitle}}<span class="cover-title-accent">{{documentSubtitle}}</span></div>
-        <p class="cover-subtitle">{{documentTypeLabel}} &nbsp;|&nbsp; Prepared by {{companyName}}</p>
+    <div class="geo-c1"></div><div class="geo-c2"></div><div class="geo-sq"></div>
+    <div class="cover-body">
+        <div class="cover-title">{{mainTitle}}<span class="cover-sub">{{documentSubtitle}}</span></div>
+        <p class="cover-desc">{{documentTypeLabel}} &nbsp;|&nbsp; Prepared by {{companyName}}</p>
     </div>
-    <div class="cover-footer">
-        <div class="cover-company">{{companyName}}</div>
+    <div class="cover-ft">
+        <div class="cover-ft-name">{{companyName}}</div>
         <div>{{emailAddress}} &nbsp;&bull;&nbsp; {{website}} &nbsp;&bull;&nbsp; {{phoneNumber}}</div>
     </div>
 </div>
 
-<!-- PAGE 2 — TERMS OF USE -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">TERMS OF USE</h2><div class="page-number-enhanced">{{pageNumberHeader2}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <div style="text-align:center;padding:18mm 0 0;">
-            <h1 style="border:none;font-size:13px;letter-spacing:2px;color:var(--primary);margin-bottom:22px;">TERMS OF USE &amp; DISCLAIMER</h1>
-            <p style="font-size:13px;line-height:1.78;color:#333;margin-bottom:14px;">{{termsSummary}}</p>
-            <p style="font-size:13px;line-height:1.78;color:#333;margin-bottom:14px;">{{termsParagraph1}}</p>
-            <p style="font-size:13px;line-height:1.78;color:#333;margin-bottom:14px;">{{termsParagraph2}}</p>
-            <p style="font-size:13px;line-height:1.78;color:#333;margin-bottom:14px;">{{termsParagraph3}}</p>
-            <p style="font-size:13px;line-height:1.78;color:#333;margin-bottom:14px;">{{termsParagraph4}}</p>
-            <p style="font-size:11px;color:#999;margin-top:22px;">{{termsParagraph5}}</p>
+<!-- ═══════════════════════════════════════════ PAGE 2 — TERMS -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">TERMS OF USE</div><div class="ph-num">{{pageNumberHeader2}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="terms-wrap">
+        <div class="terms-head">TERMS OF USE &amp; DISCLAIMER</div>
+        <p class="terms-p">{{termsSummary}}</p>
+        <p class="terms-p">{{termsParagraph1}}</p>
+        <p class="terms-p">{{termsParagraph2}}</p>
+        <p class="terms-p">{{termsParagraph3}}</p>
+        <p class="terms-p">{{termsParagraph4}}</p>
+        <p class="terms-sm">{{termsParagraph5}}</p>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 3 — TOC -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">CONTENTS</div><div class="ph-num">{{pageNumberHeader3}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title" style="margin-bottom:10mm;">Table of Contents</div>
+        <div class="toc-item"><span class="toc-label">{{contentItem1}}</span><span class="toc-pg">{{pageNumber4}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem2}}</span><span class="toc-pg">{{pageNumber5}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem3}}</span><span class="toc-pg">{{pageNumber6}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem4}}</span><span class="toc-pg">{{pageNumber7}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem5}}</span><span class="toc-pg">{{pageNumber8}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem6}}</span><span class="toc-pg">{{pageNumber9}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem7}}</span><span class="toc-pg">{{pageNumber10}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem8}}</span><span class="toc-pg">{{pageNumber11}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem9}}</span><span class="toc-pg">{{pageNumber12}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem10}}</span><span class="toc-pg">{{pageNumber13}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem11}}</span><span class="toc-pg">{{pageNumber14}}</span></div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 4 — EXECUTIVE SUMMARY -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle3}}</div><div class="ph-num">{{pageNumberHeader4}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle1}}</div>
+        <div class="sh">{{section_executive_summary_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 5 — KEY CHALLENGES -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle4}}</div><div class="ph-num">{{pageNumberHeader5}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle2}}</div>
+        <div class="sh">{{section_key_challenges_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 6 — STRATEGIC FRAMEWORK -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle5}}</div><div class="ph-num">{{pageNumberHeader6}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle3}}</div>
+        <div class="sh">{{section_strategic_framework_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 7 — IMPLEMENTATION ROADMAP -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle6}}</div><div class="ph-num">{{pageNumberHeader7}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle4}}</div>
+        <div class="sh">{{section_implementation_strategy_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 8 — RISK MANAGEMENT -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle7}}</div><div class="ph-num">{{pageNumberHeader8}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle5}}</div>
+        <div class="sh">{{section_risk_management_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 9 — BEST PRACTICES -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle8}}</div><div class="ph-num">{{pageNumberHeader9}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle6}}</div>
+        <div class="sh">{{section_best_practices_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 10 — MARKET DATA -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle9}}</div><div class="ph-num">{{pageNumberHeader10}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle7}}</div>
+        <div class="sh">{{section_key_statistics_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 11 — WORKFLOW -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle10}}</div><div class="ph-num">{{pageNumberHeader11}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle8}}</div>
+        <div class="sh">{{section_process_steps_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 12 — COMPARISON -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle11}}</div><div class="ph-num">{{pageNumberHeader12}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle9}}</div>
+        <div class="sh">{{section_comparison_table_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 13 — KEY TAKEAWAYS -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle12}}</div><div class="ph-num">{{pageNumberHeader13}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle10}}</div>
+        <div class="sh">{{section_key_takeaways_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 14 — CONCLUSION -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle13}}</div><div class="ph-num">{{pageNumberHeader14}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle11}}</div>
+        <div class="sh">{{section_conclusion_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 15 — CONTACT & CTA -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">GET STARTED</div><div class="ph-num">{{pageNumberHeader15}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="cta-box">
+            <div class="cta-h">{{ctaHeadline}}</div>
+            <p class="cta-p">{{contactDescription}}</p>
         </div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 3 — TABLE OF CONTENTS -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">CONTENTS</h2><div class="page-number-enhanced">{{pageNumberHeader3}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1 style="margin-bottom:16mm;">Table of Contents</h1>
-        <div class="toc-item"><span class="toc-title">{{contentItem1}}</span><span class="toc-page">{{pageNumber4}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem2}}</span><span class="toc-page">{{pageNumber5}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem3}}</span><span class="toc-page">{{pageNumber6}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem4}}</span><span class="toc-page">{{pageNumber7}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem5}}</span><span class="toc-page">{{pageNumber8}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem6}}</span><span class="toc-page">{{pageNumber9}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem7}}</span><span class="toc-page">{{pageNumber10}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem8}}</span><span class="toc-page">{{pageNumber11}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem9}}</span><span class="toc-page">{{pageNumber12}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem10}}</span><span class="toc-page">{{pageNumber13}}</span></div>
-        <div class="toc-item"><span class="toc-title">{{contentItem11}}</span><span class="toc-page">{{pageNumber14}}</span></div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 4 — EXECUTIVE SUMMARY -->
-<!-- section_executive_summary_html → injected as RAW HTML by render_template() -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle3}}</h2><div class="page-number-enhanced">{{pageNumberHeader4}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle1}}</h1>
-        {{#if image_1_url}}<div class="arch-img-wrap"><img class="arch-img" src="{{image_1_url}}" alt="Project Image 1"><p class="img-caption">{{architecturalImageCaption1}}</p></div>{{/if}}
-        <div class="section-html">{{section_executive_summary_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 5 — KEY CHALLENGES -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle4}}</h2><div class="page-number-enhanced">{{pageNumberHeader5}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle2}}</h1>
-        {{#if image_2_url}}<div class="arch-img-wrap"><img class="arch-img" src="{{image_2_url}}" alt="Project Image 2"><p class="img-caption">{{architecturalImageCaption2}}</p></div>{{/if}}
-        <div class="section-html">{{section_key_challenges_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 6 — STRATEGIC FRAMEWORK -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle5}}</h2><div class="page-number-enhanced">{{pageNumberHeader6}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle3}}</h1>
-        {{#if image_3_url}}<div class="arch-img-wrap"><img class="arch-img" src="{{image_3_url}}" alt="Project Image 3"><p class="img-caption">{{architecturalImageCaption3}}</p></div>{{/if}}
-        <div class="section-html">{{section_strategic_framework_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 7 — IMPLEMENTATION ROADMAP -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle6}}</h2><div class="page-number-enhanced">{{pageNumberHeader7}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle4}}</h1>
-        <div class="section-html">{{section_implementation_strategy_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 8 — RISK MANAGEMENT -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle7}}</h2><div class="page-number-enhanced">{{pageNumberHeader8}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle5}}</h1>
-        {{#if image_4_url}}<div class="arch-img-wrap"><img class="arch-img" src="{{image_4_url}}" alt="Project Image 4"></div>{{/if}}
-        <div class="section-html">{{section_risk_management_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 9 — BEST PRACTICES -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle8}}</h2><div class="page-number-enhanced">{{pageNumberHeader9}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle6}}</h1>
-        <div class="section-html">{{section_best_practices_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 10 — MARKET DATA -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle9}}</h2><div class="page-number-enhanced">{{pageNumberHeader10}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle7}}</h1>
-        <div class="section-html">{{section_key_statistics_html}}</div>
-        {{#if image_5_url}}<div class="arch-img-wrap"><img class="arch-img" src="{{image_5_url}}" alt="Data Reference"></div>{{/if}}
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 11 — TECHNICAL WORKFLOW -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle10}}</h2><div class="page-number-enhanced">{{pageNumberHeader11}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle8}}</h1>
-        <div class="section-html">{{section_process_steps_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 12 — COMPARATIVE ANALYSIS -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle11}}</h2><div class="page-number-enhanced">{{pageNumberHeader12}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle9}}</h1>
-        <div class="section-html">{{section_comparison_table_html}}</div>
-        {{#if image_6_url}}<div class="arch-img-wrap"><img class="arch-img" src="{{image_6_url}}" alt="Comparison Reference"></div>{{/if}}
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 13 — KEY TAKEAWAYS -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle12}}</h2><div class="page-number-enhanced">{{pageNumberHeader13}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle10}}</h1>
-        <div class="section-html">{{section_key_takeaways_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 14 — CONCLUSION & 90-DAY ROADMAP -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">{{sectionTitle13}}</h2><div class="page-number-enhanced">{{pageNumberHeader14}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <h1>{{customTitle11}}</h1>
-        <div class="section-html">{{section_conclusion_html}}</div>
-    </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
-</div>
-
-<!-- PAGE 15 — CONTACT & CTA -->
-<div class="page content-page">
-    <div class="page-header-enhanced"><div class="header-decoration"><div class="header-circle header-circle-1"></div><div class="header-circle header-circle-2"></div><div class="header-circle header-circle-3"></div></div><div class="page-header-content"><h2 class="page-title-enhanced">GET STARTED</h2><div class="page-number-enhanced">{{pageNumberHeader15}}</div></div></div>
-    <div class="header-accent-bar"></div>
-    <div class="page-content-area">
-        <div class="cta-section">
-            <div class="cta-title">{{ctaHeadline}}</div>
-            <p class="cta-text">{{contactDescription}}</p>
-        </div>
-        <div class="sub-heading">{{differentiatorTitle}}</div>
-        <div class="content-box">
-            <h3>{{companyName}}</h3>
+        <div class="sub-h">{{differentiatorTitle}}</div>
+        <div class="c-box">
+            <h4>{{companyName}}</h4>
             <p>{{differentiator}}</p>
-            <div class="divider"></div>
-            <p style="margin-bottom:4px;"><strong>Email:</strong> {{emailAddress}}</p>
-            <p style="margin-bottom:4px;"><strong>Phone:</strong> {{phoneNumber}}</p>
-            <p style="margin-bottom:0;"><strong>Web:</strong> {{website}}</p>
+            <p style="margin-top:8px;border-top:1px solid #e0e0e0;padding-top:8px;"><strong>Email:</strong> {{emailAddress}}</p>
+            <p><strong>Phone:</strong> {{phoneNumber}}</p>
+            <p><strong>Web:</strong> {{website}}</p>
         </div>
-        <div class="info-box" style="margin-top:18px;">
-            <div class="info-box-title">YOUR NEXT STEP</div>
+        <div class="n-box">
+            <div class="n-box-title">YOUR NEXT STEP</div>
             <p>{{ctaText}}</p>
         </div>
     </div>
-    <div class="footer-enhanced"><div class="footer-deco"><div class="footer-circle footer-circle-1"></div><div class="footer-circle footer-circle-2"></div><div class="footer-circle footer-circle-3"></div></div><div class="footer-logo-wrap"><div class="footer-logo"><div class="footer-logo-ph">{{logoPlaceholder}}</div></div><div class="footer-left">{{footerText}}</div></div><div class="footer-right">{{website}}</div></div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
 </div>
 
-</div>
 </body>
 </html>
