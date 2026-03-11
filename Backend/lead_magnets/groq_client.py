@@ -16,289 +16,184 @@ logger = logging.getLogger(__name__)
 SECTIONS = [
     (
         "executive_summary",
-        "Strategic Executive Overview",
+        "Introduction",
         "OVERVIEW",
         "text-only",
         (
-            "Write a razor-sharp Strategic Executive Overview for a professional guide on {topic} aimed at {audience}.\n"
-            "RULES — break every one of these and the section FAILS:\n"
-            "  • Never open with 'This section', 'This guide', 'In today's', or any meta-sentence.\n"
-            "  • Every paragraph must contain at least one hard number or named standard (e.g. ISO 19650, 18% cost delta, 2.4x ROI).\n"
-            "  • Name the single biggest shift happening RIGHT NOW in {topic} and why {audience} cannot afford to ignore it.\n"
+            "Write a friendly and engaging Introduction for a guide on {topic} aimed at {audience}.\n"
+            "The tone should be like an experienced architect giving helpful advice to a client.\n"
+            "RULES:\n"
+            "  • Explain the topic in simple terms and why it matters today.\n"
+            "  • Avoid technical jargon or academic writing.\n"
+            "  • Use simple explanations and relatable language.\n"
             "STRUCTURE:\n"
-            "<p>Opening provocation — a bold claim about the current state of {topic} backed by a specific industry stat.</p>\n"
-            "<h3>Why This Moment Is Different</h3>\n"
-            "<p>3–4 sentences on the macro forces (regulatory, technological, economic) converging right now. Name them explicitly.</p>\n"
-            "<h3>The Cost of Inaction</h3>\n"
-            "<p>Quantify what {audience} loses by staying with legacy approaches. Use a specific failure scenario tied to {pain_points}.</p>\n"
-            "<h3>What This Guide Delivers</h3>\n"
-            "<ul><li>Outcome 1 — specific and measurable</li><li>Outcome 2 — specific and measurable</li>"
-            "<li>Outcome 3 — specific and measurable</li><li>Outcome 4 — specific and measurable</li></ul>\n"
-            "TARGET: 380–420 words. Zero filler. Zero repetition."
+            "<p>A warm opening that defines {topic} simply and why it's a great choice for {audience}.</p>\n"
+            "<h3>Why This Matters Now</h3>\n"
+            "<p>Explain the benefits (comfort, cost savings, health) in plain English.</p>\n"
+            "<h3>The Goal of This Guide</h3>\n"
+            "<p>A brief encouraging statement on how this guide helps them make better decisions.</p>\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "key_challenges",
-        "Critical Industry Challenges",
+        "Common Challenges",
         "CHALLENGES",
         "image-right",
         (
-            "Identify 4 specific, named technical and operational challenges facing {audience} in {topic}.\n"
+            "Describe 4 real problems clients face when starting a project related to {topic}.\n"
+            "Examples: confusing technology, approval delays, poor contractor communication, unexpected costs.\n"
             "RULES:\n"
-            "  • Each challenge must have a NAME that reads like a diagnostic term (e.g. 'BIM-to-Field Data Decay', 'Tolerance Stack Failure').\n"
-            "  • Do NOT use vague language like 'lack of communication' or 'inefficiency'.\n"
-            "  • Each must tie directly to one pain point in: {pain_points}.\n"
-            "STRUCTURE — repeat 4 times:\n"
-            "<h3>[Diagnostic Challenge Name]</h3>\n"
-            "<p><strong>Root Cause:</strong> The specific technical or process failure that creates this problem in {topic} workflows.</p>\n"
-            "<p><strong>Real-World Impact:</strong> A concrete scenario — cost overrun, schedule slip, rework percentage, or client dispute — with a number.</p>\n"
-            "<p><strong>Resolution Vector:</strong> The specific method, tool, or protocol that eliminates this challenge. Name the tool or standard.</p>\n"
-            "TARGET: 380–420 words. Four distinct, named challenges. No filler sentences."
+            "  • Use simple, non-technical language.\n"
+            "  • Focus on the client's perspective and feelings.\n"
+            "STRUCTURE — for each challenge:\n"
+            "<h3>[Simple Challenge Name]</h3>\n"
+            "<p>Explain the problem in 2-3 sentences. Why does it happen?</p>\n"
+            "<p><strong>Why it's frustrating:</strong> The real-world impact on their time or budget.</p>\n"
+            "<p><strong>How we help:</strong> A simple way an architect resolves this.</p>\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "strategic_framework",
-        "Strategic Implementation Framework",
-        "FRAMEWORK",
+        "Key Principles",
+        "PRINCIPLES",
         "image-left",
         (
-            "Define a proprietary, named implementation framework for {topic} tailored to {audience}.\n"
-            "RULES:\n"
-            "  • The framework MUST have a unique name (e.g. 'The Precision Assembly Protocol', 'The Integrated Delivery Stack').\n"
-            "  • Each phase must reference specific software, standards, or hardware by name.\n"
-            "  • Include at least one quantified benchmark per phase.\n"
+            "Explain the core ideas of {topic} that {audience} should understand.\n"
+            "Keep explanations simple and relatable (e.g. comparing a building envelope to a winter coat).\n"
             "STRUCTURE:\n"
-            "<p>Name the framework and explain its core philosophy in 2 sentences. State what makes it different from generic project management.</p>\n"
-            "<h3>Phase 1: [Specific Technical Name]</h3>\n"
-            "<p>Inputs, outputs, named tools/software, and measurable milestone. Tie to a {pain_points} resolution.</p>\n"
-            "<h3>Phase 2: [Specific Technical Name]</h3>\n"
-            "<p>Integration layer — how this phase connects upstream and downstream. Name the handoff protocol.</p>\n"
-            "<h3>Phase 3: [Specific Technical Name]</h3>\n"
-            "<p>Optimization — DFMA analysis, energy modelling, or performance benchmarking with a real metric.</p>\n"
-            "<h3>When This Framework Fails</h3>\n"
-            "<p>Name 2 specific conditions that break this framework and how to detect them early.</p>\n"
-            "TARGET: 380–420 words. Named framework. No vague phases."
+            "<p>Introduction to 3 main 'pillars' of good design for {topic}.</p>\n"
+            "<h3>Principle 1: [Simple Name]</h3>\n"
+            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
+            "<h3>Principle 2: [Simple Name]</h3>\n"
+            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
+            "<h3>Principle 3: [Simple Name]</h3>\n"
+            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "implementation_strategy",
-        "High-Fidelity Implementation Roadmap",
-        "IMPLEMENTATION",
+        "Practical Strategies",
+        "STRATEGIES",
         "text-only",
         (
-            "Write a narrative implementation roadmap for {topic} — NOT a task list, but a story of how {audience} moves from current state to target state.\n"
-            "RULES:\n"
-            "  • Each phase must name the decision-maker, the tool or platform, and the deliverable.\n"
-            "  • Include at least one risk mitigation per phase tied to {pain_points}.\n"
-            "  • Use specific durations (e.g. 'Weeks 1–3', 'Day 30 checkpoint').\n"
-            "STRUCTURE — 3 phases:\n"
-            "<h3>Phase 1: [Technical Kickoff Name] — Weeks 1–4</h3>\n"
-            "<p>Who does what, using which tools, producing which specific deliverable. Name the first decision gate.</p>\n"
-            "<ul><li><strong>Milestone:</strong> [specific technical achievement]</li>"
-            "<li><strong>Risk Mitigation:</strong> How to prevent a {pain_points} failure at this stage</li></ul>\n"
-            "<h3>Phase 2: [Mid-Scale Integration Name] — Weeks 5–12</h3>\n"
-            "<p>Narrative of integration — how data, teams, and systems connect. Name the handoff protocol.</p>\n"
-            "<ul><li><strong>Milestone:</strong> [specific deliverable]</li>"
-            "<li><strong>Risk Mitigation:</strong> Early warning indicator to watch</li></ul>\n"
-            "<h3>Phase 3: [Steady-State Operations Name] — Month 4+</h3>\n"
-            "<p>What 'normal operations' looks like, the metrics dashboard, and how {audience} knows it's working.</p>\n"
-            "<ul><li><strong>Milestone:</strong> [performance benchmark achieved]</li>"
-            "<li><strong>Risk Mitigation:</strong> How to course-correct if metrics slip</li></ul>\n"
-            "TARGET: 380–420 words."
+            "Provide 3 actionable strategies {audience} can follow for their {topic} project.\n"
+            "Each strategy must include: explanation, why it matters, and a simple example.\n"
+            "STRUCTURE:\n"
+            "<h3>Strategy 1: [Actionable Name]</h3>\n"
+            "<p>What it is and how it works.</p>\n"
+            "<ul><li><strong>Why it matters:</strong> Benefit to the client.</li>\n"
+            "<li><strong>Example:</strong> A simple real-world scenario.</li></ul>\n"
+            "Repeat for Strategy 2 and 3.\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "risk_management",
-        "Institutional Risk Management",
+        "Managing Your Project Risks",
         "RISK",
         "image-above",
         (
-            "Identify 4 high-stakes, named risks specific to {topic} projects for {audience}.\n"
-            "RULES:\n"
-            "  • Each risk must have a technical name — not 'budget overrun' but 'Scope Creep from Unresolved RFIs'.\n"
-            "  • Trigger must describe the exact workflow condition that causes the risk to activate.\n"
-            "  • Mitigation must name a specific tool, protocol, or contractual clause.\n"
-            "STRUCTURE — repeat 4 times:\n"
-            "<h3>[Technical Risk Name]</h3>\n"
-            "<p><strong>Trigger Condition:</strong> The specific moment in the {topic} workflow when this risk activates — name the phase, the actor, and the system.</p>\n"
-            "<p><strong>Blast Radius:</strong> Quantified downstream impact — cost, time, or relationship damage with a realistic number.</p>\n"
-            "<p><strong>Mitigation Protocol:</strong> Named tool, contractual mechanism, or process checkpoint that neutralises this risk before it propagates.</p>\n"
-            "TARGET: 380–420 words. Four distinct risks. Hard technical language throughout."
+            "Explain how to avoid common risks in {topic} projects in simple language.\n"
+            "Focus on things like budget overruns, choosing the wrong materials, or communication gaps.\n"
+            "STRUCTURE:\n"
+            "<h3>[Risk Name]</h3>\n"
+            "<p>What the risk is and how it usually starts.</p>\n"
+            "<p><strong>Smart Solution:</strong> Practical advice on how to prevent it early.</p>\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "best_practices",
-        "Professional Standards & Best Practices",
-        "METHODS",
+        "Best Practices for Success",
+        "TIPS",
         "text-only",
         (
-            "Define 4 professional best practices for {audience} working in {topic}.\n"
-            "RULES:\n"
-            "  • Each practice must name a specific tool, platform, or published standard (e.g. Revit 2025, ISO 19650-2, Procore, AWS Wavelength).\n"
-            "  • Each practice must include a specific performance metric — percentage improvement, time saved, error reduction rate.\n"
-            "  • No vague advice like 'communicate clearly' or 'plan ahead'.\n"
-            "STRUCTURE — repeat 4 times:\n"
-            "<h3>[Practice Name — Action-Oriented]</h3>\n"
-            "<p><strong>Method:</strong> Step-by-step implementation using [named tool/standard]. Be specific about configuration, frequency, or threshold.</p>\n"
-            "<p><strong>Performance Benchmark:</strong> The specific, measurable improvement this delivers (e.g. '31% reduction in coordination RFIs', '2-week schedule compression per floor plate').</p>\n"
-            "TARGET: 380–420 words. Four practices. Every claim backed by a number or named reference."
+            "Outline professional tips for {audience} to ensure their project is a success.\n"
+            "Use a friendly, advisory tone.\n"
+            "STRUCTURE:\n"
+            "<h3>[Tip Name]</h3>\n"
+            "<p>The advice explained simply.</p>\n"
+            "<p><strong>The Result:</strong> What they gain by following this tip.</p>\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "key_statistics",
-        "Market Intelligence & Data Analysis",
+        "Facts and Figures",
         "DATA",
         "text-only",
         (
-            "Provide a data-dense market intelligence section on {topic} for {audience}.\n"
-            "RULES:\n"
-            "  • Every statistic must include a source attribution (e.g. 'McKinsey Global Institute, 2024', 'Dodge Data & Analytics', 'RIBA Future Trends').\n"
-            "  • Statistics must be specific — not 'costs are rising' but 'material cost inflation averaged 8.3% YoY in 2023–24 (Turner & Townsend)'.\n"
-            "  • Include 3 comparative benchmarks showing the gap between leaders and laggards.\n"
+            "Provide interesting facts or simple statistics about {topic} that would interest a homeowner or business owner.\n"
+            "Examples: potential energy savings, increase in property value, or health benefits.\n"
             "STRUCTURE:\n"
-            "<h3>Market Sizing & Growth Trajectory</h3>\n"
-            "<p>3–4 specific data points with source attributions on the scale and growth of {topic}.</p>\n"
-            "<h3>Performance Gap: Leaders vs. Laggards</h3>\n"
-            "<ul>\n"
-            "  <li><strong>[Metric 1]:</strong> Top quartile vs. industry average, with % delta and source.</li>\n"
-            "  <li><strong>[Metric 2]:</strong> Time-to-delivery comparison with named methodology.</li>\n"
-            "  <li><strong>[Metric 3]:</strong> Cost-per-unit delta between legacy and modern approaches.</li>\n"
-            "</ul>\n"
-            "<h3>Forward-Looking Indicators</h3>\n"
-            "<p>2–3 projections or regulatory changes that will reshape {topic} within 36 months. Name the regulation or body.</p>\n"
-            "TARGET: 380–420 words. Every number has a source or context. No made-up percentages without attribution."
+            "<h3>Did You Know?</h3>\n"
+            "<p>3-4 interesting facts presented simply.</p>\n"
+            "<ul><li><strong>[Fact Label]:</strong> [The fact/stat explained]</li></ul>\n"
+            "TARGET: 250–300 words."
         )
     ),
     (
         "process_steps",
-        "Technical Workflow Stages",
-        "PROCESS",
+        "Implementation Roadmap",
+        "ROADMAP",
         "text-only",
         (
-            "Map the complete technical workflow for implementing {topic}, written for {audience}.\n"
-            "RULES:\n"
-            "  • Use precise technical stage names — not 'Step 1: Planning' but 'Step 1: Parametric Schematic Design & Clash Pre-Check'.\n"
-            "  • Each step must name the primary software or hardware used.\n"
-            "  • Each step must name the specific deliverable and who receives it.\n"
-            "STRUCTURE — 5 steps:\n"
-            "<h3>Step 1: [Technical Stage Name]</h3>\n"
-            "<p><strong>Inputs:</strong> What comes in. <strong>Tools:</strong> Named software/hardware. <strong>Output:</strong> Specific deliverable handed to [named role].</p>\n"
-            "<h3>Step 2: [Technical Stage Name]</h3>\n"
-            "<p>Same structure. Include a quality gate or tolerance specification.</p>\n"
-            "<h3>Step 3: [Technical Stage Name]</h3>\n"
-            "<p>Same structure. Name the coordination protocol used.</p>\n"
-            "<h3>Step 4: [Technical Stage Name]</h3>\n"
-            "<p>Same structure. Include a named compliance check or standard.</p>\n"
-            "<h3>Step 5: [Technical Stage Name]</h3>\n"
-            "<p>Same structure. Include a handover metric or sign-off criterion.</p>\n"
-            "TARGET: 380–420 words. Five steps. Every step has a named tool and a named output."
+            "Explain step-by-step how someone can apply these ideas when starting a project.\n"
+            "Break it down into 5 simple phases.\n"
+            "STRUCTURE:\n"
+            "<h3>Step 1: [Simple Phase Name]</h3>\n"
+            "<p>What happens in this stage and what the client needs to do.</p>\n"
+            "Repeat for 5 steps.\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "comparison_table",
-        "Strategic Comparative Analysis",
+        "Traditional vs. Smart Design",
         "COMPARISON",
         "text-only",
         (
-            "Write a head-to-head comparative analysis: traditional approaches vs {topic} for {audience}.\n"
-            "RULES:\n"
-            "  • Compare on 4 specific criteria — not 'speed' but 'design iteration cycle time'.\n"
-            "  • Every comparison must include a number or named standard to anchor the delta.\n"
-            "  • Write in a tone that makes the {audience} feel the urgency of switching — not evangelical, but data-driven.\n"
+            "Compare traditional building methods with {topic} approaches in a simple, easy-to-understand way.\n"
+            "Focus on the benefits to the client's lifestyle and budget.\n"
             "STRUCTURE:\n"
-            "<p>One sharp opening sentence framing WHY this comparison matters now for {audience}.</p>\n"
-            "<h3>Criteria 1: [Specific Technical Metric]</h3>\n"
-            "<p>Traditional: [specific outcome with number]. {topic} approach: [specific outcome with number]. Net delta: [X%] advantage, source or benchmark.</p>\n"
-            "<h3>Criteria 2: [Financial Performance Metric]</h3>\n"
-            "<p>Same pattern. Focus on the {pain_points} most relevant to cost or schedule.</p>\n"
-            "<h3>Criteria 3: [Quality or Compliance Metric]</h3>\n"
-            "<p>Same pattern. Name the standard or defect rate being compared.</p>\n"
-            "<h3>Criteria 4: [Lifecycle or Risk Metric]</h3>\n"
-            "<p>Same pattern. Include maintenance cost or operational performance delta.</p>\n"
-            "TARGET: 380–420 words. Four criteria. Every claim is anchored."
+            "<h3>[Comparison Point]</h3>\n"
+            "<p>Contrast the two approaches simply.</p>\n"
+            "TARGET: 300–350 words."
         )
     ),
     (
         "key_takeaways",
-        "Strategic Takeaways & Next Moves",
-        "TAKEAWAYS",
+        "Key Lessons",
+        "SUMMARY",
         "text-only",
         (
-            "Summarise the 3 most important strategic pivots {audience} must make to win in {topic}.\n"
-            "RULES:\n"
-            "  • Each takeaway must be a named pivot — not 'adopt BIM' but 'Shift from Drawing-Centric to Data-Centric Coordination'.\n"
-            "  • Each must include one specific action {audience} can take in the next 30 days.\n"
-            "  • End with a high-urgency closing paragraph — no vague optimism, just a specific threat or opportunity.\n"
-            "STRUCTURE — 3 pivots:\n"
-            "<h3>Pivot 1: [Named Strategic Shift]</h3>\n"
-            "<p>Why this pivot is non-negotiable now. Name the force (regulatory, competitive, financial) driving it. 3–4 sentences.</p>\n"
-            "<ul><li><strong>30-Day Action:</strong> One specific, implementable step with a named tool or partner.</li>"
-            "<li><strong>Success Signal:</strong> How {audience} knows this pivot is working.</li></ul>\n"
-            "<h3>Pivot 2: [Named Strategic Shift]</h3>\n"
-            "<p>Same structure. Focus on a different dimension of {topic}.</p>\n"
-            "<ul><li><strong>30-Day Action:</strong> ...</li><li><strong>Success Signal:</strong> ...</li></ul>\n"
-            "<h3>Pivot 3: [Named Strategic Shift]</h3>\n"
-            "<p>Same structure.</p>\n"
-            "<ul><li><strong>30-Day Action:</strong> ...</li><li><strong>Success Signal:</strong> ...</li></ul>\n"
-            "<p><strong>The Window:</strong> A closing paragraph naming the specific timeline or market event that makes delay costly.</p>\n"
-            "TARGET: 380–420 words."
+            "Summarize the most important lessons from this guide in simple bullet points.\n"
+            "Focus on what {audience} should remember most.\n"
+            "STRUCTURE:\n"
+            "<h3>Important Takeaways</h3>\n"
+            "<ul><li>[Takeaway 1]</li><li>[Takeaway 2]</li><li>[Takeaway 3]</li><li>[Takeaway 4]</li></ul>\n"
+            "TARGET: 250–300 words."
         )
     ),
     (
         "conclusion",
-        "Conclusion & 90-Day Activation Roadmap",
-        "CONCLUSION",
+        "Conclusion & Next Steps",
+        "NEXT STEPS",
         "text-only",
         (
-            "Write the conclusion and a concrete 90-day activation plan for {audience} to implement {topic}.\n"
-            "RULES:\n"
-            "  • The conclusion must name the single biggest ROI argument for {topic} — with a number.\n"
-            "  • The 90-day plan must have named deliverables, not vague milestones.\n"
-            "  • The CTA must be specific — not 'contact us' but 'Book a 45-minute {topic} Readiness Audit'.\n"
+            "End with encouraging advice and emphasize the importance of working with experienced architects.\n"
+            "A warm, professional closing statement.\n"
             "STRUCTURE:\n"
-            "<p>2–3 sentences: The core value proposition of acting now on {topic}, with the strongest ROI stat from this guide.</p>\n"
-            "<h3>Your 90-Day {topic} Activation Roadmap</h3>\n"
-            "<ol>\n"
-            "  <li><strong>Days 1–30 — Diagnostic:</strong> Named audit, named tool, specific output (e.g. 'A gap analysis report against ISO 19650 requirements').</li>\n"
-            "  <li><strong>Days 31–60 — Pilot:</strong> Specific pilot scope, named software, measurable success criterion.</li>\n"
-            "  <li><strong>Days 61–90 — Scale:</strong> How to expand from pilot to full deployment. Named metric that triggers scale decision.</li>\n"
-            "</ol>\n"
-            "<h3>Your Next Step</h3>\n"
-            "<p>A specific, named CTA — not generic. Tell {audience} exactly what they get, how long it takes, and what happens next.</p>\n"
-            "TARGET: 280–320 words. Specific. Actionable. No waffle."
+            "<p>Final thoughts on the value of {topic}.</p>\n"
+            "<h3>Ready to Start Your Journey?</h3>\n"
+            "<p>Why partnering with an architect makes the process smoother and more successful.</p>\n"
+            "TARGET: 200–250 words."
         )
     ),
 ]
-
-DOC_TYPE_LABELS = {
-    "guide":            "Strategic Guide",
-    "case_study":       "Case Study Report",
-    "checklist":        "Implementation Checklist",
-    "roi_calculator":   "ROI Analysis Report",
-    "trends_report":    "Industry Trends Report",
-    "design_portfolio": "Design Portfolio",
-    "client_onboarding":"Client Onboarding Guide",
-    "custom":           "Strategic Report",
-}
-
-_TYPE_MAP = {
-    "guide":                  "guide",
-    "strategic guide":        "guide",
-    "case_study":             "case_study",
-    "case study":             "case_study",
-    "checklist":              "checklist",
-    "roi_calculator":         "roi_calculator",
-    "roi calculator":         "roi_calculator",
-    "trends_report":          "trends_report",
-    "trends report":          "trends_report",
-    "design_portfolio":       "design_portfolio",
-    "design portfolio":       "design_portfolio",
-    "client_onboarding_flow": "client_onboarding",
-    "client_onboarding":      "client_onboarding",
-    "client onboarding flow": "client_onboarding",
-    "custom":                 "custom",
-}
-
 ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "footer"}
 
 # ─────────────────────────────────────────────────────────────────────────────
