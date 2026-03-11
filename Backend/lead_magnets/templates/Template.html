@@ -591,4 +591,595 @@
 </div>
 
 </body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{documentTitle}} - {{companyName}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary:   {{primaryColor}};
+            --secondary: {{secondaryColor}};
+            --accent:    {{accentColor}};
+            --light:     #f8f9fa;
+            --text:      #2d3436;
+            --muted:     #636e72;
+        }
+
+        /* ── RESET & BASE ─────────────────────────────────────── */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text); }
+
+        /* ── PAGE — strict A4, no overflow ───────────────────── */
+        /* Prince/DocRaptor uses @page for PDF sizing */
+        @page { size: A4; margin: 0; }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            overflow: hidden;          /* CRITICAL: clips overflowing content */
+            position: relative;
+            page-break-after: always;
+            page-break-inside: avoid;
+            background: white;
+            display: block;
+        }
+
+        /* ── COVER ────────────────────────────────────────────── */
+        /* Reference style: white bg, dark colored header bar at top, large dark title */
+        .cover {
+            background: white;
+            width: 210mm;
+            height: 297mm;
+            overflow: hidden;
+            position: relative;
+        }
+        /* Top header bar — same style as content page .ph */
+        .cover-header {
+            background: var(--secondary);
+            padding: 14px 22mm;
+            position: relative;
+            overflow: hidden;
+        }
+        .cover-header-deco { position:absolute; top:0; right:0; width:180px; height:100%; opacity:0.12; }
+        .cover-header-c { position:absolute; border-radius:50%; border:2px solid white; }
+        .cover-header-c1 { width:110px; height:110px; top:-35px; right:-15px; }
+        .cover-header-c2 { width:70px;  height:70px;  top:8px;   right:72px; }
+        .cover-header-c3 { width:44px;  height:44px;  bottom:-8px; right:36px; }
+        .cover-header-title {
+            font-family:'Poppins',sans-serif; font-size:20px; font-weight:700;
+            color:white; text-transform:uppercase; letter-spacing:1px;
+            padding-left:12px; position:relative; z-index:2;
+        }
+        .cover-header-title::before {
+            content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+            width:3px; height:22px; background:var(--primary); border-radius:3px;
+        }
+        .cover-header-bar { height:3px; background:var(--primary); }
+
+        /* Body: title block — simple top padding, no flexbox (DocRaptor compat) */
+        .cover-body {
+            padding: 28mm 22mm 0 22mm;
+        }
+        .cover-eyebrow {
+            font-size:11px; font-weight:600; text-transform:uppercase;
+            letter-spacing:3px; color:var(--secondary); margin-bottom:14px;
+            display:block;
+        }
+        .cover-title {
+            font-family:'Poppins',sans-serif; font-size:40px; font-weight:900;
+            line-height:1.06; text-transform:uppercase; letter-spacing:-1px;
+            color:var(--primary); margin:0;
+        }
+        .cover-title-rule {
+            width:60px; height:4px; background:var(--secondary);
+            border-radius:2px; margin:16px 0;
+            display:block;
+        }
+        .cover-sub {
+            display:block; font-size:17px; font-weight:400; line-height:1.6;
+            color:#444; max-width:430px;
+        }
+        .cover-desc {
+            display:block; font-size:12px; color:var(--muted); margin-top:24px;
+            font-style:italic;
+        }
+        /* Bottom contact strip */
+        .cover-ft {
+            position:absolute; bottom:0; left:0; right:0;
+            background:var(--primary);
+            padding:14px 22mm;
+            display:block;
+        }
+        .cover-ft-name { font-weight:700; font-size:13px; color:white; margin-bottom:3px; }
+        .cover-ft-details { font-size:11px; color:rgba(255,255,255,0.8); }
+
+        /* ── CONTENT PAGES ────────────────────────────────────── */
+        /* Fixed-height zones so content cannot push past page boundary */
+
+        /* Header zone: ~18mm */
+        .ph {
+            background:var(--secondary);
+            padding:14px 22mm;
+            position:relative;
+            overflow:hidden;
+            flex-shrink:0;
+        }
+        .ph-deco { position:absolute; top:0; right:0; width:180px; height:100%; opacity:0.1; }
+        .ph-c { position:absolute; border-radius:50%; border:2px solid white; }
+        .ph-c1 { width:110px; height:110px; top:-35px; right:-15px; }
+        .ph-c2 { width:70px;  height:70px;  top:8px;   right:72px;  }
+        .ph-c3 { width:44px;  height:44px;  bottom:-8px; right:36px; }
+        .ph-row { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
+        .ph-title {
+            font-family:'Poppins',sans-serif; font-size:20px; font-weight:700;
+            color:white; text-transform:uppercase; letter-spacing:1px;
+            margin:0; padding-left:12px; position:relative;
+        }
+        .ph-title::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:22px; background:var(--primary); border-radius:3px; }
+        .ph-num { background:rgba(255,255,255,0.2); padding:5px 13px; border-radius:18px; font-size:11.5px; font-weight:600; color:white; }
+        .ph-bar { height:3px; background:var(--primary); }
+
+        /* Content zone fills remaining height above footer */
+        .pc {
+            position:absolute;
+            top:60px;          /* header height approx */
+            left:0; right:0;
+            bottom:48px;       /* footer height approx */
+            padding:10mm 22mm 6mm;
+            overflow:hidden;   /* CLIPS excess content */
+        }
+
+        /* Footer zone: fixed at bottom */
+        .pf {
+            position:absolute;
+            bottom:0; left:0; right:0;
+            background:var(--primary);
+            padding:11px 22mm;
+            display:flex; justify-content:space-between; align-items:center;
+            font-size:10.5px; color:white;
+            overflow:hidden;
+        }
+        .pf-deco { position:absolute; inset:0; opacity:0.1; pointer-events:none; }
+        .pf-fc { position:absolute; border-radius:50%; border:2px solid rgba(255,255,255,0.15); }
+        .pf-fc1 { width:50px; height:50px; top:-18px; left:30%; }
+        .pf-fc2 { width:36px; height:36px; top:-8px;  right:25%; }
+        .pf-fc3 { width:26px; height:26px; bottom:-4px; left:60%; }
+        .pf-logo-wrap { position:relative; z-index:2; display:flex; align-items:center; gap:9px; }
+        .pf-logo { width:32px; height:32px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .pf-logo-ph { width:100%; height:100%; background:linear-gradient(135deg,var(--secondary),var(--primary)); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:700; }
+        .pf-left  { position:relative; z-index:2; font-weight:500; }
+        .pf-right { position:relative; z-index:2; font-weight:500; }
+
+        /* ── TYPOGRAPHY ───────────────────────────────────────── */
+        .pg-title {
+            font-family:'Poppins',sans-serif; font-size:18px; color:var(--primary);
+            margin-bottom:9px; border-bottom:2px solid var(--secondary);
+            padding-bottom:4px; text-transform:uppercase; font-weight:700;
+            line-height:1.2;
+        }
+
+        /* ── SECTION HTML ─────────────────────────────────────── */
+        /* Styles raw HTML from section_*_html vars */
+        .sh { font-size:12px; line-height:1.72; color:var(--text); }
+        .sh p  { margin-bottom:9px; }
+        .sh h3 {
+            font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:700;
+            color:var(--primary); margin:13px 0 6px;
+            padding-left:11px; position:relative; line-height:1.3;
+        }
+        .sh h3::before {
+            content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+            width:3px; height:16px; background:var(--secondary); border-radius:2px;
+        }
+        .sh h4 { font-size:12.5px; font-weight:600; color:var(--secondary); margin:10px 0 5px; }
+        .sh ul, .sh ol { list-style:none; padding:0; margin:8px 0; }
+        .sh ol { counter-reset:olc; }
+        .sh ul > li {
+            padding:6px 0 6px 30px; position:relative;
+            font-size:12px; line-height:1.55; border-bottom:1px solid #f2f2f2;
+        }
+        .sh ul > li::before {
+            content:'✓'; position:absolute; left:0; top:50%; transform:translateY(-50%);
+            width:20px; height:20px; background:var(--secondary); color:white;
+            border-radius:50%; font-weight:700; font-size:11px; text-align:center; line-height:20px;
+        }
+        .sh ol > li {
+            counter-increment:olc;
+            padding:6px 0 6px 30px; position:relative;
+            font-size:12px; line-height:1.55; border-bottom:1px solid #f2f2f2;
+        }
+        .sh ol > li::before {
+            content:counter(olc); position:absolute; left:0; top:50%; transform:translateY(-50%);
+            width:20px; height:20px; background:var(--primary); color:white;
+            border-radius:50%; font-weight:700; font-size:11px; text-align:center; line-height:20px;
+        }
+        .sh strong { color:var(--primary); font-weight:600; }
+        .sh em { color:var(--muted); font-style:italic; }
+        .sh blockquote {
+            border-left:3px solid var(--secondary); padding:8px 12px;
+            background:var(--light); font-style:italic; color:var(--muted);
+            margin:10px 0; border-radius:0 5px 5px 0; font-size:12px;
+        }
+        .sh blockquote footer { margin-top:4px; font-style:normal; font-weight:600; color:var(--secondary); font-size:11px; }
+
+        /* ── INLINE IMAGES (conditional, full-width block) ───── */
+        /* Only rendered when image_N_url is present via {{#if}} */
+        /* Full-width between intro and first subheading — reference PDF style */
+        .img-wrap {
+            width: 100%;
+            margin: 8px 0 12px 0;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e8e8e8;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        .img-wrap img {
+            width: 100%;
+            height: 52mm;
+            object-fit: cover;
+            display: block;
+        }
+        .img-caption {
+            font-size: 10px;
+            color: var(--muted);
+            font-style: italic;
+            text-align: center;
+            padding: 5px 8px;
+            background: var(--light);
+            line-height: 1.4;
+        }
+        .clearfix::after { content:''; display:table; clear:both; }
+
+        /* ── TABLE OF CONTENTS ────────────────────────────────── */
+        .toc-item { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; padding-bottom:8px; border-bottom:1px dotted #ddd; }
+        .toc-label { flex:1; color:var(--text); font-size:12.5px; padding-right:10px; }
+        .toc-pg { color:var(--primary); font-weight:700; font-size:13px; flex-shrink:0; }
+
+        /* ── CONTACT PAGE ─────────────────────────────────────── */
+        .cta-box { background:var(--primary); padding:26px 30px; border-radius:9px; color:white; text-align:center; margin-bottom:16px; }
+        .cta-h { font-family:'Poppins',sans-serif; font-size:18px; font-weight:700; color:white; margin-bottom:8px; }
+        .cta-p { font-size:12.5px; color:rgba(255,255,255,0.88); line-height:1.65; margin:0; }
+        .sub-h { font-family:'Poppins',sans-serif; font-size:14px; font-weight:700; color:var(--primary); margin:14px 0 8px; padding-left:11px; position:relative; }
+        .sub-h::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:18px; background:var(--secondary); border-radius:2px; }
+        .c-box { background:var(--light); padding:14px; border-radius:6px; margin-bottom:10px; }
+        .c-box h4 { font-family:'Poppins',sans-serif; font-size:12.5px; font-weight:700; color:var(--primary); border-bottom:1px solid #e0e0e0; padding-bottom:5px; margin-bottom:8px; }
+        .c-box p { font-size:12px; line-height:1.6; color:var(--text); margin-bottom:4px; }
+        .n-box { border-left:4px solid var(--secondary); background:var(--light); padding:12px 14px; border-radius:0 6px 6px 0; }
+        .n-box-title { font-weight:700; font-size:11px; color:var(--secondary); margin-bottom:5px; text-transform:uppercase; letter-spacing:1px; }
+        .n-box p { font-size:12px; line-height:1.6; color:var(--text); margin:0; }
+
+        /* ── TERMS PAGE ───────────────────────────────────────── */
+        .terms-wrap { padding:14mm 22mm 0; text-align:center; }
+        .terms-head { font-family:'Poppins',sans-serif; font-size:12px; letter-spacing:2px; color:var(--primary); margin-bottom:18px; font-weight:700; text-transform:uppercase; }
+        .terms-p { font-size:12px; line-height:1.75; color:#333; margin-bottom:12px; }
+        .terms-sm { font-size:10.5px; color:#999; margin-top:16px; }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ PAGE 1 — COVER -->
+<div class="page cover">
+    <!-- Top header bar -->
+    <div class="cover-header">
+        <div class="cover-header-deco">
+            <div class="cover-header-c cover-header-c1"></div>
+            <div class="cover-header-c cover-header-c2"></div>
+            <div class="cover-header-c cover-header-c3"></div>
+        </div>
+        <div class="cover-header-title">{{documentTypeLabel}}</div>
+    </div>
+    <div class="cover-header-bar"></div>
+
+    <!-- Main body: company eyebrow + large title + rule + subtitle -->
+    <div class="cover-body">
+        <span class="cover-eyebrow">{{companyName}}</span>
+        <div class="cover-title">{{mainTitle}}</div>
+        <span class="cover-title-rule"></span>
+        <span class="cover-sub">{{documentSubtitle}}</span>
+        <span class="cover-desc">{{documentTypeLabel}} &nbsp;|&nbsp; Prepared by {{companyName}}</span>
+    </div>
+
+    <!-- Bottom contact strip pinned to bottom -->
+    <div class="cover-ft">
+        <div class="cover-ft-name">{{companyName}}</div>
+        <div class="cover-ft-details">{{emailAddress}} &nbsp;&bull;&nbsp; {{website}} &nbsp;&bull;&nbsp; {{phoneNumber}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 2 — TERMS -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">TERMS OF USE</div><div class="ph-num">{{pageNumberHeader2}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="terms-wrap">
+        <div class="terms-head">TERMS OF USE &amp; DISCLAIMER</div>
+        <p class="terms-p">{{termsSummary}}</p>
+        <p class="terms-p">{{termsParagraph1}}</p>
+        <p class="terms-p">{{termsParagraph2}}</p>
+        <p class="terms-p">{{termsParagraph3}}</p>
+        <p class="terms-p">{{termsParagraph4}}</p>
+        <p class="terms-sm">{{termsParagraph5}}</p>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 3 — TOC -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">CONTENTS</div><div class="ph-num">{{pageNumberHeader3}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title" style="margin-bottom:10mm;">Table of Contents</div>
+        <div class="toc-item"><span class="toc-label">{{contentItem1}}</span><span class="toc-pg">{{pageNumber4}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem2}}</span><span class="toc-pg">{{pageNumber5}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem3}}</span><span class="toc-pg">{{pageNumber6}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem4}}</span><span class="toc-pg">{{pageNumber7}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem5}}</span><span class="toc-pg">{{pageNumber8}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem6}}</span><span class="toc-pg">{{pageNumber9}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem7}}</span><span class="toc-pg">{{pageNumber10}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem8}}</span><span class="toc-pg">{{pageNumber11}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem9}}</span><span class="toc-pg">{{pageNumber12}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem10}}</span><span class="toc-pg">{{pageNumber13}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem11}}</span><span class="toc-pg">{{pageNumber14}}</span></div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 4 — EXECUTIVE SUMMARY -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle3}}</div><div class="ph-num">{{pageNumberHeader4}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc clearfix">
+        <div class="pg-title">{{customTitle1}}</div>
+        {{#if image_1_url}}<div class="img-wrap"><img src="{{image_1_url}}" alt="{{image_1_caption}}"><div class="img-caption">{{image_1_caption}}</div></div>{{/if}}
+
+        <div class="sh">{{section_executive_summary_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 5 — KEY CHALLENGES -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle4}}</div><div class="ph-num">{{pageNumberHeader5}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc clearfix">
+        <div class="pg-title">{{customTitle2}}</div>
+        {{#if image_2_url}}<div class="img-wrap"><img src="{{image_2_url}}" alt="{{image_2_caption}}"><div class="img-caption">{{image_2_caption}}</div></div>{{/if}}
+
+        <div class="sh">{{section_key_challenges_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 6 — STRATEGIC FRAMEWORK -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle5}}</div><div class="ph-num">{{pageNumberHeader6}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc clearfix">
+        <div class="pg-title">{{customTitle3}}</div>
+        {{#if image_3_url}}<div class="img-wrap"><img src="{{image_3_url}}" alt="{{image_3_caption}}"><div class="img-caption">{{image_3_caption}}</div></div>{{/if}}
+
+        <div class="sh">{{section_strategic_framework_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 7 — IMPLEMENTATION ROADMAP -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle6}}</div><div class="ph-num">{{pageNumberHeader7}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc clearfix">
+        <div class="pg-title">{{customTitle4}}</div>
+        {{#if image_4_url}}<div class="img-wrap"><img src="{{image_4_url}}" alt="{{image_4_caption}}"><div class="img-caption">{{image_4_caption}}</div></div>{{/if}}
+
+        <div class="sh">{{section_implementation_strategy_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 8 — RISK MANAGEMENT -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle7}}</div><div class="ph-num">{{pageNumberHeader8}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc clearfix">
+        <div class="pg-title">{{customTitle5}}</div>
+        {{#if image_5_url}}<div class="img-wrap"><img src="{{image_5_url}}" alt="{{image_5_caption}}"><div class="img-caption">{{image_5_caption}}</div></div>{{/if}}
+
+        <div class="sh">{{section_risk_management_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 9 — BEST PRACTICES -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle8}}</div><div class="ph-num">{{pageNumberHeader9}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc clearfix">
+        <div class="pg-title">{{customTitle6}}</div>
+        {{#if image_6_url}}<div class="img-wrap"><img src="{{image_6_url}}" alt="{{image_6_caption}}"><div class="img-caption">{{image_6_caption}}</div></div>{{/if}}
+
+        <div class="sh">{{section_best_practices_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 10 — MARKET DATA -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle9}}</div><div class="ph-num">{{pageNumberHeader10}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle7}}</div>
+        <div class="sh">{{section_key_statistics_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 11 — WORKFLOW -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle10}}</div><div class="ph-num">{{pageNumberHeader11}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle8}}</div>
+        <div class="sh">{{section_process_steps_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 12 — COMPARISON -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle11}}</div><div class="ph-num">{{pageNumberHeader12}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle9}}</div>
+        <div class="sh">{{section_comparison_table_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 13 — KEY TAKEAWAYS -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle12}}</div><div class="ph-num">{{pageNumberHeader13}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle10}}</div>
+        <div class="sh">{{section_key_takeaways_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 14 — CONCLUSION -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle13}}</div><div class="ph-num">{{pageNumberHeader14}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="pg-title">{{customTitle11}}</div>
+        <div class="sh">{{section_conclusion_html}}</div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PAGE 15 — CONTACT & CTA -->
+<div class="page">
+    <div class="ph">
+        <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
+        <div class="ph-row"><div class="ph-title">GET STARTED</div><div class="ph-num">{{pageNumberHeader15}}</div></div>
+    </div>
+    <div class="ph-bar"></div>
+    <div class="pc">
+        <div class="cta-box">
+            <div class="cta-h">{{ctaHeadline}}</div>
+            <p class="cta-p">{{contactDescription}}</p>
+        </div>
+        <div class="sub-h">{{differentiatorTitle}}</div>
+        <div class="c-box">
+            <h4>{{companyName}}</h4>
+            <p>{{differentiator}}</p>
+            <p style="margin-top:8px;border-top:1px solid #e0e0e0;padding-top:8px;"><strong>Email:</strong> {{emailAddress}}</p>
+            <p><strong>Phone:</strong> {{phoneNumber}}</p>
+            <p><strong>Web:</strong> {{website}}</p>
+        </div>
+        <div class="n-box">
+            <div class="n-box-title">YOUR NEXT STEP</div>
+            <p>{{ctaText}}</p>
+        </div>
+    </div>
+    <div class="pf">
+        <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
+        <div class="pf-logo-wrap"><div class="pf-logo"><div class="pf-logo-ph">{{logoPlaceholder}}</div></div><div class="pf-left">{{footerText}}</div></div>
+        <div class="pf-right">{{website}}</div>
+    </div>
+</div>
+
+</body>
 </html>
