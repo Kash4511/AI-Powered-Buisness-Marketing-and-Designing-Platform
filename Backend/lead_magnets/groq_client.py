@@ -333,10 +333,17 @@ class GroqClient:
         doc_type    = _TYPE_MAP.get(raw_type, "guide")
         pain_points = user_answers.get("pain_points", [])
         audience    = user_answers.get("target_audience", "Stakeholders")
+        
+        # Agency-level personalization enhancements
+        psychographics = user_answers.get("psychographics", "")
+        firm_usp       = user_answers.get("firm_usp", "")
+        
         return {
             "topic":           user_answers.get("main_topic", "Strategic Design"),
             "audience":        ", ".join(audience) if isinstance(audience, list) else str(audience),
             "pain_points":     ", ".join(pain_points) if isinstance(pain_points, list) else str(pain_points),
+            "psychographics":  str(psychographics).strip(),
+            "firm_usp":        str(firm_usp).strip(),
             "desired_outcome": user_answers.get("desired_outcome", ""),
             "cta":             user_answers.get("call_to_action", ""),
             "special":         user_answers.get("special_requests", ""),
@@ -779,11 +786,15 @@ class GroqClient:
             f"Topic: {signals['topic']}\n"
             f"Audience: {signals['audience']}\n"
             f"Pain Points: {signals['pain_points']}\n"
+            f"Psychographics (Values/Fears): {signals.get('psychographics', 'None provided')}\n"
+            f"Firm USP (Unique Selling Proposition): {signals.get('firm_usp', 'None provided')}\n"
             f"Industry: {signals.get('industry', 'Architecture')}\n\n"
             f"Return ONLY this JSON (be specific — name real tools, standards, metrics):\n"
             f"{{\n"
             f"  \"industry_context\": \"2–3 sentences on the current technical and market state of this industry, with a specific stat or standard\",\n"
             f"  \"core_problem_summary\": \"The precise technical/process failure that underlies these pain points\",\n"
+            f"  \"psychographic_hook\": \"A specific emotional or logical angle that connects the topic to the audience's values/fears\",\n"
+            f"  \"unique_mechanism_alignment\": \"How the firm's USP specifically solves the core problem differently than competitors\",\n"
             f"  \"stakeholder_roles\": [\"specific role 1\", \"specific role 2\", \"specific role 3\"],\n"
             f"  \"strategic_focus_areas\": [\"named focus 1\", \"named focus 2\", \"named focus 3\"],\n"
             f"  \"risk_factors\": [\"named technical risk 1\", \"named technical risk 2\"],\n"
@@ -804,11 +815,13 @@ class GroqClient:
         keys_str = json.dumps(section_keys)
         prompt = (
             f"Create a content framework plan for a professional guide on {signals['topic']} for {signals['audience']}.\n"
-            f"DOMAIN CONTEXT: {json.dumps(analysis)}\n\n"
+            f"DOMAIN CONTEXT: {json.dumps(analysis)}\n"
+            f"PSYCHOGRAPHICS: {signals.get('psychographics', 'None')}\n"
+            f"FIRM USP: {signals.get('firm_usp', 'None')}\n\n"
             f"For EACH section key in {keys_str}, return an object with:\n"
             f"  title: A 4–6 word, domain-specific, action-oriented heading (NOT generic)\n"
             f"  kicker: 1 uppercase word that labels this section's function\n"
-            f"  angle: 1 sentence — what specific insight or argument does this section make?\n"
+            f"  angle: 1 sentence — what specific insight or argument does this section make? (Incorporate the Firm's USP where relevant)\n"
             f"  key_points: exactly 3 specific, technical points this section must make\n"
             f"  pain_point_tie: which specific pain point from [{signals['pain_points']}] this resolves\n\n"
             f"Return ONLY: {{\"sections\": {{ \"section_key\": {{\"title\":\"...\",\"kicker\":\"...\",\"angle\":\"...\",\"key_points\":[...],\"pain_point_tie\":\"...\"}} }} }}"
@@ -826,11 +839,13 @@ class GroqClient:
         )
         prompt = (
             f"Generate metadata for a {type_label} on: {signals['topic']} for {signals['audience']}.\n"
-            f"Pain points being addressed: {signals['pain_points']}\n\n"
+            f"Pain points: {signals['pain_points']}\n"
+            f"Psychographics: {signals.get('psychographics', 'None')}\n"
+            f"Firm USP: {signals.get('firm_usp', 'None')}\n\n"
             f"Rules:\n"
-            f"  - title: 6–10 words, specific to {signals['topic']}, not generic\n"
-            f"  - subtitle: 10–15 words explaining the specific value of this guide\n"
-            f"  - cta_headline: a question or statement that names the specific transformation available\n"
+            f"  - title: 6–10 words, specific to {signals['topic']}, not generic. Incorporate the unique angle/USP.\n"
+            f"  - subtitle: 10–15 words explaining the specific value of this guide for someone who values {signals.get('psychographics', 'the topic')}.\n"
+            f"  - cta_headline: a question or statement that names the specific transformation available through the firm's unique mechanism.\n"
             f"  - cta_text: 2 sentences — what the reader gets from booking/downloading, with a named deliverable\n"
             f"  - legal_notice_summary: 1 sentence legal disclaimer specific to {signals['industry']} advice\n\n"
             f"Return ONLY: {{\"title\":\"...\",\"subtitle\":\"...\",\"target_audience_summary\":\"...\","
@@ -856,6 +871,8 @@ class GroqClient:
             f"You are writing ONE section of a premium institutional professional guide.\n\n"
             f"INDUSTRY CONTEXT: {analysis.get('industry_context', '')}\n"
             f"CORE PROBLEM THIS GUIDE SOLVES: {analysis.get('core_problem_summary', '')}\n"
+            f"TARGET PSYCHOGRAPHICS: {signals.get('psychographics', 'None')}\n"
+            f"FIRM'S UNIQUE SELLING PROPOSITION: {signals.get('firm_usp', 'None')}\n"
             f"THIS SECTION'S ANGLE: {angle}\n"
             f"KEY POINTS TO MAKE: {json.dumps(key_pts)}\n\n"
             f"ABSOLUTE RULES — violating any of these FAILS the section:\n"
@@ -864,9 +881,10 @@ class GroqClient:
             f"  3. No filler sentences — every sentence must add new information.\n"
             f"  4. No repetition — if a point is made once, don't restate it.\n"
             f"  5. Write like a practitioner talking to a peer — authoritative, not academic.\n"
-            f"  6. Allowed HTML only: <p> <strong> <em> <h3> <h4> <ul> <ol> <li> <br> <blockquote> <footer>\n"
-            f"  7. Do NOT include a title/heading at the top — section starts immediately with content.\n"
-            f"  8. Return valid JSON: {{\"{key}\": \"HTML string\"}} ONLY.\n"
+            f"  6. Incorporate the Firm's USP and align with the Target Psychographics where natural.\n"
+            f"  7. Allowed HTML only: <p> <strong> <em> <h3> <h4> <ul> <ol> <li> <br> <blockquote> <footer>\n"
+            f"  8. Do NOT include a title/heading at the top — section starts immediately with content.\n"
+            f"  9. Return valid JSON: {{\"{key}\": \"HTML string\"}} ONLY.\n"
         )
         prompt = (
             f"Write the '{title}' section.\n"
