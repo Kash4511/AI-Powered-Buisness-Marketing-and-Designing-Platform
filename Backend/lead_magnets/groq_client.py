@@ -194,6 +194,36 @@ SECTIONS = [
         )
     ),
 ]
+
+DOC_TYPE_LABELS = {
+    "guide":            "Strategic Guide",
+    "case_study":       "Case Study Report",
+    "checklist":        "Implementation Checklist",
+    "roi_calculator":   "ROI Analysis Report",
+    "trends_report":    "Industry Trends Report",
+    "design_portfolio": "Design Portfolio",
+    "client_onboarding":"Client Onboarding Guide",
+    "custom":           "Strategic Report",
+}
+
+_TYPE_MAP = {
+    "guide":                  "guide",
+    "strategic guide":        "guide",
+    "case_study":             "case_study",
+    "case study":             "case_study",
+    "checklist":              "checklist",
+    "roi_calculator":         "roi_calculator",
+    "roi calculator":         "roi_calculator",
+    "trends_report":          "trends_report",
+    "trends report":          "trends_report",
+    "design_portfolio":       "design_portfolio",
+    "design portfolio":       "design_portfolio",
+    "client_onboarding_flow": "client_onboarding",
+    "client_onboarding":      "client_onboarding",
+    "client onboarding flow": "client_onboarding",
+    "custom":                 "custom",
+}
+
 ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "footer"}
 
 # ─────────────────────────────────────────────────────────────────────────────
