@@ -179,18 +179,38 @@ SECTIONS = [
         )
     ),
     (
+        "case_study",
+        "Real-World Example",
+        "CASE STUDY",
+        "text-only",
+        (
+            "Create a short real-world style example (Case Study) that demonstrates how the ideas in this guide helped a project succeed.\n"
+            "The case study should be relevant to {topic} and {audience}.\n"
+            "STRUCTURE:\n"
+            "<h3>Example Project: [Project Type]</h3>\n"
+            "<p><strong>Challenge:</strong> Explain the problem the client faced in 2-3 sentences.</p>\n"
+            "<p><strong>Solution:</strong> Explain the sustainable strategies used and how the architect helped.</p>\n"
+            "<p><strong>Results:</strong> Explain the benefits achieved (energy savings, cost reduction, improved comfort, etc.).</p>\n"
+            "<p>[Suggested Visual: before-and-after building performance diagram]</p>\n"
+            "TARGET: 300–350 words."
+        )
+    ),
+    (
         "conclusion",
-        "Conclusion & Next Steps",
+        "Ready to Start Your Project?",
         "NEXT STEPS",
         "text-only",
         (
-            "End with encouraging advice and emphasize the importance of working with experienced architects.\n"
-            "A warm, professional closing statement.\n"
+            "Create a final section designed to convert readers into potential clients.\n"
+            "Encourage readers to apply the ideas from the guide and take the next step.\n"
+            "TONE: Friendly and professional, like a trusted advisor.\n"
             "STRUCTURE:\n"
-            "<p>Final thoughts on the value of {topic}.</p>\n"
-            "<h3>Ready to Start Your Journey?</h3>\n"
-            "<p>Why partnering with an architect makes the process smoother and more successful.</p>\n"
-            "TARGET: 200–250 words."
+            "<h3>Ready to Start Your Project?</h3>\n"
+            "<p>Designing a building doesn't have to be complicated. With the right guidance, you can create a space that is efficient, comfortable, and future-ready.</p>\n"
+            "<p>If you're planning a project and want expert advice, working with an experienced architecture team can make the process smoother and more successful.</p>\n"
+            "<p>Consider discussing your goals with a professional architect to explore the best solutions for your project.</p>\n"
+            "<p>End with a short motivational closing statement.</p>\n"
+            "TARGET: 250–300 words."
         )
     ),
 ]
@@ -510,12 +530,12 @@ class GroqClient:
             vars[f"pageNumber{toc_page}"] = str(toc_page).zfill(2)
             toc_page += 1
 
-        # Alias for header slots (pages 2–9 headers)
+        # Alias for header slots (pages 2–15 headers)
         vars["sectionTitle1"] = "TERMS OF USE"
         vars["sectionTitle2"] = "CONTENTS"
         vars["pageNumberHeader2"] = "02"
         vars["pageNumberHeader3"] = "03"
-        for i in range(4, 15):
+        for i in range(4, 16):
             vars[f"pageNumberHeader{i}"] = str(i).zfill(2)
 
         vars["contentsTitle"] = "Table of Contents"
@@ -529,6 +549,7 @@ class GroqClient:
 
             vars[f"customTitle{s_idx}"]   = sec_title
             vars[f"customContent{s_idx}"] = self._extract_intro(content)
+            vars[f"section_{key}_html"]   = content
 
             subheadings = self._extract_subheadings(content)
             if subheadings:

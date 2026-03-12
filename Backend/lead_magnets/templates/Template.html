@@ -12,11 +12,23 @@
             --light:     #f8f9fa;
             --text:      #2d3436;
             --muted:     #636e72;
+
+            /* Dynamic Cover Variables */
+            --cover-anim-speed: 20s;
+            --cover-color-1: #1a365d; /* Dark Blue */
+            --cover-color-2: #2a5a5e; /* Teal */
+            --cover-color-3: #1e4d40; /* Dark Green */
+            --cover-color-4: #1a365d; /* Back to Blue */
         }
 
         /* ── RESET & BASE ─────────────────────────────────────── */
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text); }
+
+        /* Animation Pause/Resume Control (Checkbox Hack) */
+        #anim-control { display: none; }
+        #anim-control:checked ~ .cover { animation-play-state: paused; }
+        #anim-control:checked ~ .cover .cover-deco-item { animation-play-state: paused; }
 
         /* ── PAGE — strict A4, no overflow ───────────────────── */
         /* Prince/DocRaptor uses @page for PDF sizing */
@@ -34,73 +46,123 @@
         }
 
         /* ── COVER ────────────────────────────────────────────── */
-        /* Reference style: white bg, dark colored header bar at top, large dark title */
+        /* Reference style: vibrant gradient background, large white title, geometric overlays */
         .cover {
-            background: white;
+            background: var(--cover-color-1);
+            background: linear-gradient(-45deg, var(--cover-color-1), var(--cover-color-2), var(--cover-color-3), var(--cover-color-4));
+            background-size: 400% 400%;
+            animation: gradientBG var(--cover-anim-speed) ease infinite;
             width: 210mm;
             height: 297mm;
             overflow: hidden;
             position: relative;
+            color: white;
         }
-        /* Top header bar — same style as content page .ph */
-        .cover-header {
-            background: var(--secondary);
-            padding: 14px 22mm;
-            position: relative;
-            overflow: hidden;
-        }
-        .cover-header-deco { position:absolute; top:0; right:0; width:180px; height:100%; opacity:0.12; }
-        .cover-header-c { position:absolute; border-radius:50%; border:2px solid white; }
-        .cover-header-c1 { width:110px; height:110px; top:-35px; right:-15px; }
-        .cover-header-c2 { width:70px;  height:70px;  top:8px;   right:72px; }
-        .cover-header-c3 { width:44px;  height:44px;  bottom:-8px; right:36px; }
-        .cover-header-title {
-            font-family:'Poppins',sans-serif; font-size:20px; font-weight:700;
-            color:white; text-transform:uppercase; letter-spacing:1px;
-            padding-left:12px; position:relative; z-index:2;
-        }
-        .cover-header-title::before {
-            content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
-            width:3px; height:22px; background:var(--primary); border-radius:3px;
-        }
-        .cover-header-bar { height:3px; background:var(--primary); }
 
-        /* Body: title block — simple top padding, no flexbox (DocRaptor compat) */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Accessibility: Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            .cover { animation: none; background-size: cover; }
+            .cover-deco-item { animation: none !important; }
+        }
+
+        /* Decorative Geometric Elements */
+        .cover-deco { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+        .cover-deco-item { position: absolute; border: 1px solid rgba(255,255,255,0.15); }
+        
+        .cover-circle-1 { 
+            width: 400px; height: 400px; border-radius: 50%; 
+            top: -100px; right: -100px; 
+            animation: float 25s infinite alternate;
+        }
+        .cover-circle-2 { 
+            width: 250px; height: 250px; border-radius: 50%; 
+            bottom: -50px; left: -80px; 
+            animation: float 18s infinite alternate-reverse;
+        }
+        .cover-diamond-1 { 
+            width: 150px; height: 150px; transform: rotate(45deg); 
+            top: 40%; right: 10%; 
+            animation: rotateDiamond 30s infinite linear;
+        }
+        .cover-line-1 {
+            width: 300px; height: 1px; background: rgba(255,255,255,0.1);
+            top: 25%; left: -50px; transform: rotate(-15deg);
+        }
+
+        @keyframes float {
+            from { transform: translate(0, 0); }
+            to { transform: translate(20px, 40px); }
+        }
+        @keyframes rotateDiamond {
+            from { transform: rotate(45deg); }
+            to { transform: rotate(405deg); }
+        }
+
+        .cover-header {
+            padding: 20px 22mm;
+            position: relative;
+            z-index: 10;
+        }
+        .cover-header-title {
+            font-family:'Poppins',sans-serif; font-size:14px; font-weight:700;
+            color: rgba(255,255,255,0.8); text-transform:uppercase; letter-spacing:2px;
+        }
+
         .cover-body {
-            padding: 28mm 22mm 0 22mm;
+            padding: 45mm 22mm 0 22mm;
+            position: relative;
+            z-index: 10;
         }
         .cover-eyebrow {
-            font-size:11px; font-weight:600; text-transform:uppercase;
-            letter-spacing:3px; color:var(--secondary); margin-bottom:14px;
+            font-size:12px; font-weight:700; text-transform:uppercase;
+            letter-spacing:4px; color:rgba(255,255,255,0.9); margin-bottom:20px;
             display:block;
         }
         .cover-title {
-            font-family:'Poppins',sans-serif; font-size:40px; font-weight:900;
-            line-height:1.06; text-transform:uppercase; letter-spacing:-1px;
-            color:var(--primary); margin:0;
+            font-family:'Poppins',sans-serif; font-size:48px; font-weight:900;
+            line-height:1.1; text-transform:uppercase; letter-spacing:-1px;
+            color: white; margin:0;
+            max-width: 550px;
         }
         .cover-title-rule {
-            width:60px; height:4px; background:var(--secondary);
-            border-radius:2px; margin:16px 0;
-            display:block;
+            width: 450px; height: 4px; background: white;
+            margin: 25px 0;
+            display: block;
         }
         .cover-sub {
-            display:block; font-size:17px; font-weight:400; line-height:1.6;
-            color:#444; max-width:430px;
+            display:block; font-size:20px; font-weight:400; line-height:1.5;
+            color: rgba(255,255,255,0.9); max-width:500px;
         }
         .cover-desc {
-            display:block; font-size:12px; color:var(--muted); margin-top:24px;
+            display:block; font-size:13px; color:rgba(255,255,255,0.7); margin-top:35px;
             font-style:italic;
         }
+
         /* Bottom contact strip */
         .cover-ft {
             position:absolute; bottom:0; left:0; right:0;
-            background:var(--primary);
-            padding:14px 22mm;
+            padding:30px 22mm;
             display:block;
+            z-index: 10;
         }
-        .cover-ft-name { font-weight:700; font-size:13px; color:white; margin-bottom:3px; }
-        .cover-ft-details { font-size:11px; color:rgba(255,255,255,0.8); }
+        .cover-ft-name { font-weight:800; font-size:16px; color:white; margin-bottom:8px; font-family:'Poppins',sans-serif; }
+        .cover-ft-details { font-size:12px; color:rgba(255,255,255,0.85); line-height: 1.6; }
+        .cover-ft-details span { margin-right: 15px; }
+
+        /* Interactive Controls Overlay (Web Only) */
+        .cover-controls {
+            position: absolute; top: 10px; right: 10px; z-index: 100;
+            background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px;
+            font-size: 10px; color: white; cursor: pointer;
+            display: none; /* Hidden by default, show in web preview if needed */
+        }
+        @media screen { .cover-controls { display: block; } }
 
         /* ── CONTENT PAGES ────────────────────────────────────── */
         /* Fixed-height zones so content cannot push past page boundary */
@@ -267,31 +329,40 @@
 <body>
 
 <!-- ═══════════════════════════════════════════ PAGE 1 — COVER -->
+<input type="checkbox" id="anim-control">
 <div class="page cover">
-    <!-- Top header bar -->
+    <label for="anim-control" class="cover-controls">Pause/Resume Animation</label>
+    
+    <!-- Decorative geometric elements -->
+    <div class="cover-deco">
+        <div class="cover-deco-item cover-circle-1"></div>
+        <div class="cover-deco-item cover-circle-2"></div>
+        <div class="cover-deco-item cover-diamond-1"></div>
+        <div class="cover-deco-item cover-line-1"></div>
+    </div>
+
+    <!-- Top header -->
     <div class="cover-header">
-        <div class="cover-header-deco">
-            <div class="cover-header-c cover-header-c1"></div>
-            <div class="cover-header-c cover-header-c2"></div>
-            <div class="cover-header-c cover-header-c3"></div>
-        </div>
         <div class="cover-header-title">{{documentTypeLabel}}</div>
     </div>
-    <div class="cover-header-bar"></div>
 
-    <!-- Main body: company eyebrow + large title + rule + subtitle -->
+    <!-- Main body -->
     <div class="cover-body">
         <span class="cover-eyebrow">{{companyName}}</span>
         <div class="cover-title">{{mainTitle}}</div>
         <span class="cover-title-rule"></span>
         <span class="cover-sub">{{documentSubtitle}}</span>
-        <span class="cover-desc">{{documentTypeLabel}} &nbsp;|&nbsp; Prepared by {{companyName}}</span>
+        <span class="cover-desc">Prepared by {{companyName}}</span>
     </div>
 
-    <!-- Bottom contact strip pinned to bottom -->
+    <!-- Bottom contact strip -->
     <div class="cover-ft">
         <div class="cover-ft-name">{{companyName}}</div>
-        <div class="cover-ft-details">{{emailAddress}} &nbsp;&bull;&nbsp; {{website}} &nbsp;&bull;&nbsp; {{phoneNumber}}</div>
+        <div class="cover-ft-details">
+            <span>{{emailAddress}}</span>
+            <span>{{website}}</span>
+            <span>{{phoneNumber}}</span>
+        </div>
     </div>
 </div>
 
@@ -338,6 +409,7 @@
         <div class="toc-item"><span class="toc-label">{{contentItem9}}</span><span class="toc-pg">{{pageNumber12}}</span></div>
         <div class="toc-item"><span class="toc-label">{{contentItem10}}</span><span class="toc-pg">{{pageNumber13}}</span></div>
         <div class="toc-item"><span class="toc-label">{{contentItem11}}</span><span class="toc-pg">{{pageNumber14}}</span></div>
+        <div class="toc-item"><span class="toc-label">{{contentItem12}}</span><span class="toc-pg">{{pageNumber15}}</span></div>
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -538,7 +610,7 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ PAGE 14 — CONCLUSION -->
+<!-- ═══════════════════════════════════════════ PAGE 14 — CASE STUDY -->
 <div class="page">
     <div class="ph">
         <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
@@ -547,7 +619,7 @@
     <div class="ph-bar"></div>
     <div class="pc">
         <div class="pg-title">{{customTitle11}}</div>
-        <div class="sh">{{section_conclusion_html}}</div>
+        <div class="sh">{{section_case_study_html}}</div>
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -556,29 +628,26 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ PAGE 15 — CONTACT & CTA -->
+<!-- ═══════════════════════════════════════════ PAGE 15 — CONCLUSION & CTA -->
 <div class="page">
     <div class="ph">
         <div class="ph-deco"><div class="ph-c ph-c1"></div><div class="ph-c ph-c2"></div><div class="ph-c ph-c3"></div></div>
-        <div class="ph-row"><div class="ph-title">GET STARTED</div><div class="ph-num">{{pageNumberHeader15}}</div></div>
+        <div class="ph-row"><div class="ph-title">{{sectionTitle14}}</div><div class="ph-num">{{pageNumberHeader15}}</div></div>
     </div>
     <div class="ph-bar"></div>
     <div class="pc">
+        <div class="sh" style="margin-bottom:30px;">{{section_conclusion_html}}</div>
+        
         <div class="cta-box">
             <div class="cta-h">{{ctaHeadline}}</div>
             <p class="cta-p">{{contactDescription}}</p>
         </div>
-        <div class="sub-h">{{differentiatorTitle}}</div>
         <div class="c-box">
             <h4>{{companyName}}</h4>
             <p>{{differentiator}}</p>
             <p style="margin-top:8px;border-top:1px solid #e0e0e0;padding-top:8px;"><strong>Email:</strong> {{emailAddress}}</p>
             <p><strong>Phone:</strong> {{phoneNumber}}</p>
             <p><strong>Web:</strong> {{website}}</p>
-        </div>
-        <div class="n-box">
-            <div class="n-box-title">YOUR NEXT STEP</div>
-            <p>{{ctaText}}</p>
         </div>
     </div>
     <div class="pf">
