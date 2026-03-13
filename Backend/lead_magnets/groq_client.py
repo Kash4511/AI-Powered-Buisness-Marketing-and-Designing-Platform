@@ -227,21 +227,24 @@ DOC_TYPE_LABELS = {
 }
 
 _TYPE_MAP = {
+    # Normalized (Lowercase + Underscore)
     "guide":                  "guide",
-    "strategic guide":        "guide",
     "case_study":             "case_study",
-    "case study":             "case_study",
     "checklist":              "checklist",
     "roi_calculator":         "roi_calculator",
-    "roi calculator":         "roi_calculator",
     "trends_report":          "trends_report",
-    "trends report":          "trends_report",
     "design_portfolio":       "design_portfolio",
-    "design portfolio":       "design_portfolio",
-    "client_onboarding_flow": "client_onboarding",
     "client_onboarding":      "client_onboarding",
-    "client onboarding flow": "client_onboarding",
+    "onboarding_flow":        "client_onboarding",
     "custom":                 "custom",
+
+    # Human-readable variants (will be normalized by get_semantic_signals)
+    "Strategic Guide":        "guide",
+    "Case Study":             "case_study",
+    "ROI Calculator":         "roi_calculator",
+    "Trends Report":          "trends_report",
+    "Design Portfolio":       "design_portfolio",
+    "Client Onboarding Flow": "client_onboarding",
 }
 
 ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "footer"}
@@ -303,6 +306,120 @@ def _deduplicate_content(html: str) -> str:
     return ''.join(result)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# MASTER PROMPT TEMPLATE — Single-call generation for all types
+# ─────────────────────────────────────────────────────────────────────────────
+MASTER_PROMPT_TEMPLATE = """
+You are a professional B2B marketing strategist and architectural consultant.
+Your task is to generate a HIGH-QUALITY LEAD MAGNET designed for architecture firms.
+
+GOALS: Specific, Practical, Engaging, Actionable, Written for non-technical readers.
+TONE: Friendly but professional, like advice from an experienced architect.
+AVOID: Technical jargon, academic writing, filler content.
+
+INPUT DATA:
+Topic: {topic}
+Lead Magnet Type: {lead_magnet_type}
+Audience: {audience}
+Pain Points: {pain_points}
+Psychographics: {psychographics}
+Firm USP: {firm_usp}
+
+---------------------------------------------
+FORMAT RULES FOR "{lead_magnet_type}":
+
+{format_specific_rules}
+---------------------------------------------
+
+WRITING RULES:
+- Write clearly and conversationally.
+- Use bullet points and examples.
+- Use <h3> for sub-headings within sections.
+- Use <p> for paragraphs.
+- Use <strong> for emphasis.
+- Use <ul><li> for lists.
+- Output MUST be structured with Markdown headers:
+  # [Main Title]
+  ## [Section Name]
+  [Section Content]
+
+Do NOT include explanations or meta-talk. Only output the lead magnet content.
+CRITICAL: You MUST include EVERY section listed in the "Structure" for "{lead_magnet_type}" above. Do not skip any sections.
+"""
+
+FORMAT_RULES = {
+    "guide": """
+Structure:
+1. TITLE PAGE: Engaging title and subtitle.
+2. INTRODUCTION: Explain the topic simply and why it matters.
+3. COMMON CHALLENGES: Describe 4 real problems clients face.
+4. KEY PRINCIPLES: Core ideas clients should understand (e.g. envelope as a coat).
+5. PRACTICAL STRATEGIES: 3 actionable strategies with examples.
+6. MANAGING YOUR PROJECT RISKS: Explain how to avoid common risks.
+7. BEST PRACTICES FOR SUCCESS: Professional tips for the audience.
+8. FACTS AND FIGURES: Interesting facts or simple statistics.
+9. IMPLEMENTATION ROADMAP: 5 step-by-step phases.
+10. TRADITIONAL VS. SMART DESIGN: Compare approaches simply.
+11. KEY LESSONS: Summarize important takeaways in bullets.
+12. REAL-WORLD EXAMPLE: A short success story (Project, Challenge, Solution, Results).
+13. READY TO START YOUR PROJECT?: Encouraging advice and a specific invitation to consult.
+""",
+    "checklist": """
+Requirements:
+- Use checkbox symbols (☐).
+- Focus on short actionable tasks organized by phase.
+Structure:
+1. Planning: 3+ tasks.
+2. Design: 3+ tasks.
+3. Construction: 3+ tasks.
+4. Final Review: 2+ tasks.
+5. Quick Tip: A short expert insight.
+""",
+    "case_study": """
+Structure:
+1. Project Overview: Describe project and client.
+2. Challenge: Explain problems faced.
+3. Approach: Strategies and decisions.
+4. Implementation: Execution details.
+5. Results: Measurable outcomes (savings, performance).
+6. Lessons Learned: Key insights.
+""",
+    "roi_calculator": """
+Structure:
+1. Introduction.
+2. Cost Factors: What affects investment.
+3. ROI Breakdown: Table with Investment Type | Cost | Expected Savings | Payback Period.
+4. Scenario Examples: 2 example calculations.
+5. Decision Tips: How to evaluate ROI.
+""",
+    "trends_report": """
+Structure:
+1. Executive Summary.
+2. Major Industry Trends: 4-5 emerging trends.
+3. Market Drivers: What influences them.
+4. Opportunities: How firms can adapt.
+5. Future Outlook: Next 5 years.
+""",
+    "client_onboarding": """
+Structure:
+1. Overview.
+2. Step 1: Initial Consultation.
+3. Step 2: Project Discovery.
+4. Step 3: Design Planning.
+5. Step 4: Approval and Permitting.
+6. Step 5: Construction Coordination.
+7. Step 6: Project Completion.
+""",
+    "design_portfolio": """
+Structure:
+1. About the Firm.
+2. Project Highlight 1: Description, Features, Sustainability.
+3. Project Highlight 2: Description, Features, Sustainability.
+4. Design Philosophy.
+""",
+    "custom": "Generate a flexible marketing lead magnet appropriate to the topic and audience."
+}
+
 class GroqClient:
     SECTIONS = SECTIONS
     DOC_TYPE_LABELS = DOC_TYPE_LABELS
@@ -329,8 +446,13 @@ class GroqClient:
             user_answers.get("document_type")
             or user_answers.get("lead_magnet_type")
             or "guide"
-        ).lower().strip()
-        doc_type    = _TYPE_MAP.get(raw_type, "guide")
+        ).strip().replace("-", "_").replace(" ", "_")
+        
+        # Try finding in map, then fallback to lowercase search
+        doc_type = _TYPE_MAP.get(raw_type)
+        if not doc_type:
+            doc_type = _TYPE_MAP.get(raw_type.lower(), "guide")
+
         pain_points = user_answers.get("pain_points", [])
         audience    = user_answers.get("target_audience", "Stakeholders")
         
@@ -355,64 +477,164 @@ class GroqClient:
     def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
         doc_type   = signals.get("document_type", "guide")
         type_label = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
-        logger.info(f"📄 {type_label} | topic={signals['topic']} | model={self.model}")
+        logger.info(f"🚀 Unified Generation | type={doc_type} | topic={signals['topic']}")
 
-        logger.info("🧠 Layer 1 — Input Analysis")
-        self._analysis = self._analyze_inputs(signals)
+        # 1. Prepare Master Prompt
+        format_rules = FORMAT_RULES.get(doc_type, FORMAT_RULES["custom"])
+        prompt = MASTER_PROMPT_TEMPLATE.format(
+            topic                = signals["topic"],
+            lead_magnet_type     = doc_type,
+            audience             = signals["audience"],
+            pain_points          = signals["pain_points"],
+            psychographics       = signals.get("psychographics", "None"),
+            firm_usp             = signals.get("firm_usp", "None"),
+            format_specific_rules = format_rules
+        )
 
-        logger.info("📐 Layer 2 — Framework Generation")
-        section_keys = [key for key, _, _, _, _ in SECTIONS]
-        self._framework = self._generate_framework(self._analysis, section_keys, signals)
+        # 2. Call AI (One Shot)
+        try:
+            response = self.client.chat.completions.create(
+                model       = self.model,
+                messages    = [
+                    {"role": "system", "content": "You are a professional marketing copywriter and strategist."},
+                    {"role": "user",   "content": prompt},
+                ],
+                temperature = self.temperature,
+                max_tokens  = self.max_tokens,
+            )
+            raw_content = response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Unified AI Call Failed: {e}")
+            raise RuntimeError(f"AI Generation Error: {e}")
 
-        title_data = self._generate_title(signals, type_label)
-        expansions: Dict[str, str] = {}
-        for key, title, label, _layout, brief in SECTIONS:
-            logger.info(f"✍️  Layer 3 — {key}")
-            expansions[key] = self._generate_section(key, title, brief, signals)
+        # 3. Parse Unified Content
+        parsed = self._parse_unified_content(raw_content, doc_type)
 
-        framework_data = self._framework.get("sections", {})
-        self._analysis  = None
-        self._framework = None
-
+        # 4. Finalize and Return
         return {
-            "title":                   title_data.get("title", signals["topic"]),
-            "subtitle":                title_data.get("subtitle", type_label),
-            "target_audience_summary": title_data.get("target_audience_summary", ""),
-            "legal_notice_summary":    title_data.get("legal_notice_summary", ""),
-            "cta_headline":            title_data.get("cta_headline", ""),
-            "cta_text":                title_data.get("cta_text", ""),
-            "document_type":           doc_type,
-            "document_type_label":     type_label,
-            "expansions":              expansions,
-            "framework":               framework_data,
+            "title":               parsed.get("title", signals["topic"]),
+            "subtitle":            parsed.get("subtitle", type_label),
+            "document_type":       doc_type,
+            "document_type_label": type_label,
+            "sections":            parsed.get("sections", {}),
+            "raw_output":          raw_content,
         }
 
+    def _parse_unified_content(self, text: str, doc_type: str) -> Dict[str, Any]:
+        """Splits unified Markdown response into structured sections."""
+        parsed = {"title": "", "subtitle": "", "sections": {}}
+        
+        # Extract Main Title (# Header)
+        title_match = re.search(r'^#\s*(.*)$', text, re.MULTILINE)
+        if title_match:
+            full_title = title_match.group(1).strip()
+            if ":" in full_title:
+                parts = full_title.split(":", 1)
+                parsed["title"] = parts[0].strip()
+                parsed["subtitle"] = parts[1].strip()
+            else:
+                parsed["title"] = full_title
+
+        # Split by ## headers
+        sections_raw = re.split(r'^##\s*(?:\d+\.?\s*)?(.*)$', text, flags=re.MULTILINE)
+        
+        # Mapping for various doc types to internal keys
+        mapping = {
+            "introduction": "executive_summary",
+            "overview": "executive_summary",
+            "executive_summary": "executive_summary",
+            "common_challenges": "key_challenges",
+            "challenges": "key_challenges",
+            "key_principles": "strategic_framework",
+            "principles": "strategic_framework",
+            "practical_strategies": "implementation_strategy",
+            "strategies": "implementation_strategy",
+            "implementation_roadmap": "process_steps",
+            "roadmap": "process_steps",
+            "steps": "process_steps",
+            "tools_and_resources": "best_practices",
+            "resources": "best_practices",
+            "quick_checklist": "risk_management",
+            "checklist": "risk_management",
+            "risks": "risk_management",
+            "case_insight": "case_study",
+            "case_study": "case_study",
+            "example": "case_study",
+            "real_world_example": "case_study",
+            "key_takeaways": "key_takeaways",
+            "takeaways": "key_takeaways",
+            "lessons": "key_takeaways",
+            "key_lessons": "key_takeaways",
+            "conclusion": "conclusion",
+            "ready_to_start": "conclusion",
+            "next_steps": "conclusion",
+            "cta": "conclusion"
+        }
+
+        # Subsequent parts are [Header, Content, Header, Content...]
+        for i in range(1, len(sections_raw), 2):
+            raw_header = sections_raw[i].strip()
+            header_slug = raw_header.lower().replace(" ", "_").replace("&", "and")
+            content = sections_raw[i+1].strip()
+            
+            key = header_slug
+            for k, v in mapping.items():
+                if k in header_slug:
+                    key = v
+                    break
+            
+            parsed["sections"][key] = {
+                "content": content,
+                "title": raw_header
+            }
+
+        return parsed
+
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
-        exp = raw.get("expansions", {})
-        fw  = raw.get("framework", {})
+        sections_data = raw.get("sections", {})
+        doc_type = raw.get("document_type", "guide")
+        
         normalized: Dict[str, Any] = {
             "title":                raw.get("title") or "",
             "subtitle":             raw.get("subtitle", ""),
-            "summary":              raw.get("target_audience_summary", ""),
-            "legal_notice_summary": raw.get("legal_notice_summary", ""),
-            "cta_headline":         raw.get("cta_headline", ""),
-            "cta_text":             raw.get("cta_text", ""),
-            "document_type":        raw.get("document_type", "guide"),
+            "document_type":        doc_type,
             "document_type_label":  raw.get("document_type_label") or "",
             "sections_config":      self.SECTIONS,
-            "framework":            fw,
+            "framework":            {}, 
         }
-        for key, *_ in SECTIONS:
-            content = exp.get(key, "")
-            if isinstance(content, dict):
-                content = json.dumps(content)
 
-            raw_html  = content if isinstance(content, str) else str(content)
-            sanitized = self._sanitize_html(raw_html)
+        # Build framework and normalize content
+        for key, default_title, default_label, _, _ in SECTIONS:
+            sec_data = sections_data.get(key, {})
+            if isinstance(sec_data, str):
+                content = sec_data
+                title = default_title
+            else:
+                content = sec_data.get("content", "")
+                title = sec_data.get("title", default_title)
+
+            # Fallback fuzzy match if key not found directly
+            if not content:
+                for s_key, s_val in sections_data.items():
+                    if key in s_key or s_key in key:
+                        if isinstance(s_val, str):
+                            content = s_val
+                        else:
+                            content = s_val.get("content", "")
+                            title = s_val.get("title", title)
+                        break
+
+            sanitized = self._sanitize_html(str(content))
             sanitized = _strip_filler(sanitized)
             sanitized = _deduplicate_content(sanitized)
+            
             normalized[key] = sanitized
+            normalized["framework"][key] = {
+                "title": title,
+                "kicker": default_label
+            }
 
+            # Specialized extractions
             if key == "key_statistics":
                 self._extract_stats(sanitized, normalized)
             elif key == "process_steps":
@@ -429,9 +651,14 @@ class GroqClient:
                 self._extract_checklists(sanitized, normalized, "listItem", 4)
             elif key == "risk_management":
                 self._extract_checklists(sanitized, normalized, "numberedItem", 4)
-                self._extract_quote(sanitized, normalized, 2)
             elif key == "conclusion":
                 self._extract_cta(sanitized, normalized)
+
+        # Ensure summary and CTA text for legacy slots
+        normalized["summary"] = normalized.get("executive_summary", "")[:500]
+        normalized["cta_text"] = normalized.get("conclusion", "")[:300]
+        normalized["cta_headline"] = normalized.get("cta_headline") or "Ready to Start Your Project?"
+        normalized["legal_notice_summary"] = "This document provides strategic guidance and should be verified by a qualified professional."
 
         return normalized
 
@@ -771,144 +998,12 @@ class GroqClient:
         if match:
             data["ctaHeadline"] = match.group(1).strip()
 
-    # ─────────────────────────────────────────────────────────────────────
-    # AI LAYERS
-    # ─────────────────────────────────────────────────────────────────────
-
-    def _analyze_inputs(self, signals: Dict[str, Any]) -> Dict[str, Any]:
-        system = (
-            "You are a domain expert and institutional strategist. "
-            "Your output feeds an AI content pipeline — be specific, technical, and zero-filler. "
-            "Return valid JSON only. No markdown. No prose."
-        )
-        prompt = (
-            f"Analyze these inputs and return structured domain intelligence for a professional guide.\n\n"
-            f"Topic: {signals['topic']}\n"
-            f"Audience: {signals['audience']}\n"
-            f"Pain Points: {signals['pain_points']}\n"
-            f"Psychographics (Values/Fears): {signals.get('psychographics', 'None provided')}\n"
-            f"Firm USP (Unique Selling Proposition): {signals.get('firm_usp', 'None provided')}\n"
-            f"Industry: {signals.get('industry', 'Architecture')}\n\n"
-            f"Return ONLY this JSON (be specific — name real tools, standards, metrics):\n"
-            f"{{\n"
-            f"  \"industry_context\": \"2–3 sentences on the current technical and market state of this industry, with a specific stat or standard\",\n"
-            f"  \"core_problem_summary\": \"The precise technical/process failure that underlies these pain points\",\n"
-            f"  \"psychographic_hook\": \"A specific emotional or logical angle that connects the topic to the audience's values/fears\",\n"
-            f"  \"unique_mechanism_alignment\": \"How the firm's USP specifically solves the core problem differently than competitors\",\n"
-            f"  \"stakeholder_roles\": [\"specific role 1\", \"specific role 2\", \"specific role 3\"],\n"
-            f"  \"strategic_focus_areas\": [\"named focus 1\", \"named focus 2\", \"named focus 3\"],\n"
-            f"  \"risk_factors\": [\"named technical risk 1\", \"named technical risk 2\"],\n"
-            f"  \"pain_point_solutions\": {{ \"pain point key\": \"named solution/framework\" }},\n"
-            f"  \"implementation_priorities\": [\"priority 1 with tool name\", \"priority 2 with metric\"]\n"
-            f"}}"
-        )
-        return self._call_ai(system, prompt, max_tokens=600)
-
-    def _generate_framework(
-        self, analysis: Dict[str, Any], section_keys: List[str], signals: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        system = (
-            "You are a senior content strategist for institutional professional guides. "
-            "Every title and kicker must be domain-specific and action-oriented — no generic labels. "
-            "Return valid JSON only. No markdown."
-        )
-        keys_str = json.dumps(section_keys)
-        prompt = (
-            f"Create a content framework plan for a professional guide on {signals['topic']} for {signals['audience']}.\n"
-            f"DOMAIN CONTEXT: {json.dumps(analysis)}\n"
-            f"PSYCHOGRAPHICS: {signals.get('psychographics', 'None')}\n"
-            f"FIRM USP: {signals.get('firm_usp', 'None')}\n\n"
-            f"For EACH section key in {keys_str}, return an object with:\n"
-            f"  title: A 4–6 word, domain-specific, action-oriented heading (NOT generic)\n"
-            f"  kicker: 1 uppercase word that labels this section's function\n"
-            f"  angle: 1 sentence — what specific insight or argument does this section make? (Incorporate the Firm's USP where relevant)\n"
-            f"  key_points: exactly 3 specific, technical points this section must make\n"
-            f"  pain_point_tie: which specific pain point from [{signals['pain_points']}] this resolves\n\n"
-            f"Return ONLY: {{\"sections\": {{ \"section_key\": {{\"title\":\"...\",\"kicker\":\"...\",\"angle\":\"...\",\"key_points\":[...],\"pain_point_tie\":\"...\"}} }} }}"
-        )
-        result = self._call_ai(system, prompt, max_tokens=2000)
-        if "sections" not in result and isinstance(result, dict):
-            result = {"sections": result}
-        return result
-
-    def _generate_title(self, signals: Dict, type_label: str) -> Dict:
-        system = (
-            "You are a senior document strategist. Titles must be specific to the topic — no generic phrases. "
-            "CTAs must name what the reader gets, not just say 'contact us'. "
-            "Return valid JSON only. No markdown."
-        )
-        prompt = (
-            f"Generate metadata for a {type_label} on: {signals['topic']} for {signals['audience']}.\n"
-            f"Pain points: {signals['pain_points']}\n"
-            f"Psychographics: {signals.get('psychographics', 'None')}\n"
-            f"Firm USP: {signals.get('firm_usp', 'None')}\n\n"
-            f"Rules:\n"
-            f"  - title: 6–10 words, specific to {signals['topic']}, not generic. Incorporate the unique angle/USP.\n"
-            f"  - subtitle: 10–15 words explaining the specific value of this guide for someone who values {signals.get('psychographics', 'the topic')}.\n"
-            f"  - cta_headline: a question or statement that names the specific transformation available through the firm's unique mechanism.\n"
-            f"  - cta_text: 2 sentences — what the reader gets from booking/downloading, with a named deliverable\n"
-            f"  - legal_notice_summary: 1 sentence legal disclaimer specific to {signals['industry']} advice\n\n"
-            f"Return ONLY: {{\"title\":\"...\",\"subtitle\":\"...\",\"target_audience_summary\":\"...\","
-            f"\"legal_notice_summary\":\"...\",\"cta_headline\":\"...\",\"cta_text\":\"...\"}}"
-        )
-        return self._call_ai(system, prompt, max_tokens=500)
-
-    def _generate_section(self, key: str, title: str, brief: str, signals: Dict) -> str:
-        brief_filled = brief.format(
-            topic       = signals["topic"],
-            audience    = signals["audience"],
-            pain_points = signals["pain_points"],
-            industry    = signals.get("industry") or signals["topic"],
-        )
-        analysis = self._analysis or {}
-        secs     = (self._framework or {}).get("sections", {})
-        sec_plan = secs.get(key, {})
-        key_pts  = sec_plan.get("key_points", [])
-        angle    = sec_plan.get("angle", "")
-
-        system = (
-            f"You are a domain expert and senior consultant in {signals['topic']} writing for {signals['audience']}.\n"
-            f"You are writing ONE section of a premium institutional professional guide.\n\n"
-            f"INDUSTRY CONTEXT: {analysis.get('industry_context', '')}\n"
-            f"CORE PROBLEM THIS GUIDE SOLVES: {analysis.get('core_problem_summary', '')}\n"
-            f"TARGET PSYCHOGRAPHICS: {signals.get('psychographics', 'None')}\n"
-            f"FIRM'S UNIQUE SELLING PROPOSITION: {signals.get('firm_usp', 'None')}\n"
-            f"THIS SECTION'S ANGLE: {angle}\n"
-            f"KEY POINTS TO MAKE: {json.dumps(key_pts)}\n\n"
-            f"ABSOLUTE RULES — violating any of these FAILS the section:\n"
-            f"  1. NEVER open with 'This section', 'This guide', 'In today's world', or any meta-phrase.\n"
-            f"  2. Every paragraph must include at least ONE specific metric, tool name, or standard.\n"
-            f"  3. No filler sentences — every sentence must add new information.\n"
-            f"  4. No repetition — if a point is made once, don't restate it.\n"
-            f"  5. Write like a practitioner talking to a peer — authoritative, not academic.\n"
-            f"  6. Incorporate the Firm's USP and align with the Target Psychographics where natural.\n"
-            f"  7. Allowed HTML only: <p> <strong> <em> <h3> <h4> <ul> <ol> <li> <br> <blockquote> <footer>\n"
-            f"  8. Do NOT include a title/heading at the top — section starts immediately with content.\n"
-            f"  9. Return valid JSON: {{\"{key}\": \"HTML string\"}} ONLY.\n"
-        )
-        prompt = (
-            f"Write the '{title}' section.\n"
-            f"BRIEF:\n{brief_filled}\n\n"
-            f"Return ONLY: {{\"{key}\": \"<HTML content here>\"}}"
-        )
-        raw = self._call_ai(system, prompt, max_tokens=2000)
-        return self._sanitize_html(self._extract_content(raw, key))
-
-    # ─────────────────────────────────────────────────────────────────────
-    # UTILITIES
-    # ─────────────────────────────────────────────────────────────────────
-
-    def _extract_content(self, result: Dict, key: str) -> str:
-        if not result:
-            return ""
-        if key in result and isinstance(result[key], str):
-            return result[key]
-        # Fallback: find the longest string value
-        best = ""
-        for k, v in result.items():
-            if isinstance(v, str) and len(v) > len(best):
-                best = v
-        return best
+    # ── Stub kept for backward compat with FormaAIConversationView ────────────
+    def ensure_section_content(
+        self, sections: list, signals: Dict[str, Any], firm_profile: Dict[str, Any]
+    ) -> list:
+        """Pass-through — sections are now always generated in generate_lead_magnet_json."""
+        return sections
 
     def _sanitize_html(self, html: str) -> str:
         if not html:

@@ -304,13 +304,12 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             ),
             "tone":             "Professional and Institutional",
             "industry":         "Architecture",
-            "document_type": (
-                gen_data.lead_magnet_type.lower().replace(" ", "_")
-                if gen_data and gen_data.lead_magnet_type
-                else "guide"
-            ),
-            "lead_magnet_type": gen_data.lead_magnet_type if gen_data else "Strategic Guide",
+            "document_type":    gen_data.lead_magnet_type or "guide",
+            "lead_magnet_type": gen_data.lead_magnet_type or "Strategic Guide",
         }
+
+        logger.info(f"🔍 gen_data.lead_magnet_type = '{gen_data.lead_magnet_type}'")
+        logger.info(f"🔍 ai_input_data document_type = '{ai_input_data['document_type']}'")
 
         # Build firm profile
         firm_profile = _build_firm_profile(user)
