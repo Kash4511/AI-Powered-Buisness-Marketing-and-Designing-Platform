@@ -244,16 +244,27 @@ ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockq
 # FILLER DETECTION
 # ─────────────────────────────────────────────────────────────────────────────
 _FILLER_PATTERNS = [
-    r"this (section|guide|document|report) (provides?|offers?|explores?|covers?|aims? to|is designed to)",
-    r"in (today's|the current|this) (fast[- ]paced|rapidly changing|evolving|dynamic|competitive)",
-    r"it is (important|crucial|essential|critical) (to note|to understand|that)",
-    r"(as we|let us|let's) (explore|delve|dive|look at|examine)",
-    r"(understanding|navigating) the (complexities|nuances|intricacies) of",
-    r"(the following|below) (section|content|information) (will|provides?|outlines?)",
-    r"in conclusion,? (this|it|we)",
-    r"(to summarize|in summary|to recap),",
-    r"this comprehensive (guide|report|document)",
-    r"(by the end of this|after reading this)",
+    r"this (section|guide|document|report|checklist|article) (provides?|offers?|explores?|covers?|aims? to|is designed to)",
+    r"in (today's|the current|this) (fast[- ]paced|rapidly changing|evolving|dynamic|competitive|modern)",
+    r"it is (important|crucial|essential|critical|vital) (to note|to understand|that|to consider)",
+    r"(as we|let us|let's|we will) (explore|delve|dive|look at|examine|discuss|uncover)",
+    r"(understanding|navigating) the (complexities|nuances|intricacies|challenges) of",
+    r"(the following|below) (section|content|information|steps|points) (will|provides?|outlines?|describes?)",
+    r"in conclusion,? (this|it|we|as shown)",
+    r"(to summarize|in summary|to recap|overall),",
+    r"this comprehensive (guide|report|document|analysis)",
+    r"(by the end of this|after reading this|now that you've read)",
+    r"one of the most (significant|important|notable) (aspects|factors|elements)",
+    r"it's worth (noting|mentioning|considering) that",
+    r"furthermore,? (the|this|we)",
+    r"additionally,? (the|this|we)",
+    r"moreover,? (the|this|we)",
+    r"consequently,? (the|this|we)",
+    r"as a result,? (the|this|we)",
+    r"first and foremost,?",
+    r"lastly,? (the|this|we)",
+    r"to put it simply,?",
+    r"in other words,?",
 ]
 _FILLER_RE = re.compile("|".join(_FILLER_PATTERNS), re.IGNORECASE)
 
@@ -261,8 +272,15 @@ _FILLER_RE = re.compile("|".join(_FILLER_PATTERNS), re.IGNORECASE)
 def _strip_filler(html: str) -> str:
     if not html:
         return html
+    # Split by sentences (handling basic punctuation)
     sentences = re.split(r'(?<=[.!?])\s+', html)
-    cleaned = [s for s in sentences if not _FILLER_RE.search(s)]
+    cleaned = []
+    for s in sentences:
+        # If the sentence starts with a filler pattern, skip it
+        if _FILLER_RE.match(s.strip()):
+            logger.debug(f"Stripped filler sentence: {s[:60]}...")
+            continue
+        cleaned.append(s)
     return " ".join(cleaned)
 
 
@@ -291,12 +309,15 @@ def _deduplicate_content(html: str) -> str:
 # MASTER PROMPT — type-aware format rules injected per doc_type
 # ─────────────────────────────────────────────────────────────────────────────
 MASTER_PROMPT_TEMPLATE = """
-You are a professional B2B marketing strategist and architectural consultant.
-Generate a HIGH-QUALITY LEAD MAGNET for an architecture firm.
+You are a senior architectural consultant and high-end marketing strategist.
+Your task is to generate a SUBSTANTIAL, HIGH-VALUE lead magnet that sounds like it was written by a human expert with 20+ years of experience.
 
-GOALS: Specific, Practical, Engaging, Actionable, Written for non-technical readers.
-TONE: Friendly but professional, like advice from an experienced architect.
-AVOID: Technical jargon, academic writing, filler content.
+CRITICAL DIRECTIVES:
+1. NO AI FILLER: Eliminate all meta-talk (e.g., "In this section...", "This guide explores..."). Start every section with direct, impactful content.
+2. HYPER-SPECIFICITY: Replace generic advice with precise, actionable insights. Use real-world analogies, specific architectural standards (e.g., Passive House, LEED, local zoning terms), and concrete metrics.
+3. PERSONALIZATION: Weave the Topic, Audience, Pain Points, Psychographics, and Firm USP into every paragraph. The content must feel bespoke to this specific firm and their ideal client.
+4. NO REPETITION: Ensure each section provides unique value. Do not repeat the same points across different headers.
+5. TECHNICAL DEPTH: Provide "insider" knowledge that a client couldn't find with a simple Google search.
 
 INPUT DATA:
 Topic: {topic}
@@ -312,32 +333,43 @@ FORMAT RULES FOR "{lead_magnet_type}":
 =============================================
 
 WRITING RULES:
-- Write clearly and conversationally.
-- Use <h3> for sub-headings, <p> for paragraphs, <strong> for emphasis, <ul><li> for lists.
-- Output MUST be structured with Markdown headers:
-  # [Main Title]
+- Tone: Authoritative, advisory, and sophisticated.
+- Formatting: Use <h3> for sub-headings, <p> for paragraphs, <strong> for emphasis, <ul><li> for lists.
+- Markdown: Output MUST be structured with Markdown headers:
+  # [Vibrant, Non-Generic Title]
   ## [Section Name]
-  [Section Content in HTML tags]
+  [Section Content using raw HTML tags]
 
-CRITICAL: Include EVERY section listed in the Structure above. Do not skip any.
-Do NOT include explanations or meta-talk. Only output the lead magnet content.
+Do NOT include any introductory or concluding remarks about the task. Only output the lead magnet content.
 """
 
 FORMAT_RULES = {
     "guide": """
 Structure (use these EXACT ## header names):
 ## Introduction
+(Hook the reader immediately. Define the topic through the lens of the Firm's USP.)
 ## Common Challenges
+(Detail 4 sophisticated challenges. Focus on hidden costs, regulatory traps, and aesthetic vs. functional trade-offs.)
 ## Key Principles
+(Provide 3-4 "golden rules" of design for this topic. Use specific analogies.)
 ## Practical Strategies
+(3 high-impact strategies. Include "how-to" steps and expected outcomes.)
 ## Managing Risks
+(Identify 3 non-obvious risks—e.g., liability, long-term maintenance, or contractor shortcuts—and provide professional mitigations.)
 ## Best Practices
+(Advanced "insider" tips that demonstrate the firm's superior expertise.)
 ## Facts and Figures
+(Include specific, verifiable metrics related to ROI, sustainability, or property value.)
 ## Implementation Roadmap
+(A 5-phase strategic timeline from vision to handover.)
 ## Traditional vs Modern
+(A sharp comparison of outdated methods vs. the firm's innovative approach.)
 ## Key Lessons
+(Distill the most critical strategic takeaways into 4 punchy bullets.)
 ## Real World Example
+(A detailed client success story: Challenge, the firm's Unique Mechanism, and the Transformation.)
 ## Ready to Start
+(A sophisticated call to action that positions the firm as the only logical partner.)
 """,
     "checklist": """
 Structure (use these EXACT ## header names):
@@ -354,11 +386,12 @@ Structure (use these EXACT ## header names):
 ## Real World Example
 ## Ready to Start
 
-For each checklist section, use:
+Requirements:
+- For each checklist section, provide high-value, non-obvious tasks.
+- Format:
 <h3>[Phase Name]</h3>
 <ul>
-<li>☐ [Actionable task]</li>
-<li>☐ [Actionable task]</li>
+<li>☐ <strong>[Task Name]:</strong> [Detailed explanation of why this matters and how to execute it.]</li>
 </ul>
 """,
     "case_study": """
@@ -375,6 +408,11 @@ Structure (use these EXACT ## header names):
 ## Real World Example
 ## Additional Insights
 ## Ready to Start
+
+Requirements:
+- Write this as a deep-dive narrative.
+- Focus on the "Unique Mechanism" used to solve complex problems.
+- Use <h3> for sub-phases of the project.
 """,
     "roi_calculator": """
 Structure (use these EXACT ## header names):
@@ -391,9 +429,9 @@ Structure (use these EXACT ## header names):
 ## Real World Example
 ## Ready to Start
 
-For ROI Breakdown, use a comparison table format:
-<h3>Investment vs Returns</h3>
-<p><strong>Investment Type</strong> | <strong>Cost</strong> | <strong>Expected Savings</strong> | <strong>Payback Period</strong></p>
+Requirements:
+- For ROI Breakdown, provide a technical breakdown of costs vs. long-term savings.
+- Use specific scenarios (e.g., "A 3,000 sq ft renovation") to ground the data.
 """,
     "trends_report": """
 Structure (use these EXACT ## header names):
@@ -409,6 +447,10 @@ Structure (use these EXACT ## header names):
 ## Key Lessons
 ## Real World Example
 ## Ready to Start
+
+Requirements:
+- Provide forward-looking intelligence.
+- Explain *why* these trends are happening and how to capitalize on them.
 """,
     "client_onboarding": """
 Structure (use these EXACT ## header names):
@@ -424,6 +466,10 @@ Structure (use these EXACT ## header names):
 ## Key Lessons
 ## Real World Example
 ## Ready to Start
+
+Requirements:
+- Map out a premium, high-touch experience.
+- Focus on transparency, communication, and expectation management.
 """,
     "design_portfolio": """
 Structure (use these EXACT ## header names):
@@ -439,6 +485,10 @@ Structure (use these EXACT ## header names):
 ## Real World Example
 ## Our Process
 ## Ready to Start
+
+Requirements:
+- Focus on the "Art and Science" of the firm's work.
+- Use descriptive language that evokes quality and craftsmanship.
 """,
     "custom": """
 Structure (use these EXACT ## header names):
@@ -964,17 +1014,17 @@ class GroqClient:
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
             "mainTitleAccent":   ai_content.get("subtitle") or "",
-            "documentSubtitle":  ai_content.get("subtitle") or f"A practitioner's guide to {topic}.",
+            "documentSubtitle":  ai_content.get("subtitle") or f"Strategic Insights and Implementation Roadmap for {topic}.",
             "companyName":       company_name,
-            "companySubtitle":   firm_profile.get("company_subtitle", ""),
+            "companySubtitle":   firm_profile.get("company_subtitle", "") or f"Architectural Excellence in {signals.get('industry', 'Modern Design')}",
             "emailAddress":      firm_profile.get("work_email", ""),
             "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
             "logoPlaceholder":   company_name[:2].upper() if company_name else "AI",
-            "footerText":        f"© {company_name} — Confidential",
+            "footerText":        f"© {company_name} — Strategic Property Analysis",
             "differentiator": (
                 firm_profile.get("branding_guidelines")
-                or f"Proven specialists in {topic} with a track record of measurable results."
+                or f"Leveraging {signals.get('firm_usp', 'advanced design methodologies')} to deliver measurable value for {signals.get('audience', 'sophisticated property owners')}."
             ),
         }
 
@@ -1103,13 +1153,13 @@ class GroqClient:
             vars[f"timelineItem{i+1}"]      = re.sub(r'<[^>]+>', '', body).strip()[:200]
 
         # ── CTA vars ─────────────────────────────────────────────────────────
-        cta_headline = ai_content.get("cta_headline") or f"Ready to Transform Your {topic} Outcomes?"
+        cta_headline = ai_content.get("cta_headline") or f"Ready to Implement Your {topic} Strategy?"
         cta_text_raw = ai_content.get("cta_text") or ""
         if not cta_text_raw or re.search(r'contact (us|me) today', cta_text_raw, re.I):
             cta_text_raw = (
-                f"Book a complimentary 45-minute {topic} Readiness Audit with our team. "
-                f"You'll leave with a prioritised action plan, a gap analysis against current "
-                f"industry benchmarks, and a clear ROI projection — no obligation."
+                f"Take the next step in your {topic} journey. Our team of specialists is ready to help you "
+                f"navigate the complexities of your project, ensuring maximum value and long-term success. "
+                f"Book a complimentary 45-minute consultation to develop your custom roadmap."
             )
 
         vars.update({
@@ -1161,8 +1211,15 @@ class GroqClient:
     # ─────────────────────────────────────────────────────────────────────
 
     def _extract_intro(self, html: str) -> str:
-        match = re.search(r'<p>(.*?)</p>', html, re.S)
-        return re.sub(r'<[^>]+>', '', match.group(1)).strip() if match else ""
+        """Extracts the first few paragraphs as a plain-text intro."""
+        if not html:
+            return ""
+        # Find all content before the first H3
+        intro_part = re.split(r'<h[1-6]>', html, flags=re.I)[0]
+        # Strip all tags and normalize whitespace
+        clean = re.sub(r'<[^>]+>', ' ', intro_part)
+        clean = re.sub(r'\s+', ' ', clean).strip()
+        return clean[:500] # Cap at 500 chars for template slots
 
     def _extract_subheadings(self, html: str) -> List[str]:
         return re.findall(r'<h3>(.*?)</h3>', html)
