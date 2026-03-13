@@ -319,6 +319,55 @@ CRITICAL DIRECTIVES:
 4. NO REPETITION: Ensure each section provides unique value. Do not repeat the same points across different headers.
 5. TECHNICAL DEPTH: Provide "insider" knowledge that a client couldn't find with a simple Google search.
 
+CONTENT DEPTH REQUIREMENTS:
+- The guide must contain substantial content.
+- Rules:
+  • Each major section must contain 3–5 paragraphs.
+  • Each paragraph should be 80–120 words.
+  • Include bullet lists where helpful.
+  • Provide examples or explanations when introducing ideas.
+  • Avoid one-line sections or short filler text.
+  • Never generate extremely short sections. If a section contains fewer than 2 paragraphs, expand it with additional explanations or examples.
+- Minimum structure for each section:
+  Section Title
+  Paragraph explaining the topic.
+  Paragraph explaining why it matters.
+  Bullet list of practical considerations.
+  Optional short example.
+- Ensure the final guide would fill approximately 8–10 PDF pages when rendered.
+
+IMAGE PLACEMENT RULES:
+- Images must not appear randomly inside text.
+- Images should only appear:
+  • After section headers
+  • Between paragraphs
+  • Never inside bullet lists
+  • Never mid-sentence
+- Use this format for images:
+  [IMAGE]
+  Type: illustration / diagram / architecture / sustainability
+  Description: short description
+  Placement: after section header
+  [/IMAGE]
+- Example:
+  ## Sustainable Building Orientation
+  [IMAGE]
+  Type: diagram
+  Description: building orientation optimizing sunlight and ventilation
+  Placement: after section header
+  [/IMAGE]
+  Paragraph text begins here.
+
+IMAGE DISTRIBUTION:
+- Include 5–7 images across the entire guide.
+- Suggested placement:
+  • Cover page hero image
+  • Introduction illustration
+  • 1 image every 1–2 sections
+  • Final infographic or summary diagram
+- Images should represent: sustainable buildings, green architecture concepts, eco materials, architectural diagrams, energy systems.
+- Avoid generic stock imagery. Prefer diagrams or architectural visuals.
+
 INPUT DATA:
 Topic: {topic}
 Lead Magnet Type: {lead_magnet_type}
@@ -820,6 +869,7 @@ class GroqClient:
             "document_type":       doc_type,
             "document_type_label": type_label,
             "sections":            parsed.get("sections", {}),
+            "images":              parsed.get("images", []),
             "raw_output":          raw_content,
         }
 
@@ -827,11 +877,26 @@ class GroqClient:
         """
         Splits unified Markdown response into structured sections,
         then maps them to SECTIONS keys using type-aware mapping.
+        Also extracts [IMAGE] blocks.
         """
-        parsed = {"title": "", "subtitle": "", "sections": {}}
+        parsed = {"title": "", "subtitle": "", "sections": {}, "images": []}
 
-        # Extract Main Title (# Header)
-        title_match = re.search(r'^#\s*(.+)$', text, re.MULTILINE)
+        # 1. Extract [IMAGE] blocks before splitting sections
+        image_blocks = re.findall(r'\[IMAGE\](.*?)\[/IMAGE\]', text, re.S)
+        for block in image_blocks:
+            img_data = {}
+            for line in block.strip().split("\n"):
+                if ":" in line:
+                    k, v = line.split(":", 1)
+                    img_data[k.strip().lower()] = v.strip()
+            if img_data:
+                parsed["images"].append(img_data)
+
+        # Remove image blocks from text to avoid them being treated as content
+        clean_text = re.sub(r'\[IMAGE\].*?\[/IMAGE\]', '', text, flags=re.S)
+
+        # 2. Extract Main Title (# Header)
+        title_match = re.search(r'^#\s*(.+)$', clean_text, re.MULTILINE)
         if title_match:
             full_title = title_match.group(1).strip()
             if ":" in full_title:
@@ -841,8 +906,8 @@ class GroqClient:
             else:
                 parsed["title"] = full_title
 
-        # Split by ## headers
-        sections_raw = re.split(r'^##\s*(?:\d+\.?\s*)?(.+)$', text, flags=re.MULTILINE)
+        # 3. Split by ## headers
+        sections_raw = re.split(r'^##\s*(?:\d+\.?\s*)?(.+)$', clean_text, flags=re.MULTILINE)
 
         # Get the type-specific mapping + universal fallback
         type_map = _SECTION_MAPS.get(doc_type, _SECTION_MAPS.get("guide", {}))
@@ -915,6 +980,7 @@ class GroqClient:
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
         sections_data = raw.get("sections", {})
         doc_type      = raw.get("document_type", "guide")
+        ai_images     = raw.get("images", [])
 
         normalized: Dict[str, Any] = {
             "title":               raw.get("title") or "",
@@ -923,6 +989,7 @@ class GroqClient:
             "document_type_label": raw.get("document_type_label") or "",
             "sections_config":     self.SECTIONS,
             "framework":           {},
+            "ai_images":           ai_images,
         }
 
         for key, default_title, default_label, _, _ in SECTIONS:
@@ -1172,10 +1239,21 @@ class GroqClient:
         })
 
         # ── Image vars ────────────────────────────────────────────────────────
+        ai_images = ai_content.get("ai_images", [])
         for i in range(1, 7):
-            vars[f"architecturalImageCaption{i}"] = f"{topic} — Project Reference {i}"
+            # Try to get image metadata from AI output first
+            ai_img = ai_images[i-1] if len(ai_images) >= i else {}
+            
+            # Caption priority: AI Description > Firm Profile > Default
+            caption = (
+                ai_img.get("description") 
+                or firm_profile.get(f"image_{i}_caption") 
+                or f"{topic} — {doc_type_label} Reference {i}"
+            )
+            
+            vars[f"architecturalImageCaption{i}"] = caption
             vars[f"image_{i}_url"]                = firm_profile.get(f"image_{i}_url", "")
-            vars[f"image_{i}_caption"]            = firm_profile.get(f"image_{i}_caption", f"Project Insight {i}")
+            vars[f"image_{i}_caption"]            = caption
 
         vars["columnBoxTitle1"]   = "Detail View"
         vars["columnBoxContent1"] = self._extract_intro(ai_content.get("process_steps", ""))
