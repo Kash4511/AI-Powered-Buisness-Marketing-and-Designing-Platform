@@ -29,4 +29,7 @@ urlpatterns = [
     path('ai-conversation/', views.FormaAIConversationView.as_view(), name='ai-conversation'),
     # Relative download route expected by frontend polling
     path('lead-magnets/<int:lead_magnet_id>/download/', views.download_lead_magnet_pdf, name='lead-magnet-download'),
+    
+    # Dynamic Theming
+    path('theme/', views.get_theme_palette, name='theme-palette'),
 ]

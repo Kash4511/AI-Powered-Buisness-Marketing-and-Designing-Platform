@@ -22,7 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/', include('lead_magnets.urls')),
-    path('api/theme/', lead_magnets_views.get_theme_palette, name='theme-palette'),
 ]
 # Serve media files in development
 if settings.DEBUG:
