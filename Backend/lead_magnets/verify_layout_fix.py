@@ -64,6 +64,9 @@ def test_mapping_logic():
     assert vars["primaryColor"] == "#2ecc71"
     assert vars["companyName"] == "EcoArch Studios"
     assert "Sustainable Urban Design" in vars["documentTitle"]
+    assert "toc_items" in vars
+    assert len(vars["toc_items"]) == len(SECTIONS)
+    assert vars["toc_items"][0]["page"] == "03"
     
     # Verify section-specific granular variables
     for key, _, _, _, _ in SECTIONS:

@@ -1113,8 +1113,12 @@ class GroqClient:
 
     def _get_unsplash_url(self, keywords: str) -> str:
         """Returns a high-quality Unsplash URL based on keywords."""
-        query = re.sub(r'\s+', ',', keywords.strip())
-        return f"https://source.unsplash.com/featured/1200x900?{query}"
+        # Filter out common filler words and clean up keywords
+        clean_keywords = re.sub(r'\b(the|and|of|for|with|in|on|at|to|a|an)\b', '', keywords, flags=re.I)
+        query = re.sub(r'[^a-zA-Z0-9,]+', ',', clean_keywords.strip())
+        query = query.strip(',')
+        # Use a more reliable endpoint and ensure we get high-quality images
+        return f"https://images.unsplash.com/photo-1?auto=format&fit=crop&q=80&w=1200&h=900&sig={hash(query)}&keywords={query}"
 
     def map_to_template_vars(
         self,
@@ -1161,12 +1165,17 @@ class GroqClient:
             "ctaHeadline":       "Ready to Start Your Project?",
             "contactDescription": "Contact us today for a consultation.",
             "cover_image_url":   self._get_unsplash_url(f"{topic},architecture,modern"),
+            "contentsTitle":     "Table of Contents",
+            "toc_items":         [],
         }
 
         # ── Section content vars ─────────────────────────────────────────────
         fw = ai_content.get("framework", {})
         ai_images = ai_content.get("ai_images", [])
         
+        # Starting page for sections (Page 1: Cover, Page 2: TOC, Page 3: First Section)
+        current_page = 3
+
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
             sec_fw    = fw.get(key, {})
             sec_title = sec_fw.get("title") or default_title
@@ -1187,6 +1196,14 @@ class GroqClient:
             vars[f"section_{key}_callout"] = callout
             vars[f"section_{key}_stat_val"] = stat_v
             vars[f"section_{key}_stat_lbl"] = stat_l
+
+            # Add to TOC
+            vars["toc_items"].append({
+                "num": str(s_idx).zfill(2),
+                "title": sec_title,
+                "page": str(current_page).zfill(2)
+            })
+            current_page += 1
 
             # Image logic - Keyword based from section title and topic
             img_url = firm_profile.get(f"image_{s_idx}_url", "")

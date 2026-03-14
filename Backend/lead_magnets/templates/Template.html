@@ -24,7 +24,7 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { 
             font-family:'Inter', sans-serif; 
-            font-size:13px; 
+            font-size:16px; 
             color:var(--text); 
             background: var(--white); 
             line-height: 1.6;
@@ -37,7 +37,7 @@
             @bottom-right {
                 content: counter(page);
                 font-family: 'Poppins', sans-serif;
-                font-size: 10px;
+                font-size: 11px;
                 color: #636e72;
             }
         }
@@ -57,7 +57,9 @@
             color: var(--white);
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
             padding: 0;
         }
         .cover-hero {
@@ -71,68 +73,91 @@
         .cover-gradient {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.8));
+            background: radial-gradient(circle, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%);
             z-index: 2;
         }
         .cover-content {
             position: relative;
             z-index: 3;
-            padding: 40mm 22mm 30mm;
+            padding: 20mm;
+            width: 100%;
         }
         .cover-tag {
             display: inline-block;
-            padding: 8px 20px;
+            padding: 8px 24px;
             background: var(--secondary);
             font-family: 'Poppins', sans-serif;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 14px;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
+            letter-spacing: 2.5px;
+            margin-bottom: 40px;
             border-radius: 4px;
             color: var(--white);
         }
         .cover-title {
             font-family: 'Poppins', sans-serif;
-            font-size: 56px;
+            font-size: 60px;
             font-weight: 900;
-            line-height: 1.05;
-            margin-bottom: 24px;
+            line-height: 1.0;
+            margin-bottom: 30px;
             text-transform: uppercase;
             color: var(--white);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .cover-subtitle {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 300;
-            max-width: 600px;
+            max-width: 700px;
             opacity: 0.95;
             line-height: 1.4;
             color: var(--white);
+            margin-left: auto;
+            margin-right: auto;
         }
         .cover-brand-area {
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.2);
+            position: absolute;
+            bottom: 30mm;
+            left: 0;
+            right: 0;
+            z-index: 3;
+            padding: 0 20mm;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
         }
-        .cover-brand { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; }
-        .cover-contact { font-size: 13px; opacity: 0.8; }
+        .cover-brand { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 24px; margin-bottom: 10px; }
+        .cover-contact { font-size: 14px; opacity: 0.8; letter-spacing: 1px; }
+
+        /* ── TABLE OF CONTENTS ───────────────────────────────── */
+        .toc-list { list-style: none; padding: 0; margin-top: 40px; }
+        .toc-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: baseline; 
+            margin-bottom: 20px;
+            border-bottom: 1px dotted rgba(0,0,0,0.1);
+            padding-bottom: 8px;
+        }
+        .toc-num { font-weight: 700; color: var(--secondary); margin-right: 15px; width: 30px; }
+        .toc-label { flex: 1; font-weight: 600; color: var(--primary); font-size: 16px; }
+        .toc-page { font-weight: 700; color: var(--muted); margin-left: 15px; }
 
         /* ── SECTION LAYOUT (TWO COLUMN) ─────────────────────── */
         .section-row {
             display: flex;
             align-items: stretch;
-            gap: 50px;
-            padding: 25mm 22mm;
+            gap: 60px;
+            padding: 21mm 20mm;
             height: 100%;
         }
         .section-row.reverse { flex-direction: row-reverse; }
         
         .text-col { 
             flex: 1.2; 
-            max-width: 580px; 
+            max-width: 600px; 
             display: flex;
             flex-direction: column;
         }
@@ -146,12 +171,12 @@
         .alt-bg { background: var(--highlight); }
 
         /* ── TYPOGRAPHY ───────────────────────────────────────── */
-        h1 { font-family:'Poppins',sans-serif; font-size:36px; font-weight:900; color:var(--primary); margin-bottom:30px; text-transform:uppercase; }
-        h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:900; color:var(--primary); margin-bottom:15px; text-transform:uppercase; line-height:1.1; }
-        h3 { font-family:'Poppins',sans-serif; font-size:15px; font-weight:700; color:var(--secondary); margin:25px 0 10px; text-transform:uppercase; letter-spacing:1.5px; }
+        h1 { font-family:'Poppins',sans-serif; font-size:42px; font-weight:900; color:var(--primary); margin-bottom:40px; text-transform:uppercase; }
+        h2 { font-family:'Poppins',sans-serif; font-size:34px; font-weight:900; color:var(--primary); margin-bottom:20px; text-transform:uppercase; line-height:1.1; }
+        h3 { font-family:'Poppins',sans-serif; font-size:22px; font-weight:700; color:var(--secondary); margin:30px 0 15px; text-transform:uppercase; letter-spacing:1.5px; }
         
-        .intro-text { font-size:16px; font-weight:600; color:var(--primary); margin-bottom:25px; line-height:1.5; }
-        .support-text { font-size:13.5px; color:var(--text); margin-top:25px; line-height: 1.7; }
+        .intro-text { font-size:18px; font-weight:600; color:var(--primary); margin-bottom:30px; line-height:1.5; }
+        .support-text { font-size:16px; color:var(--text); margin-top:30px; line-height: 1.6; }
 
         /* ── VISUAL ELEMENTS ──────────────────────────────────── */
         .img-wrap {
@@ -263,6 +288,24 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════ PAGE 2 — CONTENTS -->
+<div class="page">
+    <div style="padding: 30mm 20mm;">
+        <h1>{{contentsTitle}}</h1>
+        <div class="divider" style="width: 100px;"></div>
+        <ul class="toc-list">
+            {{#each toc_items}}
+            <li class="toc-item">
+                <span class="toc-num">{{this.num}}</span>
+                <span class="toc-label">{{this.title}}</span>
+                <span class="toc-page">{{this.page}}</span>
+            </li>
+            {{/each}}
+        </ul>
+    </div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">02</span></div>
+</div>
+
 <!-- ═══════════════════════════════════════════ CONTENT SECTIONS -->
 
 <!-- SECTION 1 -->
@@ -296,7 +339,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">04</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">03</span></div>
 </div>
 
 <!-- SECTION 2 (REVERSED) -->
@@ -324,7 +367,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">05</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">04</span></div>
 </div>
 
 <!-- SECTION 3 -->
@@ -352,7 +395,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">06</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">05</span></div>
 </div>
 
 <!-- SECTION 4 (REVERSED) -->
@@ -380,7 +423,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">07</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">06</span></div>
 </div>
 
 <!-- SECTION 5 -->
@@ -408,7 +451,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">08</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">07</span></div>
 </div>
 
 <!-- SECTION 6 (REVERSED) -->
@@ -436,7 +479,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">09</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">08</span></div>
 </div>
 
 <!-- SECTION 7 -->
@@ -464,7 +507,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">10</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">09</span></div>
 </div>
 
 <!-- SECTION 8 (REVERSED) -->
@@ -492,7 +535,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">11</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">10</span></div>
 </div>
 
 <!-- SECTION 9 -->
@@ -520,7 +563,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">12</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">11</span></div>
 </div>
 
 <!-- SECTION 10 (REVERSED) -->
@@ -548,7 +591,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">13</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">12</span></div>
 </div>
 
 <!-- SECTION 11 -->
@@ -576,7 +619,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">14</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">13</span></div>
 </div>
 
 <!-- SECTION 12 (REVERSED / CONCLUSION) -->
@@ -605,7 +648,7 @@
             {{/if}}
         </div>
     </div>
-    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">15</span></div>
+    <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">14</span></div>
 </div>
 
 </body>
