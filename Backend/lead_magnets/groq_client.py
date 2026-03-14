@@ -780,11 +780,10 @@ class GroqClient:
     _TYPE_MAP = _TYPE_MAP
     SECTION_LAYOUT = {key: layout for key, _, _, layout, _ in SECTIONS}
 
-    def __init__(self):
-        api_key = os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
-        if not api_key:
-            raise ValueError("GROQ_API_KEY is required.")
-        self.client      = Groq(api_key=api_key)
+    def __init__(self, api_key: str = None):
+        api_key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
+        # For testing purposes, we allow initializing without a key if we only use mapping methods
+        self.client      = Groq(api_key=api_key) if api_key else None
         self.model       = "llama-3.3-70b-versatile"
         self.temperature = 0.55
         self.max_tokens  = 4096
@@ -1041,6 +1040,82 @@ class GroqClient:
 
         return normalized
 
+    def _extract_intro_v2(self, html: str) -> str:
+        """Extracts the first 2-3 sentences as an intro."""
+        if not html:
+            return ""
+        # Remove headers and lists first
+        clean = re.sub(r'<h[1-6]>.*?</h[1-6]>', '', html, flags=re.S)
+        clean = re.sub(r'<ul>.*?</ul>', '', clean, flags=re.S)
+        clean = re.sub(r'<ol>.*?</ol>', '', clean, flags=re.S)
+        # Get first paragraph or first 300 chars
+        match = re.search(r'<p>(.*?)</p>', clean, re.S)
+        text = match.group(1) if match else clean
+        text = re.sub(r'<[^>]+>', '', text).strip()
+        # Cap at 250 chars
+        return text[:250] + ("..." if len(text) > 250 else "")
+
+    def _extract_bullets_v2(self, html: str) -> str:
+        """Extracts 3-5 bullets and returns as HTML list items."""
+        bullets = re.findall(r'<li>(.*?)</li>', html, re.S)
+        if not bullets:
+            # Try to find paragraphs that look like bullets
+            paras = re.findall(r'<p>(?:•|-|\d\.)\s*(.*?)</p>', html, re.S)
+            bullets = paras if paras else []
+        
+        # Take 3-5 bullets
+        selected = bullets[:5]
+        return "".join([f"<li>{b.strip()}</li>" for b in selected])
+
+    def _extract_support_v2(self, html: str) -> str:
+        """Extracts remaining paragraphs as support text."""
+        paras = re.findall(r'<p>(.*?)</p>', html, re.S)
+        # Skip the first paragraph (usually the intro)
+        support_paras = [p for p in paras if not any(char in p[:5] for char in ['•', '-', '1.'])]
+        if len(support_paras) > 1:
+            return " ".join([f"<p>{p.strip()}</p>" for p in support_paras[1:3]])
+        return ""
+
+    def _extract_callout_v2(self, html: str) -> str:
+        """Extracts a bolded sentence or short paragraph as a callout."""
+        match = re.search(r'<strong>(.*?)</strong>', html, re.S)
+        if match:
+            return match.group(1).strip()
+        return ""
+
+    def _extract_stat_v2(self, html: str) -> tuple:
+        """Extracts a statistic (value, label)."""
+        if not html:
+            return ("", "")
+        
+        # Look for percentages or numbers (e.g., 45%, $100k, 1,000)
+        # We prioritize percentages and currency
+        match = re.search(r'(\d+%\+?|\$\d+(?:\.\d+)?[MBK]?)', html)
+        if not match:
+            # Fallback to plain numbers if they look like a stat (at least 2 digits or followed by a keyword)
+            match = re.search(r'(\d{2,}(?:,\d{3})*)', html)
+            
+        if match:
+            val = match.group(1)
+            # Find a label by looking at words around the value
+            start = max(0, match.start() - 60)
+            end = min(len(html), match.end() + 60)
+            context = html[start:end]
+            clean_context = re.sub(r'<[^>]+>', ' ', context).strip()
+            
+            keywords = ["efficiency", "increase", "roi", "savings", "growth", "reduction", "impact", "improvement"]
+            for kw in keywords:
+                if kw in clean_context.lower():
+                    return (val, kw.title())
+            
+            return (val, "Key Metric")
+        return ("", "")
+
+    def _get_unsplash_url(self, keywords: str) -> str:
+        """Returns a high-quality Unsplash URL based on keywords."""
+        query = re.sub(r'\s+', ',', keywords.strip())
+        return f"https://source.unsplash.com/featured/1200x900?{query}"
+
     def map_to_template_vars(
         self,
         ai_content: Dict[str, Any],
@@ -1055,7 +1130,7 @@ class GroqClient:
         accent_color    = firm_profile.get("accent_color") or "#f8fafc"
         surface_color   = "#ffffff"
         on_surface      = "#1a202c"
-        highlight_color = "#e8f4f8"
+        highlight_color = "#f4f7f9"
 
         # Ensure hex
         def fix_hex(c): return "#" + str(c).lstrip("#") if c and len(str(c).lstrip("#")) == 6 else "#1a365d"
@@ -1076,236 +1151,53 @@ class GroqClient:
             "surfaceColor":      fix_hex(surface_color),
             "onSurfaceColor":    fix_hex(on_surface),
             "highlightColor":    fix_hex(highlight_color),
-            "goldColor":         "#c5a059",
             "documentTitle":     ai_content.get("title") or topic,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
-            "mainTitleAccent":   ai_content.get("subtitle") or "",
             "documentSubtitle":  ai_content.get("subtitle") or f"Strategic Insights and Implementation Roadmap for {topic}.",
             "companyName":       company_name,
-            "companySubtitle":   firm_profile.get("company_subtitle", "") or f"Architectural Excellence in {signals.get('industry', 'Modern Design')}",
             "emailAddress":      firm_profile.get("work_email", ""),
-            "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
-            "logoPlaceholder":   company_name[:2].upper() if company_name else "AI",
-            "footerText":        f"© {company_name} — Strategic Property Analysis",
-            "differentiator": (
-                firm_profile.get("branding_guidelines")
-                or f"Leveraging {signals.get('firm_usp', 'advanced design methodologies')} to deliver measurable value for {signals.get('audience', 'sophisticated property owners')}."
-            ),
+            "ctaHeadline":       "Ready to Start Your Project?",
+            "contactDescription": "Contact us today for a consultation.",
+            "cover_image_url":   self._get_unsplash_url(f"{topic},architecture,modern"),
         }
 
-        # ── Terms of use (page 2) ────────────────────────────────────────────
-        legal = ai_content.get("legal_notice_summary") or (
-            f"This {doc_type_label} on {topic} is provided for informational and strategic guidance purposes only."
-        )
-        vars.update({
-            "termsTitle":      "Terms of Use & Disclaimer",
-            "termsSummary":    legal,
-            "termsParagraph1": f"© {company_name}. All rights reserved. Unauthorised reproduction or distribution is prohibited.",
-            "termsParagraph2": (
-                f"The information in this document relates to {topic} and reflects the state of "
-                f"the industry as of the date of publication. It does not constitute legal, financial, or professional advice."
-            ),
-            "termsParagraph3": (
-                "Given the dynamic nature of regulations, technology, and market conditions, readers are advised "
-                "to verify all information independently before making business decisions."
-            ),
-            "termsParagraph4": (
-                f"While every effort has been made to ensure accuracy, {company_name} accepts no liability "
-                "for errors, omissions, or outcomes arising from the use of this material."
-            ),
-            "termsParagraph5": (
-                f"This document was produced using AI-assisted research and editorial tools. "
-                f"All strategic recommendations should be validated by a qualified {signals.get('industry','industry')} professional."
-            ),
-        })
-
-        # ── Table of contents (page 3) ────────────────────────────────────────
-        fw = ai_content.get("framework", {})
-        toc_page = 4
-        for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
-            sec_fw    = fw.get(key, {})
-            sec_title = sec_fw.get("title") or default_title
-            sec_label = sec_fw.get("kicker") or default_label
-            s_idx     = idx + 1
-
-            vars[f"sectionTitle{idx+3}"] = sec_label
-            vars[f"contentItem{s_idx}"]  = sec_title
-            vars[f"pageNumber{toc_page}"] = str(toc_page).zfill(2)
-            toc_page += 1
-
-        vars["sectionTitle1"]     = "TERMS OF USE"
-        vars["sectionTitle2"]     = "CONTENTS"
-        vars["pageNumberHeader2"] = "02"
-        vars["pageNumberHeader3"] = "03"
-        for i in range(4, 16):
-            vars[f"pageNumberHeader{i}"] = str(i).zfill(2)
-        vars["contentsTitle"] = "Table of Contents"
-
         # ── Section content vars ─────────────────────────────────────────────
+        fw = ai_content.get("framework", {})
+        ai_images = ai_content.get("ai_images", [])
+        
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
             sec_fw    = fw.get(key, {})
             sec_title = sec_fw.get("title") or default_title
             content   = ai_content.get(key, "")
             s_idx     = idx + 1
 
-            vars[f"customTitle{s_idx}"]   = sec_title
-            vars[f"customContent{s_idx}"] = self._extract_intro(content)
-            
-            # Handle responsive images using the helper
-            section_html = f'<div class="sh">{content}</div>'
-            ai_images = ai_content.get("ai_images", [])
-            
-            # IMPROVED: Map images to sections based on AI hints or distribution
-            img_html = ""
+            # Extract granular components
+            intro   = self._extract_intro_v2(content)
+            bullets = self._extract_bullets_v2(content)
+            support = self._extract_support_v2(content)
+            callout = self._extract_callout_v2(content)
+            stat_v, stat_l = self._extract_stat_v2(content)
+
+            vars[f"customTitle{s_idx}"] = sec_title
+            vars[f"section_{key}_intro"] = intro
+            vars[f"section_{key}_bullets_html"] = bullets
+            vars[f"section_{key}_support"] = support
+            vars[f"section_{key}_callout"] = callout
+            vars[f"section_{key}_stat_val"] = stat_v
+            vars[f"section_{key}_stat_lbl"] = stat_l
+
+            # Image logic - Keyword based from section title and topic
             img_url = firm_profile.get(f"image_{s_idx}_url", "")
+            if not img_url:
+                # Use AI image description if available, else build from title
+                ai_img = ai_images[idx] if idx < len(ai_images) else {}
+                img_keywords = ai_img.get("description") or f"{sec_title},{topic},architecture"
+                img_url = self._get_unsplash_url(img_keywords)
             
-            # If no firm image, check if AI requested an image for this section
-            if not img_url and len(ai_images) >= s_idx:
-                img_data = ai_images[s_idx-1]
-                # Still use render_image with empty URL to trigger placeholder
-                img_html = self.render_image("", img_data.get("description", ""))
-            elif img_url:
-                img_data = ai_images[s_idx-1] if len(ai_images) >= s_idx else {}
-                img_html = self.render_image(img_url, img_data.get("description", ""))
-
-            if img_html:
-                # Inject image HTML after header or first paragraph
-                if "</h3>" in section_html:
-                    section_html = section_html.replace("</h3>", f"</h3>{img_html}", 1)
-                else:
-                    section_html = section_html.replace('">', f'">{img_html}', 1)
-
-            vars[f"section_{key}_html"]   = section_html
-
-            subheadings = self._extract_subheadings(content)
-            if subheadings:
-                vars[f"subheading{s_idx}"]  = subheadings[0]
-                vars[f"subcontent{s_idx}"]  = self._extract_subcontent(content, subheadings[0])
-            else:
-                vars[f"subheading{s_idx}"]  = sec_title
-                vars[f"subcontent{s_idx}"]  = content[:300] if content else ""
-
-            boxes = self._extract_boxes(content)
-            if boxes:
-                vars[f"boxTitle{s_idx}"]   = boxes[0][0]
-                vars[f"boxContent{s_idx}"] = boxes[0][1]
-            else:
-                vars[f"boxTitle{s_idx}"]   = sec_title
-                vars[f"boxContent{s_idx}"] = self._extract_intro(content)
-
-            items = re.findall(r'<li>(.*?)</li>', content, re.S)
-            for li_idx, item in enumerate(items[:6]):
-                vars[f"listItem{s_idx}_{li_idx+1}"] = item
-
-        # ── Flat list vars ────────────────────────────────────────────────────
-        challenges_content = ai_content.get("key_challenges", "")
-        ch_items = re.findall(r'<li>(.*?)</li>', challenges_content, re.S)
-        for i, item in enumerate(ch_items[:4]):
-            vars[f"listItem{i+1}"] = item
-
-        bp_content = ai_content.get("best_practices", "")
-        bp_items = re.findall(r'<li>(.*?)</li>', bp_content, re.S)
-        for i, item in enumerate(bp_items[:6]):
-            vars[f"extListItem{i+1}"] = item
-
-        risk_content = ai_content.get("risk_management", "")
-        risk_items = re.findall(r'<li>(.*?)</li>', risk_content, re.S)
-        for i, item in enumerate(risk_items[:4]):
-            vars[f"numberedItem{i+1}"] = item
-
-        # ── Stats ─────────────────────────────────────────────────────────────
-        stats_content = ai_content.get("key_statistics", "")
-        stat_items = re.findall(r'<li><strong>(.*?)</strong>\s*:?\s*(.*?)</li>', stats_content, re.S)
-        for i, (lbl, val) in enumerate(stat_items[:3]):
-            vars[f"stat{i+1}Label"] = lbl.strip()
-            vars[f"stat{i+1}Value"] = val.strip()
-
-        # ── Steps ─────────────────────────────────────────────────────────────
-        steps_content = ai_content.get("process_steps", "")
-        step_matches = re.findall(r'<h3>Step \d+:\s*(.*?)</h3>\s*<p>(.*?)</p>', steps_content, re.S)
-        for i, (title, body) in enumerate(step_matches[:5]):
-            vars[f"stepTitle{i+1}"]   = title.strip()
-            vars[f"stepContent{i+1}"] = re.sub(r'<[^>]+>', '', body).strip()[:200]
-
-        # ── Takeaway icon cards ───────────────────────────────────────────────
-        takeaway_content = ai_content.get("key_takeaways", "")
-        pivots = re.findall(r'<h3>(.*?)</h3>\s*<p>(.*?)</p>', takeaway_content, re.S)
-        for i, (title, body) in enumerate(pivots[:4]):
-            vars[f"iconCard{i+1}Title"] = title.strip()
-            clean_body = re.sub(r'<[^>]+>', '', body).strip()
-            vars[f"iconCard{i+1}Text"]  = clean_body[:120] + ("..." if len(clean_body) > 120 else "")
-
-        # ── Timeline ─────────────────────────────────────────────────────────
-        impl_content = ai_content.get("implementation_strategy", "")
-        phases = re.findall(r'<h3>Phase \d+:\s*(.*?)</h3>\s*<p>(.*?)</p>', impl_content, re.S)
-        for i, (title, body) in enumerate(phases[:5]):
-            vars[f"timelineItem{i+1}Title"] = title.strip()
-            vars[f"timelineItem{i+1}"]      = re.sub(r'<[^>]+>', '', body).strip()[:200]
-
-        # ── CTA vars ─────────────────────────────────────────────────────────
-        cta_headline = ai_content.get("cta_headline") or f"Ready to Implement Your {topic} Strategy?"
-        cta_text_raw = ai_content.get("cta_text") or ""
-        if not cta_text_raw or re.search(r'contact (us|me) today', cta_text_raw, re.I):
-            cta_text_raw = (
-                f"Take the next step in your {topic} journey. Our team of specialists is ready to help you "
-                f"navigate the complexities of your project, ensuring maximum value and long-term success. "
-                f"Book a complimentary 45-minute consultation to develop your custom roadmap."
-            )
-
-        vars.update({
-            "ctaHeadline":         cta_headline,
-            "ctaText":             cta_text_raw,
-            "ctaText2":            cta_text_raw,
-            "ctaButtonText":       f"Book Your {topic} Audit →",
-            "differentiatorTitle": "Why Work With Us",
-            "contactDescription":  cta_text_raw,
-        })
-
-        # ── Image vars ────────────────────────────────────────────────────────
-        ai_images = ai_content.get("ai_images", [])
-        for i in range(1, 7):
-            # Try to get image metadata from AI output first
-            ai_img = ai_images[i-1] if len(ai_images) >= i else {}
-            
-            # Caption priority: AI Description > Firm Profile > Default
-            caption = (
-                ai_img.get("description") 
-                or firm_profile.get(f"image_{i}_caption") 
-                or f"{topic} — {doc_type_label} Reference {i}"
-            )
-            
-            vars[f"architecturalImageCaption{i}"] = caption
-            vars[f"image_{i}_url"]                = firm_profile.get(f"image_{i}_url", "")
-            vars[f"image_{i}_caption"]            = caption
-
-        vars["columnBoxTitle1"]   = "Detail View"
-        vars["columnBoxContent1"] = self._extract_intro(ai_content.get("process_steps", ""))
-        vars["accentBoxTitle3"]   = "Key Insight"
-        vars["accentBoxContent3"] = self._extract_intro(ai_content.get("risk_management", ""))
-
-        for q_idx in range(1, 4):
-            vars.setdefault(f"quoteText{q_idx}", "")
-            vars.setdefault(f"quoteAuthor{q_idx}", "Industry Analysis")
-
-        vars["architecturalImageCaption1"] = f"{topic} — Execution Detail"
-        vars["architecturalImageCaption2"] = f"{topic} — Technical Overview"
-        vars["architecturalImageCaption3"] = f"{topic} — Process View"
-
-        # ── Pass full section HTML (double-ensure) ────────────────────────────
-        for key, *_ in SECTIONS:
-            vars[f"section_{key}_html"] = ai_content.get(key, "")
-
-        # ── Merge remaining ai_content fields ─────────────────────────────────
-        skip = {"title", "subtitle", "summary", "document_type", "document_type_label",
-                "sections_config", "expansions", "framework", "ai_images", "raw_output"}
-        for k, v in ai_content.items():
-            if k not in skip and k not in vars:
-                vars[k] = v
-
-        for n in range(2, 16):
-            vars[f"pageNumber{n}"] = str(n).zfill(2)
+            vars[f"section_{key}_image_url"] = img_url
+            vars[f"section_{key}_image_caption"] = f"{sec_title} - Strategic Visual Illustration"
 
         return vars
 
