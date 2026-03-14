@@ -1058,7 +1058,7 @@ class GroqClient:
         highlight_color = "#e8f4f8"
 
         # Ensure hex
-        def fix_hex(c): return "#" + str(c).lstrip("#") if c else "#000000"
+        def fix_hex(c): return "#" + str(c).lstrip("#") if c and len(str(c).lstrip("#")) == 6 else "#1a365d"
         
         # ── Company info ─────────────────────────────────────────────────────
         company_name = (
@@ -1156,15 +1156,26 @@ class GroqClient:
             # Handle responsive images using the helper
             section_html = f'<div class="sh">{content}</div>'
             ai_images = ai_content.get("ai_images", [])
-            # Map images to sections based on some logic or distribution
-            # For simplicity, we'll try to match image index to section index
-            if len(ai_images) >= s_idx:
+            
+            # IMPROVED: Map images to sections based on AI hints or distribution
+            img_html = ""
+            img_url = firm_profile.get(f"image_{s_idx}_url", "")
+            
+            # If no firm image, check if AI requested an image for this section
+            if not img_url and len(ai_images) >= s_idx:
                 img_data = ai_images[s_idx-1]
-                img_url = firm_profile.get(f"image_{s_idx}_url", "")
-                if img_url:
-                    img_html = self.render_image(img_url, img_data.get("description", ""))
-                    # Inject image HTML after header or first paragraph
+                # Still use render_image with empty URL to trigger placeholder
+                img_html = self.render_image("", img_data.get("description", ""))
+            elif img_url:
+                img_data = ai_images[s_idx-1] if len(ai_images) >= s_idx else {}
+                img_html = self.render_image(img_url, img_data.get("description", ""))
+
+            if img_html:
+                # Inject image HTML after header or first paragraph
+                if "</h3>" in section_html:
                     section_html = section_html.replace("</h3>", f"</h3>{img_html}", 1)
+                else:
+                    section_html = section_html.replace('">', f'">{img_html}', 1)
 
             vars[f"section_{key}_html"]   = section_html
 
@@ -1288,7 +1299,7 @@ class GroqClient:
 
         # ── Merge remaining ai_content fields ─────────────────────────────────
         skip = {"title", "subtitle", "summary", "document_type", "document_type_label",
-                "sections_config", "expansions", "framework"}
+                "sections_config", "expansions", "framework", "ai_images", "raw_output"}
         for k, v in ai_content.items():
             if k not in skip and k not in vars:
                 vars[k] = v
@@ -1372,11 +1383,10 @@ class GroqClient:
         """
         Returns a responsive <picture> element with placeholder and CLS prevention.
         """
+        # If no URL, use a high-quality architectural placeholder
         if not url:
-            return ""
+            url = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000"
         
-        # In a real-world scenario, we would generate 1x, 2x, and webp variants here.
-        # For now, we'll use the provided URL and focus on CLS and accessibility.
         loading_attr = 'loading="lazy"' if lazy else ""
         
         # Use an inline SVG placeholder to reserve space (CLS prevention)

@@ -26,7 +26,7 @@
 
         /* ── RESET & BASE ─────────────────────────────────────── */
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text); background: var(--surface); }
+        body { font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text); background: var(--surface); line-height: 1.5; }
 
         /* Animation Pause/Resume Control (Checkbox Hack) */
         #anim-control { display: none; }
@@ -40,7 +40,7 @@
         .page {
             width: 210mm;
             height: 297mm;
-            overflow: hidden;          /* CRITICAL: clips overflowing content */
+            overflow: visible;         /* CHANGED: allow content to be seen if it flows */
             position: relative;
             page-break-after: always;
             page-break-inside: avoid;
@@ -176,7 +176,8 @@
             padding:14px 22mm;
             position:relative;
             overflow:hidden;
-            flex-shrink:0;
+            width: 100%;
+            height: 60px; /* Fixed height to match old absolute top */
         }
         .ph-deco { position:absolute; top:0; right:0; width:180px; height:100%; opacity:0.1; }
         .ph-c { position:absolute; border-radius:50%; border:2px solid white; }
@@ -195,23 +196,24 @@
 
         /* Content zone fills remaining height above footer */
         .pc {
-            position:absolute;
-            top:60px;          /* header height approx */
-            left:0; right:0;
-            bottom:48px;       /* footer height approx */
-            padding:12mm 22mm 8mm;
-            overflow:hidden;   /* CLIPS excess content */
+            position:relative; /* CHANGED: relative instead of absolute to allow flow */
+            margin-top:0;
+            width:100%;
+            min-height: 200mm; /* Ensure it takes up space */
+            padding:12mm 22mm 20mm; /* Added bottom padding for footer clearance */
         }
 
-        /* Footer zone: fixed at bottom */
+        /* Footer zone: fixed at bottom of page */
         .pf {
             position:absolute;
             bottom:0; left:0; right:0;
+            height: 40px; /* Fixed height */
             background:var(--primary);
-            padding:11px 22mm;
+            padding:0 22mm;
             display:flex; justify-content:space-between; align-items:center;
             font-size:10.5px; color:white;
             overflow:hidden;
+            z-index: 10;
         }
         .pf-deco { position:absolute; inset:0; opacity:0.1; pointer-events:none; }
         .pf-fc { position:absolute; border-radius:50%; border:2px solid rgba(255,255,255,0.15); }
@@ -234,8 +236,8 @@
 
         /* ── SECTION HTML ─────────────────────────────────────── */
         /* Styles raw HTML from section_*_html vars */
-        .sh { font-size:12px; line-height:1.75; color:var(--text); text-align: justify; hyphens: auto; }
-        .sh p  { margin-bottom:12px; }
+        .sh { font-size:12.5px; line-height:1.8; color:var(--text); text-align: justify; hyphens: auto; }
+        .sh p  { margin-bottom:16px; }
         .sh h3 {
             font-family:'Poppins',sans-serif; font-size:14px; font-weight:700;
             color:var(--primary); margin:18px 0 8px;
