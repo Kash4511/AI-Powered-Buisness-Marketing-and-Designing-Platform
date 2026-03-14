@@ -260,6 +260,47 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
         )
 
 
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def get_theme_palette(request):
+    """
+    Returns hex values for primary, secondary, surface, and on-surface colors.
+    Reacts to user preferences or system dark-mode toggles (if provided).
+    """
+    is_dark_mode = request.query_params.get('mode') == 'dark'
+    
+    # Defaults
+    palette = {
+        "primary":    "#1a365d",
+        "secondary":  "#c5a059",
+        "surface":    "#ffffff",
+        "onSurface":  "#1a202c",
+        "accent":     "#f8fafc",
+        "highlight":  "#e8f4f8",
+    }
+    
+    # Try fetching from user's firm profile
+    try:
+        fp = FirmProfile.objects.get(user=request.user)
+        if fp.primary_brand_color:
+            palette["primary"] = fp.primary_brand_color
+        if fp.secondary_brand_color:
+            palette["secondary"] = fp.secondary_brand_color
+    except FirmProfile.DoesNotExist:
+        pass
+        
+    # Dark mode adjustments
+    if is_dark_mode:
+        palette.update({
+            "surface":   "#1a202c",
+            "onSurface": "#f7fafc",
+            "accent":    "#2d3748",
+            "highlight": "#4a5568",
+        })
+        
+    return Response(palette)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # BACKGROUND GENERATION JOB
 # ─────────────────────────────────────────────────────────────────────────────

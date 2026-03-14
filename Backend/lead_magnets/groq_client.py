@@ -1050,18 +1050,16 @@ class GroqClient:
         signals = signals or {}
 
         # ── Colours ─────────────────────────────────────────────────────────
-        primary_color = firm_profile.get("primary_brand_color") or signals.get("primary_color") or "#1a365d"
-        if not str(primary_color).startswith("#"):
-            primary_color = "#" + primary_color
+        primary_color   = firm_profile.get("primary_brand_color") or signals.get("primary_color") or "#1a365d"
         secondary_color = firm_profile.get("secondary_brand_color") or "#c5a059"
-        if not str(secondary_color).startswith("#"):
-            secondary_color = "#" + secondary_color
         accent_color    = firm_profile.get("accent_color") or "#f8fafc"
-        if not str(accent_color).startswith("#"):
-            accent_color = "#" + accent_color
-        highlight_color = firm_profile.get("highlight_color") or "#e8f4f8"
-        gold_color      = firm_profile.get("gold_color") or "#c5a059"
+        surface_color   = "#ffffff"
+        on_surface      = "#1a202c"
+        highlight_color = "#e8f4f8"
 
+        # Ensure hex
+        def fix_hex(c): return "#" + str(c).lstrip("#") if c else "#000000"
+        
         # ── Company info ─────────────────────────────────────────────────────
         company_name = (
             firm_profile.get("firm_name")
@@ -1072,12 +1070,14 @@ class GroqClient:
         doc_type_label = ai_content.get("document_type_label") or "STRATEGIC GUIDE"
 
         vars: Dict[str, Any] = {
+            "primaryColor":      fix_hex(primary_color),
+            "secondaryColor":    fix_hex(secondary_color),
+            "accentColor":       fix_hex(accent_color),
+            "surfaceColor":      fix_hex(surface_color),
+            "onSurfaceColor":    fix_hex(on_surface),
+            "highlightColor":    fix_hex(highlight_color),
+            "goldColor":         "#c5a059",
             "documentTitle":     ai_content.get("title") or topic,
-            "primaryColor":      primary_color,
-            "secondaryColor":    secondary_color,
-            "accentColor":       accent_color,
-            "highlightColor":    highlight_color,
-            "goldColor":         gold_color,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
             "mainTitleAccent":   ai_content.get("subtitle") or "",
@@ -1152,7 +1152,21 @@ class GroqClient:
 
             vars[f"customTitle{s_idx}"]   = sec_title
             vars[f"customContent{s_idx}"] = self._extract_intro(content)
-            vars[f"section_{key}_html"]   = content
+            
+            # Handle responsive images using the helper
+            section_html = f'<div class="sh">{content}</div>'
+            ai_images = ai_content.get("ai_images", [])
+            # Map images to sections based on some logic or distribution
+            # For simplicity, we'll try to match image index to section index
+            if len(ai_images) >= s_idx:
+                img_data = ai_images[s_idx-1]
+                img_url = firm_profile.get(f"image_{s_idx}_url", "")
+                if img_url:
+                    img_html = self.render_image(img_url, img_data.get("description", ""))
+                    # Inject image HTML after header or first paragraph
+                    section_html = section_html.replace("</h3>", f"</h3>{img_html}", 1)
+
+            vars[f"section_{key}_html"]   = section_html
 
             subheadings = self._extract_subheadings(content)
             if subheadings:
@@ -1353,6 +1367,30 @@ class GroqClient:
         match = re.search(r'<h3>(.*?)</h3>', html)
         if match:
             data["ctaHeadline"] = match.group(1).strip()
+
+    def render_image(self, url: str, alt: str = "", aspect_ratio: str = "16/9", lazy: bool = True) -> str:
+        """
+        Returns a responsive <picture> element with placeholder and CLS prevention.
+        """
+        if not url:
+            return ""
+        
+        # In a real-world scenario, we would generate 1x, 2x, and webp variants here.
+        # For now, we'll use the provided URL and focus on CLS and accessibility.
+        loading_attr = 'loading="lazy"' if lazy else ""
+        
+        # Use an inline SVG placeholder to reserve space (CLS prevention)
+        # Assuming 16:9 aspect ratio by default
+        w, h = map(int, aspect_ratio.split('/'))
+        placeholder = f"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {w} {h}'%3E%3C/svg%3E"
+        
+        return f"""
+        <picture class="img-container" style="aspect-ratio: {aspect_ratio};">
+            <source srcset="{url}" type="image/webp">
+            <img src="{placeholder}" data-src="{url}" alt="{alt}" {loading_attr} 
+                 class="lazyload" style="width:100%; height:auto; display:block;">
+        </picture>
+        """
 
     def _sanitize_html(self, html: str) -> str:
         if not html:

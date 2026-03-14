@@ -8,22 +8,25 @@
         :root {
             --primary:   {{primaryColor}};
             --secondary: {{secondaryColor}};
+            --surface:   {{surfaceColor}};
+            --on-surface: {{onSurfaceColor}};
             --accent:    {{accentColor}};
+            --highlight: {{highlightColor}};
             --light:     #f8f9fa;
-            --text:      #2d3436;
+            --text:      var(--on-surface);
             --muted:     #636e72;
 
             /* Dynamic Cover Variables */
             --cover-anim-speed: 20s;
-            --cover-color-1: #1a365d; /* Dark Blue */
-            --cover-color-2: #2a5a5e; /* Teal */
-            --cover-color-3: #1e4d40; /* Dark Green */
-            --cover-color-4: #1a365d; /* Back to Blue */
+            --cover-color-1: var(--primary);
+            --cover-color-2: var(--secondary);
+            --cover-color-3: var(--accent);
+            --cover-color-4: var(--primary);
         }
 
         /* ── RESET & BASE ─────────────────────────────────────── */
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text); }
+        body { font-family:'Inter',sans-serif; font-size:12.5px; color:var(--text); background: var(--surface); }
 
         /* Animation Pause/Resume Control (Checkbox Hack) */
         #anim-control { display: none; }
@@ -432,9 +435,7 @@
     <div class="ph-bar"></div>
     <div class="pc clearfix">
         <div class="pg-title">{{customTitle1}}</div>
-        {{#if image_1_url}}<div class="img-wrap"><img src="{{image_1_url}}" alt="{{image_1_caption}}"><div class="img-caption"><strong>Project Insight</strong> {{image_1_caption}}</div></div>{{/if}}
-
-        <div class="sh">{{section_executive_summary_html}}</div>
+        {{section_executive_summary_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -452,9 +453,7 @@
     <div class="ph-bar"></div>
     <div class="pc clearfix">
         <div class="pg-title">{{customTitle2}}</div>
-        {{#if image_2_url}}<div class="img-wrap"><img src="{{image_2_url}}" alt="{{image_2_caption}}"><div class="img-caption"><strong>Project Insight</strong> {{image_2_caption}}</div></div>{{/if}}
-
-        <div class="sh">{{section_key_challenges_html}}</div>
+        {{section_key_challenges_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -472,9 +471,7 @@
     <div class="ph-bar"></div>
     <div class="pc clearfix">
         <div class="pg-title">{{customTitle3}}</div>
-        {{#if image_3_url}}<div class="img-wrap"><img src="{{image_3_url}}" alt="{{image_3_caption}}"><div class="img-caption"><strong>Project Insight</strong> {{image_3_caption}}</div></div>{{/if}}
-
-        <div class="sh">{{section_strategic_framework_html}}</div>
+        {{section_strategic_framework_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -492,9 +489,7 @@
     <div class="ph-bar"></div>
     <div class="pc clearfix">
         <div class="pg-title">{{customTitle4}}</div>
-        {{#if image_4_url}}<div class="img-wrap"><img src="{{image_4_url}}" alt="{{image_4_caption}}"><div class="img-caption"><strong>Project Insight</strong> {{image_4_caption}}</div></div>{{/if}}
-
-        <div class="sh">{{section_implementation_strategy_html}}</div>
+        {{section_implementation_strategy_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -512,9 +507,7 @@
     <div class="ph-bar"></div>
     <div class="pc clearfix">
         <div class="pg-title">{{customTitle5}}</div>
-        {{#if image_5_url}}<div class="img-wrap"><img src="{{image_5_url}}" alt="{{image_5_caption}}"><div class="img-caption"><strong>Project Insight</strong> {{image_5_caption}}</div></div>{{/if}}
-
-        <div class="sh">{{section_risk_management_html}}</div>
+        {{section_risk_management_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -532,9 +525,7 @@
     <div class="ph-bar"></div>
     <div class="pc clearfix">
         <div class="pg-title">{{customTitle6}}</div>
-        {{#if image_6_url}}<div class="img-wrap"><img src="{{image_6_url}}" alt="{{image_6_caption}}"><div class="img-caption"><strong>Project Insight</strong> {{image_6_caption}}</div></div>{{/if}}
-
-        <div class="sh">{{section_best_practices_html}}</div>
+        {{section_best_practices_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -552,7 +543,7 @@
     <div class="ph-bar"></div>
     <div class="pc">
         <div class="pg-title">{{customTitle7}}</div>
-        <div class="sh">{{section_key_statistics_html}}</div>
+        {{section_key_statistics_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -570,7 +561,7 @@
     <div class="ph-bar"></div>
     <div class="pc">
         <div class="pg-title">{{customTitle8}}</div>
-        <div class="sh">{{section_process_steps_html}}</div>
+        {{section_process_steps_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -588,7 +579,7 @@
     <div class="ph-bar"></div>
     <div class="pc">
         <div class="pg-title">{{customTitle9}}</div>
-        <div class="sh">{{section_comparison_table_html}}</div>
+        {{section_comparison_table_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -606,7 +597,7 @@
     <div class="ph-bar"></div>
     <div class="pc">
         <div class="pg-title">{{customTitle10}}</div>
-        <div class="sh">{{section_key_takeaways_html}}</div>
+        {{section_key_takeaways_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -624,7 +615,7 @@
     <div class="ph-bar"></div>
     <div class="pc">
         <div class="pg-title">{{customTitle11}}</div>
-        <div class="sh">{{section_case_study_html}}</div>
+        {{section_case_study_html}}
     </div>
     <div class="pf">
         <div class="pf-deco"><div class="pf-fc pf-fc1"></div><div class="pf-fc pf-fc2"></div><div class="pf-fc pf-fc3"></div></div>
@@ -641,7 +632,7 @@
     </div>
     <div class="ph-bar"></div>
     <div class="pc">
-        <div class="sh" style="margin-bottom:30px;">{{section_conclusion_html}}</div>
+        {{section_conclusion_html}}
         
         <div class="cta-box">
             <div class="cta-h">{{ctaHeadline}}</div>
