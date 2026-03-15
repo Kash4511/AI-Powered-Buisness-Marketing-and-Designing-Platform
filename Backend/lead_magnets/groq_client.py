@@ -8,7 +8,7 @@ from typing import Dict, Any, List
 from groq import Groq
 from .config_helper import get_config
 from .constants import (
-    DEFAULT_SECTIONS, DEFAULT_DOC_TYPE_LABELS, DEFAULT_MASTER_PROMPT_TEMPLATE,
+    DEFAULT_SECTIONS, DEFAULT_DOC_TYPE_LABELS, MASTER_PROMPT_TEMPLATE,
     DEFAULT_FORMAT_RULES, DEFAULT_TERMS
 )
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 SECTIONS               = get_config("lead_magnet_sections", DEFAULT_SECTIONS)
 DOC_TYPE_LABELS        = get_config("doc_type_labels", DEFAULT_DOC_TYPE_LABELS)
-MASTER_PROMPT_TEMPLATE = get_config("master_prompt_template", DEFAULT_MASTER_PROMPT_TEMPLATE)
+MASTER_PROMPT_TEMPLATE = get_config("master_prompt_template", MASTER_PROMPT_TEMPLATE)
 FORMAT_RULES           = get_config("format_rules", DEFAULT_FORMAT_RULES)
 TERMS_OF_USE           = get_config("terms_of_use", DEFAULT_TERMS)
 AI_MODEL               = get_config("ai_model_name", "llama-3.3-70b-versatile")
