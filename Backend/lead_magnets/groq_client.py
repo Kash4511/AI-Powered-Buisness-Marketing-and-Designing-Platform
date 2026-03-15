@@ -656,41 +656,6 @@ class GroqClient:
             return " ".join(clean_paras)
         return ""
 
-    def _extract_callout_v2(self, html: str) -> str:
-        """Extracts a bolded sentence or short paragraph as a callout."""
-        match = re.search(r'<strong>(.*?)</strong>', html, re.S)
-        if match:
-            return match.group(1).strip()
-        return ""
-
-    def _extract_stat_v2(self, html: str) -> tuple:
-        """Extracts a statistic (value, label)."""
-        if not html:
-            return ("", "")
-        
-        # Look for percentages or numbers (e.g., 45%, $100k, 1,000)
-        # We prioritize percentages and currency
-        match = re.search(r'(\d+%\+?|\$\d+(?:\.\d+)?[MBK]?)', html)
-        if not match:
-            # Fallback to plain numbers if they look like a stat (at least 2 digits or followed by a keyword)
-            match = re.search(r'(\d{2,}(?:,\d{3})*)', html)
-            
-        if match:
-            val = match.group(1)
-            # Find a label by looking at words around the value
-            start = max(0, match.start() - 60)
-            end = min(len(html), match.end() + 60)
-            context = html[start:end]
-            clean_context = re.sub(r'<[^>]+>', ' ', context).strip()
-            
-            keywords = get_config("stat_keywords", ["efficiency", "increase", "roi", "savings", "growth", "reduction", "impact", "improvement"])
-            for kw in keywords:
-                if kw in clean_context.lower():
-                    return (val, kw.title())
-            
-            return (val, get_config("default_stat_label", "Key Metric"))
-        return ("", "")
-
     def _extract_highlight_v2(self, html: str, tag: str) -> str:
         """Extracts text from custom highlight blocks like [TAG: text]."""
         pattern = rf'\[{tag}:\s*(.*?)\]'
@@ -834,9 +799,6 @@ class GroqClient:
             vars[f"section_{key}_intro_html"] = intro
             vars[f"section_{key}_bullets_html"] = bullets
             vars[f"section_{key}_support_html"] = support
-            vars[f"section_{key}_callout"] = callout
-            vars[f"section_{key}_stat_val"] = stat_v
-            vars[f"section_{key}_stat_lbl"] = stat_l
             
             # Inject highlights
             vars[f"section_{key}_key_insight"]   = key_insight
