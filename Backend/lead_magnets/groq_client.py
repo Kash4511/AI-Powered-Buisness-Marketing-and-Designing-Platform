@@ -1041,7 +1041,7 @@ class GroqClient:
         return normalized
 
     def _extract_intro_v2(self, html: str) -> str:
-        """Extracts the first 2-3 sentences as an intro."""
+        """Extracts the first 2-3 sentences as an intro, cutting at a sentence boundary."""
         if not html:
             return ""
         # Remove headers and lists first
@@ -1052,8 +1052,19 @@ class GroqClient:
         match = re.search(r'<p>(.*?)</p>', clean, re.S)
         text = match.group(1) if match else clean
         text = re.sub(r'<[^>]+>', '', text).strip()
-        # Cap at 250 chars
-        return text[:250] + ("..." if len(text) > 250 else "")
+        
+        if len(text) <= 250:
+            return text
+            
+        # Find last sentence boundary before 250
+        truncated = text[:250]
+        # Find last ., !, or ?
+        boundaries = [truncated.rfind('.'), truncated.rfind('!'), truncated.rfind('?')]
+        last_boundary = max(boundaries)
+        
+        if last_boundary > 100: # Ensure we have at least some content
+            return text[:last_boundary + 1]
+        return truncated + "..."
 
     def _extract_bullets_v2(self, html: str) -> str:
         """Extracts 3-5 bullets and returns as HTML list items."""
@@ -1068,12 +1079,14 @@ class GroqClient:
         return "".join([f"<li>{b.strip()}</li>" for b in selected])
 
     def _extract_support_v2(self, html: str) -> str:
-        """Extracts remaining paragraphs as support text."""
+        """Extracts remaining paragraphs as plain-text support text."""
         paras = re.findall(r'<p>(.*?)</p>', html, re.S)
         # Skip the first paragraph (usually the intro)
         support_paras = [p for p in paras if not any(char in p[:5] for char in ['•', '-', '1.'])]
         if len(support_paras) > 1:
-            return " ".join([f"<p>{p.strip()}</p>" for p in support_paras[1:3]])
+            # Strip tags and return plain text to avoid double-escaping
+            clean_paras = [re.sub(r'<[^>]+>', '', p).strip() for p in support_paras[1:3]]
+            return " ".join(clean_paras)
         return ""
 
     def _extract_callout_v2(self, html: str) -> str:
@@ -1112,13 +1125,8 @@ class GroqClient:
         return ("", "")
 
     def _get_unsplash_url(self, keywords: str) -> str:
-        """Returns a high-quality Unsplash URL based on keywords."""
-        # Filter out common filler words and clean up keywords
-        clean_keywords = re.sub(r'\b(the|and|of|for|with|in|on|at|to|a|an)\b', '', keywords, flags=re.I)
-        query = re.sub(r'[^a-zA-Z0-9,]+', ',', clean_keywords.strip())
-        query = query.strip(',')
-        # Use a more reliable endpoint and ensure we get high-quality images
-        return f"https://images.unsplash.com/photo-1?auto=format&fit=crop&q=80&w=1200&h=900&sig={hash(query)}&keywords={query}"
+        """Returns empty string as we no longer support fake Unsplash URLs."""
+        return ""
 
     def map_to_template_vars(
         self,
@@ -1166,7 +1174,7 @@ class GroqClient:
             "contactDescription": "Contact us today for a consultation.",
             "cover_image_url":   self._get_unsplash_url(f"{topic},architecture,modern"),
             "contentsTitle":     "Table of Contents",
-            "toc_items":         [],
+            "toc_html":          "",
         }
 
         # ── Section content vars ─────────────────────────────────────────────
@@ -1175,6 +1183,7 @@ class GroqClient:
         
         # Starting page for sections (Page 1: Cover, Page 2: TOC, Page 3: First Section)
         current_page = 3
+        toc_html = ""
 
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
             sec_fw    = fw.get(key, {})
@@ -1190,32 +1199,29 @@ class GroqClient:
             stat_v, stat_l = self._extract_stat_v2(content)
 
             vars[f"customTitle{s_idx}"] = sec_title
-            vars[f"section_{key}_intro"] = intro
+            vars[f"section_{key}_intro_html"] = intro
             vars[f"section_{key}_bullets_html"] = bullets
-            vars[f"section_{key}_support"] = support
+            vars[f"section_{key}_support_html"] = support
             vars[f"section_{key}_callout"] = callout
             vars[f"section_{key}_stat_val"] = stat_v
             vars[f"section_{key}_stat_lbl"] = stat_l
 
-            # Add to TOC
-            vars["toc_items"].append({
-                "num": str(s_idx).zfill(2),
-                "title": sec_title,
-                "page": str(current_page).zfill(2)
-            })
+            # Add to TOC HTML string instead of toc_items list
+            num = str(s_idx).zfill(2)
+            page_num = str(current_page).zfill(2)
+            toc_html += f'<div class="toc-item"><span class="toc-num">{num}</span><span class="toc-label">{sec_title}</span><span class="toc-page">{page_num}</span></div>'
             current_page += 1
 
             # Image logic - Keyword based from section title and topic
             img_url = firm_profile.get(f"image_{s_idx}_url", "")
             if not img_url:
-                # Use AI image description if available, else build from title
-                ai_img = ai_images[idx] if idx < len(ai_images) else {}
-                img_keywords = ai_img.get("description") or f"{sec_title},{topic},architecture"
-                img_url = self._get_unsplash_url(img_keywords)
+                # Use empty string if no user image is provided to suppress broken boxes
+                img_url = ""
             
             vars[f"section_{key}_image_url"] = img_url
             vars[f"section_{key}_image_caption"] = f"{sec_title} - Strategic Visual Illustration"
 
+        vars["toc_html"] = toc_html
         return vars
 
     # ─────────────────────────────────────────────────────────────────────

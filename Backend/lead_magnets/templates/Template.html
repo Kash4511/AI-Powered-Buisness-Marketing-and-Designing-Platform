@@ -55,10 +55,7 @@
         .cover {
             background: var(--primary);
             color: var(--white);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: relative;
             text-align: center;
             padding: 0;
         }
@@ -77,7 +74,10 @@
             z-index: 2;
         }
         .cover-content {
-            position: relative;
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 3;
             padding: 20mm;
             width: 100%;
@@ -184,7 +184,6 @@
             border-radius: var(--radius);
             overflow: hidden;
             box-shadow: var(--shadow);
-            background: #f0f0f0;
             position: relative;
         }
         .img-wrap img {
@@ -281,10 +280,10 @@
         <div class="cover-tag">{{documentTypeLabel}}</div>
         <h1 class="cover-title">{{mainTitle}}</h1>
         <div class="cover-subtitle">{{documentSubtitle}}</div>
-        <div class="cover-brand-area">
-            <div class="cover-brand">{{companyName}}</div>
-            <div class="cover-contact">{{emailAddress}} &nbsp;|&nbsp; {{website}}</div>
-        </div>
+    </div>
+    <div class="cover-brand-area">
+        <div class="cover-brand">{{companyName}}</div>
+        <div class="cover-contact">{{emailAddress}} &nbsp;|&nbsp; {{website}}</div>
     </div>
 </div>
 
@@ -293,15 +292,9 @@
     <div style="padding: 30mm 20mm;">
         <h1>{{contentsTitle}}</h1>
         <div class="divider" style="width: 100px;"></div>
-        <ul class="toc-list">
-            {{#each toc_items}}
-            <li class="toc-item">
-                <span class="toc-num">{{this.num}}</span>
-                <span class="toc-label">{{this.title}}</span>
-                <span class="toc-page">{{this.page}}</span>
-            </li>
-            {{/each}}
-        </ul>
+        <div class="toc-list">
+            {{toc_html}}
+        </div>
     </div>
     <div class="pf"><span class="pf-left">{{companyName}} &nbsp;|&nbsp; {{documentTitle}}</span><span class="pf-num">02</span></div>
 </div>
@@ -313,12 +306,12 @@
     <div class="section-row">
         <div class="text-col">
             <h2>{{customTitle1}}</h2>
-            <div class="intro-text">{{section_executive_summary_intro}}</div>
+            <div class="intro-text">{{section_executive_summary_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_executive_summary_bullets_html}}
             </ul>
-            <div class="support-text">{{section_executive_summary_support}}</div>
+            <div class="support-text">{{section_executive_summary_support_html}}</div>
             {{#if section_executive_summary_callout}}
             <div class="callout-box">
                 <h4>Key Insight</h4>
@@ -327,10 +320,12 @@
             {{/if}}
         </div>
         <div class="img-col">
+            {{#if section_executive_summary_image_url}}
             <div class="img-wrap">
                 <img src="{{section_executive_summary_image_url}}" alt="{{customTitle1}}">
                 <div class="img-caption">{{section_executive_summary_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_executive_summary_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_executive_summary_stat_val}}</span>
@@ -347,18 +342,20 @@
     <div class="section-row reverse">
         <div class="text-col">
             <h2>{{customTitle2}}</h2>
-            <div class="intro-text">{{section_key_challenges_intro}}</div>
+            <div class="intro-text">{{section_key_challenges_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_key_challenges_bullets_html}}
             </ul>
-            <div class="support-text">{{section_key_challenges_support}}</div>
+            <div class="support-text">{{section_key_challenges_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_key_challenges_image_url}}
             <div class="img-wrap">
                 <img src="{{section_key_challenges_image_url}}" alt="{{customTitle2}}">
                 <div class="img-caption">{{section_key_challenges_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_key_challenges_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_key_challenges_stat_val}}</span>
@@ -375,18 +372,20 @@
     <div class="section-row">
         <div class="text-col">
             <h2>{{customTitle3}}</h2>
-            <div class="intro-text">{{section_strategic_framework_intro}}</div>
+            <div class="intro-text">{{section_strategic_framework_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_strategic_framework_bullets_html}}
             </ul>
-            <div class="support-text">{{section_strategic_framework_support}}</div>
+            <div class="support-text">{{section_strategic_framework_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_strategic_framework_image_url}}
             <div class="img-wrap">
                 <img src="{{section_strategic_framework_image_url}}" alt="{{customTitle3}}">
                 <div class="img-caption">{{section_strategic_framework_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_strategic_framework_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_strategic_framework_stat_val}}</span>
@@ -403,18 +402,20 @@
     <div class="section-row reverse">
         <div class="text-col">
             <h2>{{customTitle4}}</h2>
-            <div class="intro-text">{{section_implementation_strategy_intro}}</div>
+            <div class="intro-text">{{section_implementation_strategy_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_implementation_strategy_bullets_html}}
             </ul>
-            <div class="support-text">{{section_implementation_strategy_support}}</div>
+            <div class="support-text">{{section_implementation_strategy_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_implementation_strategy_image_url}}
             <div class="img-wrap">
                 <img src="{{section_implementation_strategy_image_url}}" alt="{{customTitle4}}">
                 <div class="img-caption">{{section_implementation_strategy_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_implementation_strategy_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_implementation_strategy_stat_val}}</span>
@@ -431,18 +432,20 @@
     <div class="section-row">
         <div class="text-col">
             <h2>{{customTitle5}}</h2>
-            <div class="intro-text">{{section_risk_management_intro}}</div>
+            <div class="intro-text">{{section_risk_management_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_risk_management_bullets_html}}
             </ul>
-            <div class="support-text">{{section_risk_management_support}}</div>
+            <div class="support-text">{{section_risk_management_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_risk_management_image_url}}
             <div class="img-wrap">
                 <img src="{{section_risk_management_image_url}}" alt="{{customTitle5}}">
                 <div class="img-caption">{{section_risk_management_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_risk_management_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_risk_management_stat_val}}</span>
@@ -459,18 +462,20 @@
     <div class="section-row reverse">
         <div class="text-col">
             <h2>{{customTitle6}}</h2>
-            <div class="intro-text">{{section_best_practices_intro}}</div>
+            <div class="intro-text">{{section_best_practices_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_best_practices_bullets_html}}
             </ul>
-            <div class="support-text">{{section_best_practices_support}}</div>
+            <div class="support-text">{{section_best_practices_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_best_practices_image_url}}
             <div class="img-wrap">
                 <img src="{{section_best_practices_image_url}}" alt="{{customTitle6}}">
                 <div class="img-caption">{{section_best_practices_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_best_practices_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_best_practices_stat_val}}</span>
@@ -487,18 +492,20 @@
     <div class="section-row">
         <div class="text-col">
             <h2>{{customTitle7}}</h2>
-            <div class="intro-text">{{section_key_statistics_intro}}</div>
+            <div class="intro-text">{{section_key_statistics_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_key_statistics_bullets_html}}
             </ul>
-            <div class="support-text">{{section_key_statistics_support}}</div>
+            <div class="support-text">{{section_key_statistics_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_key_statistics_image_url}}
             <div class="img-wrap">
                 <img src="{{section_key_statistics_image_url}}" alt="{{customTitle7}}">
                 <div class="img-caption">{{section_key_statistics_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_key_statistics_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_key_statistics_stat_val}}</span>
@@ -515,18 +522,20 @@
     <div class="section-row reverse">
         <div class="text-col">
             <h2>{{customTitle8}}</h2>
-            <div class="intro-text">{{section_process_steps_intro}}</div>
+            <div class="intro-text">{{section_process_steps_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_process_steps_bullets_html}}
             </ul>
-            <div class="support-text">{{section_process_steps_support}}</div>
+            <div class="support-text">{{section_process_steps_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_process_steps_image_url}}
             <div class="img-wrap">
                 <img src="{{section_process_steps_image_url}}" alt="{{customTitle8}}">
                 <div class="img-caption">{{section_process_steps_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_process_steps_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_process_steps_stat_val}}</span>
@@ -543,18 +552,20 @@
     <div class="section-row">
         <div class="text-col">
             <h2>{{customTitle9}}</h2>
-            <div class="intro-text">{{section_comparison_table_intro}}</div>
+            <div class="intro-text">{{section_comparison_table_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_comparison_table_bullets_html}}
             </ul>
-            <div class="support-text">{{section_comparison_table_support}}</div>
+            <div class="support-text">{{section_comparison_table_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_comparison_table_image_url}}
             <div class="img-wrap">
                 <img src="{{section_comparison_table_image_url}}" alt="{{customTitle9}}">
                 <div class="img-caption">{{section_comparison_table_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_comparison_table_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_comparison_table_stat_val}}</span>
@@ -571,18 +582,20 @@
     <div class="section-row reverse">
         <div class="text-col">
             <h2>{{customTitle10}}</h2>
-            <div class="intro-text">{{section_key_takeaways_intro}}</div>
+            <div class="intro-text">{{section_key_takeaways_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_key_takeaways_bullets_html}}
             </ul>
-            <div class="support-text">{{section_key_takeaways_support}}</div>
+            <div class="support-text">{{section_key_takeaways_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_key_takeaways_image_url}}
             <div class="img-wrap">
                 <img src="{{section_key_takeaways_image_url}}" alt="{{customTitle10}}">
                 <div class="img-caption">{{section_key_takeaways_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_key_takeaways_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_key_takeaways_stat_val}}</span>
@@ -599,18 +612,20 @@
     <div class="section-row">
         <div class="text-col">
             <h2>{{customTitle11}}</h2>
-            <div class="intro-text">{{section_case_study_intro}}</div>
+            <div class="intro-text">{{section_case_study_intro_html}}</div>
             <div class="divider"></div>
             <ul class="icon-list">
                 {{section_case_study_bullets_html}}
             </ul>
-            <div class="support-text">{{section_case_study_support}}</div>
+            <div class="support-text">{{section_case_study_support_html}}</div>
         </div>
         <div class="img-col">
+            {{#if section_case_study_image_url}}
             <div class="img-wrap">
                 <img src="{{section_case_study_image_url}}" alt="{{customTitle11}}">
                 <div class="img-caption">{{section_case_study_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_case_study_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_case_study_stat_val}}</span>
@@ -627,19 +642,21 @@
     <div class="section-row reverse">
         <div class="text-col">
             <h2>{{customTitle12}}</h2>
-            <div class="intro-text">{{section_conclusion_intro}}</div>
+            <div class="intro-text">{{section_conclusion_intro_html}}</div>
             <div class="divider"></div>
-            <div class="support-text">{{section_conclusion_support}}</div>
+            <div class="support-text">{{section_conclusion_support_html}}</div>
             <div class="callout-box" style="margin-top:40px; background:var(--secondary);">
                 <h4>{{ctaHeadline}}</h4>
                 <p>{{contactDescription}}</p>
             </div>
         </div>
         <div class="img-col">
+            {{#if section_conclusion_image_url}}
             <div class="img-wrap">
                 <img src="{{section_conclusion_image_url}}" alt="{{customTitle12}}">
                 <div class="img-caption">{{section_conclusion_image_caption}}</div>
             </div>
+            {{/if}}
             {{#if section_conclusion_stat_val}}
             <div class="metric-card">
                 <span class="metric-val">{{section_conclusion_stat_val}}</span>

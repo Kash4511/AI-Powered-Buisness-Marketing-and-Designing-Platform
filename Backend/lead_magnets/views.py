@@ -69,7 +69,8 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         key      = m.group(1).strip()
         content  = m.group(2)
         val      = vars_dict.get(key, "")
-        return content if val else ""
+        # Explicit check for truthiness — empty string, None, False are falsy
+        return content if (val and str(val).strip()) else ""
 
     html = _re.sub(
         r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}',
@@ -85,8 +86,8 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         if val is None:
             val = ""
         val_str = str(val)
-        # section_*_html keys contain pre-rendered HTML — inject raw, no escaping
-        if key.startswith("section_") and key.endswith("_html"):
+        # section_*_html keys and toc_html contain pre-rendered HTML — inject raw, no escaping
+        if (key.startswith("section_") and key.endswith("_html")) or key == "toc_html":
             return val_str
         # All other values are plain text — must be HTML-escaped
         return val_str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -99,13 +100,38 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
 # HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _clean_company_name(name: str, email: str = "") -> str:
+    """
+    Detects username-style strings (no spaces, all lowercase, has digits) 
+    and derives a better name from the email domain or title-cases the username.
+    """
+    if not email:
+        return name or "Your Company"
+        
+    username = email.split("@")[0]
+    # If name is missing or matches the username fallback
+    if not name or name == username:
+        # Check if username looks like a 'kaashifameen32' style string
+        is_username_style = username.islower() and any(c.isdigit() for c in username) and " " not in username
+        
+        if is_username_style:
+            domain_part = email.split("@")[-1].split(".")[0]
+            # If domain isn't a common provider, use it
+            if domain_part.lower() not in ["gmail", "outlook", "hotmail", "yahoo", "icloud", "me"]:
+                return domain_part.title()
+            # Fallback: title case the username and strip digits
+            return _re.sub(r'\d+', '', username).title()
+        return username.title()
+    return name
+
+
 def _resolve_image_url(img) -> str:
     if not img:
         return ""
     if isinstance(img, str):
-        return img
+        return img.strip()
     if isinstance(img, dict):
-        return img.get("src") or img.get("url") or ""
+        return (img.get("src") or img.get("url") or "").strip()
     return ""
 
 
@@ -117,10 +143,11 @@ def _build_firm_profile(user, fp_obj=None) -> dict:
         except FirmProfile.DoesNotExist:
             fp_obj = None
 
+    email = getattr(user, "email", "")
     if fp_obj:
         return {
-            "firm_name":             fp_obj.firm_name or user.email.split("@")[0],
-            "work_email":            fp_obj.work_email or user.email,
+            "firm_name":             _clean_company_name(fp_obj.firm_name, email),
+            "work_email":            fp_obj.work_email or email,
             "phone_number":          fp_obj.phone_number or "",
             "firm_website":          fp_obj.firm_website or "",
             "primary_brand_color":   fp_obj.primary_brand_color or "",
@@ -130,8 +157,8 @@ def _build_firm_profile(user, fp_obj=None) -> dict:
             "branding_guidelines":   fp_obj.branding_guidelines or "",
         }
     return {
-        "firm_name":             user.email.split("@")[0],
-        "work_email":            user.email,
+        "firm_name":             _clean_company_name("", email),
+        "work_email":            email,
         "phone_number":          "",
         "firm_website":          "",
         "primary_brand_color":   "",
