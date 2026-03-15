@@ -699,6 +699,19 @@ class GroqClient:
             return match.group(1).strip()
         return ""
 
+    def _calculate_flesch_score(self, text: str) -> float:
+        """Calculates a rough Flesch Reading Ease score."""
+        if not text: return 0.0
+        sentences = len(re.split(r'[.!?]+', text))
+        words = len(text.split())
+        # Simplified syllable count: vowels or vowel groups
+        syllables = len(re.findall(r'[aeiouy]+', text.lower()))
+        
+        if sentences == 0 or words == 0: return 0.0
+        
+        score = 206.835 - (1.015 * (words / sentences)) - (84.6 * (syllables / words))
+        return round(score, 2)
+
     def map_to_template_vars(
         self,
         ai_content: Dict[str, Any],
@@ -803,8 +816,14 @@ class GroqClient:
             intro   = self._extract_intro_v2(content)
             bullets = self._extract_bullets_v2(content)
             support = self._extract_support_v2(content)
-            callout = self._extract_callout_v2(content)
-            stat_v, stat_l = self._extract_stat_v2(content)
+            
+            # QA: Readability scoring
+            full_text = f"{intro} {bullets} {support}"
+            flesch_score = self._calculate_flesch_score(full_text)
+            logger.info(f"QA | Section: {key} | Flesch: {flesch_score}")
+            
+            # Key Insights density check (at least 1 per 100 words roughly)
+            word_count = len(full_text.split())
             
             # New highlight boxes
             key_insight   = self._extract_highlight_v2(content, "KEY INSIGHT")
@@ -824,10 +843,15 @@ class GroqClient:
             vars[f"section_{key}_strategic_tip"] = strategic_tip
             vars[f"section_{key}_industry_stat"] = industry_stat
 
-            # Add to TOC HTML string instead of toc_items list
+            # Add to TOC HTML string
             num = str(s_idx).zfill(2)
             page_num = str(current_page).zfill(2)
-            toc_html += f'<div class="toc-item"><span class="toc-num">{num}</span><span class="toc-label">{sec_title}</span><span class="toc-page">{page_num}</span></div>'
+            # Use data-page attribute for potential JS-based navigation, 
+            # but for Prince/DocRaptor, we use a simple anchor link
+            target_id = f"section-{key}"
+            vars[f"section_{key}_id"] = target_id
+            
+            toc_html += f'<div class="toc-item"><span class="toc-num">{num}</span><a href="#{target_id}" class="toc-label">{sec_title}</a><span class="toc-page">{page_num}</span></div>'
             current_page += 1
 
             # Image logic - Keyword based from section title and topic

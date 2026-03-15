@@ -4,23 +4,18 @@
 DEFAULT_SECTIONS = [
     (
         "introduction",
-        "Introduction",
-        "OVERVIEW",
+        "Executive Summary",
+        "EXECUTIVE SUMMARY",
         "text-only",
         (
-            "Write a high-level executive summary and introduction for a strategic guide on {topic} for {audience}.\n"
-            "TONE: Expert, authoritative, yet accessible. Like a McKinsey report.\n"
+            "Write a high-impact Executive Summary for a strategic report on {topic} for {audience}.\n"
             "CONTENT REQUIREMENTS:\n"
-            "  • 120–180 words.\n"
-            "  • Explain the strategic importance of {topic} in the current market.\n"
-            "  • Define the value proposition for the reader.\n"
-            "  • Include a 'KEY INSIGHT' callout block using [KEY INSIGHT: text] format.\n"
-            "  • Use specific terms like 'passive solar design', 'embodied carbon', or 'net-zero' where relevant.\n"
-            "  • No first-person ('we', 'our'). No transitional slop.\n"
-            "STRUCTURE:\n"
-            "<p>A strong, data-driven opening paragraph.</p>\n"
-            "<ul><li>3-5 key insights as bullet points.</li></ul>\n"
-            "[KEY INSIGHT: One sentence of high-impact strategic intelligence.]"
+            "  • MAX 150 words.\n"
+            "  • Summarize core findings and strategic value proposition immediately.\n"
+            "  • Achieve high information density (at least 1 insight per 100 words).\n"
+            "  • Include a 'KEY INSIGHT' callout.\n"
+            "  • No generic filler. Use objective, research-backed tone.\n"
+            "  • End with a transition to the next section: 'Market Dynamics & Industry Challenges'.\n"
         )
     ),
     (
@@ -243,23 +238,23 @@ DEFAULT_DOC_TYPE_LABELS = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MASTER PROMPT — consultancy grade content generation
+# MASTER PROMPT — high-density executive-grade content generation
 # ─────────────────────────────────────────────────────────────────────────────
 MASTER_PROMPT_TEMPLATE = """
-You are a senior strategic consultant for elite architecture and engineering firms. 
-Your task is to generate a PREMIUM, HIGH-VALUE lead magnet that sounds like it was produced by a top-tier consultancy (McKinsey, BCG, or a specialized architectural research group).
+You are an elite research writer and subject-matter expert for high-end consultancies.
+Your task is to generate a PREMIUM, HIGH-DENSITY lead magnet that delivers maximum value with zero filler.
 
 CRITICAL DIRECTIVES:
-1. TONE: Objective, authoritative, and intellectual. No marketing fluff. Use sophisticated vocabulary (e.g., 'systemic', 'lifecycle optimization', 'regulatory landscape', 'integrated design').
-2. NO FIRST-PERSON: NEVER use "we", "our", "us", or "our firm". Use an institutional voice.
-3. NO TRANSITIONAL SLOP: BANNED openers include "So,", "Another", "While", "Furthermore,", "In addition to". Start every paragraph with a direct, impactful claim or data point.
-4. SPECIFICITY: Reference specific technical standards (NCC, Passive House, LEED, NABERS) and architectural concepts (thermal bridging, embodied carbon, building envelope efficiency).
-5. STRATEGIC HIGHLIGHTS: You MUST include exactly one highlight box per section using these EXACT formats:
-   [KEY INSIGHT: A one-sentence high-impact strategic observation.]
-   [STRATEGIC TIP: A specific, actionable recommendation for implementation.]
-   [INDUSTRY STAT: A precise data point or percentage (e.g., 22% reduction in energy load).]
-6. DEPTH: Each section must be 120–180 words of meaningful content. Avoid filler.
-7. IMAGE BLOCKS: If a section requires a diagram, include [IMAGE: descriptive alt text].
+1. EXECUTIVE SUMMARY (PAGE 4): Instead of an introduction, start with a high-impact 'Executive Summary' (max 150 words) that outlines key findings and strategic value immediately.
+2. INFORMATION DENSITY: Maintain a minimum of one core strategic insight or actionable takeaway per 100 words. No generic statements or repetition.
+3. DOMAIN EXPERTISE: Use sophisticated vocabulary and reference latest data (≤ 12 months old) and authoritative sources (e.g., NCC 2022, IPCC reports, McKinsey Research). Use inline citations where possible.
+4. STRUCTURE: Use a logical, hierarchical progression: Problem Definition → Deep Analysis → Proposed Solution → Implementation Framework → Quantifiable Results.
+5. TRANSITIONS: Each section MUST end with a transition paragraph that links to the next section to ensure narrative coherence.
+6. NO FIRST-PERSON: Maintain an objective, institutional tone throughout.
+7. HIGHLIGHT BOXES: Include exactly one highlight box per section:
+   [KEY INSIGHT: text]
+   [STRATEGIC TIP: text]
+   [INDUSTRY STAT: text]
 
 INPUT DATA:
 Topic: {topic}
@@ -275,15 +270,17 @@ FORMAT RULES FOR "{lead_magnet_type}":
 =============================================
 
 WRITING RULES:
-- Use <h3> for sub-headings within sections if needed.
-- Use <p> for paragraphs.
+- Use <h1> for the section title (H1).
+- Use <h2> for major sub-points (H2).
+- Use <h3> for detailed breakdowns (H3).
+- Use <p> for body text.
 - Use <ul><li> for lists.
-- Output MUST be structured with Markdown headers for sections:
-  # [Vibrant, Professional Title]
+- Output MUST be structured with Markdown headers for internal mapping:
+  # [Keyword-Rich Main Title]
   ## [Section Name]
-  [Section Content with HTML tags and Highlight Boxes]
+  [Section Content with H2, H3, Transition Paragraphs, and Highlight Boxes]
 
-Do NOT include any introductory or concluding remarks. Only output the lead magnet content.
+Do NOT include any introductory remarks. Only output the lead magnet content.
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
