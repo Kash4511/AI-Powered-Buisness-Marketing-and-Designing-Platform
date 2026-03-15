@@ -88,6 +88,7 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         val_str = str(val)
         # RAW injection for pre-rendered HTML sections
         if (key.endswith("_html") or 
+            key == "toc_html" or
             key.startswith("customTitle") or 
             key.endswith("_insight") or 
             key.endswith("_tip") or 

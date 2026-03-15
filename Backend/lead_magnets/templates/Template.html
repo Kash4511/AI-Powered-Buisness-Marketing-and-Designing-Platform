@@ -130,7 +130,7 @@
             </div>
             <div class="cover-footer">
                 <div class="cover-brand">{{companyName}}</div>
-                <div class="cover-tagline">Strategic Architectural Consultancy</div>
+                <div class="cover-tagline">{{documentTypeLabel}} | Strategic Analysis</div>
                 <div class="cover-contact">
                     <span>{{website}}</span>
                     <span>{{emailAddress}}</span>
@@ -150,13 +150,15 @@
                     <div class="page-number-enhanced">{{pageNumber02}}</div>
                 </div>
             </div>
-            <div class="page-content-area" style="padding-top: 20mm;">
-                <p class="intro-text" style="text-align: center;">{{termsSummary}}</p>
-                <div class="content-text">{{termsParagraph1}}</div>
+            <div class="page-content-area">
+                <p class="intro-text">{{termsSummary}}</p>
+                <div class="content-text" style="margin-top: 10mm;">{{termsParagraph1}}</div>
                 <div class="content-text">{{termsParagraph2}}</div>
                 <div class="content-text">{{termsParagraph3}}</div>
                 <div class="content-text">{{termsParagraph4}}</div>
-                <div style="margin-top: 40mm; text-align: center; font-size: 12px; color: #999;">{{termsParagraph5}}</div>
+                <div style="position: absolute; bottom: 20mm; left: 25mm; right: 25mm; text-align: center; font-size: 11px; color: #aaa; border-top: 1px solid #eee; padding-top: 10px;">
+                    {{termsParagraph5}}
+                </div>
             </div>
             <div class="footer-enhanced">
                 <span>{{companyName}}</span>
@@ -191,7 +193,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Strategic Overview</div>
+                        <div class="page-kicker">{{section_introduction_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle1}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber04}}</div>
@@ -211,7 +213,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Market Dynamics</div>
+                        <div class="page-kicker">{{section_industry_challenges_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle2}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber05}}</div>
@@ -231,7 +233,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Foundational Framework</div>
+                        <div class="page-kicker">{{section_core_principles_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle3}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber06}}</div>
@@ -251,7 +253,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Operational Implementation</div>
+                        <div class="page-kicker">{{section_practical_strategies_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle4}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber07}}</div>
@@ -271,7 +273,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Risk Mitigation</div>
+                        <div class="page-kicker">{{section_risk_management_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle5}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber08}}</div>
@@ -291,7 +293,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Strategic Standards</div>
+                        <div class="page-kicker">{{section_best_practices_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle6}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber09}}</div>
@@ -311,7 +313,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Analytical Data</div>
+                        <div class="page-kicker">{{section_key_statistics_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle7}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber10}}</div>
@@ -331,7 +333,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Execution Roadmap</div>
+                        <div class="page-kicker">{{section_implementation_roadmap_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle8}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber11}}</div>
@@ -351,7 +353,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Industry Comparison</div>
+                        <div class="page-kicker">{{section_traditional_vs_modern_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle9}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber12}}</div>
@@ -371,7 +373,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Case Analysis</div>
+                        <div class="page-kicker">{{section_case_study_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle10}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber13}}</div>
@@ -391,7 +393,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Senior Advisory</div>
+                        <div class="page-kicker">{{section_expert_insights_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle11}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber14}}</div>
@@ -411,7 +413,7 @@
             <div class="page-header-enhanced">
                 <div class="page-header-content">
                     <div>
-                        <div class="page-kicker">Next Steps</div>
+                        <div class="page-kicker">{{section_conclusion_kicker}}</div>
                         <h2 class="page-title-enhanced">{{customTitle12}}</h2>
                     </div>
                     <div class="page-number-enhanced">{{pageNumber15}}</div>

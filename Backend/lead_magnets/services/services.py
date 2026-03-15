@@ -30,6 +30,7 @@ def _is_raw_html_key(key: str) -> bool:
     """Keys whose values must be injected as raw HTML without escaping."""
     return (
         key.endswith("_html") or 
+        key == "toc_html" or
         key.startswith("customTitle") or 
         key.endswith("_insight") or 
         key.endswith("_tip") or 

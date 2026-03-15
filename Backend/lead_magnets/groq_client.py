@@ -13,18 +13,18 @@ logger = logging.getLogger(__name__)
 # SECTION DEFINITIONS
 # ─────────────────────────────────────────────────────────────────────────────
 SECTIONS = [
-    ("executive_summary",    "Introduction",               "OVERVIEW",    "text-only", ""),
-    ("key_challenges",       "Common Challenges",          "CHALLENGES",  "text-only", ""),
-    ("strategic_framework",  "Key Principles",             "PRINCIPLES",  "text-only", ""),
-    ("implementation_strategy", "Practical Strategies",   "STRATEGIES",  "text-only", ""),
-    ("risk_management",      "Managing Your Project Risks","RISK",        "text-only", ""),
-    ("best_practices",       "Best Practices for Success", "TIPS",        "text-only", ""),
+    ("introduction",         "Introduction",               "OVERVIEW",    "text-only", ""),
+    ("industry_challenges",  "Common Challenges",          "CHALLENGES",  "text-only", ""),
+    ("core_principles",      "Key Principles",             "PRINCIPLES",  "text-only", ""),
+    ("practical_strategies", "Practical Strategies",       "STRATEGIES",  "text-only", ""),
+    ("risk_management",      "Managing Risks",             "RISK",        "text-only", ""),
+    ("best_practices",       "Best Practices",             "TIPS",        "text-only", ""),
     ("key_statistics",       "Facts and Figures",          "DATA",        "text-only", ""),
-    ("process_steps",        "Implementation Roadmap",     "ROADMAP",     "text-only", ""),
-    ("comparison_table",     "Traditional vs. Smart Design","COMPARISON", "text-only", ""),
-    ("key_takeaways",        "Key Lessons",                "SUMMARY",     "text-only", ""),
-    ("case_study",           "Real-World Example",         "CASE STUDY",  "text-only", ""),
-    ("conclusion",           "Ready to Start Your Project?","NEXT STEPS", "text-only", ""),
+    ("implementation_roadmap", "Implementation Roadmap",    "ROADMAP",     "text-only", ""),
+    ("traditional_vs_modern", "Traditional vs Modern",      "COMPARISON", "text-only", ""),
+    ("case_study",           "Real World Example",         "CASE STUDY",  "text-only", ""),
+    ("expert_insights",      "Expert Insights",            "INSIGHTS",    "text-only", ""),
+    ("conclusion",           "Ready to Start",             "NEXT STEPS", "text-only", ""),
 ]
 
 DOC_TYPE_LABELS = {
@@ -128,186 +128,173 @@ def _deduplicate_content(html: str) -> str:
 # for exactly one section. No generic filler, no repeated statistics.
 # ─────────────────────────────────────────────────────────────────────────────
 SECTION_PROMPTS = {
-    "executive_summary": """Write a compelling Introduction for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "introduction": """Write a high-impact Introduction and Executive Summary for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- Open with a specific, provocative claim or statistic about {topic} — NOT "In this guide..." or "Welcome to..."
-- Reference at least one named standard or regulation relevant to {topic}
-- 3 full paragraphs, each 90–120 words
-- End with 1 subheading <h3> and 1 paragraph about what's at stake if they don't act
+- MINIMUM 300 words.
+- Open with a specific, provocative claim or statistic about {topic}.
+- 3–5 full paragraphs, each 80–120 words.
+- Cite specific standards (e.g. NCC, Passive House) and real numbers.
+- End with a transition to the next section.
 
 OUTPUT FORMAT — raw HTML only, no markdown:
 <p>[Opening paragraph — bold claim + context]</p>
-<p>[Second paragraph — why this matters now, specific consequence]</p>
-<p>[Third paragraph — what the reader gains from this guide]</p>
+<p>[Subsequent paragraphs — strategic depth + citations]</p>
 <h3>[Subheading about the stakes]</h3>
 <p>[What happens if they ignore this — specific outcome]</p>
 
-Pain Points to address: {pain_points}
+Pain Points: {pain_points}
 Firm USP: {firm_usp}""",
 
-    "key_challenges": """Write a detailed Common Challenges section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "industry_challenges": """Write a detailed Common Challenges section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- Describe exactly 4 specific, non-obvious challenges — each with its own <h3>
-- Each challenge block: 70–90 word problem paragraph + <p><strong>Real cost:</strong>...</p> + <p><strong>Expert fix:</strong>...</p>
-- Use specific numbers, percentages, dollar figures
-- Do NOT repeat the same statistic across challenges
-- Reference specific regulatory or technical context (NCC, BASIX, zoning, etc.)
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Describe 4 specific, non-obvious challenges — each with its own <h3>.
+- Use specific numbers, percentages, dollar figures.
+- Cite specific standards and real numbers.
 
 OUTPUT FORMAT:
 <h3>[Challenge 1 Name]</h3>
-<p>[What happens and why. 70-90 words.]</p>
+<p>[Deep analysis of the problem. 80-120 words.]</p>
 <p><strong>Real cost:</strong> [Specific financial or timeline impact.]</p>
-<p><strong>Expert fix:</strong> [Non-obvious professional resolution. 40-60 words.]</p>
 [Repeat for challenges 2, 3, 4]
 
 Pain Points: {pain_points}""",
 
-    "strategic_framework": """Write a Key Principles section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "core_principles": """Write a Key Principles section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- Cover exactly 3 core design or technical principles
-- Each principle: named standard or method + plain English explanation + real-world analogy
-- Opening paragraph sets up why these 3 matter
-- Each principle block: 80–110 words
-- Principles must be DIFFERENT from each other — different domains (e.g. thermal, structural, regulatory)
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Define the 3 foundational pillars of success.
+- Cite specific standards and real numbers.
 
 OUTPUT FORMAT:
-<p>[Opening: why these 3 principles are non-negotiable for {topic}. 60-80 words.]</p>
-<h3>Principle 1: [Technical Name] — [Plain English Name]</h3>
-<p>[Explained with named standard and analogy. 80-110 words.]</p>
-<h3>Principle 2: [Technical Name] — [Plain English Name]</h3>
-<p>[Different domain. 80-110 words.]</p>
-<h3>Principle 3: [Technical Name] — [Plain English Name]</h3>
-<p>[Different domain. 80-110 words.]</p>
+<p>[Opening: why these principles are non-negotiable. 80-120 words.]</p>
+<h3>Principle 1: [Technical Name]</h3>
+<p>[Detailed explanation. 80-120 words.]</p>
+[Repeat for Principles 2 and 3]""",
 
-Audience: {audience}""",
-
-    "implementation_strategy": """Write a Practical Strategies section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "practical_strategies": """Write a Practical Strategies section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- 3 actionable strategies — each a different phase of the project lifecycle
-- Each strategy: what to do (step-by-step) + expected outcome with a number
-- No generic advice — specific tools, methods, or standards must be named
-- Each strategy block: 80–100 word description + 2-item <ul> list
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- 3 actionable strategies.
+- Cite specific standards and real numbers.
 
 OUTPUT FORMAT:
-<h3>Strategy 1: [Action-Oriented Name — verb first]</h3>
-<p>[What it involves and how to execute it. 80-100 words.]</p>
-<ul>
-<li><strong>Expected outcome:</strong> [Specific measurable benefit.]</li>
-<li><strong>Common mistake to avoid:</strong> [The one error that kills this strategy.]</li>
-</ul>
-[Repeat for Strategy 2 and Strategy 3 — each covering a DIFFERENT project phase]
-
-Pain Points: {pain_points}""",
+<h3>Strategy 1: [Action-Oriented Name]</h3>
+<p>[Detailed step-by-step execution. 80-120 words.]</p>
+[Repeat for Strategies 2 and 3]""",
 
     "risk_management": """Write a Managing Risks section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- 3 NON-OBVIOUS risks — each in a different category (legal/financial/technical/regulatory)
-- Do NOT repeat challenges from other sections
-- Each risk block: what triggers it + specific professional mitigation (named method or contract clause)
-- Vary the statistics — do NOT use "20% reduction" or "25% increase" more than once total
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Outline risk mitigation frameworks.
+- Cite specific standards and real numbers.
 
 OUTPUT FORMAT:
-<h3>[Risk Name — specific, not generic]</h3>
-<p>[How this risk manifests and what triggers it. 70-90 words.]</p>
-<p><strong>Professional mitigation:</strong> [Specific safeguard. 50-70 words.]</p>
-[Repeat for Risk 2 and Risk 3]
+<h3>[Risk Name]</h3>
+<p>[Analysis and mitigation. 80-120 words.]</p>
+[Repeat for Risks 2 and 3]""",
 
-Audience: {audience}""",
-
-    "best_practices": """Write a Best Practices for Success section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "best_practices": """Write a Best Practices section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- 4 advanced professional tips — what separates excellent outcomes from average ones
-- Each tip names a specific tool, method, certification, or standard
-- Do NOT repeat strategies from the Practical Strategies section
-- Each tip block: 70–90 word explanation + concrete before/after outcome
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Distill elite best practices.
+- Cite specific standards and real numbers.
 
 OUTPUT FORMAT:
-<h3>[Tip Name — specific, expert-level]</h3>
-<p>[The expert approach explained with actionable detail. 70-90 words.]</p>
-<p><strong>The difference it makes:</strong> [Concrete before/after outcome. 40-60 words.]</p>
-[Repeat for Tips 2, 3, 4]
-
-Firm USP: {firm_usp}""",
+<h3>[Best Practice Name]</h3>
+<p>[Detailed strategy and impact. 80-120 words.]</p>
+[Repeat for Practices 2, 3, 4]""",
 
     "key_statistics": """Write a Facts and Figures section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- 4–5 specific statistics, each from a DIFFERENT dimension (cost, time, environmental, adoption, ROI)
-- Each stat sourced to a named body (CSIRO, ABS, GBCA, US DOE, USGBC, McKinsey, etc.)
-- NO REPEATED STATISTICS — every number must be different
-- Opening paragraph: why data matters for {topic} decisions
-- Closing paragraph: what these numbers mean collectively for the reader
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Present data-driven insights.
+- Cite specific sources and real numbers.
 
 OUTPUT FORMAT:
-<h3>The Numbers That Matter</h3>
-<p>[Why data literacy matters for {topic} decisions. 50-70 words.]</p>
+<h3>Analytical Data Points</h3>
 <ul>
-<li><strong>[Stat Label]:</strong> [Specific figure + source name + what it means for {audience}. 40-60 words.]</li>
-<li><strong>[Stat Label]:</strong> [Different dimension. 40-60 words.]</li>
-<li><strong>[Stat Label]:</strong> [Different dimension. 40-60 words.]</li>
-<li><strong>[Stat Label]:</strong> [Different dimension. 40-60 words.]</li>
+<li><strong>[Metric]:</strong> [Deep analysis. 80-120 words.]</li>
 </ul>
-<p>[Closing: what these numbers mean collectively. 50-70 words.]</p>
+[Repeat for 4 metrics]""",
 
-Topic: {topic}""",
-
-    "process_steps": """Write an Implementation Roadmap section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "implementation_roadmap": """Write an Implementation Roadmap section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- Exactly 5 sequential phases with clear START triggers and END deliverables
-- Each phase: name, typical duration, who is responsible, what the client receives
-- No overlap between phases
-- Each phase block: 70–90 words
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Define the strategic timeline.
+- Cite specific standards and real numbers.
 
 OUTPUT FORMAT:
-<h3>Step 1: [Phase Name] — [Typical Duration]</h3>
-<p>[What happens, who does what, what the client receives at the end. 70-90 words.]</p>
-<h3>Step 2: [Phase Name] — [Typical Duration]</h3>
-<p>[Different phase. 70-90 words.]</p>
-[Continue for Steps 3, 4, 5]
+<h3>Phase 1: [Phase Name]</h3>
+<p>[Detailed roadmap. 80-120 words.]</p>
+[Repeat for Phases 2-5]""",
 
-Topic: {topic}, Audience: {audience}""",
-
-    "comparison_table": """Write a Traditional vs. Smart Design section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "traditional_vs_modern": """Write a Traditional vs Modern section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- Compare across exactly 4 different dimensions (cost, time, performance, compliance, maintenance, etc.)
-- Each dimension: specific traditional limitation with metric + specific modern improvement with metric
-- Use different metrics for each dimension — no repeated statistics
-- Modern approach must be clearly superior with evidence
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Compare legacy vs modern approaches.
+- Cite specific standards and real numbers.
 
 OUTPUT FORMAT:
-<h3>[Comparison Dimension 1 — e.g. Energy Performance]</h3>
-<p><strong>Traditional approach:</strong> [Specific limitation with metric. 40-60 words.]</p>
-<p><strong>Modern approach:</strong> [Specific improvement with metric. 40-60 words.]</p>
-[Repeat for Dimensions 2, 3, 4]
+<h3>[Dimension Name]</h3>
+<p><strong>Traditional:</strong> [Analysis. 60-80 words.]</p>
+<p><strong>Modern:</strong> [Analysis. 60-80 words.]</p>
+[Repeat for 4 dimensions]""",
 
-Topic: {topic}""",
-
-    "key_takeaways": """Write a Key Lessons section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "case_study": """Write a Real World Example section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- 4 punchy, memorable takeaways — each synthesising a DIFFERENT theme from the guide
-- Each takeaway: a complete standalone thought, 30–50 words, specific not vague
-- Closing paragraph: connects lessons to the reader's next decision
-- Opening paragraph: frames why these 4 lessons matter most
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Provide a detailed client success story.
+- Cite real numbers and outcomes.
 
 OUTPUT FORMAT:
-<h3>What Every {audience} Must Know Before Starting</h3>
-<p>[Why these 4 lessons are the most critical. 50-70 words.]</p>
-<ul>
-<li>[Takeaway 1 — from principles/challenges. Specific, memorable. 30-50 words.]</li>
-<li>[Takeaway 2 — from strategies/roadmap. Actionable. 30-50 words.]</li>
-<li>[Takeaway 3 — from risks/best practices. Protective. 30-50 words.]</li>
-<li>[Takeaway 4 — forward-looking, inspiring. 30-50 words.]</li>
-</ul>
-<p>[Closing: what these lessons mean for their next decision. 60-80 words.]</p>""",
+<h3>Case Study: [Project Name]</h3>
+<p>[Context, Challenge, Solution, Result. 300+ words total.]</p>""",
+
+    "expert_insights": """Write an Expert Insights section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+
+RULES:
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Provide high-level expert analysis.
+- Cite specific standards and real numbers.
+
+OUTPUT FORMAT:
+<h3>Expert Perspective: [Topic]</h3>
+<p>[Nuanced analysis. 100-150 words.]</p>
+[Repeat for 2-3 insights]""",
+
+    "conclusion": """Write a Ready to Start closing section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+
+RULES:
+- MINIMUM 300 words.
+- 3–5 full paragraphs, each 80–120 words.
+- Create a powerful call to action.
+- Summarize why the firm is the logical choice.
+
+OUTPUT FORMAT:
+<h3>Partnering for Success</h3>
+<p>[Persuasive closing. 300+ words total.]</p>""",
+}
 
     "case_study": """Write a Real-World Example section for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
@@ -349,96 +336,34 @@ Firm USP: {firm_usp}, Topic: {topic}""",
 # Section maps
 _SECTION_MAPS: Dict[str, Dict[str, str]] = {
     "guide": {
-        "introduction": "executive_summary", "overview": "executive_summary",
-        "common_challenges": "key_challenges", "challenges": "key_challenges",
-        "key_principles": "strategic_framework", "principles": "strategic_framework",
-        "practical_strategies": "implementation_strategy", "strategies": "implementation_strategy",
-        "managing_risks": "risk_management", "risks": "risk_management",
+        "introduction": "introduction", "overview": "introduction", "executive_summary": "introduction",
+        "common_challenges": "industry_challenges", "challenges": "industry_challenges", "industry_challenges": "industry_challenges",
+        "key_principles": "core_principles", "principles": "core_principles", "core_principles": "core_principles",
+        "practical_strategies": "practical_strategies", "strategies": "practical_strategies",
+        "managing_risks": "risk_management", "risks": "risk_management", "risk_management": "risk_management",
         "best_practices": "best_practices",
-        "facts_and_figures": "key_statistics", "facts": "key_statistics",
-        "implementation_roadmap": "process_steps", "roadmap": "process_steps",
-        "traditional_vs_modern": "comparison_table", "comparison": "comparison_table",
-        "key_lessons": "key_takeaways", "lessons": "key_takeaways",
-        "real_world_example": "case_study", "example": "case_study",
+        "facts_and_figures": "key_statistics", "facts": "key_statistics", "key_statistics": "key_statistics",
+        "implementation_roadmap": "implementation_roadmap", "roadmap": "implementation_roadmap",
+        "traditional_vs_modern": "traditional_vs_modern", "comparison": "traditional_vs_modern",
+        "real_world_example": "case_study", "example": "case_study", "case_study": "case_study",
+        "expert_insights": "expert_insights", "insights": "expert_insights",
         "ready_to_start": "conclusion", "conclusion": "conclusion",
-    },
-    "roi_calculator": {
-        "introduction": "executive_summary", "why_roi_matters": "key_challenges",
-        "cost_factors": "strategic_framework", "roi_breakdown": "implementation_strategy",
-        "scenario_example_one": "process_steps", "scenario_example_two": "comparison_table",
-        "managing_risks": "risk_management", "best_practices": "best_practices",
-        "facts_and_figures": "key_statistics", "key_lessons": "key_takeaways",
-        "real_world_example": "case_study", "ready_to_start": "conclusion", "conclusion": "conclusion",
-    },
-    "checklist": {
-        "introduction": "executive_summary",
-        "planning_checklist": "key_challenges", "design_checklist": "strategic_framework",
-        "construction_checklist": "implementation_strategy", "quality_review_checklist": "risk_management",
-        "key_principles": "best_practices", "managing_risks": "risk_management",
-        "best_practices": "best_practices", "facts_and_figures": "key_statistics",
-        "key_lessons": "key_takeaways", "real_world_example": "case_study",
-        "ready_to_start": "conclusion", "conclusion": "conclusion",
-        "implementation_roadmap": "process_steps", "traditional_vs_modern": "comparison_table",
-    },
-    "case_study": {
-        "introduction": "executive_summary", "project_overview": "key_challenges",
-        "key_challenges": "key_challenges", "our_approach": "strategic_framework",
-        "implementation_steps": "process_steps", "managing_risks": "risk_management",
-        "results_achieved": "key_statistics", "facts_and_figures": "key_statistics",
-        "key_lessons": "key_takeaways", "real_world_example": "case_study",
-        "additional_insights": "best_practices", "ready_to_start": "conclusion", "conclusion": "conclusion",
-        "best_practices": "best_practices", "traditional_vs_modern": "comparison_table",
-        "strategies": "implementation_strategy",
-    },
-    "trends_report": {
-        "introduction": "executive_summary", "major_trend_one": "key_challenges",
-        "major_trend_two": "strategic_framework", "major_trend_three": "implementation_strategy",
-        "market_drivers": "risk_management", "opportunities_for_firms": "best_practices",
-        "managing_risks": "risk_management", "best_practices": "best_practices",
-        "facts_and_figures": "key_statistics", "key_lessons": "key_takeaways",
-        "real_world_example": "case_study", "ready_to_start": "conclusion", "conclusion": "conclusion",
-        "traditional_vs_modern": "comparison_table", "roadmap": "process_steps",
-    },
-    "client_onboarding": {
-        "introduction": "executive_summary", "initial_consultation": "key_challenges",
-        "project_discovery": "strategic_framework", "design_planning": "implementation_strategy",
-        "approval_and_permitting": "process_steps", "construction_coordination": "comparison_table",
-        "managing_risks": "risk_management", "best_practices": "best_practices",
-        "facts_and_figures": "key_statistics", "key_lessons": "key_takeaways",
-        "real_world_example": "case_study", "ready_to_start": "conclusion", "conclusion": "conclusion",
-    },
-    "design_portfolio": {
-        "introduction": "executive_summary", "about_our_firm": "key_challenges",
-        "project_highlight_one": "strategic_framework", "project_highlight_two": "implementation_strategy",
-        "design_philosophy": "risk_management", "managing_risks": "risk_management",
-        "best_practices": "best_practices", "facts_and_figures": "key_statistics",
-        "key_lessons": "key_takeaways", "real_world_example": "case_study",
-        "our_process": "process_steps", "ready_to_start": "conclusion", "conclusion": "conclusion",
-        "traditional_vs_modern": "comparison_table",
-    },
-    "custom": {
-        "introduction": "executive_summary", "key_insights": "key_challenges",
-        "core_framework": "strategic_framework", "practical_strategies": "implementation_strategy",
-        "managing_risks": "risk_management", "best_practices": "best_practices",
-        "facts_and_figures": "key_statistics", "implementation_steps": "process_steps",
-        "comparison_analysis": "comparison_table", "key_lessons": "key_takeaways",
-        "real_world_example": "case_study", "ready_to_start": "conclusion", "conclusion": "conclusion",
     },
 }
 
 _UNIVERSAL_SLUG_MAP = {
-    "introduction": "executive_summary", "overview": "executive_summary",
-    "challenges": "key_challenges", "problems": "key_challenges",
-    "framework": "strategic_framework", "principles": "strategic_framework",
-    "strategies": "implementation_strategy", "strategy": "implementation_strategy",
-    "risks": "risk_management", "risk": "risk_management",
-    "tips": "best_practices", "practices": "best_practices",
-    "facts": "key_statistics", "statistics": "key_statistics", "data": "key_statistics",
-    "steps": "process_steps", "roadmap": "process_steps", "phases": "process_steps",
-    "comparison": "comparison_table", "vs": "comparison_table",
-    "takeaways": "key_takeaways", "lessons": "key_takeaways",
-    "case": "case_study", "example": "case_study", "results": "case_study",
-    "conclusion": "conclusion", "start": "conclusion", "cta": "conclusion",
+    "introduction": "introduction", "overview": "introduction", "executive_summary": "introduction",
+    "challenges": "industry_challenges", "industry_challenges": "industry_challenges",
+    "principles": "core_principles", "core_principles": "core_principles",
+    "strategies": "practical_strategies", "practical_strategies": "practical_strategies",
+    "risks": "risk_management", "risk_management": "risk_management",
+    "tips": "best_practices", "best_practices": "best_practices",
+    "facts": "key_statistics", "key_statistics": "key_statistics", "data": "key_statistics",
+    "roadmap": "implementation_roadmap", "implementation_roadmap": "implementation_roadmap",
+    "comparison": "traditional_vs_modern", "traditional_vs_modern": "traditional_vs_modern",
+    "case": "case_study", "case_study": "case_study", "example": "case_study",
+    "insights": "expert_insights", "expert_insights": "expert_insights",
+    "conclusion": "conclusion", "ready_to_start": "conclusion",
 }
 
 
@@ -499,12 +424,14 @@ class GroqClient:
 
         # ── Pass 1a: Generate title ──────────────────────────────────────────
         title_prompt = (
-            f"Generate a compelling title and subtitle for a {type_label} on '{topic}' for {audience}.\n"
+            f"Generate a professional, high-impact title and subtitle for a {type_label} on '{topic}' for {audience}.\n"
             f"Format exactly as: TITLE: [title here]\nSUBTITLE: [subtitle here]\n"
-            f"Rules: Title should be 3-6 words, punchy, not generic. "
-            f"Subtitle should be a complete sentence explaining the value. "
-            f"Do NOT include the doc type label in the title. "
-            f"Do NOT use the word 'sustainable-architecture' as a slug — use proper words."
+            f"Rules:\n"
+            f"- The TITLE must prominently feature the core topic '{topic}'. Avoid being too metaphorical.\n"
+            f"- Title should be 3-6 words, authoritative, and intellectual.\n"
+            f"- Subtitle should be a complete sentence explaining the specific value proposition.\n"
+            f"- Do NOT use the word 'sustainable-architecture' as a slug — use proper English words.\n"
+            f"- No marketing fluff. Tone should be McKinsey-style."
         )
         title = topic
         subtitle = f"Strategic Insights for {topic}"
@@ -743,6 +670,7 @@ class GroqClient:
 
             # Inject the standard title variable used in some templates
             vars[f"section_{key}_title"] = sec_title
+            vars[f"section_{key}_kicker"] = fw_entry.get("kicker") or default_label
             
             # Plain text slots
             vars[f"section_{key}_intro"]   = self._extract_intro_text(content)
