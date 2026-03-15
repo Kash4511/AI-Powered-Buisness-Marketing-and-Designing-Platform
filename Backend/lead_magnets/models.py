@@ -43,6 +43,29 @@ class LeadMagnet(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+class SystemConfiguration(models.Model):
+    """Stores global system configurations, prompts, and static content."""
+    CONFIG_TYPE_CHOICES = [
+        ('text', 'Plain Text'),
+        ('json', 'JSON Object'),
+        ('html', 'HTML Content'),
+    ]
+
+    key = models.CharField(max_length=255, unique=True)
+    value = models.TextField()
+    config_type = models.CharField(max_length=10, choices=CONFIG_TYPE_CHOICES, default='text')
+    description = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.key} ({self.config_type})"
+
+    class Meta:
+        verbose_name = 'System Configuration'
+        verbose_name_plural = 'System Configurations'
+
 class Lead(models.Model):
     lead_magnet = models.ForeignKey(LeadMagnet, on_delete=models.CASCADE, related_name='leads')
     email = models.EmailField()

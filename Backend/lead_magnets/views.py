@@ -32,6 +32,7 @@ from .services import DocRaptorService, render_template
 from .reportlab_service import ReportLabService
 from .groq_client import GroqClient
 from .models import Template
+from .config_helper import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +87,8 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         if val is None:
             val = ""
         val_str = str(val)
-        # section_*_html keys and toc_html contain pre-rendered HTML — inject raw, no escaping
-        if (key.startswith("section_") and key.endswith("_html")) or key == "toc_html":
+        # All keys ending in _html or starting with customTitle contain raw content
+        if key.endswith("_html") or key.startswith("customTitle"):
             return val_str
         # All other values are plain text — must be HTML-escaped
         return val_str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -105,8 +106,9 @@ def _clean_company_name(name: str, email: str = "") -> str:
     Detects username-style strings (no spaces, all lowercase, has digits) 
     and derives a better name from the email domain or title-cases the username.
     """
+    default_company = get_config("default_company_name", "Your Company")
     if not email:
-        return name or "Your Company"
+        return name or default_company
         
     username = email.split("@")[0]
     # If name is missing or matches the username fallback
@@ -117,7 +119,8 @@ def _clean_company_name(name: str, email: str = "") -> str:
         if is_username_style:
             domain_part = email.split("@")[-1].split(".")[0]
             # If domain isn't a common provider, use it
-            if domain_part.lower() not in ["gmail", "outlook", "hotmail", "yahoo", "icloud", "me"]:
+            common_providers = get_config("common_email_providers", ["gmail", "outlook", "hotmail", "yahoo", "icloud", "me"])
+            if domain_part.lower() not in common_providers:
                 return domain_part.title()
             # Fallback: title case the username and strip digits
             return _re.sub(r'\d+', '', username).title()
@@ -153,7 +156,7 @@ def _build_firm_profile(user, fp_obj=None) -> dict:
             "primary_brand_color":   fp_obj.primary_brand_color or "",
             "secondary_brand_color": fp_obj.secondary_brand_color or "",
             "logo_url":              fp_obj.logo.url if fp_obj.logo else "",
-            "industry":              "Architecture",
+            "industry":              get_config("default_industry", "Architecture"),
             "branding_guidelines":   fp_obj.branding_guidelines or "",
         }
     return {
@@ -164,7 +167,7 @@ def _build_firm_profile(user, fp_obj=None) -> dict:
         "primary_brand_color":   "",
         "secondary_brand_color": "",
         "logo_url":              "",
-        "industry":              "Architecture",
+        "industry":              get_config("default_industry", "Architecture"),
         "branding_guidelines":   "",
     }
 
@@ -298,12 +301,12 @@ def get_theme_palette(request):
     
     # Defaults
     palette = {
-        "primary":    "#1a365d",
-        "secondary":  "#c5a059",
-        "surface":    "#ffffff",
-        "onSurface":  "#1a202c",
-        "accent":     "#f8fafc",
-        "highlight":  "#e8f4f8",
+        "primary":    get_config("palette_primary", "#1a365d"),
+        "secondary":  get_config("palette_secondary", "#c5a059"),
+        "surface":    get_config("palette_surface", "#ffffff"),
+        "onSurface":  get_config("palette_on_surface", "#1a202c"),
+        "accent":     get_config("palette_accent", "#f8fafc"),
+        "highlight":  get_config("palette_highlight", "#e8f4f8"),
     }
     
     # Try fetching from user's firm profile
@@ -318,12 +321,12 @@ def get_theme_palette(request):
         
     # Dark mode adjustments
     if is_dark_mode:
-        palette.update({
+        palette.update(get_config("palette_dark_mode", {
             "surface":   "#1a202c",
             "onSurface": "#f7fafc",
             "accent":    "#2d3748",
             "highlight": "#4a5568",
-        })
+        }))
         
     return Response(palette)
 
@@ -347,17 +350,17 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             _set_job(job_id, status="failed", error="template_id and lead_magnet_id are required")
             return
 
-        _set_job(job_id, status="processing", progress=5, message="Parsing request...", lead_magnet_id=lead_magnet_id)
+        _set_job(job_id, status="processing", progress=5, message=get_config("job_msg_parsing", "Parsing request..."), lead_magnet_id=lead_magnet_id)
 
         try:
             lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=user)
         except LeadMagnet.DoesNotExist:
-            _set_job(job_id, status="failed", error="Lead magnet not found")
+            _set_job(job_id, status="failed", error=get_config("job_err_not_found", "Lead magnet not found"))
             return
 
         gen_data = getattr(lead_magnet, "generation_data", None)
         if not gen_data:
-            _set_job(job_id, status="failed", error="Lead magnet is missing generation data")
+            _set_job(job_id, status="failed", error=get_config("job_err_missing_data", "Lead magnet is missing generation data"))
             return
 
         ai_client = GroqClient()
@@ -370,11 +373,12 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 if isinstance(gen_data.audience_pain_points, list)
                 else [gen_data.audience_pain_points]
             ),
-            "tone":             "Professional and Institutional",
-            "industry":         "Architecture",
-            "document_type":    gen_data.lead_magnet_type or "guide",
-            "lead_magnet_type": gen_data.lead_magnet_type or "Strategic Guide",
+            "tone":             get_config("default_tone", "Professional and Institutional"),
+            "industry":         get_config("default_industry", "Architecture"),
+            "document_type":    gen_data.lead_magnet_type or get_config("default_doc_type", "guide"),
+            "lead_magnet_type": gen_data.lead_magnet_type or get_config("default_lead_magnet_type_label", "Strategic Guide"),
         }
+
 
         logger.info(f"🔍 gen_data.lead_magnet_type = '{gen_data.lead_magnet_type}'")
         logger.info(f"🔍 ai_input_data document_type = '{ai_input_data['document_type']}'")
@@ -387,14 +391,14 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             raw_img = architectural_images[i - 1] if len(architectural_images) >= i else ""
             url     = _resolve_image_url(raw_img)
             firm_profile[f"image_{i}_url"]     = url
-            firm_profile[f"image_{i}_caption"] = f"Project Insight {i}"
+            firm_profile[f"image_{i}_caption"] = f"{get_config('default_image_caption_prefix', 'Project Insight')} {i}"
 
         template_vars: dict = {}
 
         if use_ai_content:
             try:
                 _set_job(job_id, status="processing", progress=15,
-                         message="Generating deep AI content via Groq... (~20s)")
+                         message=get_config("job_msg_generating", "Generating deep AI content via Groq... (~20s)"))
                 start_ai = time.time()
                 logger.info("🤖 AI Generation Start via Groq")
 
@@ -412,7 +416,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 if empty_sections:
                     logger.warning(f"⚠️ Empty sections after generation: {empty_sections}")
 
-                _set_job(job_id, status="processing", progress=65, message="Mapping content to template...")
+                _set_job(job_id, status="processing", progress=65, message=get_config("job_msg_mapping", "Mapping content to template..."))
 
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
 
@@ -424,11 +428,12 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                         template_vars[html_key] = ai_content.get(key, "")
 
                 # Ensure firm data is never empty
-                topic = signals.get("topic", "Industry")
-                template_vars["companyName"]  = template_vars.get("companyName")  or firm_profile.get("firm_name") or f"{topic} Experts"
+                topic = signals.get("topic", get_config("default_topic", "Industry"))
+                template_vars["companyName"]  = template_vars.get("companyName")  or firm_profile.get("firm_name") or f"{topic} {get_config('default_company_suffix', 'Experts')}"
                 template_vars["emailAddress"] = template_vars.get("emailAddress") or firm_profile.get("work_email", "")
                 template_vars["phoneNumber"]  = template_vars.get("phoneNumber")  or firm_profile.get("phone_number", "")
                 template_vars["website"]      = template_vars.get("website")      or firm_profile.get("firm_website", "")
+
 
                 # Page numbers
                 for n in range(2, 16):
@@ -450,11 +455,11 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 return
         else:
             template_vars = {
-                "primaryColor":     firm_profile.get("primary_brand_color") or "#1a365d",
-                "secondaryColor":   firm_profile.get("secondary_brand_color") or "#c5a059",
+                "primaryColor":     firm_profile.get("primary_brand_color") or get_config("palette_primary", "#1a365d"),
+                "secondaryColor":   firm_profile.get("secondary_brand_color") or get_config("palette_secondary", "#c5a059"),
                 "companyName":      firm_profile.get("firm_name") or "",
                 "mainTitle":        lead_magnet.title,
-                "documentSubtitle": "Professional Insights",
+                "documentSubtitle": get_config("default_subtitle_label", "Professional Insights"),
                 "emailAddress":     firm_profile.get("work_email") or "",
                 "phoneNumber":      firm_profile.get("phone_number") or "",
                 "website":          firm_profile.get("firm_website") or "",
@@ -466,7 +471,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
         pdf_service = DocRaptorService()
         try:
             _set_job(job_id, status="processing", progress=75,
-                     message="Rendering PDF via DocRaptor...")
+                     message=get_config("job_msg_rendering", "Rendering PDF via DocRaptor..."))
             start_pdf = time.time()
 
             docraptor_vars = template_vars.copy()
@@ -474,29 +479,30 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             # Ensure images pass through
             for i in range(1, 7):
                 docraptor_vars[f"image_{i}_url"]     = firm_profile.get(f"image_{i}_url", "")
-                docraptor_vars[f"image_{i}_caption"] = firm_profile.get(f"image_{i}_caption", f"Project Insight {i}")
+                docraptor_vars[f"image_{i}_caption"] = firm_profile.get(f"image_{i}_caption", f"{get_config('default_image_caption_prefix', 'Project Insight')} {i}")
 
             # Ensure colours are set
-            docraptor_vars["primaryColor"]   = template_vars.get("primaryColor")   or "#2a5766"
-            docraptor_vars["secondaryColor"] = template_vars.get("secondaryColor") or "#c5a059"
-            docraptor_vars["accentColor"]    = template_vars.get("accentColor")    or "#f8fafc"
+            docraptor_vars["primaryColor"]   = template_vars.get("primaryColor")   or get_config("palette_primary", "#2a5766")
+            docraptor_vars["secondaryColor"] = template_vars.get("secondaryColor") or get_config("palette_secondary", "#c5a059")
+            docraptor_vars["accentColor"]    = template_vars.get("accentColor")    or get_config("palette_accent", "#f8fafc")
 
             # Pass architectural_images list for any Jinja2-style conditional in templates
             docraptor_vars["architecturalImages"] = architectural_images
 
             _set_job(job_id, status="processing", progress=82,
-                     message="DocRaptor rendering your 15-page PDF...")
+                     message=get_config("job_msg_docraptor", "DocRaptor rendering your 15-page PDF..."))
             result      = pdf_service.generate_pdf("modern-guide", docraptor_vars)
             pdf_duration = time.time() - start_pdf
 
             if not result.get("success"):
-                err     = result.get("error", "PDF generation failed")
+                err     = result.get("error", get_config("job_err_pdf_failed", "PDF generation failed"))
                 details = result.get("details", "")
                 logger.error(f"PDF Failure: {err} | {details} | {pdf_duration:.2f}s")
                 _set_job(job_id, status="failed", error=f"{err}: {details}")
                 return
 
-            _set_job(job_id, status="processing", progress=92, message="Saving to cloud storage...")
+            _set_job(job_id, status="processing", progress=92, message=get_config("job_msg_saving", "Saving to cloud storage..."))
+
             pdf_data = result.get("pdf_data")
             filename = result.get("filename", f"lead-magnet-{lead_magnet_id}.pdf")
 
@@ -522,7 +528,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             logger.info(f"✅ PDF complete | {pdf_duration:.2f}s")
             _set_job(job_id, status="complete", progress=100,
                      pdf_url=f"/api/lead-magnets/{lead_magnet_id}/download/",
-                     message="Your PDF is ready!")
+                     message=get_config("job_msg_complete", "Your PDF is ready!"))
 
         except Exception as e:
             logger.error(f"PDF Rendering Error: {e}\n{traceback.format_exc()}")
@@ -830,9 +836,9 @@ class FormaAIConversationView(APIView):
         firm_profile = _build_firm_profile(request.user)
         user_answers = {
             "main_topic":            message,
-            "lead_magnet_type":      "Custom Guide",
+            "lead_magnet_type":      get_config("forma_ai_default_type", "Custom Guide"),
             "desired_outcome":       message.strip().replace("\n", " "),
-            "industry":              "",
+            "industry":              get_config("default_industry", "Architecture"),
             "brand_primary_color":   firm_profile.get("primary_brand_color", ""),
             "brand_secondary_color": firm_profile.get("secondary_brand_color", ""),
             "brand_logo_url":        firm_profile.get("logo_url", ""),
@@ -974,8 +980,8 @@ class BrandAssetsPDFPreviewView(APIView):
                 "phone":           fp.phone_number or "",
                 "email":           fp.work_email or "",
                 "website":         fp.firm_website or "",
-                "primaryColor":    fp.primary_brand_color or "#2a5766",
-                "secondaryColor":  fp.secondary_brand_color or "#FFFFFF",
+                "primaryColor":    fp.primary_brand_color or get_config("palette_primary", "#2a5766"),
+                "secondaryColor":  fp.secondary_brand_color or get_config("palette_white", "#FFFFFF"),
                 "logoUrl":         abs_url(fp.logo.url) if fp.logo else "",
                 "brandGuidelines": fp.branding_guidelines or "",
             }

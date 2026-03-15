@@ -6,213 +6,28 @@ import re
 import traceback as _tb
 from typing import Dict, Any, List
 from groq import Groq
+from .config_helper import get_config
+from .constants import (
+    DEFAULT_SECTIONS, DEFAULT_DOC_TYPE_LABELS, DEFAULT_MASTER_PROMPT_TEMPLATE,
+    DEFAULT_FORMAT_RULES, DEFAULT_TERMS
+)
 
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION DEFINITIONS — 12 content sections used by the HTML template.
-# These NEVER change — the template {{section_*_html}} vars depend on them.
-# What changes per doc_type is the PROMPT BRIEF sent to the AI.
+# CONFIGURABLE SETTINGS — pulled from SystemConfiguration or Constants
 # ─────────────────────────────────────────────────────────────────────────────
-SECTIONS = [
-    (
-        "executive_summary",
-        "Introduction",
-        "OVERVIEW",
-        "text-only",
-        (
-            "Write a friendly and engaging Introduction for a guide on {topic} aimed at {audience}.\n"
-            "The tone should be like an experienced architect giving helpful advice to a client.\n"
-            "RULES:\n"
-            "  • Explain the topic in simple terms and why it matters today.\n"
-            "  • Avoid technical jargon or academic writing.\n"
-            "  • Use simple explanations and relatable language.\n"
-            "STRUCTURE:\n"
-            "<p>A warm opening that defines {topic} simply and why it's a great choice for {audience}.</p>\n"
-            "<h3>Why This Matters Now</h3>\n"
-            "<p>Explain the benefits (comfort, cost savings, health) in plain English.</p>\n"
-            "<h3>The Goal of This Guide</h3>\n"
-            "<p>A brief encouraging statement on how this guide helps them make better decisions.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "key_challenges",
-        "Common Challenges",
-        "CHALLENGES",
-        "image-right",
-        (
-            "Describe 4 real problems clients face when starting a project related to {topic}.\n"
-            "RULES:\n"
-            "  • Use simple, non-technical language.\n"
-            "  • Focus on the client's perspective and feelings.\n"
-            "STRUCTURE — for each challenge:\n"
-            "<h3>[Simple Challenge Name]</h3>\n"
-            "<p>Explain the problem in 2-3 sentences. Why does it happen?</p>\n"
-            "<p><strong>Why it's frustrating:</strong> The real-world impact on their time or budget.</p>\n"
-            "<p><strong>How we help:</strong> A simple way an architect resolves this.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "strategic_framework",
-        "Key Principles",
-        "PRINCIPLES",
-        "image-left",
-        (
-            "Explain the core ideas of {topic} that {audience} should understand.\n"
-            "STRUCTURE:\n"
-            "<p>Introduction to 3 main 'pillars' of good design for {topic}.</p>\n"
-            "<h3>Principle 1: [Simple Name]</h3>\n"
-            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
-            "<h3>Principle 2: [Simple Name]</h3>\n"
-            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
-            "<h3>Principle 3: [Simple Name]</h3>\n"
-            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "implementation_strategy",
-        "Practical Strategies",
-        "STRATEGIES",
-        "text-only",
-        (
-            "Provide 3 actionable strategies {audience} can follow for their {topic} project.\n"
-            "STRUCTURE:\n"
-            "<h3>Strategy 1: [Actionable Name]</h3>\n"
-            "<p>What it is and how it works.</p>\n"
-            "<ul><li><strong>Why it matters:</strong> Benefit to the client.</li>\n"
-            "<li><strong>Example:</strong> A simple real-world scenario.</li></ul>\n"
-            "Repeat for Strategy 2 and 3.\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "risk_management",
-        "Managing Your Project Risks",
-        "RISK",
-        "image-above",
-        (
-            "Explain how to avoid common risks in {topic} projects in simple language.\n"
-            "STRUCTURE:\n"
-            "<h3>[Risk Name]</h3>\n"
-            "<p>What the risk is and how it usually starts.</p>\n"
-            "<p><strong>Smart Solution:</strong> Practical advice on how to prevent it early.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "best_practices",
-        "Best Practices for Success",
-        "TIPS",
-        "text-only",
-        (
-            "Outline professional tips for {audience} to ensure their project is a success.\n"
-            "STRUCTURE:\n"
-            "<h3>[Tip Name]</h3>\n"
-            "<p>The advice explained simply.</p>\n"
-            "<p><strong>The Result:</strong> What they gain by following this tip.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "key_statistics",
-        "Facts and Figures",
-        "DATA",
-        "text-only",
-        (
-            "Provide interesting facts or simple statistics about {topic}.\n"
-            "STRUCTURE:\n"
-            "<h3>Did You Know?</h3>\n"
-            "<p>3-4 interesting facts presented simply.</p>\n"
-            "<ul><li><strong>[Fact Label]:</strong> [The fact/stat explained]</li></ul>\n"
-            "TARGET: 250–300 words."
-        )
-    ),
-    (
-        "process_steps",
-        "Implementation Roadmap",
-        "ROADMAP",
-        "text-only",
-        (
-            "Explain step-by-step how someone can apply these ideas when starting a project.\n"
-            "STRUCTURE:\n"
-            "<h3>Step 1: [Simple Phase Name]</h3>\n"
-            "<p>What happens in this stage and what the client needs to do.</p>\n"
-            "Repeat for 5 steps.\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "comparison_table",
-        "Traditional vs. Smart Design",
-        "COMPARISON",
-        "text-only",
-        (
-            "Compare traditional building methods with {topic} approaches simply.\n"
-            "STRUCTURE:\n"
-            "<h3>[Comparison Point]</h3>\n"
-            "<p>Contrast the two approaches simply.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "key_takeaways",
-        "Key Lessons",
-        "SUMMARY",
-        "text-only",
-        (
-            "Summarize the most important lessons from this guide in simple bullet points.\n"
-            "STRUCTURE:\n"
-            "<h3>Important Takeaways</h3>\n"
-            "<ul><li>[Takeaway 1]</li><li>[Takeaway 2]</li><li>[Takeaway 3]</li><li>[Takeaway 4]</li></ul>\n"
-            "TARGET: 250–300 words."
-        )
-    ),
-    (
-        "case_study",
-        "Real-World Example",
-        "CASE STUDY",
-        "text-only",
-        (
-            "Create a short real-world style example that demonstrates success.\n"
-            "STRUCTURE:\n"
-            "<h3>Example Project: [Project Type]</h3>\n"
-            "<p><strong>Challenge:</strong> Explain the problem in 2-3 sentences.</p>\n"
-            "<p><strong>Solution:</strong> Explain the strategies used.</p>\n"
-            "<p><strong>Results:</strong> Explain the benefits achieved.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "conclusion",
-        "Ready to Start Your Project?",
-        "NEXT STEPS",
-        "text-only",
-        (
-            "Create a final section to convert readers into potential clients.\n"
-            "TONE: Friendly and professional.\n"
-            "STRUCTURE:\n"
-            "<h3>Ready to Start Your Project?</h3>\n"
-            "<p>Encouraging advice and a specific invitation to consult.</p>\n"
-            "TARGET: 250–300 words."
-        )
-    ),
-]
+SECTIONS               = get_config("lead_magnet_sections", DEFAULT_SECTIONS)
+DOC_TYPE_LABELS        = get_config("doc_type_labels", DEFAULT_DOC_TYPE_LABELS)
+MASTER_PROMPT_TEMPLATE = get_config("master_prompt_template", DEFAULT_MASTER_PROMPT_TEMPLATE)
+FORMAT_RULES           = get_config("format_rules", DEFAULT_FORMAT_RULES)
+TERMS_OF_USE           = get_config("terms_of_use", DEFAULT_TERMS)
+AI_MODEL               = get_config("ai_model_name", "llama-3.3-70b-versatile")
+AI_TEMPERATURE         = float(get_config("ai_temperature", 0.55))
+AI_MAX_TOKENS          = int(get_config("ai_max_tokens", 4096))
+SYSTEM_PROMPT          = get_config("ai_system_prompt", "You are a professional marketing copywriter and strategist specialising in architecture firms.")
 
-DOC_TYPE_LABELS = {
-    "guide":             "Strategic Guide",
-    "case_study":        "Case Study Report",
-    "checklist":         "Implementation Checklist",
-    "roi_calculator":    "ROI Analysis Report",
-    "trends_report":     "Industry Trends Report",
-    "design_portfolio":  "Design Portfolio",
-    "client_onboarding": "Client Onboarding Guide",
-    "custom":            "Strategic Report",
-}
-
-_TYPE_MAP = {
+_TYPE_MAP = get_config("doc_type_map", {
     # lowercase / underscore variants
     "guide":                  "guide",
     "strategic_guide":        "guide",
@@ -236,14 +51,14 @@ _TYPE_MAP = {
     "Client Onboarding Flow": "client_onboarding",
     "Client Onboarding":      "client_onboarding",
     "Custom":                 "custom",
-}
+})
 
-ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "footer"}
+ALLOWED_TAGS = get_config("allowed_html_tags", {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "footer"})
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FILLER DETECTION
 # ─────────────────────────────────────────────────────────────────────────────
-_FILLER_PATTERNS = [
+_FILLER_PATTERNS = get_config("filler_patterns", [
     r"this (section|guide|document|report|checklist|article) (provides?|offers?|explores?|covers?|aims? to|is designed to)",
     r"in (today's|the current|this) (fast[- ]paced|rapidly changing|evolving|dynamic|competitive|modern)",
     r"it is (important|crucial|essential|critical|vital) (to note|to understand|that|to consider)",
@@ -265,7 +80,7 @@ _FILLER_PATTERNS = [
     r"lastly,? (the|this|we)",
     r"to put it simply,?",
     r"in other words,?",
-]
+])
 _FILLER_RE = re.compile("|".join(_FILLER_PATTERNS), re.IGNORECASE)
 
 
@@ -306,262 +121,11 @@ def _deduplicate_content(html: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MASTER PROMPT — type-aware format rules injected per doc_type
-# ─────────────────────────────────────────────────────────────────────────────
-MASTER_PROMPT_TEMPLATE = """
-You are a senior architectural consultant and high-end marketing strategist.
-Your task is to generate a SUBSTANTIAL, HIGH-VALUE lead magnet that sounds like it was written by a human expert with 20+ years of experience.
-
-CRITICAL DIRECTIVES:
-1. NO AI FILLER: Eliminate all meta-talk (e.g., "In this section...", "This guide explores..."). Start every section with direct, impactful content.
-2. HYPER-SPECIFICITY: Replace generic advice with precise, actionable insights. Use real-world analogies, specific architectural standards (e.g., Passive House, LEED, local zoning terms), and concrete metrics.
-3. PERSONALIZATION: Weave the Topic, Audience, Pain Points, Psychographics, and Firm USP into every paragraph. The content must feel bespoke to this specific firm and their ideal client.
-4. NO REPETITION: Ensure each section provides unique value. Do not repeat the same points across different headers.
-5. TECHNICAL DEPTH: Provide "insider" knowledge that a client couldn't find with a simple Google search.
-
-CONTENT DEPTH REQUIREMENTS:
-- The guide must contain substantial content.
-- Rules:
-  • Each major section must contain 3–5 paragraphs.
-  • Each paragraph should be 80–120 words.
-  • Include bullet lists where helpful.
-  • Provide examples or explanations when introducing ideas.
-  • Avoid one-line sections or short filler text.
-  • Never generate extremely short sections. If a section contains fewer than 2 paragraphs, expand it with additional explanations or examples.
-- Minimum structure for each section:
-  Section Title
-  Paragraph explaining the topic.
-  Paragraph explaining why it matters.
-  Bullet list of practical considerations.
-  Optional short example.
-- Ensure the final guide would fill approximately 8–10 PDF pages when rendered.
-
-IMAGE PLACEMENT RULES:
-- Images must not appear randomly inside text.
-- Images should only appear:
-  • After section headers
-  • Between paragraphs
-  • Never inside bullet lists
-  • Never mid-sentence
-- Use this format for images:
-  [IMAGE]
-  Type: illustration / diagram / architecture / sustainability
-  Description: short description
-  Placement: after section header
-  [/IMAGE]
-- Example:
-  ## Sustainable Building Orientation
-  [IMAGE]
-  Type: diagram
-  Description: building orientation optimizing sunlight and ventilation
-  Placement: after section header
-  [/IMAGE]
-  Paragraph text begins here.
-
-IMAGE DISTRIBUTION:
-- Include 5–7 images across the entire guide.
-- Suggested placement:
-  • Cover page hero image
-  • Introduction illustration
-  • 1 image every 1–2 sections
-  • Final infographic or summary diagram
-- Images should represent: sustainable buildings, green architecture concepts, eco materials, architectural diagrams, energy systems.
-- Avoid generic stock imagery. Prefer diagrams or architectural visuals.
-
-INPUT DATA:
-Topic: {topic}
-Lead Magnet Type: {lead_magnet_type}
-Audience: {audience}
-Pain Points: {pain_points}
-Psychographics: {psychographics}
-Firm USP: {firm_usp}
-
-=============================================
-FORMAT RULES FOR "{lead_magnet_type}":
-{format_specific_rules}
-=============================================
-
-WRITING RULES:
-- Tone: Authoritative, advisory, and sophisticated.
-- Formatting: Use <h3> for sub-headings, <p> for paragraphs, <strong> for emphasis, <ul><li> for lists.
-- Markdown: Output MUST be structured with Markdown headers:
-  # [Vibrant, Non-Generic Title]
-  ## [Section Name]
-  [Section Content using raw HTML tags]
-
-Do NOT include any introductory or concluding remarks about the task. Only output the lead magnet content.
-"""
-
-FORMAT_RULES = {
-    "guide": """
-Structure (use these EXACT ## header names):
-## Introduction
-(Hook the reader immediately. Define the topic through the lens of the Firm's USP.)
-## Common Challenges
-(Detail 4 sophisticated challenges. Focus on hidden costs, regulatory traps, and aesthetic vs. functional trade-offs.)
-## Key Principles
-(Provide 3-4 "golden rules" of design for this topic. Use specific analogies.)
-## Practical Strategies
-(3 high-impact strategies. Include "how-to" steps and expected outcomes.)
-## Managing Risks
-(Identify 3 non-obvious risks—e.g., liability, long-term maintenance, or contractor shortcuts—and provide professional mitigations.)
-## Best Practices
-(Advanced "insider" tips that demonstrate the firm's superior expertise.)
-## Facts and Figures
-(Include specific, verifiable metrics related to ROI, sustainability, or property value.)
-## Implementation Roadmap
-(A 5-phase strategic timeline from vision to handover.)
-## Traditional vs Modern
-(A sharp comparison of outdated methods vs. the firm's innovative approach.)
-## Key Lessons
-(Distill the most critical strategic takeaways into 4 punchy bullets.)
-## Real World Example
-(A detailed client success story: Challenge, the firm's Unique Mechanism, and the Transformation.)
-## Ready to Start
-(A sophisticated call to action that positions the firm as the only logical partner.)
-""",
-    "checklist": """
-Structure (use these EXACT ## header names):
-## Introduction
-## Planning Checklist
-## Design Checklist
-## Construction Checklist
-## Quality Review Checklist
-## Key Principles
-## Managing Risks
-## Best Practices
-## Facts and Figures
-## Key Lessons
-## Real World Example
-## Ready to Start
-
-Requirements:
-- For each checklist section, provide high-value, non-obvious tasks.
-- Format:
-<h3>[Phase Name]</h3>
-<ul>
-<li>☐ <strong>[Task Name]:</strong> [Detailed explanation of why this matters and how to execute it.]</li>
-</ul>
-""",
-    "case_study": """
-Structure (use these EXACT ## header names):
-## Introduction
-## Project Overview
-## Key Challenges
-## Our Approach
-## Implementation Steps
-## Managing Risks
-## Results Achieved
-## Facts and Figures
-## Key Lessons
-## Real World Example
-## Additional Insights
-## Ready to Start
-
-Requirements:
-- Write this as a deep-dive narrative.
-- Focus on the "Unique Mechanism" used to solve complex problems.
-- Use <h3> for sub-phases of the project.
-""",
-    "roi_calculator": """
-Structure (use these EXACT ## header names):
-## Introduction
-## Why ROI Matters
-## Cost Factors
-## ROI Breakdown
-## Scenario Example One
-## Scenario Example Two
-## Managing Risks
-## Best Practices
-## Facts and Figures
-## Key Lessons
-## Real World Example
-## Ready to Start
-
-Requirements:
-- For ROI Breakdown, provide a technical breakdown of costs vs. long-term savings.
-- Use specific scenarios (e.g., "A 3,000 sq ft renovation") to ground the data.
-""",
-    "trends_report": """
-Structure (use these EXACT ## header names):
-## Introduction
-## Major Trend One
-## Major Trend Two
-## Major Trend Three
-## Market Drivers
-## Opportunities for Firms
-## Managing Risks
-## Best Practices
-## Facts and Figures
-## Key Lessons
-## Real World Example
-## Ready to Start
-
-Requirements:
-- Provide forward-looking intelligence.
-- Explain *why* these trends are happening and how to capitalize on them.
-""",
-    "client_onboarding": """
-Structure (use these EXACT ## header names):
-## Introduction
-## Initial Consultation
-## Project Discovery
-## Design Planning
-## Approval and Permitting
-## Construction Coordination
-## Managing Risks
-## Best Practices
-## Facts and Figures
-## Key Lessons
-## Real World Example
-## Ready to Start
-
-Requirements:
-- Map out a premium, high-touch experience.
-- Focus on transparency, communication, and expectation management.
-""",
-    "design_portfolio": """
-Structure (use these EXACT ## header names):
-## Introduction
-## About Our Firm
-## Project Highlight One
-## Project Highlight Two
-## Design Philosophy
-## Managing Risks
-## Best Practices
-## Facts and Figures
-## Key Lessons
-## Real World Example
-## Our Process
-## Ready to Start
-
-Requirements:
-- Focus on the "Art and Science" of the firm's work.
-- Use descriptive language that evokes quality and craftsmanship.
-""",
-    "custom": """
-Structure (use these EXACT ## header names):
-## Introduction
-## Key Insights
-## Core Framework
-## Practical Strategies
-## Managing Risks
-## Best Practices
-## Facts and Figures
-## Implementation Steps
-## Comparison Analysis
-## Key Lessons
-## Real World Example
-## Ready to Start
-"""
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
 # TYPE-AWARE SECTION MAPPING
 # Maps any AI-generated ## header → one of the 12 SECTIONS keys.
 # Each doc_type gets its own priority mapping so nothing falls through.
 # ─────────────────────────────────────────────────────────────────────────────
-_SECTION_MAPS: Dict[str, Dict[str, str]] = {
+_SECTION_MAPS: Dict[str, Dict[str, str]] = get_config("section_maps", {
     "guide": {
         "introduction":          "executive_summary",
         "overview":              "executive_summary",
@@ -591,6 +155,8 @@ _SECTION_MAPS: Dict[str, Dict[str, str]] = {
         "real_world_example":    "case_study",
         "case_study":            "case_study",
         "example":               "case_study",
+        "expert_insights":       "expert_insights",
+        "faqs":                  "expert_insights",
         "ready_to_start":        "conclusion",
         "conclusion":            "conclusion",
         "next_steps":            "conclusion",
@@ -725,10 +291,10 @@ _SECTION_MAPS: Dict[str, Dict[str, str]] = {
         "ready_to_start":        "conclusion",
         "conclusion":            "conclusion",
     },
-}
+})
 
 # Fallback universal mapping (used when doc_type not found or slug not in type map)
-_UNIVERSAL_SLUG_MAP = {
+_UNIVERSAL_SLUG_MAP = get_config("universal_slug_map", {
     "introduction":          "executive_summary",
     "overview":              "executive_summary",
     "summary":               "executive_summary",
@@ -765,7 +331,8 @@ _UNIVERSAL_SLUG_MAP = {
     "start":                 "conclusion",
     "cta":                   "conclusion",
     "contact":               "conclusion",
-}
+})
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SLOT ORDER — defines which SECTIONS key gets priority when assigning content.
@@ -784,9 +351,9 @@ class GroqClient:
         api_key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
         # For testing purposes, we allow initializing without a key if we only use mapping methods
         self.client      = Groq(api_key=api_key) if api_key else None
-        self.model       = "llama-3.3-70b-versatile"
-        self.temperature = 0.55
-        self.max_tokens  = 4096
+        self.model       = AI_MODEL
+        self.temperature = AI_TEMPERATURE
+        self.max_tokens  = AI_MAX_TOKENS
         self._analysis   = None
         self._framework  = None
 
@@ -847,7 +414,7 @@ class GroqClient:
             response = self.client.chat.completions.create(
                 model       = self.model,
                 messages    = [
-                    {"role": "system", "content": "You are a professional marketing copywriter and strategist specialising in architecture firms."},
+                    {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user",   "content": prompt},
                 ],
                 temperature = self.temperature,
@@ -1035,8 +602,8 @@ class GroqClient:
 
         normalized["summary"]             = normalized.get("executive_summary", "")[:500]
         normalized["cta_text"]            = normalized.get("conclusion", "")[:300]
-        normalized["cta_headline"]        = normalized.get("cta_headline") or "Ready to Start Your Project?"
-        normalized["legal_notice_summary"] = "This document provides strategic guidance and should be verified by a qualified professional."
+        normalized["cta_headline"]        = normalized.get("cta_headline") or get_config("cta_headline", "Ready to Start Your Project?")
+        normalized["legal_notice_summary"] = get_config("legal_notice_summary", "This document provides strategic guidance and should be verified by a qualified professional.")
 
         return normalized
 
@@ -1059,8 +626,8 @@ class GroqClient:
         # Find last sentence boundary before 250
         truncated = text[:250]
         # Find last ., !, or ?
-        boundaries = [truncated.rfind('.'), truncated.rfind('!'), truncated.rfind('?')]
-        last_boundary = max(boundaries)
+        match_end = re.search(r'[.!?](?=[^.!?]*$)', truncated)
+        last_boundary = match_end.start() if match_end else -1
         
         if last_boundary > 100: # Ensure we have at least some content
             return text[:last_boundary + 1]
@@ -1085,7 +652,7 @@ class GroqClient:
         support_paras = [p for p in paras if not any(char in p[:5] for char in ['•', '-', '1.'])]
         if len(support_paras) > 1:
             # Strip tags and return plain text to avoid double-escaping
-            clean_paras = [re.sub(r'<[^>]+>', '', p).strip() for p in support_paras[1:3]]
+            clean_paras = [re.sub(r'<[^>]+>', ' ', p).strip() for p in support_paras[1:3]]
             return " ".join(clean_paras)
         return ""
 
@@ -1116,17 +683,13 @@ class GroqClient:
             context = html[start:end]
             clean_context = re.sub(r'<[^>]+>', ' ', context).strip()
             
-            keywords = ["efficiency", "increase", "roi", "savings", "growth", "reduction", "impact", "improvement"]
+            keywords = get_config("stat_keywords", ["efficiency", "increase", "roi", "savings", "growth", "reduction", "impact", "improvement"])
             for kw in keywords:
                 if kw in clean_context.lower():
                     return (val, kw.title())
             
-            return (val, "Key Metric")
+            return (val, get_config("default_stat_label", "Key Metric"))
         return ("", "")
-
-    def _get_unsplash_url(self, keywords: str) -> str:
-        """Returns empty string as we no longer support fake Unsplash URLs."""
-        return ""
 
     def map_to_template_vars(
         self,
@@ -1137,24 +700,30 @@ class GroqClient:
         signals = signals or {}
 
         # ── Colours ─────────────────────────────────────────────────────────
-        primary_color   = firm_profile.get("primary_brand_color") or signals.get("primary_color") or "#1a365d"
-        secondary_color = firm_profile.get("secondary_brand_color") or "#c5a059"
-        accent_color    = firm_profile.get("accent_color") or "#f8fafc"
-        surface_color   = "#ffffff"
-        on_surface      = "#1a202c"
-        highlight_color = "#f4f7f9"
+        primary_color   = firm_profile.get("primary_brand_color") or signals.get("primary_color") or get_config("palette_primary", "#1a365d")
+        secondary_color = firm_profile.get("secondary_brand_color") or get_config("palette_secondary", "#c5a059")
+        accent_color    = firm_profile.get("accent_color") or get_config("palette_accent", "#f8fafc")
+        surface_color   = get_config("palette_surface", "#ffffff")
+        on_surface      = get_config("palette_on_surface", "#1a202c")
+        highlight_color = get_config("palette_highlight", "#f4f7f9")
+        text_color      = get_config("palette_text", "#2d3436")
+        text_light      = get_config("palette_text_light", "#636e72")
+        light_color     = get_config("palette_light", "#f8f9fa")
+        white_color     = get_config("palette_white", "#ffffff")
+        body_bg         = get_config("palette_body_bg", "#e0e0e0")
+        border_radius   = get_config("style_border_radius", "12px")
 
         # Ensure hex
-        def fix_hex(c): return "#" + str(c).lstrip("#") if c and len(str(c).lstrip("#")) == 6 else "#1a365d"
+        def fix_hex(c): return "#" + str(c).lstrip("#") if c and len(str(c).lstrip("#")) == 6 else c
         
         # ── Company info ─────────────────────────────────────────────────────
         company_name = (
             firm_profile.get("firm_name")
             or firm_profile.get("name")
-            or signals.get("topic", "Strategic Analysis")
+            or signals.get("topic", get_config("default_topic", "Strategic Analysis"))
         )
-        topic = signals.get("topic", "Industry Best Practices")
-        doc_type_label = ai_content.get("document_type_label") or "STRATEGIC GUIDE"
+        topic = signals.get("topic", get_config("default_topic", "Industry Best Practices"))
+        doc_type_label = ai_content.get("document_type_label") or get_config("default_doc_type_label", "STRATEGIC GUIDE")
 
         vars: Dict[str, Any] = {
             "primaryColor":      fix_hex(primary_color),
@@ -1163,26 +732,49 @@ class GroqClient:
             "surfaceColor":      fix_hex(surface_color),
             "onSurfaceColor":    fix_hex(on_surface),
             "highlightColor":    fix_hex(highlight_color),
+            "textColor":         fix_hex(text_color),
+            "textLightColor":    fix_hex(text_light),
+            "lightColor":        fix_hex(light_color),
+            "whiteColor":        fix_hex(white_color),
+            "bodyBackground":    fix_hex(body_bg),
+            "borderRadius":      border_radius,
             "documentTitle":     ai_content.get("title") or topic,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
-            "documentSubtitle":  ai_content.get("subtitle") or f"Strategic Insights and Implementation Roadmap for {topic}.",
+            "documentSubtitle":  ai_content.get("subtitle") or f"{get_config('default_subtitle_prefix', 'Strategic Insights and Implementation Roadmap for')} {topic}.",
             "companyName":       company_name,
             "emailAddress":      firm_profile.get("work_email", ""),
             "website":           firm_profile.get("firm_website", ""),
-            "ctaHeadline":       "Ready to Start Your Project?",
-            "contactDescription": "Contact us today for a consultation.",
-            "cover_image_url":   self._get_unsplash_url(f"{topic},architecture,modern"),
-            "contentsTitle":     "Table of Contents",
+            "ctaHeadline":       get_config("cta_headline", "Ready to Start Your Project?"),
+            "contactDescription": get_config("contact_description", "Contact us today for a consultation."),
+            "contentsTitle":     get_config("toc_title", "Table of Contents"),
+            "caseStudyDetailsTitle": get_config("case_study_details_title", "Case Study Details"),
+            "strategicTipLabel": get_config("strategic_tip_label", "Strategic Tip"),
             "toc_html":          "",
+            # ── Terms of Use ──────────────────────────────────────────────────
+            "termsTitle":        TERMS_OF_USE.get("title", "Terms of Use & Disclaimer"),
+            "termsSummary":      TERMS_OF_USE.get("summary", ""),
+            "termsParagraph1":   TERMS_OF_USE.get("paragraph1", ""),
+            "termsParagraph2":   TERMS_OF_USE.get("paragraph2", ""),
+            "termsParagraph3":   TERMS_OF_USE.get("paragraph3", ""),
+            "termsParagraph4":   TERMS_OF_USE.get("paragraph4", ""),
+            "termsParagraph5":   TERMS_OF_USE.get("paragraph5", ""),
+            "logoPlaceholder":   company_name[0] if company_name else get_config("default_logo_letter", "A"),
+            "footerText":        f"{company_name} | {get_config('footer_suffix', 'Strategic Report')}",
         }
+
+
+        # Handle cover image separately
+        cover_img = firm_profile.get("cover_image_url") or ""
+        if cover_img:
+            vars["cover_image_url"] = cover_img
 
         # ── Section content vars ─────────────────────────────────────────────
         fw = ai_content.get("framework", {})
         ai_images = ai_content.get("ai_images", [])
         
-        # Starting page for sections (Page 1: Cover, Page 2: TOC, Page 3: First Section)
-        current_page = 3
+        # Starting page for sections (Page 1: Cover, Page 2: Terms, Page 3: TOC, Page 4: First Section)
+        current_page = 4
         toc_html = ""
 
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
@@ -1214,12 +806,9 @@ class GroqClient:
 
             # Image logic - Keyword based from section title and topic
             img_url = firm_profile.get(f"image_{s_idx}_url", "")
-            if not img_url:
-                # Use empty string if no user image is provided to suppress broken boxes
-                img_url = ""
-            
-            vars[f"section_{key}_image_url"] = img_url
-            vars[f"section_{key}_image_caption"] = f"{sec_title} - Strategic Visual Illustration"
+            if img_url:
+                vars[f"section_{key}_image_url"] = img_url
+                vars[f"section_{key}_image_caption"] = f"{sec_title} - {get_config('default_image_caption_suffix', 'Strategic Visual Illustration')}"
 
         vars["toc_html"] = toc_html
         return vars
@@ -1300,7 +889,7 @@ class GroqClient:
         """
         # If no URL, use a high-quality architectural placeholder
         if not url:
-            url = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000"
+            url = get_config("default_placeholder_image_url", "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000")
         
         loading_attr = 'loading="lazy"' if lazy else ""
         
