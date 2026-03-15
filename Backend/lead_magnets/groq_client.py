@@ -341,6 +341,13 @@ _UNIVERSAL_SLUG_MAP = get_config("universal_slug_map", {
 SECTION_KEYS = [s[0] for s in SECTIONS]
 
 
+def _clean_topic_slug(text: str) -> str:
+    """Removes hyphens and underscores from topic slugs for cleaner display."""
+    if not text:
+        return ""
+    return text.replace("-", " ").replace("_", " ").title()
+
+
 class GroqClient:
     SECTIONS = SECTIONS
     DOC_TYPE_LABELS = DOC_TYPE_LABELS
@@ -381,7 +388,7 @@ class GroqClient:
         audience    = user_answers.get("target_audience", "Stakeholders")
 
         return {
-            "topic":           user_answers.get("main_topic", "Strategic Design"),
+            "topic":           _clean_topic_slug(str(user_answers.get("main_topic", "Strategic Design"))),
             "audience":        ", ".join(audience) if isinstance(audience, list) else str(audience),
             "pain_points":     ", ".join(pain_points) if isinstance(pain_points, list) else str(pain_points),
             "psychographics":  str(user_answers.get("psychographics", "")).strip(),
@@ -467,10 +474,10 @@ class GroqClient:
             full_title = title_match.group(1).strip()
             if ":" in full_title:
                 parts = full_title.split(":", 1)
-                parsed["title"]    = parts[0].strip()
-                parsed["subtitle"] = parts[1].strip()
+                parsed["title"]    = _clean_topic_slug(parts[0].strip())
+                parsed["subtitle"] = _clean_topic_slug(parts[1].strip())
             else:
-                parsed["title"] = full_title
+                parsed["title"] = _clean_topic_slug(full_title)
 
         # 3. Split by ## headers
         sections_raw = re.split(r'^##\s*(?:\d+\.?\s*)?(.+)$', clean_text, flags=re.MULTILINE)
@@ -711,6 +718,10 @@ class GroqClient:
         topic = signals.get("topic", get_config("default_topic", "Industry Best Practices"))
         doc_type_label = ai_content.get("document_type_label") or get_config("default_doc_type_label", "STRATEGIC GUIDE")
 
+        # Subtitle cleaning logic
+        raw_sub = ai_content.get("subtitle") or ""
+        subtitle = _clean_topic_slug(raw_sub) if raw_sub and raw_sub != topic else f"Strategic Insights for {topic}"
+
         vars: Dict[str, Any] = {
             "primaryColor":      fix_hex(primary_color),
             "secondaryColor":    fix_hex(secondary_color),
@@ -727,7 +738,7 @@ class GroqClient:
             "documentTitle":     ai_content.get("title") or topic,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
-            "documentSubtitle":  ai_content.get("subtitle") or f"{get_config('default_subtitle_prefix', 'Strategic Insights and Implementation Roadmap for')} {topic}.",
+            "documentSubtitle":  subtitle,
             "companyName":       company_name,
             "emailAddress":      firm_profile.get("work_email", ""),
             "website":           firm_profile.get("firm_website", ""),
@@ -783,27 +794,15 @@ class GroqClient:
             support = self._extract_support_v2(content)
             
             # QA: Readability scoring
-            full_text = f"{intro} {bullets} {support}"
+            full_text = re.sub(r'<[^>]+>', ' ', content).strip()
             flesch_score = self._calculate_flesch_score(full_text)
-            logger.info(f"QA | Section: {key} | Flesch: {flesch_score}")
-            
-            # Key Insights density check (at least 1 per 100 words roughly)
-            word_count = len(full_text.split())
-            
-            # New highlight boxes
-            key_insight   = self._extract_highlight_v2(content, "KEY INSIGHT")
-            strategic_tip = self._extract_highlight_v2(content, "STRATEGIC TIP")
-            industry_stat = self._extract_highlight_v2(content, "INDUSTRY STAT")
+            logger.info(f"QA | Section: {key} | Flesch: {flesch_score} | Words: {len(full_text.split())}")
 
             vars[f"customTitle{s_idx}"] = sec_title
+            vars[f"section_{key}_full_html"] = content # The main content variable for Template.html
             vars[f"section_{key}_intro_html"] = intro
             vars[f"section_{key}_bullets_html"] = bullets
             vars[f"section_{key}_support_html"] = support
-            
-            # Inject highlights
-            vars[f"section_{key}_key_insight"]   = key_insight
-            vars[f"section_{key}_strategic_tip"] = strategic_tip
-            vars[f"section_{key}_industry_stat"] = industry_stat
 
             # Add to TOC HTML string
             num = str(s_idx).zfill(2)
