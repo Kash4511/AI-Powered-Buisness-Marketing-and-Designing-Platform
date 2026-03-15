@@ -629,15 +629,20 @@ class GroqClient:
 
         for key, default_title, default_label, _, _ in SECTIONS:
             sec_data = sections_data.get(key, {})
-            content  = sec_data.get("content", "") if isinstance(sec_data, dict) else str(sec_data)
-            title    = (sec_data.get("title", "") if isinstance(sec_data, dict) else "") or default_title
+            # Ensure we handle both dict and string content from Pass 1b
+            if isinstance(sec_data, dict):
+                content = sec_data.get("content", "")
+                title   = sec_data.get("title", "") or default_title
+            else:
+                content = str(sec_data)
+                title   = default_title
 
             sanitized = _strip_filler(_deduplicate_content(self._sanitize_html(str(content))))
 
             normalized[key] = sanitized
             normalized["framework"][key] = {"title": title or default_title, "kicker": default_label}
 
-        normalized["summary"]              = normalized.get("executive_summary", "")[:500]
+        normalized["summary"]              = normalized.get("introduction", "")[:500]
         normalized["cta_text"]             = normalized.get("conclusion", "")[:300]
         normalized["cta_headline"]         = normalized.get("cta_headline") or "Ready to Start Your Project?"
         normalized["legal_notice_summary"] = "This document provides strategic guidance and should be verified by a qualified professional."
@@ -710,27 +715,35 @@ class GroqClient:
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
             fw_entry  = ai_content.get("framework", {}).get(key, {})
             sec_title = fw_entry.get("title") or default_title
-            page_num  = str(idx + 3).zfill(2)
+            page_num  = str(idx + 4).zfill(2) # Page 1: Cover, 2: Terms, 3: TOC, 4: First Section
+            target_id = f"section-{key}"
             toc_html_parts.append(
                 f'<div class="toc-item">'
                 f'<span class="toc-num">{str(idx+1).zfill(2)}</span>'
-                f'<span class="toc-label">{sec_title}</span>'
+                f'<a href="#{target_id}" class="toc-label">{sec_title}</a>'
                 f'<span class="toc-page">{page_num}</span>'
                 f'</div>'
             )
         vars["toc_html"] = "\n".join(toc_html_parts)
 
         # Section vars — set once, protected
-        protected_html_keys = set()
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
             fw_entry  = ai_content.get("framework", {}).get(key, {})
             sec_title = fw_entry.get("title") or default_title
             content   = ai_content.get(key, "")
             s_idx     = idx + 1
 
-            vars[f"customTitle{s_idx}"]   = sec_title
-            vars[f"customContent{s_idx}"] = self._extract_intro_text(content)
+            # Map old executive_summary to introduction if needed
+            if key == "introduction" and not content:
+                content = ai_content.get("executive_summary", "")
 
+            vars[f"customTitle{s_idx}"]   = sec_title
+            vars[f"section_{key}_full_html"] = content # Full content injection for Template.html
+            vars[f"section_{key}_id"] = f"section-{key}" # Fix missing anchor ID
+
+            # Inject the standard title variable used in some templates
+            vars[f"section_{key}_title"] = sec_title
+            
             # Plain text slots
             vars[f"section_{key}_intro"]   = self._extract_intro_text(content)
             vars[f"section_{key}_support"] = self._extract_support_text(content)
@@ -743,7 +756,6 @@ class GroqClient:
             # Bullets HTML — raw injection
             bullet_texts = self._extract_bullets_text(content)
             vars[f"section_{key}_bullets_html"] = "".join(f"<li>{bt}</li>" for bt in bullet_texts) if bullet_texts else ""
-            protected_html_keys.add(f"section_{key}_bullets_html")
 
             # Image URL — only if real URL exists
             user_img_url = str(firm_profile.get(f"image_{s_idx}_url") or "").strip()
