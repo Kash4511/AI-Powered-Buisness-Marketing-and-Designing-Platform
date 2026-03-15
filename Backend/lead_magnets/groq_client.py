@@ -691,6 +691,14 @@ class GroqClient:
             return (val, get_config("default_stat_label", "Key Metric"))
         return ("", "")
 
+    def _extract_highlight_v2(self, html: str, tag: str) -> str:
+        """Extracts text from custom highlight blocks like [TAG: text]."""
+        pattern = rf'\[{tag}:\s*(.*?)\]'
+        match = re.search(pattern, html, re.I)
+        if match:
+            return match.group(1).strip()
+        return ""
+
     def map_to_template_vars(
         self,
         ai_content: Dict[str, Any],
@@ -776,12 +784,20 @@ class GroqClient:
         # Starting page for sections (Page 1: Cover, Page 2: Terms, Page 3: TOC, Page 4: First Section)
         current_page = 4
         toc_html = ""
+        
+        # Inject page numbers for static pages
+        vars["pageNumber02"] = "02"
+        vars["pageNumber03"] = "03"
 
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
             sec_fw    = fw.get(key, {})
             sec_title = sec_fw.get("title") or default_title
             content   = ai_content.get(key, "")
             s_idx     = idx + 1
+            
+            # Inject page number for this section
+            p_num = str(current_page).zfill(2)
+            vars[f"pageNumber{p_num}"] = p_num
 
             # Extract granular components
             intro   = self._extract_intro_v2(content)
@@ -789,6 +805,11 @@ class GroqClient:
             support = self._extract_support_v2(content)
             callout = self._extract_callout_v2(content)
             stat_v, stat_l = self._extract_stat_v2(content)
+            
+            # New highlight boxes
+            key_insight   = self._extract_highlight_v2(content, "KEY INSIGHT")
+            strategic_tip = self._extract_highlight_v2(content, "STRATEGIC TIP")
+            industry_stat = self._extract_highlight_v2(content, "INDUSTRY STAT")
 
             vars[f"customTitle{s_idx}"] = sec_title
             vars[f"section_{key}_intro_html"] = intro
@@ -797,6 +818,11 @@ class GroqClient:
             vars[f"section_{key}_callout"] = callout
             vars[f"section_{key}_stat_val"] = stat_v
             vars[f"section_{key}_stat_lbl"] = stat_l
+            
+            # Inject highlights
+            vars[f"section_{key}_key_insight"]   = key_insight
+            vars[f"section_{key}_strategic_tip"] = strategic_tip
+            vars[f"section_{key}_industry_stat"] = industry_stat
 
             # Add to TOC HTML string instead of toc_items list
             num = str(s_idx).zfill(2)
@@ -812,6 +838,7 @@ class GroqClient:
 
         vars["toc_html"] = toc_html
         return vars
+
 
     # ─────────────────────────────────────────────────────────────────────
     # INTERNAL HELPERS

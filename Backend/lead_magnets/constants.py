@@ -3,204 +3,230 @@
 # ─────────────────────────────────────────────────────────────────────────────
 DEFAULT_SECTIONS = [
     (
-        "executive_summary",
+        "introduction",
         "Introduction",
         "OVERVIEW",
         "text-only",
         (
-            "Write a friendly and engaging Introduction for a guide on {topic} aimed at {audience}.\n"
-            "The tone should be like an experienced architect giving helpful advice to a client.\n"
-            "RULES:\n"
-            "  • Explain the topic in simple terms and why it matters today.\n"
-            "  • Avoid technical jargon or academic writing.\n"
-            "  • Use simple explanations and relatable language.\n"
+            "Write a high-level executive summary and introduction for a strategic guide on {topic} for {audience}.\n"
+            "TONE: Expert, authoritative, yet accessible. Like a McKinsey report.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 120–180 words.\n"
+            "  • Explain the strategic importance of {topic} in the current market.\n"
+            "  • Define the value proposition for the reader.\n"
+            "  • Include a 'KEY INSIGHT' callout block using [KEY INSIGHT: text] format.\n"
+            "  • Use specific terms like 'passive solar design', 'embodied carbon', or 'net-zero' where relevant.\n"
+            "  • No first-person ('we', 'our'). No transitional slop.\n"
             "STRUCTURE:\n"
-            "<p>A warm opening that defines {topic} simply and why it's a great choice for {audience}.</p>\n"
-            "<h3>Why This Matters Now</h3>\n"
-            "<p>Explain the benefits (comfort, cost savings, health) in plain English.</p>\n"
-            "<h3>The Goal of This Guide</h3>\n"
-            "<p>A brief encouraging statement on how this guide helps them make better decisions.</p>\n"
-            "TARGET: 300–350 words."
+            "<p>A strong, data-driven opening paragraph.</p>\n"
+            "<ul><li>3-5 key insights as bullet points.</li></ul>\n"
+            "[KEY INSIGHT: One sentence of high-impact strategic intelligence.]"
         )
     ),
     (
-        "key_challenges",
-        "Common Challenges",
+        "industry_challenges",
+        "Industry Challenges",
         "CHALLENGES",
         "image-right",
         (
-            "Describe 4 real problems clients face when starting a project related to {topic}.\n"
-            "RULES:\n"
-            "  • Use simple, non-technical language.\n"
-            "  • Focus on the client's perspective and feelings.\n"
-            "STRUCTURE — for each challenge:\n"
-            "<h3>[Simple Challenge Name]</h3>\n"
-            "<p>Explain the problem in 2-3 sentences. Why does it happen?</p>\n"
-            "<p><strong>Why it's frustrating:</strong> The real-world impact on their time or budget.</p>\n"
-            "<p><strong>How we help:</strong> A simple way an architect resolves this.</p>\n"
-            "TARGET: 300–350 words."
+            "Analyze 4 critical industry challenges regarding {topic} that impact {audience}.\n"
+            "TONE: Analytical, focusing on risks and regulatory complexities.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 150–180 words.\n"
+            "  • Focus on hidden costs, regulatory traps (NCC, BASIX), and technical barriers.\n"
+            "  • Include an 'INDUSTRY STAT' callout using [INDUSTRY STAT: text] format.\n"
+            "  • No filler phrases.\n"
+            "STRUCTURE:\n"
+            "<h3>[Specific Challenge Name]</h3>\n"
+            "<p>Explain the systemic issue and its financial or operational impact.</p>\n"
+            "[INDUSTRY STAT: A specific percentage or metric related to this challenge.]"
         )
     ),
     (
-        "strategic_framework",
-        "Key Principles",
+        "core_principles",
+        "Core Principles",
         "PRINCIPLES",
         "image-left",
         (
-            "Explain the core ideas of {topic} that {audience} should understand.\n"
+            "Define the 3 foundational pillars of successful {topic} implementation.\n"
+            "TONE: Advisory and principled.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 150–180 words.\n"
+            "  • Use architectural analogies and technical standards (Passive House, LEED).\n"
+            "  • Include a 'STRATEGIC TIP' callout using [STRATEGIC TIP: text] format.\n"
             "STRUCTURE:\n"
-            "<p>Introduction to 3 main 'pillars' of good design for {topic}.</p>\n"
-            "<h3>Principle 1: [Simple Name]</h3>\n"
-            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
-            "<h3>Principle 2: [Simple Name]</h3>\n"
-            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
-            "<h3>Principle 3: [Simple Name]</h3>\n"
-            "<p>A clear, plain-English explanation with a relatable example.</p>\n"
-            "TARGET: 300–350 words."
+            "<h3>[Principle Name]</h3>\n"
+            "<p>Technical explanation of the principle and its long-term benefit.</p>\n"
+            "[STRATEGIC TIP: Actionable advice for immediate implementation.]"
         )
     ),
     (
-        "implementation_strategy",
-        "Practical Strategies",
+        "practical_strategies",
+        "Practical Design Strategies",
         "STRATEGIES",
         "text-only",
         (
-            "Provide 3 actionable strategies {audience} can follow for their {topic} project.\n"
+            "Provide 3-4 high-impact design strategies for {topic}.\n"
+            "TONE: Technical and practical.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 150–180 words.\n"
+            "  • Focus on building envelope efficiency, renewable integration, and thermal mass.\n"
+            "  • Include a [IMAGE: description] block indicating where a diagram should go.\n"
             "STRUCTURE:\n"
-            "<h3>Strategy 1: [Actionable Name]</h3>\n"
-            "<p>What it is and how it works.</p>\n"
-            "<ul><li><strong>Why it matters:</strong> Benefit to the client.</li>\n"
-            "<li><strong>Example:</strong> A simple real-world scenario.</li></ul>\n"
-            "Repeat for Strategy 2 and 3.\n"
-            "TARGET: 300–350 words."
+            "<h3>[Strategy Name]</h3>\n"
+            "<p>Detailed 'how-to' explanation with expected ROI or performance metrics.</p>\n"
+            "[IMAGE: Technical diagram of this design strategy in practice]"
         )
     ),
     (
         "risk_management",
-        "Managing Your Project Risks",
+        "Risk Management",
         "RISK",
         "image-above",
         (
-            "Explain how to avoid common risks in {topic} projects in simple language.\n"
+            "Outline the risk mitigation framework for {topic} projects.\n"
+            "TONE: Risk-averse and professional.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 120–150 words.\n"
+            "  • Identify non-obvious risks (liability, maintenance, supply chain).\n"
+            "  • Include a 'KEY INSIGHT' callout.\n"
             "STRUCTURE:\n"
-            "<h3>[Risk Name]</h3>\n"
-            "<p>What the risk is and how it usually starts.</p>\n"
-            "<p><strong>Smart Solution:</strong> Practical advice on how to prevent it early.</p>\n"
-            "TARGET: 300–350 words."
+            "<h3>[Risk Category]</h3>\n"
+            "<p>Analysis of the risk and the professional mitigation strategy required.</p>\n"
+            "[KEY INSIGHT: The most critical risk factor to monitor.]"
         )
     ),
     (
         "best_practices",
-        "Best Practices for Success",
+        "Best Practices",
         "TIPS",
         "text-only",
         (
-            "Outline professional tips for {audience} to ensure their project is a success.\n"
+            "Distill 'insider' best practices from top-tier architectural consultancies.\n"
+            "TONE: Sophisticated and elite.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 150–180 words.\n"
+            "  • Focus on quality assurance and project lifecycle management.\n"
+            "  • Include a 'STRATEGIC TIP' callout.\n"
             "STRUCTURE:\n"
-            "<h3>[Tip Name]</h3>\n"
-            "<p>The advice explained simply.</p>\n"
-            "<p><strong>The Result:</strong> What they gain by following this tip.</p>\n"
-            "TARGET: 300–350 words."
+            "<h3>[Best Practice Name]</h3>\n"
+            "<p>The high-level strategy and its impact on project success.</p>\n"
+            "[STRATEGIC TIP: A specific checklist item for the project manager.]"
         )
     ),
     (
         "key_statistics",
-        "Facts and Figures",
+        "Key Statistics",
         "DATA",
         "text-only",
         (
-            "Provide interesting facts or simple statistics about {topic}.\n"
+            "Present data-driven insights on the ROI and impact of {topic}.\n"
+            "TONE: Fact-based and quantitative.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 120–150 words.\n"
+            "  • Use verifiable-style metrics (e.g., '22% reduction in lifecycle costs').\n"
+            "  • Include an 'INDUSTRY STAT' callout.\n"
             "STRUCTURE:\n"
-            "<h3>Did You Know?</h3>\n"
-            "<p>3-4 interesting facts presented simply.</p>\n"
-            "<ul><li><strong>[Fact Label]:</strong> [The fact/stat explained]</li></ul>\n"
-            "TARGET: 250–300 words."
+            "<h3>Economic & Environmental Impact</h3>\n"
+            "<ul><li>[Data point with explanation]</li></ul>\n"
+            "[INDUSTRY STAT: The single most impressive data point.]"
         )
     ),
     (
-        "process_steps",
+        "implementation_roadmap",
         "Implementation Roadmap",
         "ROADMAP",
         "text-only",
         (
-            "Explain step-by-step how someone can apply these ideas when starting a project.\n"
+            "Define a 5-phase strategic timeline for {topic} projects.\n"
+            "TONE: Process-oriented and structured.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 150–180 words.\n"
+            "  • Focus on the transition from vision to handover.\n"
+            "  • Include a [IMAGE: roadmap diagram] block.\n"
             "STRUCTURE:\n"
-            "<h3>Step 1: [Simple Phase Name]</h3>\n"
-            "<p>What happens in this stage and what the client needs to do.</p>\n"
-            "Repeat for 5 steps.\n"
-            "TARGET: 300–350 words."
+            "<h3>[Phase Name]</h3>\n"
+            "<p>Critical path tasks and stakeholder requirements for this phase.</p>\n"
+            "[IMAGE: Visual roadmap showing the 5-phase progression]"
         )
     ),
     (
-        "comparison_table",
-        "Traditional vs. Smart Design",
+        "traditional_vs_modern",
+        "Traditional vs. Modern Approaches",
         "COMPARISON",
         "text-only",
         (
-            "Compare traditional building methods with {topic} approaches simply.\n"
+            "Compare legacy building methods with modern, high-performance approaches.\n"
+            "TONE: Comparative and objective.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 150–180 words.\n"
+            "  • Contrast 'business as usual' with 'innovation-led' design.\n"
+            "  • Include a 'KEY INSIGHT' callout.\n"
             "STRUCTURE:\n"
             "<h3>[Comparison Point]</h3>\n"
-            "<p>Contrast the two approaches simply.</p>\n"
-            "TARGET: 300–350 words."
-        )
-    ),
-    (
-        "key_takeaways",
-        "Key Lessons",
-        "SUMMARY",
-        "text-only",
-        (
-            "Summarize the most important lessons from this guide in simple bullet points.\n"
-            "STRUCTURE:\n"
-            "<h3>Important Takeaways</h3>\n"
-            "<ul><li>[Takeaway 1]</li><li>[Takeaway 2]</li><li>[Takeaway 3]</li><li>[Takeaway 4]</li></ul>\n"
-            "TARGET: 250–300 words."
+            "<p>Analysis of the shift in industry standards and the benefit of modernization.</p>\n"
+            "[KEY INSIGHT: Why the modern approach is the only logical choice for long-term value.]"
         )
     ),
     (
         "case_study",
-        "Real-World Example",
+        "Real-World Case Study",
         "CASE STUDY",
         "text-only",
         (
-            "Create a short real-world style example that demonstrates success.\n"
+            "Present a detailed success story illustrating {topic} in practice.\n"
+            "TONE: Narrative but data-heavy.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 180–200 words.\n"
+            "  • Detail the Challenge, the Unique Mechanism used, and the quantifiable Transformation.\n"
+            "  • Include an 'INDUSTRY STAT' callout.\n"
             "STRUCTURE:\n"
-            "<h3>Example Project: [Project Type]</h3>\n"
-            "<p><strong>Challenge:</strong> Explain the problem in 2-3 sentences.</p>\n"
-            "<p><strong>Solution:</strong> Explain the strategies used.</p>\n"
-            "<p><strong>Results:</strong> Explain the benefits achieved.</p>\n"
-            "TARGET: 300–350 words."
+            "<h3>Project: [Fictional High-End Project Name]</h3>\n"
+            "<p><strong>Challenge:</strong> Complex technical barrier.</p>\n"
+            "<p><strong>Solution:</strong> Innovative application of {topic}.</p>\n"
+            "<p><strong>Result:</strong> Specific performance metrics (cost, energy, time).</p>\n"
+            "[INDUSTRY STAT: Performance improvement metric achieved in this case.]"
         )
     ),
     (
         "expert_insights",
-        "Expert Insights & FAQs",
+        "Expert Insights",
         "INSIGHTS",
         "text-only",
         (
-            "Provide 3-4 frequently asked questions about {topic} with expert answers.\n"
+            "Provide high-level expert answers to sophisticated questions about {topic}.\n"
+            "TONE: Intellectual and advisory.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 150–180 words.\n"
+            "  • Avoid basic FAQs; focus on 'edge case' complexities.\n"
+            "  • Include a 'STRATEGIC TIP' callout.\n"
             "STRUCTURE:\n"
-            "<h3>Expert Insight: [Question Name]</h3>\n"
-            "<p>The question explained simply.</p>\n"
-            "<p><strong>The Answer:</strong> Expert advice based on industry standards.</p>\n"
-            "TARGET: 300–350 words."
+            "<h3>Expert Perspective: [Complex Question]</h3>\n"
+            "<p>A nuanced answer referencing industry standards or future trends.</p>\n"
+            "[STRATEGIC TIP: Expert advice on navigating this complexity.]"
         )
     ),
     (
         "conclusion",
-        "Ready to Start Your Project?",
+        "Next Steps",
         "NEXT STEPS",
         "text-only",
         (
-            "Create a final section to convert readers into potential clients.\n"
-            "TONE: Friendly and professional.\n"
+            "Create a powerful closing statement that positions the firm as the ideal partner.\n"
+            "TONE: Persuasive, elite, and inviting.\n"
+            "CONTENT REQUIREMENTS:\n"
+            "  • 120–150 words.\n"
+            "  • Summarize the path forward.\n"
+            "  • Focus on partnership and expertise.\n"
             "STRUCTURE:\n"
-            "<h3>Ready to Start Your Project?</h3>\n"
-            "<p>Encouraging advice and a specific invitation to consult.\n"
-            "TARGET: 250–300 words."
+            "<h3>Partnering for Success</h3>\n"
+            "<p>A final persuasive paragraph on why now is the time to act and why this firm is the logical choice.</p>\n"
+            "<h3>Ready to Start?</h3>\n"
+            "<p>A clear, sophisticated call to action.</p>"
         )
     ),
 ]
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DEFAULT DOC TYPE LABELS
@@ -217,45 +243,23 @@ DEFAULT_DOC_TYPE_LABELS = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# DEFAULT MASTER PROMPT
+# MASTER PROMPT — consultancy grade content generation
 # ─────────────────────────────────────────────────────────────────────────────
-DEFAULT_MASTER_PROMPT_TEMPLATE = """
-You are a senior architectural consultant and high-end marketing strategist. 
-Your task is to generate a SUBSTANTIAL, HIGH-VALUE lead magnet that sounds like it was written by a human expert with 20+ years of experience.
+MASTER_PROMPT_TEMPLATE = """
+You are a senior strategic consultant for elite architecture and engineering firms. 
+Your task is to generate a PREMIUM, HIGH-VALUE lead magnet that sounds like it was produced by a top-tier consultancy (McKinsey, BCG, or a specialized architectural research group).
 
 CRITICAL DIRECTIVES:
-1. NO FIRST-PERSON FIRM VOICE: BANNED phrases include "our firm", "we believe", "we recommend", "we specialize in". Use an objective, authoritative tone or address the reader directly.
-2. NO TRANSITIONAL SLOP: BANNED openers include "So,", "Another", "While", "Furthermore,", "In addition to". Start every paragraph with a direct, impactful claim or data point.
-3. PROVOCATIVE OPENERS: Every section MUST open with a provocative claim, a surprising data point, or a sharp industry insight. No soft setups or "Introduction to..." sentences.
-4. SPECIFIC STANDARDS: You MUST reference named architectural and building standards where relevant (e.g., Passive House, NCC, LEED, NABERS, BASIX, WELL Building Standard). 
-5. DATA-DRIVEN: You MUST include specific numbers, percentages, or cost-benefit metrics in EVERY section. (e.g., "A 15% reduction in thermal bridging leads to...", "The NCC 2022 updates require...").
-6. HYPER-SPECIFICITY: Replace generic advice with precise, actionable insights. Use real-world analogies and concrete metrics.
-7. NO REPETITION: Ensure each section provides unique value. Do not repeat the same points across different headers.
-
-CONTENT DEPTH REQUIREMENTS:
-- The guide must contain substantial content.
-- Rules:
-  • Each major section must contain 3–5 paragraphs.
-  • Each paragraph should be 80–120 words.
-  • Include bullet lists where helpful.
-  • Provide examples or explanations when introducing ideas.
-  • Avoid one-line sections or short filler text.
-- Minimum structure for each section:
-  Section Title
-  Provocative opening sentence with data or a sharp claim.
-  Paragraph explaining the strategic implications.
-  Paragraph detailing technical requirements or standards (NCC, Passive House, etc.).
-  Bullet list of practical, non-obvious considerations.
-  Detailed scenario or metric-based explanation.
-
-IMAGE PLACEMENT RULES:
-- Images must not appear randomly inside text.
-- Use this format for images:
-  [IMAGE]
-  Type: illustration / diagram / architecture / sustainability
-  Description: short description
-  Placement: after section header
-  [/IMAGE]
+1. TONE: Objective, authoritative, and intellectual. No marketing fluff. Use sophisticated vocabulary (e.g., 'systemic', 'lifecycle optimization', 'regulatory landscape', 'integrated design').
+2. NO FIRST-PERSON: NEVER use "we", "our", "us", or "our firm". Use an institutional voice.
+3. NO TRANSITIONAL SLOP: BANNED openers include "So,", "Another", "While", "Furthermore,", "In addition to". Start every paragraph with a direct, impactful claim or data point.
+4. SPECIFICITY: Reference specific technical standards (NCC, Passive House, LEED, NABERS) and architectural concepts (thermal bridging, embodied carbon, building envelope efficiency).
+5. STRATEGIC HIGHLIGHTS: You MUST include exactly one highlight box per section using these EXACT formats:
+   [KEY INSIGHT: A one-sentence high-impact strategic observation.]
+   [STRATEGIC TIP: A specific, actionable recommendation for implementation.]
+   [INDUSTRY STAT: A precise data point or percentage (e.g., 22% reduction in energy load).]
+6. DEPTH: Each section must be 120–180 words of meaningful content. Avoid filler.
+7. IMAGE BLOCKS: If a section requires a diagram, include [IMAGE: descriptive alt text].
 
 INPUT DATA:
 Topic: {topic}
@@ -271,14 +275,15 @@ FORMAT RULES FOR "{lead_magnet_type}":
 =============================================
 
 WRITING RULES:
-- Tone: Authoritative, advisory, and sophisticated.
-- Formatting: Use <h3> for sub-headings, <p> for paragraphs, <strong> for emphasis, <ul><li> for lists.
-- Markdown: Output MUST be structured with Markdown headers:
-  # [Vibrant, Non-Generic Title]
+- Use <h3> for sub-headings within sections if needed.
+- Use <p> for paragraphs.
+- Use <ul><li> for lists.
+- Output MUST be structured with Markdown headers for sections:
+  # [Vibrant, Professional Title]
   ## [Section Name]
-  [Section Content using raw HTML tags]
+  [Section Content with HTML tags and Highlight Boxes]
 
-Do NOT include any introductory or concluding remarks about the task. Only output the lead magnet content.
+Do NOT include any introductory or concluding remarks. Only output the lead magnet content.
 """
 
 # ─────────────────────────────────────────────────────────────────────────────

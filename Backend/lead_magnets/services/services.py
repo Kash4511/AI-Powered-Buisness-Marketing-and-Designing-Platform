@@ -28,7 +28,13 @@ logger = logging.getLogger(__name__)
 
 def _is_raw_html_key(key: str) -> bool:
     """Keys whose values must be injected as raw HTML without escaping."""
-    return key.startswith("section_") and key.endswith("_html")
+    return (
+        key.endswith("_html") or 
+        key.startswith("customTitle") or 
+        key.endswith("_insight") or 
+        key.endswith("_tip") or 
+        key.endswith("_stat")
+    )
 
 
 def _safe_escape(value: str) -> str:
@@ -176,7 +182,7 @@ class DocRaptorService:
                 "doc": {
                     "document_content": rendered_html,
                     "document_type":    "pdf",
-                    "test":             self.test_mode,
+                    "test":             False, # Ensure production mode
                     "prince_options": {
                         "media":   "print",
                         "baseurl": getattr(settings, "SITE_URL", "https://www.kyro.com"),

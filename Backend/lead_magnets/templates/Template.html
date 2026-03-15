@@ -23,7 +23,6 @@
         body {
             font-family: 'Inter', sans-serif;
             background: {{bodyBackground}};
-            padding: 20px;
             color: var(--text);
             line-height: 1.6;
         }
@@ -32,7 +31,6 @@
             width: 210mm;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
         }
 
         .page {
@@ -48,67 +46,73 @@
         .cover {
             background: var(--primary);
             color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 25mm;
         }
 
-        .geo-circle-1 { position: absolute; width: 400px; height: 400px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); top: -150px; right: -100px; border: 2px solid rgba(255, 255, 255, 0.1); }
-        .geo-circle-2 { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: rgba(255, 255, 255, 0.03); bottom: -100px; left: -80px; border: 2px solid rgba(255, 255, 255, 0.08); }
-        .geo-square { position: absolute; width: 150px; height: 150px; background: rgba(255, 255, 255, 0.04); transform: rotate(45deg); top: 40%; right: 50px; border: 2px solid rgba(255, 255, 255, 0.1); }
-        .geo-line { width: 200px; height: 2px; background: rgba(255, 255, 255, 0.1); margin: 20px 0; transform-origin: left; }
+        .cover-accent-top { position: absolute; top: 0; left: 0; width: 100%; height: 10mm; background: var(--secondary); }
+        .cover-accent-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 40mm; background: rgba(0,0,0,0.1); }
 
-        .cover-content { position: relative; z-index: 10; padding: 80mm 25mm 25mm 25mm; }
-        .cover-title { font-family: 'Poppins', sans-serif; font-size: 48px; font-weight: 900; line-height: 1.1; margin-bottom: 20px; text-transform: uppercase; border-bottom: 3px solid var(--secondary); padding-bottom: 15px; display: inline-block; }
-        .cover-subtitle { font-size: 18px; font-weight: 300; line-height: 1.6; margin-top: 30px; color: white; max-width: 500px; }
-        .cover-footer { position: absolute; bottom: 25mm; left: 25mm; right: 25mm; color: rgba(255, 255, 255, 0.9); font-size: 12px; }
-        .company-name { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+        .cover-content { position: relative; z-index: 10; }
+        .cover-kicker { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; }
+        .cover-title { font-family: 'Poppins', sans-serif; font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 30px; text-transform: uppercase; }
+        .cover-subtitle { font-size: 20px; font-weight: 300; line-height: 1.5; color: rgba(255,255,255,0.9); max-width: 550px; border-left: 4px solid var(--secondary); padding-left: 25px; margin-bottom: 40px; }
+        
+        .cover-footer { position: absolute; bottom: 25mm; left: 25mm; right: 25mm; color: white; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; }
+        .cover-brand { font-weight: 700; font-size: 18px; margin-bottom: 5px; }
+        .cover-tagline { font-size: 12px; opacity: 0.8; margin-bottom: 15px; }
+        .cover-contact { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.7; }
 
         /* ── PAGE HEADERS ─────────────────────────────────────── */
-        .page-header-enhanced { background: var(--secondary); padding: 20px 25mm; position: relative; overflow: hidden; }
-        .header-decoration { position: absolute; top: 0; right: 0; width: 200px; height: 100%; opacity: 0.1; }
-        .header-circle { position: absolute; border-radius: 50%; border: 2px solid white; }
-        .header-circle-1 { width: 120px; height: 120px; top: -40px; right: -20px; }
-        .header-circle-2 { width: 80px; height: 80px; top: 10px; right: 80px; }
-        .header-circle-3 { width: 50px; height: 50px; bottom: -10px; right: 40px; }
-        .page-header-content { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; }
-        .page-title-enhanced { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1px; padding-left: 15px; border-left: 5px solid var(--accent); }
-        .page-number-enhanced { background: rgba(255, 255, 255, 0.2); padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; color: white; }
-        .header-accent-bar { height: 6px; background: var(--primary); }
+        .page-header-enhanced { padding: 15mm 25mm 10mm; border-bottom: 1px solid #eee; margin-bottom: 10mm; }
+        .page-header-content { display: flex; justify-content: space-between; align-items: baseline; }
+        .page-kicker { font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .page-title-enhanced { font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 900; color: var(--primary); text-transform: uppercase; }
+        .page-number-enhanced { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700; color: #ccc; }
 
         /* ── CONTENT AREA ─────────────────────────────────────── */
-        .page-content-area { padding: 20mm 25mm; }
-        h1 { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 900; color: var(--primary); margin-bottom: 25px; text-transform: uppercase; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; }
-        h3.section-title { font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 700; color: var(--primary); margin: 30px 0 15px; position: relative; padding-left: 20px; }
-        h3.section-title:before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 6px; height: 30px; background: var(--secondary); border-radius: 3px; }
-        .content-text { font-size: 15px; line-height: 1.8; color: var(--text); margin-bottom: 20px; }
+        .page-content-area { padding: 0 25mm; position: relative; height: calc(297mm - 60mm); }
+        .intro-text { font-size: 16px; font-weight: 500; color: var(--primary); margin-bottom: 25px; line-height: 1.7; }
+        .content-text { font-size: 14px; line-height: 1.8; color: var(--text); margin-bottom: 20px; }
+        
+        h3 { font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; color: var(--primary); margin: 25px 0 12px; text-transform: uppercase; border-left: 4px solid var(--secondary); padding-left: 15px; }
+        
+        ul { margin-bottom: 20px; padding-left: 20px; }
+        li { font-size: 14px; margin-bottom: 10px; color: var(--text); }
 
-        /* ── VISUAL ELEMENTS ──────────────────────────────────── */
-        .img-wrap { width: 100%; border-radius: var(--radius); overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1); margin: 25px 0; position: relative; }
-        .img-wrap img { width: 100%; height: auto; display: block; object-fit: cover; max-height: 250px; }
-        .img-caption { padding: 12px 20px; font-size: 12px; font-style: italic; color: var(--text-light); background: var(--white); border-top: 1px solid #eee; }
+        /* ── HIGHLIGHT BOXES ──────────────────────────────────── */
+        .highlight-box { padding: 20px 25px; border-radius: var(--radius); margin: 30px 0; position: relative; }
+        .highlight-label { font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
+        
+        .box-key-insight { background: var(--light); border-left: 6px solid var(--primary); }
+        .box-key-insight .highlight-label { color: var(--primary); }
+        
+        .box-strategic-tip { background: var(--accent); border-left: 6px solid var(--secondary); }
+        .box-strategic-tip .highlight-label { color: var(--secondary); }
+        
+        .box-industry-stat { background: var(--primary); color: white; text-align: center; }
+        .box-industry-stat .highlight-label { color: var(--secondary); }
+        .box-industry-stat .stat-val { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 900; display: block; }
 
-        .checklist { list-style: none; margin: 20px 0; padding: 0; }
-        .checklist li { padding: 12px 0 12px 45px; position: relative; font-size: 14px; border-bottom: 1px solid #e0e0e0; }
-        .checklist li:before { content: '✓'; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: var(--secondary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-
-        .info-box { background: var(--light); padding: 25px; border-radius: var(--radius); border-left: 5px solid var(--secondary); margin: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .info-box-title { font-weight: 700; font-size: 16px; color: var(--secondary); margin-bottom: 12px; text-transform: uppercase; }
-
-        .metric-card { background: var(--white); border-left: 5px solid var(--secondary); padding: 20px 25px; margin: 20px 0; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border-radius: 0 8px 8px 0; }
-        .metric-val { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 900; color: var(--primary); display: block; line-height: 1; }
-        .metric-lbl { font-size: 12px; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px; font-weight: 600; }
+        /* ── IMAGES ───────────────────────────────────────────── */
+        .img-wrap { width: 100%; border-radius: var(--radius); overflow: hidden; margin: 30px 0; background: #f9f9f9; }
+        .img-wrap img { width: 100%; height: auto; display: block; object-fit: cover; max-height: 300px; }
+        .img-caption { padding: 12px 20px; font-size: 11px; font-style: italic; color: var(--text-light); border-top: 1px solid #eee; }
 
         /* ── FOOTER ──────────────────────────────────────────── */
-        .footer-enhanced { position: absolute; bottom: 0; left: 0; right: 0; background: var(--primary); padding: 18px 25mm; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: white; }
-        .footer-logo-placeholder { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 900; font-size: 20px; }
+        .footer-enhanced { position: absolute; bottom: 0; left: 0; right: 0; padding: 10mm 25mm; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #999; border-top: 1px solid #eee; }
 
-        .toc-list { list-style: none; padding: 0; margin-top: 40px; }
-        .toc-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; border-bottom: 1px dotted rgba(0,0,0,0.1); padding-bottom: 8px; }
-        .toc-num { font-weight: 700; color: var(--secondary); width: 35px; }
-        .toc-label { flex: 1; font-weight: 600; color: var(--primary); }
-        .toc-page { font-weight: 700; color: var(--text-light); margin-left: 15px; }
+        /* ── TOC ─────────────────────────────────────────────── */
+        .toc-list { margin-top: 20mm; }
+        .toc-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; border-bottom: 1px dotted #ddd; padding-bottom: 5px; }
+        .toc-num { font-family: 'Poppins', sans-serif; font-weight: 700; color: var(--secondary); width: 30px; }
+        .toc-label { flex: 1; font-weight: 600; color: var(--primary); text-transform: uppercase; font-size: 13px; }
+        .toc-page { font-weight: 700; color: #999; margin-left: 15px; }
 
         @media print {
             body { background: white; padding: 0; }
-            .book { box-shadow: none; }
             @page { size: A4; margin: 0; }
         }
     </style>
@@ -117,40 +121,44 @@
     <div class="book">
         <!-- PAGE 01: COVER -->
         <div class="page cover">
-            <div class="geo-circle-1"></div>
-            <div class="geo-circle-2"></div>
-            <div class="geo-square"></div>
+            <div class="cover-accent-top"></div>
             <div class="cover-content">
+                <div class="cover-kicker">{{documentTypeLabel}}</div>
                 <h1 class="cover-title">{{mainTitle}}</h1>
                 <p class="cover-subtitle">{{documentSubtitle}}</p>
             </div>
             <div class="cover-footer">
-                <div class="company-name">{{companyName}}</div>
-                <div>{{emailAddress}} • {{website}}</div>
+                <div class="cover-brand">{{companyName}}</div>
+                <div class="cover-tagline">Strategic Architectural Consultancy</div>
+                <div class="cover-contact">
+                    <span>{{website}}</span>
+                    <span>{{emailAddress}}</span>
+                </div>
             </div>
+            <div class="cover-accent-bottom"></div>
         </div>
 
         <!-- PAGE 02: TERMS OF USE -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{termsTitle}}</h2>
+                    <div>
+                        <div class="page-kicker">Legal Notice</div>
+                        <h2 class="page-title-enhanced">{{termsTitle}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber02}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
-            <div class="page-content-area" style="text-align: center; padding-top: 40mm;">
-                <h1 style="border:none;">{{termsTitle}}</h1>
-                <p class="content-text" style="font-weight: 700;">{{termsSummary}}</p>
-                <p class="content-text">{{termsParagraph1}}</p>
-                <p class="content-text">{{termsParagraph2}}</p>
-                <p class="content-text">{{termsParagraph3}}</p>
-                <p class="content-text">{{termsParagraph4}}</p>
-                <p style="margin-top: 30px; font-size: 12px;">{{termsParagraph5}}</p>
+            <div class="page-content-area" style="padding-top: 20mm;">
+                <p class="intro-text" style="text-align: center;">{{termsSummary}}</p>
+                <div class="content-text">{{termsParagraph1}}</div>
+                <div class="content-text">{{termsParagraph2}}</div>
+                <div class="content-text">{{termsParagraph3}}</div>
+                <div class="content-text">{{termsParagraph4}}</div>
+                <div style="margin-top: 40mm; text-align: center; font-size: 12px; color: #999;">{{termsParagraph5}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
@@ -159,124 +167,139 @@
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{contentsTitle}}</h2>
+                    <div>
+                        <div class="page-kicker">Navigation</div>
+                        <h2 class="page-title-enhanced">{{contentsTitle}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber03}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{contentsTitle}}</h1>
                 <div class="toc-list">
                     {{toc_html}}
                 </div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 04: EXECUTIVE SUMMARY -->
+        <!-- PAGE 04: INTRODUCTION -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle1}}</h2>
+                    <div>
+                        <div class="page-kicker">Phase 01</div>
+                        <h2 class="page-title-enhanced">{{customTitle1}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber04}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle1}}</h1>
-                <div class="content-text">{{section_executive_summary_intro_html}}</div>
-                {{#if section_executive_summary_image_url}}
-                <div class="img-wrap">
-                    <img src="{{section_executive_summary_image_url}}" alt="{{customTitle1}}">
-                    <div class="img-caption">{{section_executive_summary_image_caption}}</div>
+                <div class="content-text">{{section_introduction_intro_html}}</div>
+                <div class="content-text">{{section_introduction_bullets_html}}</div>
+                {{#if section_introduction_key_insight}}
+                <div class="highlight-box box-key-insight">
+                    <span class="highlight-label">Key Insight</span>
+                    <p>{{section_introduction_key_insight}}</p>
                 </div>
                 {{/if}}
-                <div class="content-text">{{section_executive_summary_support_html}}</div>
+                <div class="content-text">{{section_introduction_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 05: KEY CHALLENGES -->
+        <!-- PAGE 05: INDUSTRY CHALLENGES -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle2}}</h2>
+                    <div>
+                        <div class="page-kicker">Market Analysis</div>
+                        <h2 class="page-title-enhanced">{{customTitle2}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber05}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle2}}</h1>
-                <div class="content-text">{{section_key_challenges_intro_html}}</div>
-                <ul class="checklist">
-                    {{section_key_challenges_bullets_html}}
-                </ul>
-                <div class="content-text">{{section_key_challenges_support_html}}</div>
+                <div class="content-text">{{section_industry_challenges_intro_html}}</div>
+                {{#if section_industry_challenges_industry_stat}}
+                <div class="highlight-box box-industry-stat">
+                    <span class="highlight-label">Industry Stat</span>
+                    <span class="stat-val">{{section_industry_challenges_industry_stat}}</span>
+                </div>
+                {{/if}}
+                <div class="content-text">{{section_industry_challenges_support_html}}</div>
+                {{#if section_industry_challenges_image_url}}
+                <div class="img-wrap">
+                    <img src="{{section_industry_challenges_image_url}}" alt="Challenges">
+                </div>
+                {{/if}}
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 06: STRATEGIC FRAMEWORK -->
+        <!-- PAGE 06: CORE PRINCIPLES -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle3}}</h2>
+                    <div>
+                        <div class="page-kicker">Foundations</div>
+                        <h2 class="page-title-enhanced">{{customTitle3}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber06}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle3}}</h1>
-                <div class="content-text">{{section_strategic_framework_intro_html}}</div>
-                {{#if section_strategic_framework_image_url}}
-                <div class="img-wrap">
-                    <img src="{{section_strategic_framework_image_url}}" alt="{{customTitle3}}">
+                <div class="content-text">{{section_core_principles_intro_html}}</div>
+                {{#if section_core_principles_strategic_tip}}
+                <div class="highlight-box box-strategic-tip">
+                    <span class="highlight-label">Strategic Tip</span>
+                    <p>{{section_core_principles_strategic_tip}}</p>
                 </div>
                 {{/if}}
-                <div class="content-text">{{section_strategic_framework_support_html}}</div>
+                <div class="content-text">{{section_core_principles_support_html}}</div>
+                {{#if section_core_principles_image_url}}
+                <div class="img-wrap">
+                    <img src="{{section_core_principles_image_url}}" alt="Principles">
+                </div>
+                {{/if}}
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 07: IMPLEMENTATION STRATEGY -->
+        <!-- PAGE 07: PRACTICAL STRATEGIES -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle4}}</h2>
+                    <div>
+                        <div class="page-kicker">Implementation</div>
+                        <h2 class="page-title-enhanced">{{customTitle4}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber07}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle4}}</h1>
-                <div class="content-text">{{section_implementation_strategy_intro_html}}</div>
-                <ul class="checklist">
-                    {{section_implementation_strategy_bullets_html}}
-                </ul>
-                <div class="info-box">
-                    <div class="info-box-title">{{strategicTipLabel}}</div>
-                    <p>{{section_implementation_strategy_support_html}}</p>
+                <div class="content-text">{{section_practical_strategies_intro_html}}</div>
+                <div class="content-text">{{section_practical_strategies_support_html}}</div>
+                {{#if section_practical_strategies_key_insight}}
+                <div class="highlight-box box-key-insight">
+                    <span class="highlight-label">Strategic Insight</span>
+                    <p>{{section_practical_strategies_key_insight}}</p>
                 </div>
+                {{/if}}
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
@@ -285,24 +308,30 @@
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle5}}</h2>
+                    <div>
+                        <div class="page-kicker">Risk Mitigation</div>
+                        <h2 class="page-title-enhanced">{{customTitle5}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber08}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle5}}</h1>
                 <div class="content-text">{{section_risk_management_intro_html}}</div>
                 {{#if section_risk_management_image_url}}
                 <div class="img-wrap">
-                    <img src="{{section_risk_management_image_url}}" alt="{{customTitle5}}">
+                    <img src="{{section_risk_management_image_url}}" alt="Risk">
+                </div>
+                {{/if}}
+                {{#if section_risk_management_key_insight}}
+                <div class="highlight-box box-key-insight">
+                    <span class="highlight-label">Critical Warning</span>
+                    <p>{{section_risk_management_key_insight}}</p>
                 </div>
                 {{/if}}
                 <div class="content-text">{{section_risk_management_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
@@ -311,49 +340,52 @@
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle6}}</h2>
+                    <div>
+                        <div class="page-kicker">Excellence</div>
+                        <h2 class="page-title-enhanced">{{customTitle6}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber09}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle6}}</h1>
                 <div class="content-text">{{section_best_practices_intro_html}}</div>
-                <ul class="checklist">
-                    {{section_best_practices_bullets_html}}
-                </ul>
+                {{#if section_best_practices_strategic_tip}}
+                <div class="highlight-box box-strategic-tip">
+                    <span class="highlight-label">Consultant Tip</span>
+                    <p>{{section_best_practices_strategic_tip}}</p>
+                </div>
+                {{/if}}
                 <div class="content-text">{{section_best_practices_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 10: KEY STATISTICS -->
+        <!-- PAGE 10: FACTS AND FIGURES -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle7}}</h2>
+                    <div>
+                        <div class="page-kicker">Data Points</div>
+                        <h2 class="page-title-enhanced">{{customTitle7}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber10}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle7}}</h1>
                 <div class="content-text">{{section_key_statistics_intro_html}}</div>
-                {{#if section_key_statistics_stat_val}}
-                <div class="metric-card">
-                    <span class="metric-val">{{section_key_statistics_stat_val}}</span>
-                    <span class="metric-lbl">{{section_key_statistics_stat_lbl}}</span>
+                {{#if section_key_statistics_industry_stat}}
+                <div class="highlight-box box-industry-stat">
+                    <span class="highlight-label">Performance Metric</span>
+                    <span class="stat-val">{{section_key_statistics_industry_stat}}</span>
                 </div>
                 {{/if}}
                 <div class="content-text">{{section_key_statistics_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
@@ -362,24 +394,24 @@
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle8}}</h2>
+                    <div>
+                        <div class="page-kicker">The Path Forward</div>
+                        <h2 class="page-title-enhanced">{{customTitle8}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber11}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle8}}</h1>
-                <div class="content-text">{{section_process_steps_intro_html}}</div>
-                {{#if section_process_steps_image_url}}
+                <div class="content-text">{{section_implementation_roadmap_intro_html}}</div>
+                {{#if section_implementation_roadmap_image_url}}
                 <div class="img-wrap">
-                    <img src="{{section_process_steps_image_url}}" alt="{{customTitle8}}">
+                    <img src="{{section_implementation_roadmap_image_url}}" alt="Roadmap">
                 </div>
                 {{/if}}
-                <div class="content-text">{{section_process_steps_support_html}}</div>
+                <div class="content-text">{{section_implementation_roadmap_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
@@ -388,104 +420,111 @@
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle9}}</h2>
+                    <div>
+                        <div class="page-kicker">Comparative Analysis</div>
+                        <h2 class="page-title-enhanced">{{customTitle9}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber12}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle9}}</h1>
-                <div class="content-text">{{section_comparison_table_intro_html}}</div>
-                {{#if section_comparison_table_image_url}}
-                <div class="img-wrap">
-                    <img src="{{section_comparison_table_image_url}}" alt="{{customTitle9}}">
+                <div class="content-text">{{section_traditional_vs_modern_intro_html}}</div>
+                {{#if section_traditional_vs_modern_key_insight}}
+                <div class="highlight-box box-key-insight">
+                    <span class="highlight-label">Market Shift</span>
+                    <p>{{section_traditional_vs_modern_key_insight}}</p>
                 </div>
                 {{/if}}
-                <div class="content-text">{{section_comparison_table_support_html}}</div>
+                <div class="content-text">{{section_traditional_vs_modern_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 13: REAL-WORLD EXAMPLE -->
+        <!-- PAGE 13: CASE STUDY -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle11}}</h2>
+                    <div>
+                        <div class="page-kicker">Proof of Concept</div>
+                        <h2 class="page-title-enhanced">{{customTitle10}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber13}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle11}}</h1>
                 <div class="content-text">{{section_case_study_intro_html}}</div>
-                <div class="info-box">
-                    <div class="info-box-title">{{caseStudyDetailsTitle}}</div>
-                    <div class="content-text">{{section_case_study_support_html}}</div>
+                <div class="highlight-box box-industry-stat" style="background: var(--secondary);">
+                    <span class="highlight-label" style="color: white;">Case Study Stat</span>
+                    <span class="stat-val">{{section_case_study_industry_stat}}</span>
                 </div>
+                <div class="content-text">{{section_case_study_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 14: EXPERT INSIGHTS & FAQS -->
+        <!-- PAGE 14: EXPERT INSIGHTS -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle12}}</h2>
+                    <div>
+                        <div class="page-kicker">Expert Perspective</div>
+                        <h2 class="page-title-enhanced">{{customTitle11}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber14}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle12}}</h1>
                 <div class="content-text">{{section_expert_insights_intro_html}}</div>
-                <ul class="checklist">
-                    {{section_expert_insights_bullets_html}}
-                </ul>
+                {{#if section_expert_insights_strategic_tip}}
+                <div class="highlight-box box-strategic-tip">
+                    <span class="highlight-label">Expert Advice</span>
+                    <p>{{section_expert_insights_strategic_tip}}</p>
+                </div>
+                {{/if}}
                 <div class="content-text">{{section_expert_insights_support_html}}</div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
 
-        <!-- PAGE 15: CONCLUSION & NEXT STEPS -->
+        <!-- PAGE 15: CALL TO ACTION -->
         <div class="page content-page">
             <div class="page-header-enhanced">
                 <div class="page-header-content">
-                    <h2 class="page-title-enhanced">{{customTitle13}}</h2>
+                    <div>
+                        <div class="page-kicker">Next Steps</div>
+                        <h2 class="page-title-enhanced">{{customTitle12}}</h2>
+                    </div>
                     <div class="page-number-enhanced">{{pageNumber15}}</div>
                 </div>
             </div>
-            <div class="header-accent-bar"></div>
             <div class="page-content-area">
-                <h1>{{customTitle13}}</h1>
                 <div class="content-text">{{section_conclusion_intro_html}}</div>
-                <div class="info-box" style="background: var(--secondary); color: white;">
-                    <div class="info-box-title" style="color: white;">{{ctaHeadline}}</div>
-                    <p style="color: white;">{{contactDescription}}</p>
+                <div class="highlight-box box-key-insight" style="background: var(--primary); color: white; padding: 40px;">
+                    <span class="highlight-label" style="color: var(--secondary);">Partner With Us</span>
+                    <h2 style="color: white; margin-bottom: 20px; border: none; font-size: 24px;">{{ctaHeadline}}</h2>
+                    <p style="font-size: 16px; line-height: 1.6;">{{contactDescription}}</p>
                 </div>
-                <div class="content-text" style="text-align: center; margin-top: 30px;">
-                    <strong>{{companyName}}</strong><br>
-                    {{emailAddress}}<br>
-                    {{website}}
+                <div style="text-align: center; margin-top: 20mm;">
+                    <div style="font-weight: 900; font-size: 20px; color: var(--primary);">{{companyName}}</div>
+                    <div style="font-size: 14px; margin-top: 10px;">{{website}}</div>
+                    <div style="font-size: 14px; margin-top: 5px;">{{emailAddress}}</div>
                 </div>
             </div>
             <div class="footer-enhanced">
-                <div class="footer-logo-placeholder">{{logoPlaceholder}}</div>
-                <span>{{footerText}}</span>
+                <span>{{companyName}}</span>
                 <span>{{website}}</span>
             </div>
         </div>
+
     </div>
 </body>
 </html>

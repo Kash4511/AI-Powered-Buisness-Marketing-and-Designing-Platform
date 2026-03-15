@@ -80,17 +80,20 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         flags=_re.DOTALL,
     )
 
-    # Pass 2: simple {{key}} substitution
     def _replace_var(m):
         key = m.group(1).strip()
         val = vars_dict.get(key, "")
         if val is None:
             val = ""
         val_str = str(val)
-        # All keys ending in _html or starting with customTitle contain raw content
-        if key.endswith("_html") or key.startswith("customTitle"):
+        # RAW injection for pre-rendered HTML sections
+        if (key.endswith("_html") or 
+            key.startswith("customTitle") or 
+            key.endswith("_insight") or 
+            key.endswith("_tip") or 
+            key.endswith("_stat")):
             return val_str
-        # All other values are plain text — must be HTML-escaped
+        # Plain-text escaping for everything else
         return val_str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     html = _re.sub(r'\{\{(\w+)\}\}', _replace_var, html)
