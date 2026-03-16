@@ -6,6 +6,7 @@ import re
 import traceback as _tb
 from typing import Dict, Any, List, Tuple
 from groq import Groq
+from .config_helper import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -534,8 +535,8 @@ class GroqClient:
 
         normalized["summary"]              = normalized.get("introduction", "")[:500]
         normalized["cta_text"]             = normalized.get("conclusion", "")[:300]
-        normalized["cta_headline"]         = normalized.get("cta_headline") or "Ready to Start Your Project?"
-        normalized["legal_notice_summary"] = "This document provides strategic guidance and should be verified by a qualified professional."
+        normalized["cta_headline"]         = normalized.get("cta_headline") or get_config("cta_headline", "Ready to Start Your Project?")
+        normalized["legal_notice_summary"] = get_config("legal_notice_summary", "This document provides strategic guidance and should be verified by a qualified professional.")
         return normalized
 
     def map_to_template_vars(self, ai_content: Dict[str, Any], firm_profile: Dict[str, Any], signals: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -546,9 +547,17 @@ class GroqClient:
             s = str(c).strip()
             return s if s.startswith("#") else "#" + s
 
-        primary_color   = fix_hex(firm_profile.get("primary_brand_color") or signals.get("primary_color")) or "#1a365d"
-        secondary_color = fix_hex(firm_profile.get("secondary_brand_color")) or "#c5a059"
-        accent_color    = fix_hex(firm_profile.get("accent_color")) or "#f8fafc"
+        primary_color   = fix_hex(firm_profile.get("primary_brand_color") or signals.get("primary_color")) or get_config("palette_primary", "#1a365d")
+        secondary_color = fix_hex(firm_profile.get("secondary_brand_color")) or get_config("palette_secondary", "#c5a059")
+        accent_color    = fix_hex(firm_profile.get("accent_color")) or get_config("palette_accent", "#f8fafc")
+
+        # New palette variables for template
+        white_color      = "#ffffff"
+        light_color      = get_config("palette_light", "#f1f5f9")
+        text_color       = get_config("palette_text", "#1e293b")
+        text_light_color = get_config("palette_text_light", "#64748b")
+        body_bg          = get_config("palette_body_bg", "#ffffff")
+        border_radius    = get_config("layout_border_radius", "8px")
 
         work_email   = firm_profile.get("work_email", "")
         raw_name     = firm_profile.get("firm_name") or firm_profile.get("name") or ""
@@ -571,9 +580,15 @@ class GroqClient:
             "primaryColor":      primary_color,
             "secondaryColor":    secondary_color,
             "accentColor":       accent_color,
-            "surfaceColor":      "#ffffff",
-            "onSurfaceColor":    "#1a202c",
-            "highlightColor":    "#f4f7f9",
+            "whiteColor":       white_color,
+            "lightColor":       light_color,
+            "textColor":        text_color,
+            "textLightColor":   text_light_color,
+            "bodyBackground":   body_bg,
+            "borderRadius":      border_radius,
+            "surfaceColor":      get_config("palette_surface", "#ffffff"),
+            "onSurfaceColor":    get_config("palette_on_surface", "#1a202c"),
+            "highlightColor":    get_config("palette_highlight", "#f4f7f9"),
             "documentTitle":     ai_content.get("title") or topic,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
@@ -582,12 +597,17 @@ class GroqClient:
             "emailAddress":      work_email,
             "phoneNumber":       firm_profile.get("phone_number", ""),
             "website":           firm_profile.get("firm_website", ""),
+            "logoUrl":           firm_profile.get("firm_logo") or firm_profile.get("logo_url") or "",
             "logoPlaceholder":   company_name[:2].upper() if company_name else "AI",
             "footerText":        f"© {company_name} — Strategic Property Analysis",
             "differentiator":    firm_profile.get("branding_guidelines") or f"Expert {topic} solutions for {signals.get('audience', 'property owners')}.",
             "ctaHeadline":       cta_headline,
             "contactDescription": cta_text,
             "contentsTitle":     "Table of Contents",
+            "termsTitle":        get_config("terms_title", "Terms of Use"),
+            "summary":           ai_content.get("summary", ""),
+            "image_1_url":       firm_profile.get("image_1_url") or signals.get("image_1_url"),
+            "image_2_url":       firm_profile.get("image_2_url") or signals.get("image_2_url"),
         }
 
         # Terms

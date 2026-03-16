@@ -31,43 +31,40 @@ class PDFGenerationTests(TestCase):
 
     def test_variable_mapping_completeness(self):
         """Test that all required Template.html variables are mapped"""
-        # Mock AI content
+        from .groq_client import GroqClient
+        
+        # Mock AI content with all expected sections
         ai_content = {
             'title': 'Test Title',
             'subtitle': 'Test Subtitle',
             'target_audience_summary': 'Test Summary',
-            'key_pain_points': [{'title': 'P1', 'description': 'D1'}],
-            'solutions': [{'title': 'S1', 'implementation_steps': ['Step 1'], 'expected_outcome': 'O1'}],
-            'roi_section': {'cost_savings': 'C1', 'time_savings': 'T1', 'competitive_advantage': 'A1'},
-            'call_to_action': 'CTA'
+            'conclusion': '<h3>CTA</h3><p>Support text</p>',
+            'framework': {}
         }
+        for key in [s[0] for s in GroqClient().SECTIONS]:
+            ai_content[key] = f"<p>Content for {key}</p>"
         
-        # Manually map to maintain template compatibility for now
-        template_vars = {
-            'mainTitle': ai_content.get('title'),
-            'documentSubtitle': ai_content.get('subtitle'),
-            'companyName': self.firm_profile.get('firm_name'),
-            'emailAddress': self.firm_profile.get('work_email'),
-            'phoneNumber': self.firm_profile.get('phone_number'),
-            'website': self.firm_profile.get('firm_website'),
-            'primaryColor': self.firm_profile.get('primary_brand_color'),
-            'secondaryColor': self.firm_profile.get('secondary_brand_color'),
-            'summary': ai_content.get('target_audience_summary'),
-            'key_pain_points': ai_content.get('key_pain_points'),
-            'solutions': ai_content.get('solutions'),
-            'roi': ai_content.get('roi_section'),
-            'cta': ai_content.get('call_to_action'),
-        }
+        client = GroqClient()
+        template_vars = client.map_to_template_vars(ai_content, self.firm_profile, signals={'topic': 'Test Topic'})
         
         # Load Template.html and find all {{variable}}
         template_path = os.path.join(settings.BASE_DIR, 'lead_magnets', 'templates', 'Template.html')
         with open(template_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
+        # Find placeholders like {{var}}, but exclude Jinja2 keywords like {{#if}}, {{/if}}, {{else}}
         placeholders = re.findall(r'\{\{\s*(\w+)\s*\}\}', html_content)
         unique_placeholders = set(placeholders)
         
+        # Exclude known non-variable placeholders if any
+        excluded = {'else'}
+        unique_placeholders = {p for p in unique_placeholders if p not in excluded}
+        
         missing_vars = [p for p in unique_placeholders if p not in template_vars]
+        
+        if missing_vars:
+            print(f"DEBUG: Unique placeholders found: {sorted(list(unique_placeholders))}")
+            print(f"DEBUG: Template vars keys: {sorted(list(template_vars.keys()))}")
         
         self.assertEqual(len(missing_vars), 0, f"Missing variables in mapping: {missing_vars}")
 

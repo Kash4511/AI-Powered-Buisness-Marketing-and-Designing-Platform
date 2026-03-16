@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 from corsheaders.defaults import default_headers, default_methods
@@ -16,6 +17,9 @@ except Exception as e:
     print(f"⚠️ Error loading .env: {e}")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Detect if we are running tests
+TESTING = 'test' in sys.argv or 'pytest' in sys.argv
 
 # -----------------------------
 # Core Config
@@ -136,7 +140,7 @@ else:
                 'PASSWORD': POSTGRES_PASSWORD,
                 'HOST': POSTGRES_HOST,
                 'PORT': POSTGRES_PORT,
-                'CONN_MAX_AGE': 600,
+                'CONN_MAX_AGE': 0 if TESTING else 600,
                 'OPTIONS': {
                     'sslmode': os.getenv("POSTGRES_SSLMODE", "require"),
                 },
