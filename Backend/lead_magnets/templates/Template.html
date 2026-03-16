@@ -154,20 +154,121 @@
             height: 297mm;
             margin-top: -30mm; /* Offset page margin to fill sheet */
             z-index: 100;
+            position: relative;
+            overflow: hidden;
         }
 
-        .cover-accent-top { position: absolute; top: 0; left: 0; width: 100%; height: 10mm; background: var(--secondary); }
-        .cover-accent-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 40mm; background: rgba(0,0,0,0.1); }
+        .cover::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
+            z-index: 1;
+        }
 
-        .cover-content { position: relative; z-index: 10; }
-        .cover-kicker { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; }
-        .cover-title { font-family: 'Poppins', sans-serif; font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 30px; text-transform: uppercase; }
-        .cover-subtitle { font-size: 20px; font-weight: 300; line-height: 1.5; color: rgba(255,255,255,0.9); max-width: 550px; border-left: 4px solid var(--secondary); padding-left: 25px; margin-bottom: 40px; }
+        .cover-pattern {
+            position: absolute;
+            top: -10%;
+            right: -10%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .cover-accent-top { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 15mm; 
+            background: var(--secondary); 
+            z-index: 3;
+        }
+
+        .cover-content { 
+            position: relative; 
+            z-index: 10; 
+            max-width: 160mm;
+        }
+
+        .cover-kicker { 
+            font-family: 'Poppins', sans-serif; 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: var(--secondary); 
+            text-transform: uppercase; 
+            letter-spacing: 4px; 
+            margin-bottom: 25px; 
+            display: block;
+        }
+
+        .cover-title { 
+            font-family: 'Poppins', sans-serif; 
+            font-size: 58px; 
+            font-weight: 900; 
+            line-height: 1.05; 
+            margin-bottom: 35px; 
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .cover-subtitle { 
+            font-size: 22px; 
+            font-weight: 300; 
+            line-height: 1.6; 
+            color: rgba(255,255,255,0.95); 
+            border-left: 5px solid var(--secondary); 
+            padding-left: 30px; 
+            margin-bottom: 50px; 
+        }
         
-        .cover-footer { position: absolute; bottom: 25mm; left: 25mm; right: 25mm; color: white; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; }
-        .cover-brand { font-weight: 700; font-size: 18px; margin-bottom: 5px; }
-        .cover-tagline { font-size: 12px; opacity: 0.8; margin-bottom: 15px; }
-        .cover-contact { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.7; }
+        .cover-footer { 
+            position: absolute; 
+            bottom: 30mm; 
+            left: 25mm; 
+            right: 25mm; 
+            color: white; 
+            border-top: 1px solid rgba(255,255,255,0.2); 
+            padding-top: 25px; 
+            z-index: 10;
+        }
+
+        .cover-brand { 
+            font-weight: 700; 
+            font-size: 22px; 
+            margin-bottom: 8px; 
+            letter-spacing: 1px;
+        }
+
+        .cover-tagline { 
+            font-size: 14px; 
+            opacity: 0.9; 
+            margin-bottom: 20px; 
+            font-weight: 400;
+        }
+
+        .cover-contact { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 12px; 
+            opacity: 0.8; 
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .cover-accent-bottom { 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 50mm; 
+            background: rgba(0,0,0,0.15); 
+            z-index: 3;
+        }
 
         /* ── CONTENT AREA ─────────────────────────────────────── */
         .page-content-area { 
@@ -297,6 +398,7 @@
     <div class="book">
         <!-- PAGE 01: COVER -->
         <div class="page cover">
+            <div class="cover-pattern"></div>
             <div class="cover-accent-top"></div>
             <div class="cover-content">
                 <div class="cover-kicker">{{documentTypeLabel}}</div>
@@ -352,7 +454,7 @@
             <div class="page-content-area">
                 <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{contentsTitle}}</h2>
                 <div class="toc-list">
-                    {{toc_html}}
+                    {{toc_sections_html}}
                 </div>
             </div>
         </div>

@@ -53,7 +53,7 @@ _TYPE_MAP = {
     "Custom": "custom",
 }
 
-ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote"}
+ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "div", "span", "a"}
 
 SECTION_KEYS = [s[0] for s in SECTIONS]
 
@@ -129,172 +129,158 @@ def _deduplicate_content(html: str) -> str:
 # for exactly one section. No generic filler, no repeated statistics.
 # ─────────────────────────────────────────────────────────────────────────────
 SECTION_PROMPTS = {
-    "introduction": """Write a high-impact Introduction and Executive Summary for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "introduction": """Write a high-impact Executive Summary for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 RULES:
-- MINIMUM 300 words.
-- Open with a specific, provocative claim or statistic about {topic}.
-- 3–5 full paragraphs, each 80–120 words.
-- Cite specific standards (e.g. NCC, Passive House) and real numbers.
-- End with a transition to the next section.
+- MINIMUM 350 words.
+- Explain: Why this is becoming essential NOW, the strategic opportunity for the audience, and what they will gain.
+- Cite specific industry data, benchmarks, or standards.
+- Deep, consulting-level analysis. No surface-level generalities.
 
-OUTPUT FORMAT — raw HTML only, no markdown:
-<p>[Opening paragraph — bold claim + context]</p>
-<p>[Subsequent paragraphs — strategic depth + citations]</p>
-<h3>[Subheading about the stakes]</h3>
-<p>[What happens if they ignore this — specific outcome]</p>
+OUTPUT FORMAT (raw HTML):
+<p>[The Shift: Context and Urgency. 100+ words]</p>
+<p>[The Opportunity: Competitive Advantage. 100+ words]</p>
+<p>[The Promise: What this guide delivers. 100+ words]</p>""",
 
-Pain Points: {pain_points}
-Firm USP: {firm_usp}""",
-
-    "industry_challenges": """Write a detailed Common Challenges section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "industry_challenges": """Write a deep Industry Challenges section on **{topic}** for **{audience}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Describe 4 specific, non-obvious challenges — each with its own <h3>.
-- Use specific numbers, percentages, dollar figures.
-- Cite specific standards and real numbers.
+- MINIMUM 350 words.
+- Discuss REAL problems: Rising costs, regulatory pressure, compliance, communication gaps, client demand.
+- Explain WHY these problems occur at a structural level.
+- 4 specific challenges, each with an <h3>.
 
 OUTPUT FORMAT:
-<h3>[Challenge 1 Name]</h3>
-<p>[Deep analysis of the problem. 80-120 words.]</p>
-<p><strong>Real cost:</strong> [Specific financial or timeline impact.]</p>
-[Repeat for challenges 2, 3, 4]
+<h3>[Challenge Name]</h3>
+<p>[Deep structural analysis. 80-120 words.]</p>
+[Repeat for 4 challenges]""",
 
-Pain Points: {pain_points}""",
-
-    "core_principles": """Write a Key Principles section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "core_principles": """Write the Core Principles of **{topic}** for **{audience}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Define the 3 foundational pillars of success.
-- Cite specific standards and real numbers.
+- MINIMUM 350 words.
+- Explain key frameworks (e.g., Passive design, Energy optimization, Material sustainability, Water management, Human-centric design).
+- Use practical examples for each principle.
 
 OUTPUT FORMAT:
-<p>[Opening: why these principles are non-negotiable. 80-120 words.]</p>
-<h3>Principle 1: [Technical Name]</h3>
-<p>[Detailed explanation. 80-120 words.]</p>
-[Repeat for Principles 2 and 3]""",
+<h3>[Principle Name]</h3>
+<p>[Strategic definition and logic. 80-120 words.]</p>
+<p><strong>Example:</strong> [Real-world application. 50+ words.]</p>
+[Repeat for 3-4 principles]""",
 
-    "practical_strategies": """Write a Practical Strategies section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "practical_strategies": """Write Practical Implementation Strategies for **{topic}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- 3 actionable strategies.
-- Cite specific standards and real numbers.
+- MINIMUM 350 words.
+- Give actionable strategies: BIM modeling, material selection, passive systems, lifecycle cost analysis.
+- Explain HOW to implement them step-by-step.
 
 OUTPUT FORMAT:
-<h3>Strategy 1: [Action-Oriented Name]</h3>
-<p>[Detailed step-by-step execution. 80-120 words.]</p>
-[Repeat for Strategies 2 and 3]""",
+<h3>[Strategy Name]</h3>
+<p>[The Strategic 'Why'. 60-80 words.]</p>
+<p>[Step-by-Step 'How'. 100+ words.]</p>
+[Repeat for 3 strategies]""",
 
-    "risk_management": """Write a Managing Risks section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "risk_management": """Write Risk Management in **{topic}** Projects.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Outline risk mitigation frameworks.
-- Cite specific standards and real numbers.
+- MINIMUM 350 words.
+- Address: Budget overruns, technology complexity, stakeholder miscommunication.
+- Provide specific mitigation frameworks.
 
 OUTPUT FORMAT:
-<h3>[Risk Name]</h3>
-<p>[Analysis and mitigation. 80-120 words.]</p>
-[Repeat for Risks 2 and 3]""",
+<h3>[Risk Vector]</h3>
+<p>[Impact analysis. 80-100 words.]</p>
+<p><strong>Mitigation:</strong> [Strategic framework. 80-100 words.]</p>
+[Repeat for 3 risks]""",
 
-    "best_practices": """Write a Best Practices section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "best_practices": """Write a Best Practices section for **{topic}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Distill elite best practices.
-- Cite specific standards and real numbers.
+- MINIMUM 350 words.
+- Distill elite practices used by top-tier firms.
+- Include data-driven insights.
 
 OUTPUT FORMAT:
-<h3>[Best Practice Name]</h3>
-<p>[Detailed strategy and impact. 80-120 words.]</p>
-[Repeat for Practices 2, 3, 4]""",
+<h3>[Best Practice]</h3>
+<p>[Detailed explanation. 120+ words.]</p>
+[Repeat for 3 practices]""",
 
-    "key_statistics": """Write a Facts and Figures section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "key_statistics": """Write Data & Industry Insights for **{topic}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Present data-driven insights.
-- Cite specific sources and real numbers.
+- MINIMUM 350 words.
+- Include specific statistics: Energy savings, property value increase, market growth.
+- Format like a McKinsey consulting report.
 
 OUTPUT FORMAT:
-<h3>Analytical Data Points</h3>
+<h3>Market Data & Performance Benchmarks</h3>
 <ul>
-<li><strong>[Metric]:</strong> [Deep analysis. 80-120 words.]</li>
+<li><strong>[Metric]:</strong> [Deep analysis of the data. 100+ words.]</li>
 </ul>
-[Repeat for 4 metrics]""",
+[Repeat for 4-5 metrics]""",
 
-    "implementation_roadmap": """Write an Implementation Roadmap section for a {lead_magnet_type} on **{topic}** for **{audience}**.
-
-RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Define the strategic timeline.
-- Cite specific standards and real numbers.
-
-OUTPUT FORMAT:
-<h3>Phase 1: [Phase Name]</h3>
-<p>[Detailed roadmap. 80-120 words.]</p>
-[Repeat for Phases 2-5]""",
-
-    "traditional_vs_modern": """Write a Traditional vs Modern section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "implementation_roadmap": """Write a Step-by-Step Implementation Roadmap for **{topic}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Compare legacy vs modern approaches.
-- Cite specific standards and real numbers.
+- MINIMUM 350 words.
+- 5 Phases: 1. Site/Climate, 2. Design Planning, 3. Material/System, 4. Construction, 5. Post-Build Performance.
+- Explain each phase in detail.
 
 OUTPUT FORMAT:
-<h3>[Dimension Name]</h3>
-<p><strong>Traditional:</strong> [Analysis. 60-80 words.]</p>
-<p><strong>Modern:</strong> [Analysis. 60-80 words.]</p>
-[Repeat for 4 dimensions]""",
+<h3>Phase [X]: [Phase Name]</h3>
+<p>[Strategic roadmap. 100+ words.]</p>
+[Repeat for 5 phases]""",
 
-    "case_study": """Write a Real World Example section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "traditional_vs_modern": """Write a Traditional vs Modern Approach comparison for **{topic}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Provide a detailed client success story.
-- Cite real numbers and outcomes.
+- MINIMUM 350 words.
+- Compare Legacy vs Sustainable approaches.
+- Focus on cost, efficiency, and long-term value.
 
 OUTPUT FORMAT:
-<h3>Case Study: [Project Name]</h3>
-<p>[Context, Challenge, Solution, Result. 300+ words total.]</p>""",
+<h3>[Dimension: e.g., Cost Efficiency]</h3>
+<p><strong>Legacy Approach:</strong> [Analysis. 80+ words.]</p>
+<p><strong>Modern Strategic Approach:</strong> [Analysis. 80+ words.]</p>
+[Repeat for 3-4 dimensions]""",
 
-    "expert_insights": """Write an Expert Insights section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "case_study": """Write a Case Study for a **{topic}** project.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Provide high-level expert analysis.
-- Cite specific standards and real numbers.
+- MINIMUM 400 words.
+- Real or realistic example.
+- Include: Design decisions, Technologies used, and Measurable outcomes.
 
 OUTPUT FORMAT:
-<h3>Expert Perspective: [Topic]</h3>
-<p>[Nuanced analysis. 100-150 words.]</p>
-[Repeat for 2-3 insights]""",
+<h3>Strategic Case Study: [Project Title]</h3>
+<p>[Context and Challenge. 100+ words.]</p>
+<p>[Strategic Decisions and Execution. 150+ words.]</p>
+<p>[Quantifiable Outcomes. 150+ words.]</p>""",
 
-    "conclusion": """Write a Ready to Start closing section for a {lead_magnet_type} on **{topic}** for **{audience}**.
+    "expert_insights": """Write Expert Insights for **{topic}**.
 
 RULES:
-- MINIMUM 300 words.
-- 3–5 full paragraphs, each 80–120 words.
-- Create a powerful call to action.
-- Summarize why the firm is the logical choice.
+- MINIMUM 350 words.
+- 3–5 professional lessons architects must follow.
+- Deep, authoritative perspective.
 
 OUTPUT FORMAT:
-<h3>Partnering for Success</h3>
-<p>[Persuasive closing. 300+ words total.]</p>""",
+<h3>Critical Insight [X]: [Insight Name]</h3>
+<p>[Deep analysis and professional advice. 120+ words.]</p>
+[Repeat for 3 insights]""",
+
+    "conclusion": """Write a professional Call to Action and Conclusion for **{topic}**.
+
+RULES:
+- MINIMUM 350 words.
+- Encourage contacting the firm (Kyro).
+- Make it persuasive but professional (Consulting style).
+
+OUTPUT FORMAT:
+<h3>The Strategic Path Forward</h3>
+<p>[Final summary. 150+ words.]</p>
+<p>[Direct, persuasive CTA to Kyro. 150+ words.]</p>""",
 }
 
 # Section maps
@@ -428,14 +414,20 @@ class GroqClient:
         sections_titles: Dict[str, str] = {}
 
         system_msg = (
-            "You are a senior architectural consultant writing premium lead magnet content. "
-            "You write with authority and precision — dense with specific insight, real numbers, named standards. "
-            "Never use placeholder text. Never truncate mid-sentence. Output raw HTML only."
+            "You are an expert architecture strategist, sustainability consultant, and technical writer. "
+            "Your job is to generate a HIGH-VALUE professional lead magnet that feels like it was written by a top architecture consultancy firm. "
+            "This is NOT a generic article. It must be a premium strategic guide designed to attract professional clients. "
+            "Tone: Professional, Consulting-level, Strategic, Insightful (McKinsey-style architecture report).\n\n"
+            "RULES:\n"
+            "- MINIMUM 300 words per section.\n"
+            "- Deep insights, practical examples, data/statistics, actionable frameworks.\n"
+            "- Avoid generic filler content. Write specifically for the TARGET AUDIENCE.\n"
+            "- Output ONLY raw HTML. No markdown, no preamble, no sign-off.\n"
+            "- Do NOT repeat paragraphs. Do NOT produce generic filler text."
         )
 
         for key, default_title, default_label, _, _ in SECTIONS:
             if key not in needed_keys:
-                # Still generate it but it may not be used
                 pass
 
             prompt_template = SECTION_PROMPTS.get(key)
@@ -456,10 +448,9 @@ class GroqClient:
                 f"Topic: {topic}\n"
                 f"Audience: {audience}\n"
                 f"Pain Points: {pain_points}\n\n"
+                f"SECTION: {default_title}\n"
                 f"{section_prompt}\n\n"
-                "CRITICAL: Output ONLY raw HTML. No markdown, no preamble, no sign-off. "
-                "Every paragraph must be 70+ words. Do not use placeholder brackets like [STAT] or [EXAMPLE]. "
-                "Do not repeat the same statistic twice. Minimum 300 words total."
+                "CRITICAL: MINIMUM 300 words. Output ONLY raw HTML. No markdown code fences. No conversational filler."
             )
 
             try:
@@ -469,7 +460,7 @@ class GroqClient:
                         {"role": "system", "content": system_msg},
                         {"role": "user",   "content": full_prompt},
                     ],
-                    temperature=self.temperature,
+                    temperature=0.55, # Lower temp for more consistent professional tone
                     max_tokens=self.max_tokens,
                 )
                 content = resp.choices[0].message.content.strip()
@@ -634,7 +625,8 @@ class GroqClient:
                 f'<span class="toc-page">{page_num}</span>'
                 f'</div>'
             )
-        vars["toc_html"] = "\n".join(toc_html_parts)
+        vars["toc_sections_html"] = "\n".join(toc_html_parts)
+        vars["toc_html"] = vars["toc_sections_html"] # Backward compatibility
 
         # Section vars — set once, protected
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
@@ -736,7 +728,19 @@ class GroqClient:
     def _sanitize_html(self, html: str) -> str:
         if not html: return html
         html = html.strip().strip('"')
+        
+        # Pass 1: Remove common markdown leaks if any
+        html = re.sub(r'^#+\s+.*$', '', html, flags=re.MULTILINE) # Strip MD headers
+        html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html) # MD bold to HTML
+        
+        # Pass 2: Strip all tags except allowed ones
         html = re.sub(r'<(/?)(\w+)([^>]*)>', lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "", html)
+        
+        # Pass 3: Fix double-escaped characters that might show up as raw tags
+        html = html.replace("&lt;", "<").replace("&gt;", ">")
+        # Re-apply tag stripping after fixing escapes to be safe
+        html = re.sub(r'<(/?)(\w+)([^>]*)>', lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "", html)
+        
         return self._ensure_closed_tags(html).strip()
 
     def _ensure_closed_tags(self, html: str) -> str:

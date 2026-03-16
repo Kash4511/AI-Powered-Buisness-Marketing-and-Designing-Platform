@@ -89,6 +89,7 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         # RAW injection for pre-rendered HTML sections
         if (key.endswith("_html") or 
             key == "toc_html" or
+            key == "toc_sections_html" or
             key.startswith("customTitle") or 
             key.endswith("_insight") or 
             key.endswith("_tip") or 
@@ -97,7 +98,7 @@ def _render_template_vars(html: str, vars_dict: dict) -> str:
         # Plain-text escaping for everything else
         return val_str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-    html = _re.sub(r'\{\{(\w+)\}\}', _replace_var, html)
+    html = _re.sub(r'\{\{\s*(\w+)\s*\}\}', _replace_var, html)
     return html
 
 

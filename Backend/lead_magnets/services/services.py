@@ -31,6 +31,7 @@ def _is_raw_html_key(key: str) -> bool:
     return (
         key.endswith("_html") or 
         key == "toc_html" or
+        key == "toc_sections_html" or
         key.startswith("customTitle") or 
         key.endswith("_insight") or 
         key.endswith("_tip") or 
@@ -96,7 +97,8 @@ def render_template(template_html: str, variables: dict) -> str:
         # Plain-text escaping for everything else
         return _safe_escape(val_str)
 
-    result = re.sub(r"\{\{([\w]+)\}\}", _replace_token, result)
+    # Match {{key}} or {{ key }}
+    result = re.sub(r"\{\{\s*([\w]+)\s*\}\}", _replace_token, result)
 
     return result
 
