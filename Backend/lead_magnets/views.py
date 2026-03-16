@@ -240,6 +240,29 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
         return Response({"error":"Firm profile update failed","details":serializer.errors}, status=400)
 
 
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def get_theme_palette(request):
+    is_dark = request.query_params.get("mode") == "dark"
+    palette = {
+        "primary":   "#1a365d",
+        "secondary": "#c5a059",
+        "surface":   "#ffffff",
+        "onSurface": "#1a202c",
+        "accent":    "#f8fafc",
+        "highlight": "#e8f4f8",
+    }
+    try:
+        fp = FirmProfile.objects.get(user=request.user)
+        if fp.primary_brand_color:   palette["primary"]   = fp.primary_brand_color
+        if fp.secondary_brand_color: palette["secondary"] = fp.secondary_brand_color
+    except FirmProfile.DoesNotExist:
+        pass
+    if is_dark:
+        palette.update({"surface":"#1a202c","onSurface":"#f7fafc","accent":"#2d3748","highlight":"#4a5568"})
+    return Response(palette)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # BACKGROUND GENERATION JOB
 # ─────────────────────────────────────────────────────────────────────────────
