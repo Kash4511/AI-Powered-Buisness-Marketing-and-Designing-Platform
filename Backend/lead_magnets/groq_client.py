@@ -296,41 +296,6 @@ OUTPUT FORMAT:
 <p>[Persuasive closing. 300+ words total.]</p>""",
 }
 
-    "case_study": """Write a Real-World Example section for a {lead_magnet_type} on **{topic}** for **{audience}**.
-
-RULES:
-- One specific, credible case study with actual numbers
-- Name a specific project type, location type, scale (e.g. "420sqm residential renovation, inner suburb")
-- At least 3 specific measurable outcomes
-- The challenge must be genuinely complex — not a basic problem
-
-OUTPUT FORMAT:
-<h3>Case Study: [Descriptive Project Name]</h3>
-<p><strong>Project context:</strong> [Type, scale, location type, client profile. 50-70 words.]</p>
-<p><strong>The core challenge:</strong> [Specific technical or regulatory problem that required expertise. 60-80 words.]</p>
-<p><strong>The professional approach:</strong> [Specific strategies and methods applied — not generic. 80-100 words.]</p>
-<p><strong>Measured outcomes:</strong> [At least 3 specific quantified results. 60-80 words.]</p>
-<p><strong>Key lesson:</strong> [The single most transferable insight. 40-60 words.]</p>
-
-Topic: {topic}, Audience: {audience}""",
-
-    "conclusion": """Write a Ready to Start closing section for a {lead_magnet_type} on **{topic}** for **{audience}**.
-
-RULES:
-- Address the reader's remaining hesitation directly
-- Make the first step feel small and low-risk
-- Reference a specific market or regulatory reason to act now
-- 3 subheadings, each with a full paragraph
-
-OUTPUT FORMAT:
-<h3>The One Decision That Changes Everything</h3>
-<p>[Acknowledge the complexity the reader now understands. 70-90 words.]</p>
-<h3>Your First Step Is Free</h3>
-<p>[Describe the consultation — specific, concrete, low-pressure. What they walk away with. 70-90 words.]</p>
-<h3>Why Now Is the Right Time</h3>
-<p>[A specific market or regulatory reason why acting now beats waiting. 60-80 words.]</p>
-
-Firm USP: {firm_usp}, Topic: {topic}""",
 }
 
 # Section maps
