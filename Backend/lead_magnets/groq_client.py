@@ -296,8 +296,6 @@ OUTPUT FORMAT:
 <p>[Persuasive closing. 300+ words total.]</p>""",
 }
 
-}
-
 # Section maps
 _SECTION_MAPS: Dict[str, Dict[str, str]] = {
     "guide": {
