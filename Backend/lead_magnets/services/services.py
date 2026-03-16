@@ -62,19 +62,22 @@ def render_template(template_html: str, variables: dict) -> str:
               • All other keys        →  HTML-escaped plain text
               • Unknown keys          →  empty string
     """
-    # ── Pass 1: conditional blocks ────────────────────────────────────────────
-    def _resolve_if(m: re.Match) -> str:
-        key     = m.group(1).strip()
-        content = m.group(2)
-        val     = variables.get(key, "")
+    # Pass 1: conditional blocks  {{#if key}}...{{/if}}
+    def _resolve_if(m):
+        key      = m.group(1).strip()
+        content  = m.group(2)
+        val      = variables.get(key, "")
         return content if (val and str(val).strip()) else ""
 
     result = re.sub(
-        r"\{\{#if\s+([\w]+)\}\}(.*?)\{\{/if\}\}",
+        r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}',
         _resolve_if,
         template_html,
         flags=re.DOTALL,
     )
+
+    # Clean up excessive newlines after block removal to prevent blank pages
+    result = re.sub(r'\n\s*\n\s*\n+', '\n\n', result)
 
     # ── Pass 2: token substitution ────────────────────────────────────────────
     def _replace_token(m: re.Match) -> str:

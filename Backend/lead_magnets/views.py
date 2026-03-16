@@ -849,7 +849,8 @@ class FormaAIConversationView(APIView):
         }
 
         ai_client        = GroqClient()
-        template_service = ReportLabService()
+        # Ensure we use DocRaptorService for Template.html consistency
+        template_service = DocRaptorService()
 
         try:
             signals        = ai_client.get_semantic_signals(user_answers)

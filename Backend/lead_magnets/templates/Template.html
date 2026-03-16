@@ -41,6 +41,11 @@
             page-break-after: always;
             display: flex;
             flex-direction: column;
+            overflow: visible; /* Prevent unwanted clipping/breaks */
+        }
+
+        .page:last-child {
+            page-break-after: avoid; /* Prevent trailing blank page */
         }
 
         /* ── PRINCE-SPECIFIC PAGINATION ──────────────────────── */
@@ -56,6 +61,12 @@
                 content: element(footer);
                 width: 100%;
             }
+        }
+
+        @page :first {
+            margin: 0;
+            @top-center { content: none; }
+            @bottom-center { content: none; }
         }
 
         .running-header {
