@@ -183,7 +183,7 @@ class DocRaptorService:
                 "doc": {
                     "document_content": rendered_html,
                     "document_type":    "pdf",
-                    "test":             False, # Ensure production mode
+                    "test":             self.test_mode, # Use configured test mode
                     "prince_options": {
                         "media":   "print",
                         "baseurl": getattr(settings, "SITE_URL", "https://www.kyro.com"),

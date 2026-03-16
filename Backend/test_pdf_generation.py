@@ -31,24 +31,24 @@ def test_pdf_generation():
     
     try:
         service = DocRaptorService()
-        print(f"Templates directory: {service.templates_dir}")
+        print(f"Templates directory: {service.TEMPLATES_DIR}")
         print(f"Test mode: {service.test_mode}")
         print(f"API key exists: {bool(service.api_key)}")
         
         # Test template rendering first
         print("\nTesting template rendering...")
-        rendered_html = service.render_template_with_vars('Template', test_variables)
+        rendered_html = service.preview_template('modern-guide', test_variables)
         print(f"Template rendered successfully. Length: {len(rendered_html)} characters")
         
         # Test PDF generation (but don't print the binary content)
         print("\nTesting PDF generation...")
-        result = service.generate_pdf('Template', test_variables)
+        result = service.generate_pdf('modern-guide', test_variables)
         
         # Print result without the binary content
-        if 'content' in result:
-            content_length = len(result['content'])
-            result_summary = {k: v for k, v in result.items() if k != 'content'}
-            result_summary['content_length'] = content_length
+        if result.get('success'):
+            pdf_data_length = len(result['pdf_data'])
+            result_summary = {k: v for k, v in result.items() if k != 'pdf_data'}
+            result_summary['pdf_data_length'] = pdf_data_length
             print(f"PDF generation successful: {result_summary}")
         else:
             print(f"PDF generation result: {result}")
