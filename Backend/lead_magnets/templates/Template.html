@@ -1,582 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{documentTitle}} - {{companyName}}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: {{primaryColor}};
-            --secondary: {{secondaryColor}};
-            --accent: {{accentColor}};
-            --highlight: {{highlightColor}};
-            --light: {{lightColor}};
-            --text: {{textColor}};
-            --text-light: {{textLightColor}};
-            --white: {{whiteColor}};
-            --radius: {{borderRadius}};
-        }
+  <meta charset="UTF-8">
+  <title>{{documentTitle}} — {{companyName}}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:    {{primaryColor}};
+      --secondary:  {{secondaryColor}};
+      --accent:     {{accentColor}};
+      --highlight:  {{highlightColor}};
+      --light:      {{lightColor}};
+      --white:      {{whiteColor}};
+      --text:       {{textColor}};
+      --text-light: {{textLightColor}};
+      --radius:     {{borderRadius}};
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--white); color:var(--text); line-height:1.65; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size:A4; margin:28mm 0 20mm;
+      @top-center    { content:element(running-header); width:100%; }
+      @bottom-center { content:element(running-footer); width:100%; }
+    }
+    @page :first { margin:0; @top-center { content:none; } @bottom-center { content:none; } }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: {{bodyBackground}};
-            color: var(--text);
-            line-height: 1.6;
-        }
+    .page { width:210mm; min-height:297mm; position:relative; page-break-after:always; background:var(--white); }
+    .page:last-child { page-break-after:avoid; }
 
-        .book {
-            width: 100%;
-            margin: 0;
-            background: white;
-        }
+    .running-header { position:running(running-header); background:#0f172a; color:var(--white); width:100%; padding:7mm 22mm; display:flex; justify-content:space-between; align-items:center; }
+    .rh-left { display:flex; align-items:center; gap:12px; }
+    .rh-accent { width:4px; height:22px; background:var(--secondary); border-radius:2px; }
+    .rh-title { font-family:'Poppins',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:2.5px; opacity:0.9; }
+    .rh-right { font-family:'Poppins',sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; background:rgba(255,255,255,0.12); padding:4px 14px; border-radius:20px; }
+    .rh-right::after { content:"PAGE " counter(page); }
 
-        .page {
-            width: 100%;
-            min-height: 297mm;
-            background: white;
-            position: relative;
-            page-break-after: always;
-            display: flex;
-            flex-direction: column;
-            overflow: visible; /* Prevent unwanted clipping/breaks */
-        }
+    .running-footer { position:running(running-footer); background:var(--primary); color:var(--white); width:100%; padding:5mm 22mm; display:flex; justify-content:space-between; align-items:center; font-size:10px; }
 
-        .page:last-child {
-            page-break-after: avoid; /* Prevent trailing blank page */
-        }
+    /* COVER */
+    .cover { background:var(--primary); color:var(--white); width:210mm; height:297mm; position:relative; overflow:hidden; }
+    .cv-c1 { position:absolute; width:380px; height:380px; border-radius:50%; border:1px solid rgba(255,255,255,0.08); top:-80px; right:-80px; }
+    .cv-c2 { position:absolute; width:220px; height:220px; border-radius:50%; border:1px solid rgba(255,255,255,0.06); bottom:120px; left:-60px; }
+    .cv-bar-top { position:absolute; top:0; right:0; width:42%; height:14mm; background:var(--secondary); opacity:0.9; }
+    .cv-side { position:absolute; left:22mm; top:46%; width:5px; height:80px; background:var(--secondary); border-radius:3px; }
+    .cv-badge { position:absolute; top:22mm; left:22mm; font-family:'Poppins',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:4px; color:var(--secondary); display:flex; align-items:center; gap:10px; }
+    .cv-badge::before { content:""; width:24px; height:2px; background:var(--secondary); display:block; }
+    .cv-body { position:absolute; top:38%; left:22mm; right:22mm; }
+    .cv-title { font-family:'Poppins',sans-serif; font-size:50px; font-weight:900; line-height:1.02; text-transform:uppercase; letter-spacing:-1.5px; color:var(--white); max-width:460px; margin-bottom:28px; }
+    .cv-sub { font-size:16px; font-weight:300; line-height:1.65; color:rgba(255,255,255,0.85); max-width:420px; border-left:4px solid var(--secondary); padding-left:20px; }
+    .cv-foot { position:absolute; bottom:0; left:0; right:0; padding:20px 22mm 24px; border-top:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.15); display:flex; justify-content:space-between; align-items:flex-end; }
+    .cv-brand { font-family:'Poppins',sans-serif; font-weight:700; font-size:17px; color:var(--white); margin-bottom:5px; }
+    .cv-tagline { font-size:11px; color:rgba(255,255,255,0.65); }
+    .cv-contact { text-align:right; font-size:11px; color:rgba(255,255,255,0.65); }
+    .cv-contact div { margin-top:3px; }
 
-        /* ── PRINCE-SPECIFIC PAGINATION ──────────────────────── */
-        @page {
-            size: A4;
-            margin: 30mm 0; /* Vertical margin for headers/footers */
-            
-            @top-center {
-                content: element(header);
-                width: 100%;
-            }
-            @bottom-center {
-                content: element(footer);
-                width: 100%;
-            }
-        }
+    /* TERMS */
+    .terms-wrap { padding:35mm 22mm 22mm; }
+    .terms-h { font-family:'Poppins',sans-serif; font-size:18px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:2px; margin-bottom:28px; padding-bottom:12px; border-bottom:3px solid var(--secondary); display:inline-block; }
+    .t-block { font-size:12.5px; line-height:1.85; color:var(--text); margin-bottom:18px; }
+    .t-small { font-size:11px; line-height:1.8; color:var(--text-light); margin-top:24px; padding-top:20px; border-top:1px solid #e2e8f0; }
 
-        @page :first {
-            margin: 0;
-            @top-center { content: none; }
-            @bottom-center { content: none; }
-        }
+    /* TOC */
+    .toc-wrap { padding:35mm 22mm 22mm; }
+    .sec-h { font-family:'Poppins',sans-serif; font-size:28px; font-weight:900; color:var(--primary); text-transform:uppercase; margin-bottom:8px; }
+    .sec-rule { width:70px; height:5px; background:var(--secondary); border-radius:3px; margin-bottom:28px; }
+    .toc-item { display:flex; align-items:baseline; justify-content:space-between; padding:10px 0; border-bottom:1px dotted #e2e8f0; }
+    .toc-num { font-family:'Poppins',sans-serif; font-weight:700; font-size:13px; color:var(--secondary); width:32px; flex-shrink:0; }
+    .toc-label { flex:1; font-weight:600; font-size:13px; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px; }
+    .toc-page { font-family:'Poppins',sans-serif; font-weight:700; font-size:12px; color:#94a3b8; margin-left:16px; }
 
-        .running-header {
-            position: running(header);
-            background: #1a1a1a;
-            color: white;
-            width: 100%;
-            padding: 8mm 25mm;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-        }
+    /* CONTENT PAGES */
+    .cp { padding:10mm 22mm 18mm; }
+    .cp.alt { background:var(--highlight); }
+    .p-num { font-family:'Poppins',sans-serif; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:3px; color:var(--secondary); margin-bottom:6px; }
+    .p-title { font-family:'Poppins',sans-serif; font-size:26px; font-weight:900; color:var(--primary); text-transform:uppercase; letter-spacing:-0.5px; margin-bottom:6px; line-height:1.1; }
+    .p-rule { width:60px; height:4px; background:var(--secondary); border-radius:2px; margin-bottom:22px; }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+    /* Stat card */
+    .stat-card { background:var(--white); border-left:5px solid var(--secondary); padding:14px 18px; border-radius:0 var(--radius) var(--radius) 0; box-shadow:0 3px 12px rgba(0,0,0,0.06); margin:0 0 18px; display:inline-block; }
+    .stat-val { font-family:'Poppins',sans-serif; font-size:28px; font-weight:900; color:var(--primary); display:block; line-height:1; margin-bottom:3px; }
+    .stat-lbl { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:#94a3b8; font-weight:600; }
 
-        .header-accent {
-            width: 4px;
-            height: 24px;
-            background: #f97316; /* Orange accent from reference */
-        }
+    /* Image block — no background so nothing shows when absent */
+    .img-block { width:100%; margin:20px 0; border-radius:var(--radius); overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.06); }
+    .img-block img { width:100%; max-height:200px; object-fit:cover; display:block; }
+    .img-cap { padding:8px 14px; font-size:11px; font-style:italic; color:#94a3b8; background:var(--white); border-top:1px solid #f1f5f9; }
 
-        .header-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+    /* Content area — styles applied to section_*_full_html content */
+    .ca p { font-size:13.5px; line-height:1.8; color:var(--text); margin-bottom:16px; }
+    .ca p strong { color:var(--primary); font-weight:700; }
+    .ca h3 { font-family:'Poppins',sans-serif; font-size:14px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:1px; margin:22px 0 10px; border-left:4px solid var(--secondary); padding-left:12px; }
+    .ca h4 { font-family:'Poppins',sans-serif; font-size:13px; font-weight:700; color:var(--secondary); margin:18px 0 8px; }
+    .ca ul { margin:12px 0 18px 0; padding:0; list-style:none; }
+    .ca ul li { font-size:13px; line-height:1.7; color:var(--text); margin-bottom:8px; padding-left:22px; position:relative; }
+    .ca ul li::before { content:"▸"; position:absolute; left:0; color:var(--secondary); font-size:11px; top:2px; }
+    .ca ul li strong { color:var(--primary); font-weight:600; }
+    .ca ol { margin:12px 0 18px 20px; }
+    .ca ol li { font-size:13px; line-height:1.7; color:var(--text); margin-bottom:8px; }
+    .ca blockquote { border-left:4px solid var(--secondary); padding:14px 18px; margin:18px 0; background:var(--light); border-radius:0 var(--radius) var(--radius) 0; font-style:italic; color:var(--primary); font-size:13.5px; }
+    .ca em { color:var(--secondary); font-style:italic; }
 
-        .header-right .page-capsule {
-            background: rgba(255,255,255,0.15);
-            padding: 4px 18px;
-            border-radius: 20px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .running-footer {
-            position: running(footer);
-            background: var(--primary);
-            color: white;
-            width: 100%;
-            padding: 6mm 25mm;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-            font-size: 10px;
-        }
-
-        .footer-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .footer-logo-small {
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.9;
-        }
-
-        .page-number::after {
-            content: "PAGE " counter(page);
-        }
-
-        /* ── COVER PAGE ───────────────────────────────────────── */
-        .cover {
-            background: var(--primary);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 0 25mm;
-            height: 297mm;
-            margin-top: -30mm; /* Offset page margin to fill sheet */
-            z-index: 100;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cover::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
-            z-index: 1;
-        }
-
-        .cover-pattern {
-            position: absolute;
-            top: -10%;
-            right: -10%;
-            width: 60%;
-            height: 60%;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%);
-            border-radius: 50%;
-            z-index: 2;
-        }
-
-        .cover-accent-top { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 15mm; 
-            background: var(--secondary); 
-            z-index: 3;
-        }
-
-        .cover-content { 
-            position: relative; 
-            z-index: 10; 
-            max-width: 160mm;
-        }
-
-        .cover-kicker { 
-            font-family: 'Poppins', sans-serif; 
-            font-size: 16px; 
-            font-weight: 700; 
-            color: var(--secondary); 
-            text-transform: uppercase; 
-            letter-spacing: 4px; 
-            margin-bottom: 25px; 
-            display: block;
-        }
-
-        .cover-title { 
-            font-family: 'Poppins', sans-serif; 
-            font-size: 58px; 
-            font-weight: 900; 
-            line-height: 1.05; 
-            margin-bottom: 35px; 
-            text-transform: uppercase;
-            letter-spacing: -1px;
-        }
-
-        .cover-subtitle { 
-            font-size: 22px; 
-            font-weight: 300; 
-            line-height: 1.6; 
-            color: rgba(255,255,255,0.95); 
-            border-left: 5px solid var(--secondary); 
-            padding-left: 30px; 
-            margin-bottom: 50px; 
-        }
-        
-        .cover-footer { 
-            position: absolute; 
-            bottom: 30mm; 
-            left: 25mm; 
-            right: 25mm; 
-            color: white; 
-            border-top: 1px solid rgba(255,255,255,0.2); 
-            padding-top: 25px; 
-            z-index: 10;
-        }
-
-        .cover-brand { 
-            font-weight: 700; 
-            font-size: 22px; 
-            margin-bottom: 8px; 
-            letter-spacing: 1px;
-        }
-
-        .cover-tagline { 
-            font-size: 14px; 
-            opacity: 0.9; 
-            margin-bottom: 20px; 
-            font-weight: 400;
-        }
-
-        .cover-contact { 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 12px; 
-            opacity: 0.8; 
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .cover-accent-bottom { 
-            position: absolute; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 50mm; 
-            background: rgba(0,0,0,0.15); 
-            z-index: 3;
-        }
-
-        /* ── CONTENT AREA ─────────────────────────────────────── */
-        .page-content-area { 
-            padding: 10mm 25mm; 
-            flex: 1;
-            max-width: 100%;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        /* ── PAGE 02: TERMS OF USE REDESIGN ──────────────────── */
-        .terms-page-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding-top: 30mm;
-            max-width: 160mm;
-            margin: 0 auto;
-        }
-
-        .terms-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 40px;
-        }
-
-        .terms-text-block {
-            font-size: 13px;
-            line-height: 1.8;
-            color: var(--text);
-            margin-bottom: 30px;
-            font-weight: 400;
-        }
-
-        /* ── DYNAMIC IMAGES ───────────────────────────────────── */
-        .dynamic-image-container {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: #f1f5f9;
-            border-radius: var(--radius);
-            overflow: hidden;
-            margin: 25px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #e2e8f0;
-        }
-
-        .dynamic-image-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .image-placeholder-label {
-            font-family: 'Poppins', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* ── EXISTING STYLES ──────────────────────────────────── */
-        .intro-text { font-size: 16px; font-weight: 500; color: var(--primary); margin-bottom: 25px; line-height: 1.7; }
-        .content-text { font-size: 14px; line-height: 1.8; color: var(--text); margin-bottom: 20px; }
-        
-        h3 { font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; color: var(--primary); margin: 25px 0 12px; text-transform: uppercase; border-left: 4px solid var(--secondary); padding-left: 15px; }
-        
-        ul { margin-bottom: 20px; padding-left: 20px; }
-        li { font-size: 14px; margin-bottom: 10px; color: var(--text); }
-
-        .highlight-box { padding: 20px 25px; border-radius: var(--radius); margin: 30px 0; position: relative; }
-        .highlight-label { font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
-        
-        .box-key-insight { background: var(--light); border-left: 6px solid var(--primary); }
-        .box-key-insight .highlight-label { color: var(--primary); }
-        
-        .box-strategic-tip { background: var(--accent); border-left: 6px solid var(--secondary); }
-        .box-strategic-tip .highlight-label { color: var(--secondary); }
-        
-        .box-industry-stat { background: var(--primary); color: white; text-align: center; }
-        .box-industry-stat .highlight-label { color: var(--secondary); }
-        .box-industry-stat .stat-val { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 900; display: block; }
-
-        /* ── TOC ─────────────────────────────────────────────── */
-        .toc-list { margin-top: 20mm; }
-        .toc-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; border-bottom: 1px dotted #ddd; padding-bottom: 5px; }
-        .toc-num { font-family: 'Poppins', sans-serif; font-weight: 700; color: var(--secondary); width: 30px; }
-        .toc-label { flex: 1; font-weight: 600; color: var(--primary); text-transform: uppercase; font-size: 13px; text-decoration: none; }
-        .toc-label:hover { color: var(--secondary); text-decoration: underline; }
-        .toc-page { font-weight: 700; color: #999; margin-left: 15px; }
-
-        @media print {
-            body { background: white; padding: 0; }
-            @page { size: A4; margin: 30mm 0; }
-        }
-    </style>
+    /* CTA box on last page */
+    .cta-box { margin-top:28px; padding:22px 24px; background:var(--primary); border-radius:var(--radius); color:var(--white); }
+    .cta-label { font-family:'Poppins',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:var(--secondary); margin-bottom:10px; }
+    .cta-company { font-weight:700; font-size:17px; margin-bottom:6px; }
+    .cta-detail { font-size:12px; opacity:0.8; margin-top:3px; }
+  </style>
 </head>
 <body>
-    <!-- RUNNING ELEMENTS -->
-    <div class="running-header">
-        <div class="header-left">
-            <div class="header-accent"></div>
-            <div class="header-title">{{mainTitle}}</div>
-        </div>
-        <div class="header-right">
-            <div class="page-capsule"><span class="page-number"></span></div>
-        </div>
-    </div>
 
-    <div class="running-footer">
-        <div class="footer-left">
-            <div class="footer-logo-small"></div>
-            <span>© 2026 {{companyName}}. All rights reserved.</span>
-        </div>
-        <div class="footer-right">
-            <span>{{website}}</span>
-        </div>
-    </div>
+<!-- RUNNING ELEMENTS -->
+<div class="running-header">
+  <div class="rh-left"><div class="rh-accent"></div><div class="rh-title">{{mainTitle}}</div></div>
+  <div class="rh-right"></div>
+</div>
+<div class="running-footer">
+  <span>© 2026 {{companyName}}. All rights reserved.</span>
+  <span>{{website}}</span>
+</div>
 
-    <div class="book">
-        <!-- PAGE 01: COVER -->
-        <div class="page cover">
-            <div class="cover-pattern"></div>
-            <div class="cover-accent-top"></div>
-            <div class="cover-content">
-                <div class="cover-kicker">{{documentTypeLabel}}</div>
-                <h1 class="cover-title">{{mainTitle}}</h1>
-                <p class="cover-subtitle">{{documentSubtitle}}</p>
-            </div>
-            <div class="cover-footer">
-                <div class="cover-brand">{{companyName}}</div>
-                <div class="cover-tagline">{{documentTypeLabel}} | Strategic Analysis</div>
-                <div class="cover-contact">
-                    <span>{{website}}</span>
-                    <span>{{emailAddress}}</span>
-                </div>
-            </div>
-            <div class="cover-accent-bottom"></div>
-        </div>
+<!-- PAGE 01: COVER -->
+<div class="page cover">
+  <div class="cv-c1"></div><div class="cv-c2"></div>
+  <div class="cv-bar-top"></div><div class="cv-side"></div>
+  <div class="cv-badge">{{documentTypeLabel}}</div>
+  <div class="cv-body">
+    <div class="cv-title">{{mainTitle}}</div>
+    <div class="cv-sub">{{documentSubtitle}}</div>
+  </div>
+  <div class="cv-foot">
+    <div><div class="cv-brand">{{companyName}}</div><div class="cv-tagline">{{documentTypeLabel}} | Strategic Analysis</div></div>
+    <div class="cv-contact"><div>{{website}}</div><div>{{emailAddress}}</div></div>
+  </div>
+</div>
 
-        <!-- PAGE 02: TERMS OF USE -->
-        <div class="page content-page">
-            <div class="page-content-area">
-                <div class="terms-page-content">
-                    <h2 class="terms-title">{{termsTitle}}</h2>
-                    
-                    <div class="terms-text-block">
-                        {{termsSummary}}
-                    </div>
-                    
-                    <div class="terms-text-block">
-                        {{termsParagraph1}}
-                    </div>
-                    
-                    <div class="terms-text-block">
-                        {{termsParagraph2}}
-                    </div>
-                    
-                    <div class="terms-text-block">
-                        {{termsParagraph3}}
-                    </div>
-                    
-                    <div class="terms-text-block">
-                        {{termsParagraph4}}
-                    </div>
-                    
-                    <div class="terms-text-block" style="opacity: 0.7; font-size: 11px; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
-                        {{termsParagraph5}}
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- PAGE 02: TERMS -->
+<div class="page"><div class="terms-wrap">
+  <div class="terms-h">{{termsTitle}}</div>
+  <div class="t-block">{{termsSummary}}</div>
+  <div class="t-block">{{termsParagraph1}}</div>
+  <div class="t-block">{{termsParagraph2}}</div>
+  <div class="t-block">{{termsParagraph3}}</div>
+  <div class="t-block">{{termsParagraph4}}</div>
+  <div class="t-small">{{termsParagraph5}}</div>
+</div></div>
 
-        <!-- PAGE 03: TABLE OF CONTENTS -->
-        <div class="page content-page">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{contentsTitle}}</h2>
-                <div class="toc-list">
-                    {{toc_sections_html}}
-                </div>
-            </div>
-        </div>
+<!-- PAGE 03: TOC -->
+<div class="page"><div class="toc-wrap">
+  <div class="sec-h">{{contentsTitle}}</div>
+  <div class="sec-rule"></div>
+  {{toc_sections_html}}
+</div></div>
 
-        <!-- PAGE 04: EXECUTIVE SUMMARY -->
-        <div class="page content-page" id="{{section_introduction_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle1}}</h2>
-                <div class="content-text">{{section_introduction_full_html}}</div>
-                
-                <div class="dynamic-image-container">
-                    {{#if image_1_url}}
-                        <img src="{{image_1_url}}" alt="Insight Image">
-                    {{else}}
-                        <div class="image-placeholder-label">PROJECT VISUAL 01</div>
-                    {{/if}}
-                </div>
-            </div>
-        </div>
+<!-- PAGE 04: EXECUTIVE SUMMARY -->
+<div class="page" id="section-executive_summary"><div class="cp">
+  <div class="p-num">01</div>
+  <div class="p-title">{{customTitle1}}</div>
+  <div class="p-rule"></div>
+  {{#if section_executive_summary_stat_val}}<div class="stat-card"><span class="stat-val">{{section_executive_summary_stat_val}}</span><span class="stat-lbl">{{section_executive_summary_stat_lbl}}</span></div>{{/if}}
+  <div class="ca">{{section_executive_summary_full_html}}</div>
+  {{#if image_1_url}}<div class="img-block"><img src="{{image_1_url}}" alt="{{customTitle1}}"><div class="img-cap">{{customTitle1}} — Strategic Visual</div></div>{{/if}}
+</div></div>
 
-        <!-- PAGE 05: INDUSTRY CHALLENGES -->
-        <div class="page content-page" id="{{section_industry_challenges_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle2}}</h2>
-                <div class="content-text">{{section_industry_challenges_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 05: INDUSTRY ANALYSIS -->
+<div class="page" id="section-industry_analysis"><div class="cp alt">
+  <div class="p-num">02</div>
+  <div class="p-title">{{customTitle2}}</div>
+  <div class="p-rule"></div>
+  {{#if section_industry_analysis_stat_val}}<div class="stat-card"><span class="stat-val">{{section_industry_analysis_stat_val}}</span><span class="stat-lbl">{{section_industry_analysis_stat_lbl}}</span></div>{{/if}}
+  <div class="ca">{{section_industry_analysis_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 06: CORE PRINCIPLES -->
-        <div class="page content-page" id="{{section_core_principles_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle3}}</h2>
-                <div class="content-text">{{section_core_principles_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 06: KEY PRINCIPLES -->
+<div class="page" id="section-core_principles"><div class="cp">
+  <div class="p-num">03</div>
+  <div class="p-title">{{customTitle3}}</div>
+  <div class="p-rule"></div>
+  <div class="ca">{{section_core_principles_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 07: PRACTICAL STRATEGIES -->
-        <div class="page content-page" id="{{section_practical_strategies_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle4}}</h2>
-                <div class="content-text">{{section_practical_strategies_full_html}}</div>
-                
-                <div class="dynamic-image-container">
-                    {{#if image_2_url}}
-                        <img src="{{image_2_url}}" alt="Strategy Image">
-                    {{else}}
-                        <div class="image-placeholder-label">STRATEGY VISUAL 02</div>
-                    {{/if}}
-                </div>
-            </div>
-        </div>
+<!-- PAGE 07: PRACTICAL STRATEGIES -->
+<div class="page" id="section-practical_strategies"><div class="cp alt">
+  <div class="p-num">04</div>
+  <div class="p-title">{{customTitle4}}</div>
+  <div class="p-rule"></div>
+  <div class="ca">{{section_practical_strategies_full_html}}</div>
+  {{#if image_2_url}}<div class="img-block"><img src="{{image_2_url}}" alt="{{customTitle4}}"><div class="img-cap">{{customTitle4}} — Strategy Visual</div></div>{{/if}}
+</div></div>
 
-        <!-- PAGE 08: RISK MANAGEMENT -->
-        <div class="page content-page" id="{{section_risk_management_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle5}}</h2>
-                <div class="content-text">{{section_risk_management_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 08: BUSINESS BENEFITS -->
+<div class="page" id="section-business_benefits"><div class="cp">
+  <div class="p-num">05</div>
+  <div class="p-title">{{customTitle5}}</div>
+  <div class="p-rule"></div>
+  {{#if section_business_benefits_stat_val}}<div class="stat-card"><span class="stat-val">{{section_business_benefits_stat_val}}</span><span class="stat-lbl">{{section_business_benefits_stat_lbl}}</span></div>{{/if}}
+  <div class="ca">{{section_business_benefits_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 09: BEST PRACTICES -->
-        <div class="page content-page" id="{{section_best_practices_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle6}}</h2>
-                <div class="content-text">{{section_best_practices_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 09: CASE STUDY -->
+<div class="page" id="section-case_study"><div class="cp alt">
+  <div class="p-num">06</div>
+  <div class="p-title">{{customTitle6}}</div>
+  <div class="p-rule"></div>
+  {{#if section_case_study_stat_val}}<div class="stat-card"><span class="stat-val">{{section_case_study_stat_val}}</span><span class="stat-lbl">{{section_case_study_stat_lbl}}</span></div>{{/if}}
+  <div class="ca">{{section_case_study_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 10: FACTS AND FIGURES -->
-        <div class="page content-page" id="{{section_key_statistics_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle7}}</h2>
-                <div class="content-text">{{section_key_statistics_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 10: RISK MANAGEMENT -->
+<div class="page" id="section-risk_management"><div class="cp">
+  <div class="p-num">07</div>
+  <div class="p-title">{{customTitle7}}</div>
+  <div class="p-rule"></div>
+  <div class="ca">{{section_risk_management_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 11: IMPLEMENTATION ROADMAP -->
-        <div class="page content-page" id="{{section_implementation_roadmap_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle8}}</h2>
-                <div class="content-text">{{section_implementation_roadmap_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 11: IMPLEMENTATION ROADMAP -->
+<div class="page" id="section-implementation_roadmap"><div class="cp alt">
+  <div class="p-num">08</div>
+  <div class="p-title">{{customTitle8}}</div>
+  <div class="p-rule"></div>
+  <div class="ca">{{section_implementation_roadmap_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 12: TRADITIONAL VS MODERN -->
-        <div class="page content-page" id="{{section_traditional_vs_modern_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle9}}</h2>
-                <div class="content-text">{{section_traditional_vs_modern_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 12: FUTURE TRENDS -->
+<div class="page" id="section-future_trends"><div class="cp">
+  <div class="p-num">09</div>
+  <div class="p-title">{{customTitle9}}</div>
+  <div class="p-rule"></div>
+  <div class="ca">{{section_future_trends_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 13: CASE STUDY -->
-        <div class="page content-page" id="{{section_case_study_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle10}}</h2>
-                <div class="content-text">{{section_case_study_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 13: KEY TAKEAWAYS -->
+<div class="page" id="section-key_takeaways"><div class="cp alt">
+  <div class="p-num">10</div>
+  <div class="p-title">{{customTitle10}}</div>
+  <div class="p-rule"></div>
+  <div class="ca">{{section_key_takeaways_full_html}}</div>
+</div></div>
 
-        <!-- PAGE 14: EXPERT INSIGHTS -->
-        <div class="page content-page" id="{{section_expert_insights_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle11}}</h2>
-                <div class="content-text">{{section_expert_insights_full_html}}</div>
-            </div>
-        </div>
+<!-- PAGE 14: CALL TO ACTION -->
+<div class="page" id="section-call_to_action"><div class="cp">
+  <div class="p-num">11</div>
+  <div class="p-title">{{customTitle11}}</div>
+  <div class="p-rule"></div>
+  <div class="ca">{{section_call_to_action_full_html}}</div>
+  <div class="cta-box">
+    <div class="cta-label">Get in Touch</div>
+    <div class="cta-company">{{companyName}}</div>
+    <div class="cta-detail">{{website}}</div>
+    <div class="cta-detail">{{emailAddress}}</div>
+  </div>
+</div></div>
 
-        <!-- PAGE 15: CALL TO ACTION -->
-        <div class="page content-page" id="{{section_conclusion_id}}">
-            <div class="page-content-area">
-                <h2 class="page-title-enhanced" style="margin-bottom: 10mm; border-bottom: 2px solid var(--secondary); display: inline-block;">{{customTitle12}}</h2>
-                <div class="content-text">{{section_conclusion_full_html}}</div>
-                <div style="text-align: center; margin-top: 20mm;">
-                    <div style="font-weight: 900; font-size: 20px; color: var(--primary);">{{companyName}}</div>
-                    <div style="font-size: 14px; margin-top: 10px;">{{website}}</div>
-                    <div style="font-size: 14px; margin-top: 5px;">{{emailAddress}}</div>
-                </div>
-            </div>
-        </div>
-
-
-    </div>
 </body>
 </html>

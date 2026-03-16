@@ -1,62 +1,56 @@
 import os
-import json
+import re
 import logging
 import time
-import re
-import traceback as _tb
 from typing import Dict, Any, List, Tuple
 from groq import Groq
-from .config_helper import get_config
 
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION DEFINITIONS
+# SECTION DEFINITIONS — 11 sections matching Template.html exactly
 # ─────────────────────────────────────────────────────────────────────────────
 SECTIONS = [
-    ("introduction",         "Introduction",               "OVERVIEW",    "text-only", ""),
-    ("industry_challenges",  "Common Challenges",          "CHALLENGES",  "text-only", ""),
-    ("core_principles",      "Key Principles",             "PRINCIPLES",  "text-only", ""),
-    ("practical_strategies", "Practical Strategies",       "STRATEGIES",  "text-only", ""),
-    ("risk_management",      "Managing Risks",             "RISK",        "text-only", ""),
-    ("best_practices",       "Best Practices",             "TIPS",        "text-only", ""),
-    ("key_statistics",       "Facts and Figures",          "DATA",        "text-only", ""),
-    ("implementation_roadmap", "Implementation Roadmap",    "ROADMAP",     "text-only", ""),
-    ("traditional_vs_modern", "Traditional vs Modern",      "COMPARISON", "text-only", ""),
-    ("case_study",           "Real World Example",         "CASE STUDY",  "text-only", ""),
-    ("expert_insights",      "Expert Insights",            "INSIGHTS",    "text-only", ""),
-    ("conclusion",           "Ready to Start",             "NEXT STEPS", "text-only", ""),
+    ("executive_summary",      "Executive Summary",         "OVERVIEW",   "text-only", ""),
+    ("industry_analysis",      "Industry Problem Analysis", "CHALLENGES", "text-only", ""),
+    ("core_principles",        "Key Principles",            "PRINCIPLES", "text-only", ""),
+    ("practical_strategies",   "Practical Implementation",  "STRATEGIES", "text-only", ""),
+    ("business_benefits",      "Business Benefits",         "VALUE",      "text-only", ""),
+    ("case_study",             "Real World Case Study",     "CASE STUDY", "text-only", ""),
+    ("risk_management",        "Risk Management",           "RISK",       "text-only", ""),
+    ("implementation_roadmap", "Implementation Roadmap",    "ROADMAP",    "text-only", ""),
+    ("future_trends",          "Future Trends",             "TRENDS",     "text-only", ""),
+    ("key_takeaways",          "Key Takeaways",             "SUMMARY",    "text-only", ""),
+    ("call_to_action",         "Call to Action",            "NEXT STEPS", "text-only", ""),
 ]
-
-DOC_TYPE_LABELS = {
-    "guide":             "Strategic Guide",
-    "case_study":        "Case Study Report",
-    "checklist":         "Implementation Checklist",
-    "roi_calculator":    "ROI Analysis Report",
-    "trends_report":     "Industry Trends Report",
-    "design_portfolio":  "Design Portfolio",
-    "client_onboarding": "Client Onboarding Guide",
-    "custom":            "Strategic Report",
-}
-
-_TYPE_MAP = {
-    "guide": "guide", "strategic_guide": "guide",
-    "case_study": "case_study", "checklist": "checklist",
-    "roi_calculator": "roi_calculator", "trends_report": "trends_report",
-    "design_portfolio": "design_portfolio", "client_onboarding": "client_onboarding",
-    "client_onboarding_flow": "client_onboarding", "onboarding_flow": "client_onboarding",
-    "custom": "custom",
-    "Guide": "guide", "Strategic Guide": "guide", "Case Study": "case_study",
-    "Checklist": "checklist", "ROI Calculator": "roi_calculator",
-    "Trends Report": "trends_report", "Design Portfolio": "design_portfolio",
-    "Client Onboarding Flow": "client_onboarding", "Client Onboarding": "client_onboarding",
-    "Custom": "custom",
-}
-
-ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "div", "span", "a"}
 
 SECTION_KEYS = [s[0] for s in SECTIONS]
 
+DOC_TYPE_LABELS = {
+    "guide": "Strategic Guide", "case_study": "Case Study Report",
+    "checklist": "Implementation Checklist", "roi_calculator": "ROI Analysis Report",
+    "trends_report": "Industry Trends Report", "design_portfolio": "Design Portfolio",
+    "client_onboarding": "Client Onboarding Guide", "custom": "Strategic Report",
+}
+
+_TYPE_MAP = {
+    "guide": "guide", "strategic_guide": "guide", "Guide": "guide", "Strategic Guide": "guide",
+    "case_study": "case_study", "Case Study": "case_study",
+    "checklist": "checklist", "Checklist": "checklist",
+    "roi_calculator": "roi_calculator", "ROI Calculator": "roi_calculator",
+    "trends_report": "trends_report", "Trends Report": "trends_report",
+    "design_portfolio": "design_portfolio", "Design Portfolio": "design_portfolio",
+    "client_onboarding": "client_onboarding", "client_onboarding_flow": "client_onboarding",
+    "Client Onboarding": "client_onboarding", "Client Onboarding Flow": "client_onboarding",
+    "custom": "custom", "Custom": "custom",
+}
+
+ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote"}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UTILITIES
+# ─────────────────────────────────────────────────────────────────────────────
 
 def _clean_topic_slug(topic: str) -> str:
     if not topic:
@@ -66,433 +60,417 @@ def _clean_topic_slug(topic: str) -> str:
 
 def _clean_company_name(name: str, email: str = "") -> str:
     if not name:
+        if email and "@" in email:
+            domain = email.split("@")[-1].split(".")[0]
+            if domain.lower() not in ("gmail","yahoo","hotmail","outlook","icloud","me","mac"):
+                return domain.replace("-"," ").replace("_"," ").title()
         return name
-    is_username = (
-        " " not in name.strip()
-        and (name == name.lower() or re.search(r'\d', name))
-        and "@" not in name
+    is_username = " " not in name.strip() and "@" not in name and (
+        re.search(r'\d', name) or name == name.lower()
     )
     if not is_username:
         return name
     if email and "@" in email:
         domain = email.split("@")[-1].split(".")[0]
-        if domain.lower() not in ("gmail", "yahoo", "hotmail", "outlook", "icloud", "me", "mac"):
-            return domain.replace("-", " ").replace("_", " ").title()
-    cleaned = re.sub(r'\d+$', '', name)
-    return cleaned.title() if cleaned else name
+        if domain.lower() not in ("gmail","yahoo","hotmail","outlook","icloud","me","mac"):
+            return domain.replace("-"," ").replace("_"," ").title()
+    return re.sub(r'\d+$', '', name).title() or name
 
 
-def _strip_filler(html: str) -> str:
+def _html_to_text(html: str) -> str:
+    if not html:
+        return ""
+    return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', html)).strip()
+
+
+def _sanitize_html(html: str) -> str:
     if not html:
         return html
-    filler_patterns = [
-        r"this (section|guide|document|report) (provides?|offers?|explores?|covers?)",
-        r"in (today's|the current|this) (fast[- ]paced|rapidly changing|evolving|dynamic|competitive|modern)",
-        r"(as we|let us|let's|we will) (explore|delve|dive|look at|examine|discuss|uncover)",
-        r"(the following|below) (section|content|information) (will|provides?|outlines?)",
-        r"this comprehensive (guide|report|document|analysis)",
-        r"furthermore,? (the|this|we)",
-        r"additionally,? (the|this|we)",
-        r"moreover,? (the|this|we)",
-        r"first and foremost,?",
-        r"welcome to (this|our)",
-        r"(in this|this) (guide|section|document|report) (you will|we will|you'll|we'll)",
-        r"whether you('re| are) (a|an|the)",
-    ]
-    filler_re = re.compile("|".join(filler_patterns), re.IGNORECASE)
-    sentences = re.split(r'(?<=[.!?])\s+', html)
-    return " ".join(s for s in sentences if not filler_re.match(s.strip()))
+    html = html.strip().strip('"')
+    html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
+    html = re.sub(r'^#{1,6}\s+.*$', '', html, flags=re.MULTILINE)
+    html = re.sub(r'\[[A-Z][^\]]{2,80}\]', '', html)
+    html = re.sub(
+        r'<(/?)(\w+)([^>]*)>',
+        lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "",
+        html
+    )
+    return _ensure_closed_tags(html).strip()
 
 
-def _deduplicate_content(html: str) -> str:
-    if not html:
-        return html
-    seen = set()
-    result = []
-    for part in re.split(r'(<[^>]+>)', html):
-        if part.startswith('<'):
-            result.append(part)
+def _ensure_closed_tags(html: str) -> str:
+    void = {"br","hr","img","input","link","meta"}
+    stack = []
+    for closing, tag in re.findall(r"<(/?)([a-zA-Z1-6]+)", html):
+        tag = tag.lower()
+        if tag in void: continue
+        if closing:
+            if stack and stack[-1] == tag: stack.pop()
         else:
-            unique = []
-            for s in re.split(r'(?<=[.!?])\s+', part):
-                norm = re.sub(r'\s+', ' ', s.strip().lower())
-                if norm and norm not in seen:
-                    seen.add(norm)
-                    unique.append(s)
-            result.append(' '.join(unique))
-    return ''.join(result)
+            stack.append(tag)
+    for tag in reversed(stack):
+        html += f"</{tag}>"
+    return html
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION-LEVEL PROMPTS
-# Each prompt is tightly scoped to produce 300–400 words of UNIQUE content
-# for exactly one section. No generic filler, no repeated statistics.
+# SECTION PROMPTS — one per section, each enforcing min 300 words,
+# banning repeated stats, banning first-person firm voice, requiring
+# named standards and specific figures.
 # ─────────────────────────────────────────────────────────────────────────────
 SECTION_PROMPTS = {
-    "introduction": """Write a high-impact Executive Summary for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
-RULES:
-- MINIMUM 350 words.
-- Explain: Why this is becoming essential NOW, the strategic opportunity for the audience, and what they will gain.
-- Cite specific industry data, benchmarks, or standards.
-- Deep, consulting-level analysis. No surface-level generalities.
+"executive_summary": """\
+Write a 350-400 word Executive Summary for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
-OUTPUT FORMAT (raw HTML):
-<p>[The Shift: Context and Urgency. 100+ words]</p>
-<p>[The Opportunity: Competitive Advantage. 100+ words]</p>
-<p>[The Promise: What this guide delivers. 100+ words]</p>""",
+STRICT RULES:
+- Start with a specific market statistic or regulatory fact. NOT "In this guide" or "Welcome".
+- Paragraph 1 (120+ words): Why {topic} is urgent for {audience} right now. Name a specific regulation or market shift.
+- Paragraph 2 (120+ words): The commercial opportunity — property value, cost reduction, compliance advantage.
+- Paragraph 3 (100+ words): What this guide delivers. Specific, not generic.
+- Mention at least one named standard (NCC, LEED, NABERS, Passive House, BASIX, WELL, etc.)
+- Zero filler phrases. Zero "our firm" or "we believe".
+Output: raw HTML only. <p> paragraphs. <strong> for key terms/numbers. No markdown.""",
 
-    "industry_challenges": """Write a deep Industry Challenges section on **{topic}** for **{audience}**.
+"industry_analysis": """\
+Write a 380-420 word Industry Problem Analysis on **{topic}** for **{audience}**.
 
-RULES:
-- MINIMUM 350 words.
-- Discuss REAL problems: Rising costs, regulatory pressure, compliance, communication gaps, client demand.
-- Explain WHY these problems occur at a structural level.
-- 4 specific challenges, each with an <h3>.
+STRUCTURE — exactly 4 problems, each with its own <h3>:
+  <h3>[Problem Name]</h3>
+  <p>[What triggers it. 80-100 words. Name a regulation, cost driver, or technical constraint.]</p>
+  <p><strong>Real impact:</strong> [Specific financial or timeline consequence. 50-70 words.]</p>
 
-OUTPUT FORMAT:
-<h3>[Challenge Name]</h3>
-<p>[Deep structural analysis. 80-120 words.]</p>
-[Repeat for 4 challenges]""",
+PROBLEM CATEGORIES (one each, in this order):
+1. Financial / cost escalation
+2. Regulatory / compliance complexity  
+3. Technical / design integration
+4. Stakeholder / communication failure
 
-    "core_principles": """Write the Core Principles of **{topic}** for **{audience}**.
+RULES: Every problem names a specific standard, dollar figure, or percentage. No two share a statistic.
+Output: raw HTML only.""",
 
-RULES:
-- MINIMUM 350 words.
-- Explain key frameworks (e.g., Passive design, Energy optimization, Material sustainability, Water management, Human-centric design).
-- Use practical examples for each principle.
+"core_principles": """\
+Write a 380-420 word Key Principles section on **{topic}** for **{audience}**.
 
-OUTPUT FORMAT:
-<h3>[Principle Name]</h3>
-<p>[Strategic definition and logic. 80-120 words.]</p>
-<p><strong>Example:</strong> [Real-world application. 50+ words.]</p>
-[Repeat for 3-4 principles]""",
+STRUCTURE:
+  <p>[60-80 word intro: why these principles are non-negotiable for {topic}]</p>
+  <h3>Principle 1: [Technical Name]</h3>
+  <p>[Named standard + plain English explanation + why it matters. 80-100 words.]</p>
+  <h3>Principle 2: [Different technical domain]</h3>
+  <p>[80-100 words.]</p>
+  <h3>Principle 3: [Different domain again]</h3>
+  <p>[80-100 words.]</p>
+  <h3>Principle 4: [Different domain again]</h3>
+  <p>[80-100 words.]</p>
 
-    "practical_strategies": """Write Practical Implementation Strategies for **{topic}**.
+RULES: Each principle covers a different domain (thermal, water, materials, energy, indoor quality, etc.).
+Every principle names a specific standard. No repeated statistics.
+Output: raw HTML only.""",
 
-RULES:
-- MINIMUM 350 words.
-- Give actionable strategies: BIM modeling, material selection, passive systems, lifecycle cost analysis.
-- Explain HOW to implement them step-by-step.
+"practical_strategies": """\
+Write a 380-420 word Practical Strategies section on **{topic}** for **{audience}**.
 
-OUTPUT FORMAT:
-<h3>[Strategy Name]</h3>
-<p>[The Strategic 'Why'. 60-80 words.]</p>
-<p>[Step-by-Step 'How'. 100+ words.]</p>
-[Repeat for 3 strategies]""",
+STRUCTURE — 3 strategies covering early design, construction, and systems phases:
+  <h3>Strategy [N]: [Action-Verb Name]</h3>
+  <p>[Technical application with named tools/methods. 100-120 words.]</p>
+  <ul>
+    <li><strong>Expected outcome:</strong> [Specific measurable benefit with a real number]</li>
+    <li><strong>Common mistake to avoid:</strong> [The one error that kills this strategy]</li>
+    <li><strong>Key tool or standard:</strong> [Named software, product, or method]</li>
+  </ul>
 
-    "risk_management": """Write Risk Management in **{topic}** Projects.
+RULES: Each strategy uses a different project phase. No shared statistics. No "So," or "Another" openers.
+Output: raw HTML only.""",
 
-RULES:
-- MINIMUM 350 words.
-- Address: Budget overruns, technology complexity, stakeholder miscommunication.
-- Provide specific mitigation frameworks.
+"business_benefits": """\
+Write a 380-420 word Business Benefits section on **{topic}** for **{audience}**.
 
-OUTPUT FORMAT:
-<h3>[Risk Vector]</h3>
-<p>[Impact analysis. 80-100 words.]</p>
-<p><strong>Mitigation:</strong> [Strategic framework. 80-100 words.]</p>
-[Repeat for 3 risks]""",
+STRUCTURE — 3 benefit areas:
+  <h3>[Benefit Area]</h3>
+  <p>[Strategic analysis with a credible cited figure. Source: GBCA, JLL, CBRE, USGBC, CoreLogic, etc. 120-140 words.]</p>
 
-    "best_practices": """Write a Best Practices section for **{topic}**.
+BENEFIT ORDER:
+1. Property value and asset premium
+2. Operational cost reduction and ROI timeline
+3. Marketability, tenant demand, and compliance advantage
 
-RULES:
-- MINIMUM 350 words.
-- Distill elite practices used by top-tier firms.
-- Include data-driven insights.
+RULES: Each benefit cites a DIFFERENT source. Each uses a DIFFERENT percentage or figure. Write for a reader who will verify claims.
+Output: raw HTML only.""",
 
-OUTPUT FORMAT:
-<h3>[Best Practice]</h3>
-<p>[Detailed explanation. 120+ words.]</p>
-[Repeat for 3 practices]""",
+"case_study": """\
+Write a 420-480 word Real World Case Study on **{topic}** for **{audience}**.
 
-    "key_statistics": """Write Data & Industry Insights for **{topic}**.
+STRUCTURE:
+  <h3>Case Study: [Descriptive Project Name]</h3>
+  <p><strong>Project context:</strong> [Building type, scale in sqm, location type, client profile. 60-80 words.]</p>
+  <p><strong>The challenge:</strong> [Specific technical or regulatory problem. Name the constraint. 80-100 words.]</p>
+  <p><strong>The approach:</strong> [Specific strategies, technologies, and methods applied. No generics. 100-120 words.]</p>
+  <p><strong>Measured outcomes:</strong> [At least 3 specific quantified results — energy %, cost $, rating, timeline. 80-100 words.]</p>
+  <p><strong>Transferable lesson:</strong> [The single most applicable insight for {audience}. 50-70 words.]</p>
 
-RULES:
-- MINIMUM 350 words.
-- Include specific statistics: Energy savings, property value increase, market growth.
-- Format like a McKinsey consulting report.
+RULES: Make it specific — real numbers, named technologies, realistic constraints. No two outcomes the same percentage. No "our firm" language.
+Output: raw HTML only.""",
 
-OUTPUT FORMAT:
-<h3>Market Data & Performance Benchmarks</h3>
-<ul>
-<li><strong>[Metric]:</strong> [Deep analysis of the data. 100+ words.]</li>
-</ul>
-[Repeat for 4-5 metrics]""",
+"risk_management": """\
+Write a 380-420 word Risk Management section on **{topic}** for **{audience}**.
 
-    "implementation_roadmap": """Write a Step-by-Step Implementation Roadmap for **{topic}**.
+STRUCTURE — 3 non-obvious risks:
+  <h3>[Risk Name — specific, not generic like "Budget Overrun"]</h3>
+  <p>[How it manifests and what triggers it. Name the mechanism. 80-100 words.]</p>
+  <p><strong>Professional mitigation:</strong> [Specific safeguard — contract clause, test protocol, or named standard. 70-90 words.]</p>
 
-RULES:
-- MINIMUM 350 words.
-- 5 Phases: 1. Site/Climate, 2. Design Planning, 3. Material/System, 4. Construction, 5. Post-Build Performance.
-- Explain each phase in detail.
+RISK CATEGORIES (one each):
+1. Technical/design failure (e.g. thermal bridging, embodied carbon error)
+2. Regulatory/compliance (e.g. greenwashing liability, code non-compliance)
+3. Commercial/procurement (e.g. contractor skill gap, material substitution)
 
-OUTPUT FORMAT:
-<h3>Phase [X]: [Phase Name]</h3>
-<p>[Strategic roadmap. 100+ words.]</p>
-[Repeat for 5 phases]""",
+RULES: Each risk is a different category. Each mitigation references a specific document, contract type, or test.
+Output: raw HTML only.""",
 
-    "traditional_vs_modern": """Write a Traditional vs Modern Approach comparison for **{topic}**.
+"implementation_roadmap": """\
+Write a 380-420 word Implementation Roadmap for **{topic}** for **{audience}**.
 
-RULES:
-- MINIMUM 350 words.
-- Compare Legacy vs Sustainable approaches.
-- Focus on cost, efficiency, and long-term value.
+STRUCTURE — exactly 6 phases:
+  <h3>Phase [N]: [Phase Name] — [Typical Duration]</h3>
+  <p>[Who does what, what the client receives as a deliverable. Specific actions. 70-90 words.]</p>
 
-OUTPUT FORMAT:
-<h3>[Dimension: e.g., Cost Efficiency]</h3>
-<p><strong>Legacy Approach:</strong> [Analysis. 80+ words.]</p>
-<p><strong>Modern Strategic Approach:</strong> [Analysis. 80+ words.]</p>
-[Repeat for 3-4 dimensions]""",
+PHASES:
+1. Feasibility & Business Case (2-4 weeks)
+2. Site & Climate Analysis (2-3 weeks)
+3. Integrated Design Development (6-12 weeks)
+4. Material Specification & Procurement (4-8 weeks)
+5. Construction & Commissioning (project duration)
+6. Post-Occupancy Evaluation (3-12 months post-handover)
 
-    "case_study": """Write a Case Study for a **{topic}** project.
+RULES: Each phase has a clear start trigger and end deliverable. No overlap between phases.
+Output: raw HTML only.""",
 
-RULES:
-- MINIMUM 400 words.
-- Real or realistic example.
-- Include: Design decisions, Technologies used, and Measurable outcomes.
+"future_trends": """\
+Write a 380-420 word Future Trends section on **{topic}** for **{audience}**.
 
-OUTPUT FORMAT:
-<h3>Strategic Case Study: [Project Title]</h3>
-<p>[Context and Challenge. 100+ words.]</p>
-<p>[Strategic Decisions and Execution. 150+ words.]</p>
-<p>[Quantifiable Outcomes. 150+ words.]</p>""",
+STRUCTURE — 4 trends:
+  <h3>[Trend Name]</h3>
+  <p>[What drives it, when it mainstreams, what {audience} must do NOW to prepare. 100-120 words. Name specific technologies, regulations, or market forces.]</p>
 
-    "expert_insights": """Write Expert Insights for **{topic}**.
+TRENDS TO COVER:
+1. Net-zero mandates and embodied carbon legislation tightening
+2. AI-assisted building performance simulation (EnergyPlus, IESVE, digital twins)
+3. Mass timber, CLT, and low-carbon structural systems
+4. Smart building integration: IoT sensors, automated commissioning, real-time NABERS tracking
 
-RULES:
-- MINIMUM 350 words.
-- 3–5 professional lessons architects must follow.
-- Deep, authoritative perspective.
+RULES: Each trend explains WHY it is accelerating. Each includes a specific timeline or market figure. No shared statistics.
+Output: raw HTML only.""",
 
-OUTPUT FORMAT:
-<h3>Critical Insight [X]: [Insight Name]</h3>
-<p>[Deep analysis and professional advice. 120+ words.]</p>
-[Repeat for 3 insights]""",
+"key_takeaways": """\
+Write a 300-350 word Key Takeaways section for **{topic}** for **{audience}**.
 
-    "conclusion": """Write a professional Call to Action and Conclusion for **{topic}**.
+STRUCTURE:
+  <h3>What Every {audience} Must Know</h3>
+  <p>[60-80 word framing: why these 5 insights are the most actionable from this guide]</p>
+  <ul>
+    <li><strong>[Label]:</strong> [Insight synthesising principles/challenges. 40-60 words.]</li>
+    <li><strong>[Label]:</strong> [Insight from strategies/roadmap. Actionable. 40-60 words.]</li>
+    <li><strong>[Label]:</strong> [Insight from risks/case study. Protective. 40-60 words.]</li>
+    <li><strong>[Label]:</strong> [Insight from business benefits. Commercial. 40-60 words.]</li>
+    <li><strong>[Label]:</strong> [Insight from future trends. Forward-looking. 40-60 words.]</li>
+  </ul>
+  <p>[50-70 word closing: what to do in the next 30 days]</p>
 
-RULES:
-- MINIMUM 350 words.
-- Encourage contacting the firm (Kyro).
-- Make it persuasive but professional (Consulting style).
+RULES: Every takeaway synthesises a DIFFERENT section. No repeated statistics within this section.
+Output: raw HTML only.""",
 
-OUTPUT FORMAT:
-<h3>The Strategic Path Forward</h3>
-<p>[Final summary. 150+ words.]</p>
-<p>[Direct, persuasive CTA to Kyro. 150+ words.]</p>""",
+"call_to_action": """\
+Write a 350-400 word Call to Action close for **{topic}** — consulting-grade persuasive writing.
+
+STRUCTURE:
+  <h3>The Decision That Separates High-Performers</h3>
+  <p>[100-120 words: Acknowledge the complexity the reader now understands. Reference a specific market or regulatory shift that makes acting now smarter than waiting. No generic sustainability language.]</p>
+  <h3>What a Consultation Actually Looks Like</h3>
+  <p>[100-120 words: Describe the first meeting concretely — questions answered, what they walk away with, why it is low-risk.]</p>
+  <h3>Why the Timing Matters</h3>
+  <p>[80-100 words: One specific market, regulatory, or cost reason to act in the next 90 days. Name a real deadline or market trend.]</p>
+
+RULES: Zero "contact us today" without context. Zero "At our firm, we believe". Write as a trusted adviser, not a salesperson.
+Output: raw HTML only.""",
 }
 
-# Section maps
-_SECTION_MAPS: Dict[str, Dict[str, str]] = {
-    "guide": {
-        "introduction": "introduction", "overview": "introduction", "executive_summary": "introduction",
-        "common_challenges": "industry_challenges", "challenges": "industry_challenges", "industry_challenges": "industry_challenges",
-        "key_principles": "core_principles", "principles": "core_principles", "core_principles": "core_principles",
-        "practical_strategies": "practical_strategies", "strategies": "practical_strategies",
-        "managing_risks": "risk_management", "risks": "risk_management", "risk_management": "risk_management",
-        "best_practices": "best_practices",
-        "facts_and_figures": "key_statistics", "facts": "key_statistics", "key_statistics": "key_statistics",
-        "implementation_roadmap": "implementation_roadmap", "roadmap": "implementation_roadmap",
-        "traditional_vs_modern": "traditional_vs_modern", "comparison": "traditional_vs_modern",
-        "real_world_example": "case_study", "example": "case_study", "case_study": "case_study",
-        "expert_insights": "expert_insights", "insights": "expert_insights",
-        "ready_to_start": "conclusion", "conclusion": "conclusion",
-    },
-}
 
-_UNIVERSAL_SLUG_MAP = {
-    "introduction": "introduction", "overview": "introduction", "executive_summary": "introduction",
-    "challenges": "industry_challenges", "industry_challenges": "industry_challenges",
-    "principles": "core_principles", "core_principles": "core_principles",
-    "strategies": "practical_strategies", "practical_strategies": "practical_strategies",
-    "risks": "risk_management", "risk_management": "risk_management",
-    "tips": "best_practices", "best_practices": "best_practices",
-    "facts": "key_statistics", "key_statistics": "key_statistics", "data": "key_statistics",
-    "roadmap": "implementation_roadmap", "implementation_roadmap": "implementation_roadmap",
-    "comparison": "traditional_vs_modern", "traditional_vs_modern": "traditional_vs_modern",
-    "case": "case_study", "case_study": "case_study", "example": "case_study",
-    "insights": "expert_insights", "expert_insights": "expert_insights",
-    "conclusion": "conclusion", "ready_to_start": "conclusion",
-}
-
+# ─────────────────────────────────────────────────────────────────────────────
+# GROQ CLIENT
+# ─────────────────────────────────────────────────────────────────────────────
 
 class GroqClient:
-    SECTIONS = SECTIONS
+    SECTIONS        = SECTIONS
+    SECTION_KEYS    = SECTION_KEYS
     DOC_TYPE_LABELS = DOC_TYPE_LABELS
-    _TYPE_MAP = _TYPE_MAP
-    SECTION_LAYOUT = {key: layout for key, _, _, layout, _ in SECTIONS}
+    _TYPE_MAP       = _TYPE_MAP
+    SECTION_LAYOUT  = {key: layout for key, _, _, layout, _ in SECTIONS}
 
     def __init__(self, api_key: str = None):
-        api_key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
+        api_key      = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
         self.client      = Groq(api_key=api_key) if api_key else None
         self.model       = "llama-3.3-70b-versatile"
-        self.temperature = 0.65
+        self.temperature = 0.60
         self.max_tokens  = 4096
 
-    # ─────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────
     # PUBLIC API
-    # ─────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────
 
     def get_semantic_signals(self, user_answers: Dict[str, Any]) -> Dict[str, Any]:
-        raw_type = str(user_answers.get("document_type") or user_answers.get("lead_magnet_type") or "guide").strip()
-        doc_type = _TYPE_MAP.get(raw_type) or _TYPE_MAP.get(raw_type.lower().replace("-","_").replace(" ","_"), "guide")
-
+        raw_type = str(
+            user_answers.get("document_type") or
+            user_answers.get("lead_magnet_type") or "guide"
+        ).strip()
+        doc_type = (
+            _TYPE_MAP.get(raw_type) or
+            _TYPE_MAP.get(raw_type.lower().replace("-","_").replace(" ","_"), "guide")
+        )
         pain_points = user_answers.get("pain_points", [])
         audience    = user_answers.get("target_audience", "Stakeholders")
-        raw_topic   = user_answers.get("main_topic", "Strategic Design")
-        topic       = _clean_topic_slug(str(raw_topic))
-
         return {
-            "topic":           topic,
+            "topic":           _clean_topic_slug(str(user_answers.get("main_topic", "Strategic Design"))),
             "audience":        ", ".join(audience) if isinstance(audience, list) else str(audience),
             "pain_points":     ", ".join(pain_points) if isinstance(pain_points, list) else str(pain_points),
             "psychographics":  str(user_answers.get("psychographics", "")).strip(),
             "firm_usp":        str(user_answers.get("firm_usp", "")).strip(),
             "desired_outcome": user_answers.get("desired_outcome", ""),
-            "tone":            user_answers.get("tone", "Professional and Friendly"),
+            "tone":            user_answers.get("tone", "Professional"),
             "industry":        user_answers.get("industry", "Architecture and Design"),
             "document_type":   doc_type,
         }
 
-    def generate_lead_magnet_json(self, signals: Dict[str, Any], firm_profile: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_lead_magnet_json(
+        self, signals: Dict[str, Any], firm_profile: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         TWO-PASS GENERATION:
-        Pass 1 — Generate title + all 12 section contents individually.
-                  Each section gets its own focused API call with a tight prompt.
-                  This guarantees every section has real content.
-        Pass 2 — Assemble into the expected output structure.
+        Pass 1a — One small call to generate the document title (100 tokens)
+        Pass 1b — One focused API call per section (11 calls × up to 4096 tokens each)
+                  This GUARANTEES every page has full, deep content.
+                  A single 4096-token call can never fill 11 sections — this is the fix.
+        Pass 2  — Assemble into the return structure
         """
-        doc_type   = signals.get("document_type", "guide")
-        type_label = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
-        topic      = signals["topic"]
-        audience   = signals["audience"]
-        pain_points = signals.get("pain_points", "")
-        firm_usp   = signals.get("firm_usp", "None")
+        doc_type    = signals.get("document_type", "guide")
+        type_label  = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
+        topic       = signals["topic"]
+        audience    = signals["audience"]
+        pain_points = signals.get("pain_points", "") or "high project costs, complex compliance, client expectations"
+        firm_usp    = signals.get("firm_usp", "") or "integrated sustainable design expertise"
 
-        logger.info(f"🚀 Two-pass generation | type={doc_type} | topic={topic}")
+        logger.info(f"🚀 Two-pass | type={doc_type} | topic={topic[:40]}")
 
-        # ── Pass 1a: Generate title ──────────────────────────────────────────
-        title_prompt = (
-            f"Generate a professional, high-impact title and subtitle for a {type_label} on '{topic}' for {audience}.\n"
-            f"Format exactly as: TITLE: [title here]\nSUBTITLE: [subtitle here]\n"
-            f"Rules:\n"
-            f"- The TITLE must prominently feature the core topic '{topic}'. Avoid being too metaphorical.\n"
-            f"- Title should be 3-6 words, authoritative, and intellectual.\n"
-            f"- Subtitle should be a complete sentence explaining the specific value proposition.\n"
-            f"- Do NOT use the word 'sustainable-architecture' as a slug — use proper English words.\n"
-            f"- No marketing fluff. Tone should be McKinsey-style."
-        )
-        title = topic
-        subtitle = f"Strategic Insights for {topic}"
+        # ── Pass 1a: Title ─────────────────────────────────────────────────
+        title    = topic
+        subtitle = f"A Strategic Guide for {audience}"
         try:
-            title_resp = self.client.chat.completions.create(
+            r = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You generate compelling document titles. Respond with exactly two lines: TITLE: ... and SUBTITLE: ..."},
-                    {"role": "user", "content": title_prompt},
+                    {
+                        "role": "system",
+                        "content": (
+                            "You write authoritative document titles. "
+                            "Respond with EXACTLY two lines:\n"
+                            "TITLE: [3-6 word title prominently featuring the core topic]\n"
+                            "SUBTITLE: [One sentence value proposition for the target audience]"
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Topic: '{topic}' | Audience: {audience} | Type: {type_label}\n"
+                            f"Rules: McKinsey-style, no hyphens/slugs, no marketing fluff, "
+                            f"title must feature '{topic}' clearly."
+                        ),
+                    },
                 ],
                 temperature=0.7,
-                max_tokens=100,
+                max_tokens=120,
             )
-            title_raw = title_resp.choices[0].message.content.strip()
-            for line in title_raw.split("\n"):
+            for line in r.choices[0].message.content.strip().split("\n"):
                 if line.upper().startswith("TITLE:"):
                     title = line.split(":", 1)[1].strip()
                 elif line.upper().startswith("SUBTITLE:"):
                     subtitle = line.split(":", 1)[1].strip()
         except Exception as e:
-            logger.warning(f"Title generation failed, using fallback: {e}")
+            logger.warning(f"Title generation failed: {e}")
 
-        # ── Pass 1b: Generate each section individually ──────────────────────
-        # Use the section_maps for this doc_type to determine which sections to generate
-        type_map = _SECTION_MAPS.get(doc_type, _SECTION_MAPS["guide"])
-        # Build reverse map: section_key → set of section names for this doc_type
-        needed_keys = set(type_map.values())
-
-        sections_content: Dict[str, str] = {}
-        sections_titles: Dict[str, str] = {}
-
+        # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            "You are an expert architecture strategist, sustainability consultant, and technical writer. "
-            "Your job is to generate a HIGH-VALUE professional lead magnet that feels like it was written by a top architecture consultancy firm. "
-            "This is NOT a generic article. It must be a premium strategic guide designed to attract professional clients. "
-            "Tone: Professional, Consulting-level, Strategic, Insightful (McKinsey-style architecture report).\n\n"
-            "RULES:\n"
-            "- MINIMUM 300 words per section.\n"
-            "- Deep insights, practical examples, data/statistics, actionable frameworks.\n"
-            "- Avoid generic filler content. Write specifically for the TARGET AUDIENCE.\n"
-            "- Output ONLY raw HTML. No markdown, no preamble, no sign-off.\n"
-            "- Do NOT repeat paragraphs. Do NOT produce generic filler text."
+            "You are a senior architectural consultant and premium technical report writer. "
+            "Every response is raw HTML only — zero markdown, zero preamble, zero sign-off, zero code fences. "
+            "Content must be dense with specific insight: real standards, named technologies, credible figures. "
+            "Minimum 300 words per response. Never repeat statistics across paragraphs. "
+            "Never use first-person firm voice ('our firm', 'we believe', 'our team'). "
+            "Write as an independent expert adviser."
         )
 
-        for key, default_title, default_label, _, _ in SECTIONS:
-            if key not in needed_keys:
-                pass
+        sections_content: Dict[str, str] = {}
 
-            prompt_template = SECTION_PROMPTS.get(key)
+        for key, default_title, default_label, _, _ in SECTIONS:
+            prompt_template = SECTION_PROMPTS.get(key, "")
             if not prompt_template:
-                sections_content[key] = ""
-                sections_titles[key] = default_title
+                sections_content[key] = f"<p><strong>{default_title}</strong></p>"
                 continue
 
-            section_prompt = prompt_template.format(
-                topic=topic,
-                audience=audience,
-                pain_points=pain_points,
-                firm_usp=firm_usp,
-                lead_magnet_type=type_label,
-            )
+            try:
+                section_prompt = prompt_template.format(
+                    topic=topic, audience=audience,
+                    pain_points=pain_points, firm_usp=firm_usp,
+                    lead_magnet_type=type_label,
+                )
+            except KeyError:
+                section_prompt = prompt_template
 
-            full_prompt = (
-                f"Topic: {topic}\n"
-                f"Audience: {audience}\n"
-                f"Pain Points: {pain_points}\n\n"
-                f"SECTION: {default_title}\n"
+            user_msg = (
+                f"TOPIC: {topic}\n"
+                f"AUDIENCE: {audience}\n"
+                f"PAIN POINTS: {pain_points}\n\n"
+                f"WRITE SECTION: {default_title}\n\n"
                 f"{section_prompt}\n\n"
-                "CRITICAL: MINIMUM 300 words. Output ONLY raw HTML. No markdown code fences. No conversational filler."
+                "CRITICAL: MINIMUM 300 words. Raw HTML only. "
+                "No placeholders like [STAT] or [INSERT EXAMPLE]. No truncation."
             )
 
             try:
-                resp = self.client.chat.completions.create(
+                resp    = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_msg},
-                        {"role": "user",   "content": full_prompt},
+                        {"role": "user",   "content": user_msg},
                     ],
-                    temperature=0.55, # Lower temp for more consistent professional tone
+                    temperature=self.temperature,
                     max_tokens=self.max_tokens,
                 )
-                content = resp.choices[0].message.content.strip()
-                # Strip any markdown code fences if model added them
-                content = re.sub(r'^```html?\s*', '', content, flags=re.IGNORECASE)
-                content = re.sub(r'\s*```$', '', content)
-                sections_content[key] = content
-                sections_titles[key]  = default_title
-                logger.info(f"  ✅ {key}: {len(content)} chars")
+                raw = resp.choices[0].message.content.strip()
+                # Strip accidental code fences
+                raw = re.sub(r'^```html?\s*', '', raw, flags=re.IGNORECASE)
+                raw = re.sub(r'\s*```\s*$', '', raw)
+                # Sanitize
+                raw = _sanitize_html(raw)
+                sections_content[key] = raw
+                logger.info(f"  ✅ {key}: {len(raw)} chars")
             except Exception as e:
-                logger.error(f"  ❌ {key} generation failed: {e}")
-                sections_content[key] = f"<p>Content for {default_title} could not be generated. Please try regenerating.</p>"
-                sections_titles[key]  = default_title
+                logger.error(f"  ❌ {key}: {e}")
+                sections_content[key] = (
+                    f"<p>Content for <strong>{default_title}</strong> could not be generated. "
+                    f"Please regenerate this document.</p>"
+                )
 
-        # ── Pass 2: Assemble output structure ────────────────────────────────
-        sections_dict = {}
-        for key in SECTION_KEYS:
-            sections_dict[key] = {
-                "content": sections_content.get(key, ""),
-                "title":   sections_titles.get(key, ""),
-            }
-
-        logger.info(f"✅ Two-pass complete | {len([k for k,v in sections_content.items() if v])} sections filled")
+        # ── Pass 2: Assemble ───────────────────────────────────────────────
+        filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k,"")) > 100)
+        logger.info(f"✅ Complete | {filled}/{len(SECTION_KEYS)} sections filled")
 
         return {
             "title":               title,
             "subtitle":            subtitle,
             "document_type":       doc_type,
             "document_type_label": type_label,
-            "sections":            sections_dict,
-            "images":              [],
-            "raw_output":          "",
+            "sections": {
+                key: {"content": sections_content.get(key,""), "title": dtitle}
+                for key, dtitle, *_ in SECTIONS
+            },
         }
 
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
@@ -504,166 +482,143 @@ class GroqClient:
             "subtitle":            raw.get("subtitle", ""),
             "document_type":       doc_type,
             "document_type_label": raw.get("document_type_label") or "",
-            "sections_config":     self.SECTIONS,
             "framework":           {},
-            "ai_images":           [],
         }
 
         for key, default_title, default_label, _, _ in SECTIONS:
             sec_data = sections_data.get(key, {})
-            # Ensure we handle both dict and string content from Pass 1b
-            if isinstance(sec_data, dict):
-                content = sec_data.get("content", "")
-                title   = sec_data.get("title", "") or default_title
-            else:
-                content = str(sec_data)
-                title   = default_title
+            content  = sec_data.get("content","") if isinstance(sec_data, dict) else str(sec_data)
+            title    = (sec_data.get("title","") if isinstance(sec_data, dict) else "") or default_title
 
-            sanitized = _strip_filler(_deduplicate_content(self._sanitize_html(str(content))))
-
-            normalized[key] = sanitized
+            normalized[key] = _sanitize_html(str(content))
             normalized["framework"][key] = {"title": title or default_title, "kicker": default_label}
 
-        normalized["summary"]              = normalized.get("introduction", "")[:500]
-        normalized["cta_text"]             = normalized.get("conclusion", "")[:300]
-        normalized["cta_headline"]         = normalized.get("cta_headline") or get_config("cta_headline", "Ready to Start Your Project?")
-        normalized["legal_notice_summary"] = get_config("legal_notice_summary", "This document provides strategic guidance and should be verified by a qualified professional.")
+        normalized["summary"]              = normalized.get("executive_summary","")[:500]
+        normalized["cta_headline"]         = "Ready to Start Your Project?"
+        normalized["legal_notice_summary"] = (
+            "This document provides strategic guidance only and should be verified "
+            "by a qualified professional before implementation."
+        )
         return normalized
 
-    def map_to_template_vars(self, ai_content: Dict[str, Any], firm_profile: Dict[str, Any], signals: Dict[str, Any] = None) -> Dict[str, Any]:
+    def map_to_template_vars(
+        self,
+        ai_content: Dict[str, Any],
+        firm_profile: Dict[str, Any],
+        signals: Dict[str, Any] = None,
+    ) -> Dict[str, Any]:
         signals = signals or {}
 
-        def fix_hex(c):
+        def _fix_hex(c):
             if not c: return None
-            s = str(c).strip()
-            return s if s.startswith("#") else "#" + s
+            s = str(c).strip().lstrip("#")
+            return f"#{s}" if len(s) == 6 else None
 
-        primary_color   = fix_hex(firm_profile.get("primary_brand_color") or signals.get("primary_color")) or get_config("palette_primary", "#1a365d")
-        secondary_color = fix_hex(firm_profile.get("secondary_brand_color")) or get_config("palette_secondary", "#c5a059")
-        accent_color    = fix_hex(firm_profile.get("accent_color")) or get_config("palette_accent", "#f8fafc")
-
-        # New palette variables for template
-        white_color      = "#ffffff"
-        light_color      = get_config("palette_light", "#f1f5f9")
-        text_color       = get_config("palette_text", "#1e293b")
-        text_light_color = get_config("palette_text_light", "#64748b")
-        body_bg          = get_config("palette_body_bg", "#ffffff")
-        border_radius    = get_config("layout_border_radius", "8px")
+        primary_color   = _fix_hex(firm_profile.get("primary_brand_color") or signals.get("primary_color")) or "#1a365d"
+        secondary_color = _fix_hex(firm_profile.get("secondary_brand_color")) or "#c5a059"
+        accent_color    = _fix_hex(firm_profile.get("accent_color")) or "#f8fafc"
 
         work_email   = firm_profile.get("work_email", "")
         raw_name     = firm_profile.get("firm_name") or firm_profile.get("name") or ""
-        company_name = _clean_company_name(raw_name, work_email) or signals.get("topic", "Strategic Analysis")
+        company_name = _clean_company_name(raw_name, work_email) or signals.get("topic","Strategic Analysis")
 
-        topic    = _clean_topic_slug(str(signals.get("topic", "Industry Best Practices")))
+        topic    = _clean_topic_slug(str(signals.get("topic","Industry Best Practices")))
         raw_sub  = ai_content.get("subtitle") or ""
-        subtitle = _clean_topic_slug(raw_sub) if raw_sub and raw_sub.strip() != topic.strip() else f"Strategic Insights for {topic}"
-
+        subtitle = (
+            _clean_topic_slug(raw_sub)
+            if raw_sub and raw_sub.strip().lower() != topic.strip().lower()
+            else f"A Strategic Guide for {signals.get('audience','Industry Professionals')}"
+        )
         doc_type_label = ai_content.get("document_type_label") or "STRATEGIC GUIDE"
 
-        cta_data: Dict[str, Any] = {}
-        self._extract_cta(ai_content.get("conclusion", ""), cta_data)
-        cta_headline = cta_data.get("ctaHeadline") or f"Ready to Implement Your {topic} Strategy?"
-        cta_text = self._extract_support_text(ai_content.get("conclusion", "")) or (
-            f"Take the next step in your {topic} journey. Book a complimentary consultation today."
-        )
+        # CTA headline from conclusion section
+        cta_html  = ai_content.get("call_to_action","")
+        h3_match  = re.search(r'<h3>(.*?)</h3>', cta_html)
+        cta_headline = _html_to_text(h3_match.group(1)) if h3_match else f"Ready to Implement Your {topic} Strategy?"
 
         vars: Dict[str, Any] = {
-            "primaryColor":      primary_color,
-            "secondaryColor":    secondary_color,
-            "accentColor":       accent_color,
-            "whiteColor":       white_color,
-            "lightColor":       light_color,
-            "textColor":        text_color,
-            "textLightColor":   text_light_color,
-            "bodyBackground":   body_bg,
-            "borderRadius":      border_radius,
-            "surfaceColor":      get_config("palette_surface", "#ffffff"),
-            "onSurfaceColor":    get_config("palette_on_surface", "#1a202c"),
-            "highlightColor":    get_config("palette_highlight", "#f4f7f9"),
+            # CSS vars
+            "primaryColor":   primary_color,
+            "secondaryColor": secondary_color,
+            "accentColor":    accent_color,
+            "highlightColor": "#f4f7f9",
+            "lightColor":     "#f1f5f9",
+            "whiteColor":     "#ffffff",
+            "textColor":      "#1e293b",
+            "textLightColor": "#64748b",
+            "bodyBackground": "#ffffff",
+            "borderRadius":   "8px",
+            "surfaceColor":   "#ffffff",
+            "onSurfaceColor": "#1a202c",
+            # Document
             "documentTitle":     ai_content.get("title") or topic,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
             "documentSubtitle":  subtitle,
-            "companyName":       company_name,
-            "emailAddress":      work_email,
-            "phoneNumber":       firm_profile.get("phone_number", ""),
-            "website":           firm_profile.get("firm_website", ""),
-            "logoUrl":           firm_profile.get("firm_logo") or firm_profile.get("logo_url") or "",
-            "logoPlaceholder":   company_name[:2].upper() if company_name else "AI",
-            "footerText":        f"© {company_name} — Strategic Property Analysis",
-            "differentiator":    firm_profile.get("branding_guidelines") or f"Expert {topic} solutions for {signals.get('audience', 'property owners')}.",
-            "ctaHeadline":       cta_headline,
-            "contactDescription": cta_text,
-            "contentsTitle":     "Table of Contents",
-            "termsTitle":        get_config("terms_title", "Terms of Use"),
-            "summary":           ai_content.get("summary", ""),
-            "image_1_url":       firm_profile.get("image_1_url") or signals.get("image_1_url"),
-            "image_2_url":       firm_profile.get("image_2_url") or signals.get("image_2_url"),
+            # Company
+            "companyName":  company_name,
+            "emailAddress": work_email,
+            "phoneNumber":  firm_profile.get("phone_number",""),
+            "website":      firm_profile.get("firm_website",""),
+            "logoUrl":      firm_profile.get("firm_logo") or firm_profile.get("logo_url") or "",
+            # Labels
+            "contentsTitle": "Table of Contents",
+            "ctaHeadline":   cta_headline,
+            "termsTitle":    "Terms of Use & Disclaimer",
+            # Terms
+            "termsSummary":    ai_content.get("legal_notice_summary",""),
+            "termsParagraph1": f"© {company_name}. All rights reserved.",
+            "termsParagraph2": f"The information in this {doc_type_label} relates to {topic} and does not constitute legal, financial, or professional advice.",
+            "termsParagraph3": "Readers are advised to verify all information independently before making project or business decisions.",
+            "termsParagraph4": f"{company_name} accepts no liability for errors, omissions, or outcomes arising from the use of this material.",
+            "termsParagraph5": "All recommendations should be validated by a qualified professional familiar with local building codes and site conditions.",
         }
 
-        # Terms
-        vars.update({
-            "termsSummary":    ai_content.get("legal_notice_summary") or f"This {doc_type_label} on {topic} is provided for informational purposes only.",
-            "termsParagraph1": f"© {company_name}. All rights reserved.",
-            "termsParagraph2": f"The information relates to {topic} and does not constitute legal, financial, or professional advice.",
-            "termsParagraph3": "Readers are advised to verify all information independently before making business decisions.",
-            "termsParagraph4": f"{company_name} accepts no liability for errors or outcomes arising from the use of this material.",
-            "termsParagraph5": f"All strategic recommendations should be validated by a qualified {signals.get('industry','industry')} professional.",
-        })
+        # ── Image slots — ONLY set when a real URL exists ──────────────────
+        # Absent key → {{#if image_N_url}} evaluates falsy → no broken placeholder
+        for i in range(1, 7):
+            url = str(firm_profile.get(f"image_{i}_url") or "").strip()
+            if url:
+                vars[f"image_{i}_url"] = url
 
-        # TOC HTML
-        toc_html_parts = []
-        for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
-            fw_entry  = ai_content.get("framework", {}).get(key, {})
-            sec_title = fw_entry.get("title") or default_title
-            page_num  = str(idx + 4).zfill(2) # Page 1: Cover, 2: Terms, 3: TOC, 4: First Section
-            target_id = f"section-{key}"
-            toc_html_parts.append(
+        # ── TOC — pre-built HTML, no Handlebars loop needed ────────────────
+        toc_parts = []
+        for idx, (key, default_title, _, _, _) in enumerate(SECTIONS):
+            fw    = ai_content.get("framework",{}).get(key,{})
+            title = fw.get("title") or default_title
+            page  = str(idx + 4).zfill(2)   # Cover=01, Terms=02, TOC=03, sections=04+
+            toc_parts.append(
                 f'<div class="toc-item">'
                 f'<span class="toc-num">{str(idx+1).zfill(2)}</span>'
-                f'<a href="#{target_id}" class="toc-label">{sec_title}</a>'
-                f'<span class="toc-page">{page_num}</span>'
+                f'<span class="toc-label">{title}</span>'
+                f'<span class="toc-page">{page}</span>'
                 f'</div>'
             )
-        vars["toc_sections_html"] = "\n".join(toc_html_parts)
-        vars["toc_html"] = vars["toc_sections_html"] # Backward compatibility
+        vars["toc_sections_html"] = "\n".join(toc_parts)
+        vars["toc_html"]          = vars["toc_sections_html"]
 
-        # Section vars — set once, protected
+        # ── Per-section vars ───────────────────────────────────────────────
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
-            fw_entry  = ai_content.get("framework", {}).get(key, {})
-            sec_title = fw_entry.get("title") or default_title
-            content   = ai_content.get(key, "")
-            s_idx     = idx + 1
+            fw      = ai_content.get("framework",{}).get(key,{})
+            title   = fw.get("title") or default_title
+            content = ai_content.get(key,"")
+            s_idx   = idx + 1
 
-            # Map old executive_summary to introduction if needed
-            if key == "introduction" and not content:
-                content = ai_content.get("executive_summary", "")
-
-            vars[f"customTitle{s_idx}"]   = sec_title
-            vars[f"section_{key}_full_html"] = content # Full content injection for Template.html
-            vars[f"section_{key}_id"] = f"section-{key}" # Fix missing anchor ID
-
-            # Inject the standard title variable used in some templates
-            vars[f"section_{key}_title"] = sec_title
-            vars[f"section_{key}_kicker"] = fw_entry.get("kicker") or default_label
-            
-            # Plain text slots
-            vars[f"section_{key}_intro"]   = self._extract_intro_text(content)
-            vars[f"section_{key}_support"] = self._extract_support_text(content)
-
+            # The template uses {{section_KEY_full_html}} — injected as raw HTML
+            vars[f"customTitle{s_idx}"]          = title
+            vars[f"section_{key}_full_html"]     = content   # ← raw HTML injection
+            vars[f"section_{key}_id"]            = f"section-{key}"
+            vars[f"section_{key}_title"]         = title
+            vars[f"section_{key}_kicker"]        = default_label
+            # Plain-text slots (for any legacy template parts)
+            vars[f"section_{key}_intro"]         = self._extract_intro_text(content)
+            vars[f"section_{key}_support"]       = self._extract_support_text(content)
             # Stat
-            stat_val, stat_lbl = self._extract_stat(content)
-            vars[f"section_{key}_stat_val"] = stat_val
-            vars[f"section_{key}_stat_lbl"] = stat_lbl
-
-            # Bullets HTML — raw injection
-            bullet_texts = self._extract_bullets_text(content)
-            vars[f"section_{key}_bullets_html"] = "".join(f"<li>{bt}</li>" for bt in bullet_texts) if bullet_texts else ""
-
-            # Image URL — only if real URL exists
-            user_img_url = str(firm_profile.get(f"image_{s_idx}_url") or "").strip()
-            vars[f"section_{key}_image_url"]     = user_img_url
-            vars[f"section_{key}_image_caption"] = f"{sec_title} — Strategic Visual"
+            sv, sl = self._extract_stat(content)
+            vars[f"section_{key}_stat_val"]      = sv
+            vars[f"section_{key}_stat_lbl"]      = sl
+            # Bullet HTML
+            vars[f"section_{key}_bullets_html"]  = self._extract_bullets_html(content)
 
         # Page numbers
         for n in range(2, 16):
@@ -672,90 +627,44 @@ class GroqClient:
 
         return vars
 
-    # ─────────────────────────────────────────────────────────────────────
-    # EXTRACTION HELPERS — all return plain text
-    # ─────────────────────────────────────────────────────────────────────
-
-    def _html_to_text(self, html: str) -> str:
-        if not html: return ""
-        return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', html)).strip()
+    # ──────────────────────────────────────────────────────────────────────
+    # EXTRACTION HELPERS
+    # ──────────────────────────────────────────────────────────────────────
 
     def _extract_intro_text(self, html: str, max_chars: int = 220) -> str:
         if not html: return ""
-        match = re.search(r'<p>(.*?)</p>', html, re.S)
-        text = self._html_to_text(match.group(1)) if match else self._html_to_text(re.split(r'<h[1-6]>', html, flags=re.I)[0])
-        if len(text) <= max_chars:
-            return text
-        truncated = text[:max_chars]
-        last_end = max(truncated.rfind('.'), truncated.rfind('!'), truncated.rfind('?'))
-        return text[:last_end + 1] if last_end > max_chars // 2 else truncated.rstrip() + "…"
+        m    = re.search(r'<p>(.*?)</p>', html, re.S)
+        text = _html_to_text(m.group(1)) if m else _html_to_text(html.split('<h')[0])
+        if len(text) <= max_chars: return text
+        trunc = text[:max_chars]
+        end   = max(trunc.rfind('.'), trunc.rfind('!'), trunc.rfind('?'))
+        return text[:end+1] if end > max_chars//2 else trunc.rstrip() + "…"
 
     def _extract_support_text(self, html: str, max_chars: int = 400) -> str:
         if not html: return ""
         paras = re.findall(r'<p>(.*?)</p>', html, re.S)
         if len(paras) <= 1: return ""
-        combined = " ".join(self._html_to_text(p) for p in paras[1:3])
-        if len(combined) <= max_chars:
-            return combined
-        truncated = combined[:max_chars]
-        last_end = max(truncated.rfind('.'), truncated.rfind('!'), truncated.rfind('?'))
-        return combined[:last_end + 1] if last_end > max_chars // 2 else truncated.rstrip() + "…"
+        combined = " ".join(_html_to_text(p) for p in paras[1:3])
+        if len(combined) <= max_chars: return combined
+        trunc = combined[:max_chars]
+        end   = max(trunc.rfind('.'), trunc.rfind('!'), trunc.rfind('?'))
+        return combined[:end+1] if end > max_chars//2 else trunc.rstrip() + "…"
 
-    def _extract_bullets_text(self, html: str) -> List[str]:
+    def _extract_bullets_html(self, html: str) -> str:
         items = re.findall(r'<li>(.*?)</li>', html, re.S)
         if not items:
-            items = re.findall(r'<h3>(.*?)</h3>', html)
-        return [self._html_to_text(item) for item in items[:5]]
+            items = [re.sub(r'<[^>]+>',' ',h).strip() for h in re.findall(r'<h3>(.*?)</h3>', html)]
+        return "".join(f"<li>{_html_to_text(it)}</li>" for it in items[:5])
 
-    def _extract_stat(self, html: str) -> Tuple[str, str]:
-        if not html: return ("", "")
-        match = re.search(r'(\d+(?:\.\d+)?%\+?|\$\d+(?:\.\d+)?[MBKmb]?|\d{2,}(?:,\d{3})*)', html)
-        if not match: return ("", "")
-        val = match.group(1)
-        start = max(0, match.start() - 80)
-        end   = min(len(html), match.end() + 80)
-        ctx   = self._html_to_text(html[start:end])
-        for kw in ["efficiency", "savings", "roi", "reduction", "increase", "growth", "improvement", "energy", "cost"]:
-            if kw in ctx.lower():
-                return (val, kw.title())
+    def _extract_stat(self, html: str) -> Tuple[str,str]:
+        if not html: return ("","")
+        m = re.search(r'(\d+(?:\.\d+)?%\+?|\$\d+(?:\.\d+)?[MBKmb]?|\d{2,}(?:,\d{3})*)', html)
+        if not m: return ("","")
+        val = m.group(1)
+        ctx = _html_to_text(html[max(0,m.start()-80):min(len(html),m.end()+80)]).lower()
+        for kw in ["efficiency","savings","roi","reduction","increase","growth","energy","cost"]:
+            if kw in ctx: return (val, kw.title())
         return (val, "Key Metric")
-
-    def _extract_cta(self, html: str, data: Dict):
-        match = re.search(r'<h3>(.*?)</h3>', html)
-        if match:
-            data["ctaHeadline"] = self._html_to_text(match.group(1))
-
-    def _sanitize_html(self, html: str) -> str:
-        if not html: return html
-        html = html.strip().strip('"')
-        
-        # Pass 1: Remove common markdown leaks if any
-        html = re.sub(r'^#+\s+.*$', '', html, flags=re.MULTILINE) # Strip MD headers
-        html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html) # MD bold to HTML
-        
-        # Pass 2: Strip all tags except allowed ones
-        html = re.sub(r'<(/?)(\w+)([^>]*)>', lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "", html)
-        
-        # Pass 3: Fix double-escaped characters that might show up as raw tags
-        html = html.replace("&lt;", "<").replace("&gt;", ">")
-        # Re-apply tag stripping after fixing escapes to be safe
-        html = re.sub(r'<(/?)(\w+)([^>]*)>', lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "", html)
-        
-        return self._ensure_closed_tags(html).strip()
-
-    def _ensure_closed_tags(self, html: str) -> str:
-        void  = {"br", "hr", "img", "input", "link", "meta"}
-        stack = []
-        for closing, tag in re.findall(r"<(/?)([a-zA-Z1-6]+)", html):
-            tag = tag.lower()
-            if tag in void: continue
-            if closing:
-                if stack and stack[-1] == tag: stack.pop()
-            else:
-                stack.append(tag)
-        for tag in reversed(stack):
-            html += f"</{tag}>"
-        return html
 
     def ensure_section_content(self, sections, signals, firm_profile):
         return sections
