@@ -124,173 +124,191 @@ SECTION_PROMPTS = {
 Write a 350-400 word Executive Summary for a {lead_magnet_type} on **{topic}** for **{audience}**.
 
 STRICT RULES:
-- Start with a specific market statistic or regulatory fact. NOT "In this guide" or "Welcome".
-- Paragraph 1 (120+ words): Why {topic} is urgent for {audience} right now. Name a specific regulation or market shift.
-- Paragraph 2 (120+ words): The commercial opportunity — property value, cost reduction, compliance advantage.
-- Paragraph 3 (100+ words): What this guide delivers. Specific, not generic.
-- Mention at least one named standard (NCC, LEED, NABERS, Passive House, BASIX, WELL, etc.)
-- Zero filler phrases. Zero "our firm" or "we believe".
-Output: raw HTML only. <p> paragraphs. <strong> for key terms/numbers. No markdown.""",
+- The content must be 100% specific to **{topic}** — not generic business advice.
+- Start with a striking fact, statistic, or market reality about **{topic}** right now. NOT "In this guide" or "Welcome".
+- Paragraph 1 (120+ words): Why **{topic}** is urgent for **{audience}** right now. Reference a real market condition, regulation, or pain point specific to this topic.
+- Paragraph 2 (120+ words): The commercial or strategic opportunity that mastering **{topic}** creates — cost savings, revenue, efficiency, competitive edge, compliance — specific to this topic.
+- Paragraph 3 (100+ words): What this guide delivers to **{audience}**. Name specific outcomes they will gain.
+- Reference at least one named framework, standard, tool, methodology, or regulation relevant to **{topic}**.
+- Zero filler phrases ("In conclusion...", "It is important to note..."). Zero "our firm" or "we believe".
+- Every sentence must reference **{topic}** or the pain points: {pain_points}
+Output: raw HTML only. <p> for paragraphs. <strong> for key terms/numbers. No markdown.""",
 
 "industry_analysis": """\
 Write a 380-420 word Industry Problem Analysis on **{topic}** for **{audience}**.
 
+The problems MUST be specific to **{topic}** — not generic business problems.
+Pain points to address: {pain_points}
+
 STRUCTURE — exactly 4 problems, each with its own <h3>:
-  <h3>[Problem Name]</h3>
-  <p>[What triggers it. 80-100 words. Name a regulation, cost driver, or technical constraint.]</p>
-  <p><strong>Real impact:</strong> [Specific financial or timeline consequence. 50-70 words.]</p>
+  <h3>[Problem Name — specific to {topic}]</h3>
+  <p>[What triggers this problem in the context of {topic}. 80-100 words. Name a real constraint, cost driver, or failure mode specific to this topic.]</p>
+  <p><strong>Real impact on {audience}:</strong> [Specific financial, operational, or strategic consequence. 50-70 words.]</p>
 
-PROBLEM CATEGORIES (one each, in this order):
-1. Financial / cost escalation
-2. Regulatory / compliance complexity  
-3. Technical / design integration
-4. Stakeholder / communication failure
+PROBLEM CATEGORIES (one each, adapted to {topic}):
+1. Financial / cost problem specific to {topic}
+2. Compliance, regulatory, or standards problem specific to {topic}
+3. Technical or operational execution problem specific to {topic}
+4. People, communication, or stakeholder problem specific to {topic}
 
-RULES: Every problem names a specific standard, dollar figure, or percentage. No two share a statistic.
+RULES: Every problem is anchored to {topic}. Each includes a specific figure, cost, or measurable consequence. No two share a statistic.
 Output: raw HTML only.""",
 
 "core_principles": """\
 Write a 380-420 word Key Principles section on **{topic}** for **{audience}**.
 
-STRUCTURE:
-  <p>[60-80 word intro: why these principles are non-negotiable for {topic}]</p>
-  <h3>Principle 1: [Technical Name]</h3>
-  <p>[Named standard + plain English explanation + why it matters. 80-100 words.]</p>
-  <h3>Principle 2: [Different technical domain]</h3>
-  <p>[80-100 words.]</p>
-  <h3>Principle 3: [Different domain again]</h3>
-  <p>[80-100 words.]</p>
-  <h3>Principle 4: [Different domain again]</h3>
-  <p>[80-100 words.]</p>
+All principles MUST be specific to **{topic}** — derived from how this topic actually works.
 
-RULES: Each principle covers a different domain (thermal, water, materials, energy, indoor quality, etc.).
-Every principle names a specific standard. No repeated statistics.
+STRUCTURE:
+  <p>[60-80 word intro: why these principles are foundational for anyone working in {topic}]</p>
+  <h3>Principle 1: [Name specific to {topic}]</h3>
+  <p>[What this principle means in the context of {topic}, why it matters, real-world consequence of ignoring it. 80-100 words.]</p>
+  <h3>Principle 2: [Different aspect of {topic}]</h3>
+  <p>[80-100 words. Different domain from Principle 1.]</p>
+  <h3>Principle 3: [Different aspect of {topic}]</h3>
+  <p>[80-100 words. Different domain.]</p>
+  <h3>Principle 4: [Different aspect of {topic}]</h3>
+  <p>[80-100 words. Different domain.]</p>
+
+RULES: Each principle covers a genuinely different aspect of {topic}. Reference named tools, frameworks, or standards where relevant to this specific topic. No repeated statistics.
 Output: raw HTML only.""",
 
 "practical_strategies": """\
 Write a 380-420 word Practical Strategies section on **{topic}** for **{audience}**.
 
-STRUCTURE — 3 strategies covering early design, construction, and systems phases:
-  <h3>Strategy [N]: [Action-Verb Name]</h3>
-  <p>[Technical application with named tools/methods. 100-120 words.]</p>
+All strategies MUST be specific and actionable for **{topic}** — not generic advice.
+Address these pain points: {pain_points}
+
+STRUCTURE — 3 strategies, each covering a different phase or dimension of {topic}:
+  <h3>Strategy [N]: [Action-Verb Name specific to {topic}]</h3>
+  <p>[How to execute this strategy in the context of {topic}. Name specific tools, methods, or frameworks relevant to this topic. 100-120 words.]</p>
   <ul>
-    <li><strong>Expected outcome:</strong> [Specific measurable benefit with a real number]</li>
-    <li><strong>Common mistake to avoid:</strong> [The one error that kills this strategy]</li>
-    <li><strong>Key tool or standard:</strong> [Named software, product, or method]</li>
+    <li><strong>Expected outcome:</strong> [Specific measurable benefit — a real number or result achievable in {topic}]</li>
+    <li><strong>Common mistake to avoid:</strong> [The specific error people make in {topic} that kills this strategy]</li>
+    <li><strong>Key resource:</strong> [Named tool, platform, methodology, or framework used in {topic}]</li>
   </ul>
 
-RULES: Each strategy uses a different project phase. No shared statistics. No "So," or "Another" openers.
+RULES: Each strategy is for a different phase or dimension of {topic}. No strategy can share a statistic with another. No generic openers.
 Output: raw HTML only.""",
 
 "business_benefits": """\
 Write a 380-420 word Business Benefits section on **{topic}** for **{audience}**.
 
+Benefits MUST be specific to what **{topic}** actually delivers — not generic business benefits.
+
 STRUCTURE — 3 benefit areas:
-  <h3>[Benefit Area]</h3>
-  <p>[Strategic analysis with a credible cited figure. Source: GBCA, JLL, CBRE, USGBC, CoreLogic, etc. 120-140 words.]</p>
+  <h3>[Benefit Area — specific outcome from {topic}]</h3>
+  <p>[Strategic analysis explaining exactly how {topic} delivers this benefit. Include a credible figure or data point specific to this domain. 120-140 words.]</p>
 
-BENEFIT ORDER:
-1. Property value and asset premium
-2. Operational cost reduction and ROI timeline
-3. Marketability, tenant demand, and compliance advantage
+BENEFIT ORDER (adapt names to {topic}):
+1. Financial return, cost saving, or revenue benefit specific to {topic}
+2. Operational efficiency, time saving, or performance benefit specific to {topic}
+3. Competitive, compliance, or reputation benefit specific to {topic}
 
-RULES: Each benefit cites a DIFFERENT source. Each uses a DIFFERENT percentage or figure. Write for a reader who will verify claims.
+RULES: Each benefit uses a DIFFERENT metric or figure. Benefits must feel specific to {topic}, not copy-pasted from a generic guide. Write for a reader who will verify claims.
 Output: raw HTML only.""",
 
 "case_study": """\
 Write a 420-480 word Real World Case Study on **{topic}** for **{audience}**.
 
-STRUCTURE:
-  <h3>Case Study: [Descriptive Project Name]</h3>
-  <p><strong>Project context:</strong> [Building type, scale in sqm, location type, client profile. 60-80 words.]</p>
-  <p><strong>The challenge:</strong> [Specific technical or regulatory problem. Name the constraint. 80-100 words.]</p>
-  <p><strong>The approach:</strong> [Specific strategies, technologies, and methods applied. No generics. 100-120 words.]</p>
-  <p><strong>Measured outcomes:</strong> [At least 3 specific quantified results — energy %, cost $, rating, timeline. 80-100 words.]</p>
-  <p><strong>Transferable lesson:</strong> [The single most applicable insight for {audience}. 50-70 words.]</p>
+The case study MUST be about {topic} — not a generic business story.
 
-RULES: Make it specific — real numbers, named technologies, realistic constraints. No two outcomes the same percentage. No "our firm" language.
+STRUCTURE:
+  <h3>Case Study: [Descriptive Name specific to {topic}]</h3>
+  <p><strong>Context:</strong> [Organisation type, scale, location type, profile of the people involved. Specific to {topic}. 60-80 words.]</p>
+  <p><strong>The challenge:</strong> [The specific problem they faced with {topic}. Name the exact constraint or failure. 80-100 words.]</p>
+  <p><strong>The approach:</strong> [The specific strategies, tools, and methods they used — all relevant to {topic}. No generics. 100-120 words.]</p>
+  <p><strong>Measured outcomes:</strong> [At least 3 specific quantified results from applying {topic} principles — use different metrics for each. 80-100 words.]</p>
+  <p><strong>Transferable lesson:</strong> [The single most applicable insight for {audience} working on {topic}. 50-70 words.]</p>
+
+RULES: Every element of this case study is anchored to {topic}. Real numbers. No two outcomes the same percentage. No "our firm" language.
 Output: raw HTML only.""",
 
 "risk_management": """\
 Write a 380-420 word Risk Management section on **{topic}** for **{audience}**.
 
-STRUCTURE — 3 non-obvious risks:
-  <h3>[Risk Name — specific, not generic like "Budget Overrun"]</h3>
-  <p>[How it manifests and what triggers it. Name the mechanism. 80-100 words.]</p>
-  <p><strong>Professional mitigation:</strong> [Specific safeguard — contract clause, test protocol, or named standard. 70-90 words.]</p>
+Risks MUST be specific to **{topic}** — the real failure modes and dangers in this domain.
 
-RISK CATEGORIES (one each):
-1. Technical/design failure (e.g. thermal bridging, embodied carbon error)
-2. Regulatory/compliance (e.g. greenwashing liability, code non-compliance)
-3. Commercial/procurement (e.g. contractor skill gap, material substitution)
+STRUCTURE — 3 non-obvious risks specific to {topic}:
+  <h3>[Risk Name — a real, specific risk in {topic}]</h3>
+  <p>[How this risk manifests in {topic}, what triggers it, why it catches people off guard. 80-100 words.]</p>
+  <p><strong>Professional mitigation:</strong> [Specific action, process, tool, or safeguard that prevents this risk in {topic}. 70-90 words.]</p>
 
-RULES: Each risk is a different category. Each mitigation references a specific document, contract type, or test.
+RISK CATEGORIES (adapted to {topic}):
+1. Execution or technical risk specific to {topic}
+2. Compliance, legal, or standards risk specific to {topic}
+3. Strategic or commercial risk specific to {topic}
+
+RULES: Each risk is genuinely specific to {topic} — not a risk that could apply to any industry. Each mitigation references a specific action, document type, or process relevant to {topic}.
 Output: raw HTML only.""",
 
 "implementation_roadmap": """\
 Write a 380-420 word Implementation Roadmap for **{topic}** for **{audience}**.
 
-STRUCTURE — exactly 6 phases:
-  <h3>Phase [N]: [Phase Name] — [Typical Duration]</h3>
-  <p>[Who does what, what the client receives as a deliverable. Specific actions. 70-90 words.]</p>
+The phases MUST reflect how {topic} is actually implemented — not a generic project plan.
 
-PHASES:
-1. Feasibility & Business Case (2-4 weeks)
-2. Site & Climate Analysis (2-3 weeks)
-3. Integrated Design Development (6-12 weeks)
-4. Material Specification & Procurement (4-8 weeks)
-5. Construction & Commissioning (project duration)
-6. Post-Occupancy Evaluation (3-12 months post-handover)
+STRUCTURE — exactly 6 phases adapted to how {topic} works:
+  <h3>Phase [N]: [Phase Name relevant to {topic}] — [Typical Duration]</h3>
+  <p>[What happens in this phase specific to {topic}, who is responsible, what the deliverable is. 70-90 words.]</p>
 
-RULES: Each phase has a clear start trigger and end deliverable. No overlap between phases.
+Generate 6 sequential phases that reflect the ACTUAL workflow for implementing {topic}.
+Phase names and durations should be realistic for this specific topic.
+Each phase must have a clear start trigger and end deliverable specific to {topic}.
+
+RULES: Phases must match how {topic} is actually done — not generic project management. No overlap.
 Output: raw HTML only.""",
 
 "future_trends": """\
 Write a 380-420 word Future Trends section on **{topic}** for **{audience}**.
 
-STRUCTURE — 4 trends:
-  <h3>[Trend Name]</h3>
-  <p>[What drives it, when it mainstreams, what {audience} must do NOW to prepare. 100-120 words. Name specific technologies, regulations, or market forces.]</p>
+Trends MUST be specific to **{topic}** — what is actually changing in this domain.
 
-TRENDS TO COVER:
-1. Net-zero mandates and embodied carbon legislation tightening
-2. AI-assisted building performance simulation (EnergyPlus, IESVE, digital twins)
-3. Mass timber, CLT, and low-carbon structural systems
-4. Smart building integration: IoT sensors, automated commissioning, real-time NABERS tracking
+STRUCTURE — 4 trends that are genuinely emerging in {topic}:
+  <h3>[Trend Name — specific to {topic}]</h3>
+  <p>[What is driving this trend in {topic}, when it is expected to mainstream, what {audience} must do NOW to prepare. 100-120 words. Reference specific technologies, regulations, tools, or market forces relevant to {topic}.]</p>
 
-RULES: Each trend explains WHY it is accelerating. Each includes a specific timeline or market figure. No shared statistics.
+Generate 4 real, emerging trends in the domain of {topic} — not generic technology trends.
+Each trend must explain WHY it is happening in {topic} specifically.
+Each must include a timeline or market figure.
+No two trends can share the same driver or statistic.
+
+RULES: All trends are anchored to {topic}. Generic tech trends (AI, automation) only included if directly relevant to {topic}.
 Output: raw HTML only.""",
 
 "key_takeaways": """\
 Write a 300-350 word Key Takeaways section for **{topic}** for **{audience}**.
 
-STRUCTURE:
-  <h3>What Every {audience} Must Know</h3>
-  <p>[60-80 word framing: why these 5 insights are the most actionable from this guide]</p>
-  <ul>
-    <li><strong>[Label]:</strong> [Insight synthesising principles/challenges. 40-60 words.]</li>
-    <li><strong>[Label]:</strong> [Insight from strategies/roadmap. Actionable. 40-60 words.]</li>
-    <li><strong>[Label]:</strong> [Insight from risks/case study. Protective. 40-60 words.]</li>
-    <li><strong>[Label]:</strong> [Insight from business benefits. Commercial. 40-60 words.]</li>
-    <li><strong>[Label]:</strong> [Insight from future trends. Forward-looking. 40-60 words.]</li>
-  </ul>
-  <p>[50-70 word closing: what to do in the next 30 days]</p>
+Takeaways MUST synthesise what was covered about **{topic}** — not generic insights.
 
-RULES: Every takeaway synthesises a DIFFERENT section. No repeated statistics within this section.
+STRUCTURE:
+  <h3>What Every {audience} Must Know About {topic}</h3>
+  <p>[60-80 word framing: why these 5 insights from this guide on {topic} are the most actionable]</p>
+  <ul>
+    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} that synthesises the challenges section. 40-60 words.]</li>
+    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the strategies section. Actionable. 40-60 words.]</li>
+    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the risks section. Protective. 40-60 words.]</li>
+    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the benefits section. Commercial. 40-60 words.]</li>
+    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the trends section. Forward-looking. 40-60 words.]</li>
+  </ul>
+  <p>[50-70 word closing: the single most important next action for {audience} regarding {topic}]</p>
+
+RULES: Every takeaway references {topic} explicitly. No repeated statistics.
 Output: raw HTML only.""",
 
 "call_to_action": """\
-Write a 350-400 word Call to Action close for **{topic}** — consulting-grade persuasive writing.
+Write a 350-400 word Call to Action close for a guide on **{topic}** for **{audience}**.
+
+The CTA must be relevant to **{topic}** — reference the specific value and context of this guide.
 
 STRUCTURE:
-  <h3>The Decision That Separates High-Performers</h3>
-  <p>[100-120 words: Acknowledge the complexity the reader now understands. Reference a specific market or regulatory shift that makes acting now smarter than waiting. No generic sustainability language.]</p>
-  <h3>What a Consultation Actually Looks Like</h3>
-  <p>[100-120 words: Describe the first meeting concretely — questions answered, what they walk away with, why it is low-risk.]</p>
-  <h3>Why the Timing Matters</h3>
-  <p>[80-100 words: One specific market, regulatory, or cost reason to act in the next 90 days. Name a real deadline or market trend.]</p>
+  <h3>[Compelling heading that references {topic} and the reader's situation]</h3>
+  <p>[100-120 words: Acknowledge what the reader now understands about {topic}. Reference a specific challenge or opportunity from {topic} that makes acting now smarter than waiting. No generic language.]</p>
+  <h3>What Working Together Looks Like</h3>
+  <p>[100-120 words: Describe the first engagement concretely — what questions get answered about {topic}, what the reader walks away with, why it is low-risk. Make it specific to {topic}.]</p>
+  <h3>Why {topic} Expertise Matters Now</h3>
+  <p>[80-100 words: One specific reason tied to current market conditions, emerging requirements, or competitive pressure in {topic} that makes acting in the next 90 days smarter than deferring.]</p>
 
-RULES: Zero "contact us today" without context. Zero "At our firm, we believe". Write as a trusted adviser, not a salesperson.
+RULES: Every paragraph references {topic}. Zero "contact us today" without context. Zero "At our firm, we believe". Write as a trusted adviser.
 Output: raw HTML only.""",
 }
 
@@ -336,7 +354,7 @@ class GroqClient:
             "firm_usp":        str(user_answers.get("firm_usp", "")).strip(),
             "desired_outcome": user_answers.get("desired_outcome", ""),
             "tone":            user_answers.get("tone", "Professional"),
-            "industry":        user_answers.get("industry", "Architecture and Design"),
+            "industry":        user_answers.get("industry", ""),
             "document_type":   doc_type,
         }
 
@@ -355,14 +373,14 @@ class GroqClient:
         type_label  = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
         topic       = signals["topic"]
         audience    = signals["audience"]
-        pain_points = signals.get("pain_points", "") or "high project costs, complex compliance, client expectations"
-        firm_usp    = signals.get("firm_usp", "") or "integrated sustainable design expertise"
+        pain_points = signals.get("pain_points", "")
+        firm_usp    = signals.get("firm_usp", "")
 
         logger.info(f"🚀 Two-pass | type={doc_type} | topic={topic[:40]}")
 
         # ── Pass 1a: Title ─────────────────────────────────────────────────
-        title    = topic
-        subtitle = f"A Strategic Guide for {audience}"
+        title    = ""
+        subtitle = ""
         try:
             r = self.client.chat.completions.create(
                 model=self.model,
@@ -398,12 +416,14 @@ class GroqClient:
 
         # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            "You are a senior architectural consultant and premium technical report writer. "
+            f"You are a senior expert consultant and premium professional report writer "
+            f"specialising in {topic}. "
             "Every response is raw HTML only — zero markdown, zero preamble, zero sign-off, zero code fences. "
-            "Content must be dense with specific insight: real standards, named technologies, credible figures. "
+            f"Content must be 100% specific to {topic} — dense with insight, real examples, "
+            f"named tools/frameworks/standards relevant to {topic}, and credible figures. "
             "Minimum 300 words per response. Never repeat statistics across paragraphs. "
             "Never use first-person firm voice ('our firm', 'we believe', 'our team'). "
-            "Write as an independent expert adviser."
+            "Write as an independent expert adviser to someone who works in or with this topic every day."
         )
 
         sections_content: Dict[str, str] = {}
@@ -494,7 +514,6 @@ class GroqClient:
             normalized["framework"][key] = {"title": title or default_title, "kicker": default_label}
 
         normalized["summary"]              = normalized.get("executive_summary","")[:500]
-        normalized["cta_headline"]         = "Ready to Start Your Project?"
         normalized["legal_notice_summary"] = (
             "This document provides strategic guidance only and should be verified "
             "by a qualified professional before implementation."
@@ -520,21 +539,22 @@ class GroqClient:
 
         work_email   = firm_profile.get("work_email", "")
         raw_name     = firm_profile.get("firm_name") or firm_profile.get("name") or ""
-        company_name = _clean_company_name(raw_name, work_email) or signals.get("topic","Strategic Analysis")
+        company_name = _clean_company_name(raw_name, work_email)
 
-        topic    = _clean_topic_slug(str(signals.get("topic","Industry Best Practices")))
+        topic    = _clean_topic_slug(str(signals.get("topic", "")))
         raw_sub  = ai_content.get("subtitle") or ""
+        # Use AI subtitle if it exists and isn't just the topic repeated; otherwise empty
         subtitle = (
             _clean_topic_slug(raw_sub)
             if raw_sub and raw_sub.strip().lower() != topic.strip().lower()
-            else f"A Strategic Guide for {signals.get('audience','Industry Professionals')}"
+            else ""
         )
-        doc_type_label = ai_content.get("document_type_label") or "STRATEGIC GUIDE"
+        doc_type_label = ai_content.get("document_type_label") or ""
 
-        # CTA headline from conclusion section
+        # CTA headline — from AI-generated call_to_action section only
         cta_html  = ai_content.get("call_to_action","")
         h3_match  = re.search(r'<h3>(.*?)</h3>', cta_html)
-        cta_headline = _html_to_text(h3_match.group(1)) if h3_match else f"Ready to Implement Your {topic} Strategy?"
+        cta_headline = _html_to_text(h3_match.group(1)) if h3_match else ""
 
         vars: Dict[str, Any] = {
             # CSS vars
@@ -571,7 +591,7 @@ class GroqClient:
             "termsParagraph2": f"The information in this {doc_type_label} relates to {topic} and does not constitute legal, financial, or professional advice.",
             "termsParagraph3": "Readers are advised to verify all information independently before making project or business decisions.",
             "termsParagraph4": f"{company_name} accepts no liability for errors, omissions, or outcomes arising from the use of this material.",
-            "termsParagraph5": "All recommendations should be validated by a qualified professional familiar with local building codes and site conditions.",
+            "termsParagraph5": f"All recommendations should be validated by a qualified {signals.get('industry', topic)} professional before implementation.",
         }
 
         # ── Image slots — ONLY set when a real URL exists ──────────────────
