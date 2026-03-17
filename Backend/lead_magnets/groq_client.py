@@ -121,194 +121,291 @@ def _ensure_closed_tags(html: str) -> str:
 SECTION_PROMPTS = {
 
 "executive_summary": """\
-Write a 350-400 word Executive Summary for a {lead_magnet_type} on **{topic}** for **{audience}**.
+Write the EXECUTIVE SUMMARY section for a premium guide on **{topic}** for **{audience}**.
 
-STRICT RULES:
-- The content must be 100% specific to **{topic}** — not generic business advice.
-- Start with a striking fact, statistic, or market reality about **{topic}** right now. NOT "In this guide" or "Welcome".
-- Paragraph 1 (120+ words): Why **{topic}** is urgent for **{audience}** right now. Reference a real market condition, regulation, or pain point specific to this topic.
-- Paragraph 2 (120+ words): The commercial or strategic opportunity that mastering **{topic}** creates — cost savings, revenue, efficiency, competitive edge, compliance — specific to this topic.
-- Paragraph 3 (100+ words): What this guide delivers to **{audience}**. Name specific outcomes they will gain.
-- Reference at least one named framework, standard, tool, methodology, or regulation relevant to **{topic}**.
-- Zero filler phrases ("In conclusion...", "It is important to note..."). Zero "our firm" or "we believe".
-- Every sentence must reference **{topic}** or the pain points: {pain_points}
-Output: raw HTML only. <p> for paragraphs. <strong> for key terms/numbers. No markdown.""",
+MANDATORY STRUCTURE (follow exactly):
+
+<p>[HOOK — open with a single provocative fact or market reality specific to {topic}. Not "In this guide". Not "Welcome". A fact that makes {audience} stop and pay attention. 40-60 words.]</p>
+
+<p>[THE PROBLEM — why {topic} is harder than most {audience} realise right now. Name the specific friction, cost, or consequence they are likely experiencing. Reference a real market condition or constraint. 100-120 words.]</p>
+
+<p>[THE OPPORTUNITY — what mastering {topic} actually unlocks. Be specific: cost saved, revenue gained, risk avoided, competitive position improved. Name a concrete outcome. 100-120 words.]</p>
+
+<blockquote><strong>What this guide delivers:</strong> [3-4 specific things the reader will be able to DO after reading — not "understand" or "learn about" — actual actions they can take on {topic}.]</blockquote>
+
+<p>[CLOSING — one sentence that makes the reader want to turn the page. Reference the first section they are about to read.]</p>
+
+BANNED: "In this guide...", "It is important to note...", "our firm", "we believe", any sentence that could apply to a different topic.
+Output: raw HTML only.""",
 
 "industry_analysis": """\
-Write a 380-420 word Industry Problem Analysis on **{topic}** for **{audience}**.
+Write the INDUSTRY PROBLEM ANALYSIS section for a premium guide on **{topic}** for **{audience}**.
 
-The problems MUST be specific to **{topic}** — not generic business problems.
+This section must make the reader feel SEEN — like you understand their exact frustrations with {topic}.
 Pain points to address: {pain_points}
 
-STRUCTURE — exactly 4 problems, each with its own <h3>:
-  <h3>[Problem Name — specific to {topic}]</h3>
-  <p>[What triggers this problem in the context of {topic}. 80-100 words. Name a real constraint, cost driver, or failure mode specific to this topic.]</p>
-  <p><strong>Real impact on {audience}:</strong> [Specific financial, operational, or strategic consequence. 50-70 words.]</p>
+MANDATORY STRUCTURE:
 
-PROBLEM CATEGORIES (one each, adapted to {topic}):
-1. Financial / cost problem specific to {topic}
-2. Compliance, regulatory, or standards problem specific to {topic}
-3. Technical or operational execution problem specific to {topic}
-4. People, communication, or stakeholder problem specific to {topic}
+<p>[1-2 sentence opener that names the core tension in {topic} without being generic. 30-50 words.]</p>
 
-RULES: Every problem is anchored to {topic}. Each includes a specific figure, cost, or measurable consequence. No two share a statistic.
+<h3>[Problem 1 — Financial/Cost: a specific cost problem in {topic}]</h3>
+<p>[What triggers this problem, how it compounds, what it actually costs. 80-100 words. Include a realistic figure.]</p>
+<p><strong>Why this matters:</strong> [The downstream consequence for {audience} if this goes unaddressed. 40-60 words.]</p>
+
+<h3>[Problem 2 — Execution/Technical: a specific doing problem in {topic}]</h3>
+<p>[The specific operational or technical failure mode. What people try and why it fails. 80-100 words.]</p>
+<p><strong>Why this matters:</strong> [Consequence. 40-60 words.]</p>
+
+<h3>[Problem 3 — Compliance/Standards: a specific rules or requirements problem in {topic}]</h3>
+<p>[What the regulation/standard requires, where people fall short, what it costs to get wrong. 80-100 words.]</p>
+<p><strong>Why this matters:</strong> [Consequence. 40-60 words.]</p>
+
+<h3>[Problem 4 — People/Stakeholder: a specific communication or alignment problem in {topic}]</h3>
+<p>[The human side of the problem — misaligned expectations, knowledge gaps, trust failures. 80-100 words.]</p>
+<p><strong>Why this matters:</strong> [Consequence. 40-60 words.]</p>
+
+<blockquote><strong>The pattern:</strong> [A 2-3 sentence observation about what connects all 4 problems — the underlying root cause in {topic} that, if fixed, fixes most of the rest.]</blockquote>
+
+BANNED: Generic problems that could apply to any industry. Every problem must be specific to {topic}.
 Output: raw HTML only.""",
 
 "core_principles": """\
-Write a 380-420 word Key Principles section on **{topic}** for **{audience}**.
+Write the KEY PRINCIPLES section for a premium guide on **{topic}** for **{audience}**.
 
-All principles MUST be specific to **{topic}** — derived from how this topic actually works.
+These are not tips. These are the non-negotiable foundations that separate people who get results in {topic} from those who don't.
 
-STRUCTURE:
-  <p>[60-80 word intro: why these principles are foundational for anyone working in {topic}]</p>
-  <h3>Principle 1: [Name specific to {topic}]</h3>
-  <p>[What this principle means in the context of {topic}, why it matters, real-world consequence of ignoring it. 80-100 words.]</p>
-  <h3>Principle 2: [Different aspect of {topic}]</h3>
-  <p>[80-100 words. Different domain from Principle 1.]</p>
-  <h3>Principle 3: [Different aspect of {topic}]</h3>
-  <p>[80-100 words. Different domain.]</p>
-  <h3>Principle 4: [Different aspect of {topic}]</h3>
-  <p>[80-100 words. Different domain.]</p>
+MANDATORY STRUCTURE:
 
-RULES: Each principle covers a genuinely different aspect of {topic}. Reference named tools, frameworks, or standards where relevant to this specific topic. No repeated statistics.
+<p>[Opener: why these principles exist — what happens to {audience} who skip them. 50-70 words. Specific to {topic}.]</p>
+
+<h3>Principle 1: [Name — make it memorable, specific to {topic}]</h3>
+<p>[What this principle means in practice for {topic}. The insight behind it. What it looks like when followed vs ignored. Include a real-world implication. 90-110 words.]</p>
+
+<h3>Principle 2: [Different dimension of {topic}]</h3>
+<p>[Same format. Different domain. 90-110 words.]</p>
+
+<h3>Principle 3: [Different dimension]</h3>
+<p>[90-110 words.]</p>
+
+<h3>Principle 4: [Different dimension]</h3>
+<p>[90-110 words.]</p>
+
+<blockquote><strong>The master principle:</strong> [One sentence that ties all 4 together — the single idea that, if a {audience} only remembered one thing from this section, what would it be?]</blockquote>
+
+BANNED: Principles that are obvious or generic. Each must teach something that a professional in {topic} might not already know.
 Output: raw HTML only.""",
 
 "practical_strategies": """\
-Write a 380-420 word Practical Strategies section on **{topic}** for **{audience}**.
+Write the PRACTICAL STRATEGIES section for a premium guide on **{topic}** for **{audience}**.
 
-All strategies MUST be specific and actionable for **{topic}** — not generic advice.
-Address these pain points: {pain_points}
+These strategies must be immediately actionable. Not theory. Not "consider doing X". Specific steps.
+Pain points: {pain_points}
 
-STRUCTURE — 3 strategies, each covering a different phase or dimension of {topic}:
-  <h3>Strategy [N]: [Action-Verb Name specific to {topic}]</h3>
-  <p>[How to execute this strategy in the context of {topic}. Name specific tools, methods, or frameworks relevant to this topic. 100-120 words.]</p>
-  <ul>
-    <li><strong>Expected outcome:</strong> [Specific measurable benefit — a real number or result achievable in {topic}]</li>
-    <li><strong>Common mistake to avoid:</strong> [The specific error people make in {topic} that kills this strategy]</li>
-    <li><strong>Key resource:</strong> [Named tool, platform, methodology, or framework used in {topic}]</li>
-  </ul>
+MANDATORY STRUCTURE:
 
-RULES: Each strategy is for a different phase or dimension of {topic}. No strategy can share a statistic with another. No generic openers.
+<p>[Opener: why most approaches to {topic} fail — the mistake that makes strategies useless. 40-60 words.]</p>
+
+<h3>Strategy 1: [Action-verb title — what to DO, specific to {topic}]</h3>
+<p>[How to execute this. Name the specific steps, tools, or methods. What it looks like in practice for {audience} working on {topic}. 100-120 words.]</p>
+<ul>
+  <li><strong>Do this first:</strong> [The single most important first action.]</li>
+  <li><strong>Watch out for:</strong> [The specific mistake that kills this strategy in {topic}.]</li>
+  <li><strong>You know it's working when:</strong> [A measurable signal of success.]</li>
+</ul>
+
+<h3>Strategy 2: [Different phase or dimension of {topic}]</h3>
+<p>[100-120 words.]</p>
+<ul>
+  <li><strong>Do this first:</strong> [First action.]</li>
+  <li><strong>Watch out for:</strong> [Specific mistake.]</li>
+  <li><strong>You know it's working when:</strong> [Success signal.]</li>
+</ul>
+
+<h3>Strategy 3: [Different phase or dimension]</h3>
+<p>[100-120 words.]</p>
+<ul>
+  <li><strong>Do this first:</strong> [First action.]</li>
+  <li><strong>Watch out for:</strong> [Specific mistake.]</li>
+  <li><strong>You know it's working when:</strong> [Success signal.]</li>
+</ul>
+
+<blockquote><strong>The sequence that works:</strong> [A 2-sentence summary of how these 3 strategies chain together — when to use each one relative to the others in {topic}.]</blockquote>
+
+BANNED: Vague advice. "Consider...", "You might want to...", "It is recommended that...". Every strategy must tell the reader exactly what to do.
 Output: raw HTML only.""",
 
 "business_benefits": """\
-Write a 380-420 word Business Benefits section on **{topic}** for **{audience}**.
+Write the BUSINESS BENEFITS section for a premium guide on **{topic}** for **{audience}**.
 
-Benefits MUST be specific to what **{topic}** actually delivers — not generic business benefits.
+This section must make the business case so clearly that a {audience} could use it to justify investment in {topic} to a decision-maker.
 
-STRUCTURE — 3 benefit areas:
-  <h3>[Benefit Area — specific outcome from {topic}]</h3>
-  <p>[Strategic analysis explaining exactly how {topic} delivers this benefit. Include a credible figure or data point specific to this domain. 120-140 words.]</p>
+MANDATORY STRUCTURE:
 
-BENEFIT ORDER (adapt names to {topic}):
-1. Financial return, cost saving, or revenue benefit specific to {topic}
-2. Operational efficiency, time saving, or performance benefit specific to {topic}
-3. Competitive, compliance, or reputation benefit specific to {topic}
+<p>[Opener: the single biggest misconception about what {topic} actually costs vs what it returns. 50-70 words.]</p>
 
-RULES: Each benefit uses a DIFFERENT metric or figure. Benefits must feel specific to {topic}, not copy-pasted from a generic guide. Write for a reader who will verify claims.
+<h3>[Benefit 1: Financial — specific return, saving, or revenue impact from {topic}]</h3>
+<p>[Explain exactly how {topic} generates this financial outcome. Be specific about the mechanism, not just the result. Include a realistic figure with context about where it comes from. 120-140 words.]</p>
+
+<h3>[Benefit 2: Operational — specific efficiency, time, or performance improvement from {topic}]</h3>
+<p>[Different metric from Benefit 1. Explain the mechanism. 120-140 words.]</p>
+
+<h3>[Benefit 3: Strategic — competitive, reputational, or compliance advantage from {topic}]</h3>
+<p>[Different from the first two. Long-term positioning value. 120-140 words.]</p>
+
+<blockquote><strong>The compounding effect:</strong> [How these 3 benefits reinforce each other over time when {audience} invests properly in {topic}. 2-3 sentences.]</blockquote>
+
+BANNED: Benefits that sound good but are impossible to verify. "Improve morale", "enhance reputation" without specifics. Every benefit needs a mechanism.
 Output: raw HTML only.""",
 
 "case_study": """\
-Write a 420-480 word Real World Case Study on **{topic}** for **{audience}**.
+Write the REAL WORLD CASE STUDY section for a premium guide on **{topic}** for **{audience}**.
 
-The case study MUST be about {topic} — not a generic business story.
+This must read like a real case study — specific, credible, detailed. Not a vague story.
 
-STRUCTURE:
-  <h3>Case Study: [Descriptive Name specific to {topic}]</h3>
-  <p><strong>Context:</strong> [Organisation type, scale, location type, profile of the people involved. Specific to {topic}. 60-80 words.]</p>
-  <p><strong>The challenge:</strong> [The specific problem they faced with {topic}. Name the exact constraint or failure. 80-100 words.]</p>
-  <p><strong>The approach:</strong> [The specific strategies, tools, and methods they used — all relevant to {topic}. No generics. 100-120 words.]</p>
-  <p><strong>Measured outcomes:</strong> [At least 3 specific quantified results from applying {topic} principles — use different metrics for each. 80-100 words.]</p>
-  <p><strong>Transferable lesson:</strong> [The single most applicable insight for {audience} working on {topic}. 50-70 words.]</p>
+MANDATORY STRUCTURE:
 
-RULES: Every element of this case study is anchored to {topic}. Real numbers. No two outcomes the same percentage. No "our firm" language.
+<h3>Case Study: [Specific descriptive title that names the situation, not just "Case Study"]</h3>
+
+<p><strong>The situation:</strong> [Organisation type, size/scale, location type, what they were trying to achieve with {topic}. Specific enough to feel real. 60-80 words.]</p>
+
+<p><strong>The problem:</strong> [The exact challenge they faced with {topic}. What had already failed. What was at stake. Name the specific constraint or failure mode. 80-100 words.]</p>
+
+<p><strong>The approach:</strong> [What they actually did — specific steps, tools, methods, decisions. No generics like "they implemented best practices". Name the actual things they did related to {topic}. 100-120 words.]</p>
+
+<p><strong>The results:</strong> [At minimum 3 outcomes. Each must use a different metric. Numbers must feel realistic and earned, not round. E.g. "37% reduction" not "40% reduction". 80-100 words.]</p>
+
+<blockquote><strong>The lesson for {audience}:</strong> [The single most transferable insight from this case — what it proves about {topic} that others should replicate. 40-60 words.]</blockquote>
+
+BANNED: The word "implement", "leverage", "utilize". Vague outcomes like "significant improvement". Every result must have a number and a unit.
 Output: raw HTML only.""",
 
 "risk_management": """\
-Write a 380-420 word Risk Management section on **{topic}** for **{audience}**.
+Write the RISK MANAGEMENT section for a premium guide on **{topic}** for **{audience}**.
 
-Risks MUST be specific to **{topic}** — the real failure modes and dangers in this domain.
+These risks must be the ones that actually hurt people in {topic} — not obvious generic risks.
 
-STRUCTURE — 3 non-obvious risks specific to {topic}:
-  <h3>[Risk Name — a real, specific risk in {topic}]</h3>
-  <p>[How this risk manifests in {topic}, what triggers it, why it catches people off guard. 80-100 words.]</p>
-  <p><strong>Professional mitigation:</strong> [Specific action, process, tool, or safeguard that prevents this risk in {topic}. 70-90 words.]</p>
+MANDATORY STRUCTURE:
 
-RISK CATEGORIES (adapted to {topic}):
-1. Execution or technical risk specific to {topic}
-2. Compliance, legal, or standards risk specific to {topic}
-3. Strategic or commercial risk specific to {topic}
+<p>[Opener: why risk management in {topic} is different from general risk thinking — the specific nature of failure in this domain. 50-70 words.]</p>
 
-RULES: Each risk is genuinely specific to {topic} — not a risk that could apply to any industry. Each mitigation references a specific action, document type, or process relevant to {topic}.
+<h3>[Risk 1: Technical/Execution — a specific failure mode in {topic} that catches experts off guard]</h3>
+<p>[How it manifests, what triggers it, why even experienced {audience} miss it. 80-100 words.]</p>
+<p><strong>How to prevent it:</strong> [Specific action, checklist, test, or process that neutralises this risk in {topic}. 60-80 words.]</p>
+
+<h3>[Risk 2: Compliance/Legal — a specific regulatory or standards risk in {topic}]</h3>
+<p>[What the rule requires, where people fall short, what the consequence is. 80-100 words.]</p>
+<p><strong>How to prevent it:</strong> [Specific safeguard. 60-80 words.]</p>
+
+<h3>[Risk 3: Commercial/Strategic — a risk that kills the business case for {topic}]</h3>
+<p>[How this risk emerges, often late in the process, and why it is hard to see coming. 80-100 words.]</p>
+<p><strong>How to prevent it:</strong> [Specific safeguard. 60-80 words.]</p>
+
+<blockquote><strong>The risk most people skip:</strong> [Name the single most underestimated risk in {topic} and why it gets ignored. 2-3 sentences.]</blockquote>
+
+BANNED: Generic risks like "budget overrun" or "timeline slippage" without specific causes tied to {topic}.
 Output: raw HTML only.""",
 
 "implementation_roadmap": """\
-Write a 380-420 word Implementation Roadmap for **{topic}** for **{audience}**.
+Write the IMPLEMENTATION ROADMAP section for a premium guide on **{topic}** for **{audience}**.
 
-The phases MUST reflect how {topic} is actually implemented — not a generic project plan.
+This is the section {audience} will screenshot and pin to their wall. Make it that useful.
 
-STRUCTURE — exactly 6 phases adapted to how {topic} works:
-  <h3>Phase [N]: [Phase Name relevant to {topic}] — [Typical Duration]</h3>
-  <p>[What happens in this phase specific to {topic}, who is responsible, what the deliverable is. 70-90 words.]</p>
+MANDATORY STRUCTURE:
 
-Generate 6 sequential phases that reflect the ACTUAL workflow for implementing {topic}.
-Phase names and durations should be realistic for this specific topic.
-Each phase must have a clear start trigger and end deliverable specific to {topic}.
+<p>[Opener: the most common sequencing mistake {audience} make when implementing {topic} — what they do first that they should do third. 50-70 words.]</p>
 
-RULES: Phases must match how {topic} is actually done — not generic project management. No overlap.
+<h3>Phase 1: [Name specific to {topic}] — [Duration]</h3>
+<p>[What happens, who does what, what decision or deliverable marks the END of this phase. 70-90 words.]</p>
+
+<h3>Phase 2: [Name] — [Duration]</h3>
+<p>[70-90 words. Different from Phase 1.]</p>
+
+<h3>Phase 3: [Name] — [Duration]</h3>
+<p>[70-90 words.]</p>
+
+<h3>Phase 4: [Name] — [Duration]</h3>
+<p>[70-90 words.]</p>
+
+<h3>Phase 5: [Name] — [Duration]</h3>
+<p>[70-90 words.]</p>
+
+<h3>Phase 6: [Name] — [Duration]</h3>
+<p>[70-90 words.]</p>
+
+<blockquote><strong>The milestone that matters most:</strong> [Name the single phase transition in {topic} implementation where most projects either succeed or fail permanently — and what makes the difference.]</blockquote>
+
+BANNED: Phases named "Planning", "Execution", "Review" — too generic. Each phase name must reflect something specific about how {topic} actually works.
 Output: raw HTML only.""",
 
 "future_trends": """\
-Write a 380-420 word Future Trends section on **{topic}** for **{audience}**.
+Write the FUTURE TRENDS section for a premium guide on **{topic}** for **{audience}**.
 
-Trends MUST be specific to **{topic}** — what is actually changing in this domain.
+These trends must be specific to {topic} — not generic "AI will change everything" statements.
 
-STRUCTURE — 4 trends that are genuinely emerging in {topic}:
-  <h3>[Trend Name — specific to {topic}]</h3>
-  <p>[What is driving this trend in {topic}, when it is expected to mainstream, what {audience} must do NOW to prepare. 100-120 words. Reference specific technologies, regulations, tools, or market forces relevant to {topic}.]</p>
+MANDATORY STRUCTURE:
 
-Generate 4 real, emerging trends in the domain of {topic} — not generic technology trends.
-Each trend must explain WHY it is happening in {topic} specifically.
-Each must include a timeline or market figure.
-No two trends can share the same driver or statistic.
+<p>[Opener: the single biggest shift happening in {topic} right now that most {audience} are underestimating. 50-70 words.]</p>
 
-RULES: All trends are anchored to {topic}. Generic tech trends (AI, automation) only included if directly relevant to {topic}.
+<h3>[Trend 1 — name it specifically, tied to {topic}]</h3>
+<p>[What is driving this trend in {topic}. What it will change. When. What {audience} should do in the next 12 months to prepare. Include a specific market signal or timeline. 100-120 words.]</p>
+
+<h3>[Trend 2 — different force in {topic}]</h3>
+<p>[Same format. 100-120 words.]</p>
+
+<h3>[Trend 3 — different force]</h3>
+<p>[100-120 words.]</p>
+
+<h3>[Trend 4 — different force]</h3>
+<p>[100-120 words.]</p>
+
+<blockquote><strong>The trend to act on now:</strong> [Which of the 4 trends has the shortest window before it becomes table stakes in {topic} — and what the cost of waiting is. 2-3 sentences.]</blockquote>
+
+BANNED: Trends that are already mainstream. Trends not specific to {topic}. Generic "digital transformation" or "AI disruption" without specific connection to {topic}.
 Output: raw HTML only.""",
 
 "key_takeaways": """\
-Write a 300-350 word Key Takeaways section for **{topic}** for **{audience}**.
+Write the KEY TAKEAWAYS section for a premium guide on **{topic}** for **{audience}**.
 
-Takeaways MUST synthesise what was covered about **{topic}** — not generic insights.
+This is the last section before the CTA. It must crystallise everything and create momentum.
 
-STRUCTURE:
-  <h3>What Every {audience} Must Know About {topic}</h3>
-  <p>[60-80 word framing: why these 5 insights from this guide on {topic} are the most actionable]</p>
-  <ul>
-    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} that synthesises the challenges section. 40-60 words.]</li>
-    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the strategies section. Actionable. 40-60 words.]</li>
-    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the risks section. Protective. 40-60 words.]</li>
-    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the benefits section. Commercial. 40-60 words.]</li>
-    <li><strong>[Label from {topic}]:</strong> [Insight specific to {topic} from the trends section. Forward-looking. 40-60 words.]</li>
-  </ul>
-  <p>[50-70 word closing: the single most important next action for {audience} regarding {topic}]</p>
+MANDATORY STRUCTURE:
 
-RULES: Every takeaway references {topic} explicitly. No repeated statistics.
+<p>[Opener: a single sentence that frames what the reader now knows about {topic} that they didn't know at the start. 30-40 words.]</p>
+
+<ul>
+  <li><strong>[Takeaway 1 label — from the challenges section]:</strong> [The most important insight about what makes {topic} hard, in 40-60 words. Specific. Memorable.]</li>
+  <li><strong>[Takeaway 2 label — from the strategies section]:</strong> [The most actionable thing to do about {topic}. 40-60 words.]</li>
+  <li><strong>[Takeaway 3 label — from the risks section]:</strong> [The most important thing to avoid in {topic}. 40-60 words.]</li>
+  <li><strong>[Takeaway 4 label — from the benefits section]:</strong> [The financial or strategic case for {topic} in one clear statement. 40-60 words.]</li>
+  <li><strong>[Takeaway 5 label — from the trends section]:</strong> [What changes if {audience} waits 12 months to act on {topic}. 40-60 words.]</li>
+</ul>
+
+<blockquote><strong>The one thing:</strong> [If the reader only does one thing after reading this guide, what should it be? Make it concrete and specific to {topic}. 2-3 sentences.]</blockquote>
+
+<p>[Closing transition — 1-2 sentences that naturally lead the reader to want to take the next step. Create gentle urgency without pressure. Specific to {topic}.]</p>
+
+BANNED: Vague takeaways like "sustainable architecture is important". Every takeaway must contain a specific, actionable or protective insight.
 Output: raw HTML only.""",
 
 "call_to_action": """\
-Write a 350-400 word Call to Action close for a guide on **{topic}** for **{audience}**.
+Write the CALL TO ACTION section for a premium guide on **{topic}** for **{audience}**.
 
-The CTA must be relevant to **{topic}** — reference the specific value and context of this guide.
+This section converts readers into enquiries. It must feel helpful, not salesy.
 
-STRUCTURE:
-  <h3>[Compelling heading that references {topic} and the reader's situation]</h3>
-  <p>[100-120 words: Acknowledge what the reader now understands about {topic}. Reference a specific challenge or opportunity from {topic} that makes acting now smarter than waiting. No generic language.]</p>
-  <h3>What Working Together Looks Like</h3>
-  <p>[100-120 words: Describe the first engagement concretely — what questions get answered about {topic}, what the reader walks away with, why it is low-risk. Make it specific to {topic}.]</p>
-  <h3>Why {topic} Expertise Matters Now</h3>
-  <p>[80-100 words: One specific reason tied to current market conditions, emerging requirements, or competitive pressure in {topic} that makes acting in the next 90 days smarter than deferring.]</p>
+MANDATORY STRUCTURE:
 
-RULES: Every paragraph references {topic}. Zero "contact us today" without context. Zero "At our firm, we believe". Write as a trusted adviser.
+<h3>[Heading that speaks to where the reader is NOW after reading this guide about {topic}]</h3>
+<p>[Acknowledge what they now understand about {topic} that makes the path forward clearer. Reference a specific insight from the guide. Then name the specific gap between knowing and doing that a consultation closes. 100-120 words.]</p>
+
+<h3>What the First Conversation Looks Like</h3>
+<p>[Describe the first meeting in concrete terms. What specific questions about {topic} get answered. What the reader walks away with — not a sales pitch, an actual deliverable or clarity. Why there is no risk to saying yes. 100-120 words.]</p>
+
+<h3>Why Timing Matters for {topic}</h3>
+<p>[One specific, real reason why acting on {topic} in the next 90 days is smarter than waiting — a market condition, upcoming deadline, cost trajectory, or competitive shift specific to {topic}. Not manufactured urgency. 70-90 words.]</p>
+
+<blockquote><strong>The next step:</strong> [One clear, low-pressure action the reader can take right now. Specific. Simple. Not "contact us for more information".]</blockquote>
+
+BANNED: "Contact us today!", "Don't miss out!", "Limited time offer", "Our team of experts". Write as a trusted adviser giving honest advice about the right next step for {topic}.
 Output: raw HTML only.""",
 }
 
@@ -328,7 +425,7 @@ class GroqClient:
         api_key      = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
         self.client      = Groq(api_key=api_key) if api_key else None
         self.model       = "llama-3.3-70b-versatile"
-        self.temperature = 0.60
+        self.temperature = 0.72
         self.max_tokens  = 4096
 
     # ──────────────────────────────────────────────────────────────────────
@@ -416,14 +513,19 @@ class GroqClient:
 
         # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            f"You are a senior expert consultant and premium professional report writer "
-            f"specialising in {topic}. "
-            "Every response is raw HTML only — zero markdown, zero preamble, zero sign-off, zero code fences. "
-            f"Content must be 100% specific to {topic} — dense with insight, real examples, "
-            f"named tools/frameworks/standards relevant to {topic}, and credible figures. "
-            "Minimum 300 words per response. Never repeat statistics across paragraphs. "
-            "Never use first-person firm voice ('our firm', 'we believe', 'our team'). "
-            "Write as an independent expert adviser to someone who works in or with this topic every day."
+            f"You are writing one section of a PREMIUM $49 downloadable lead magnet on '{topic}' for {audience}.\n\n"
+            "ABSOLUTE RULES — violating any of these means the content is rejected:\n"
+            "1. Raw HTML only. Zero markdown. Zero preamble ('Here is...', 'Sure!'). Zero sign-off.\n"
+            f"2. Every sentence must be SPECIFIC to '{topic}' and '{audience}'. Zero generic business advice.\n"
+            "3. ZERO repetition. Never repeat a phrase, stat, or idea from earlier in the same section.\n"
+            "4. Stats ONLY if they have: a source name, a unit, and a sentence explaining what they mean.\n"
+            "5. Every section must use at least 2 of these visual elements:\n"
+            "   - <blockquote> for an insight, tip, or key takeaway\n"
+            "   - <ul>/<li> for a practical list (not bullet-point padding)\n"
+            "   - <strong> to highlight the single most important term per paragraph\n"
+            "6. Sections must END with a complete thought. Never truncate mid-sentence.\n"
+            "7. Minimum 350 words. Dense, expert-level prose. No padding.\n"
+            "8. Write like a trusted adviser who has done this 100 times — confident, specific, direct."
         )
 
         sections_content: Dict[str, str] = {}
