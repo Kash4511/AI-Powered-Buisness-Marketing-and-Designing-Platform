@@ -25,7 +25,7 @@
     }
     @page :first { margin:0; @top-center { content:none; } @bottom-center { content:none; } }
 
-    .page { width:210mm; min-height:297mm; position:relative; page-break-after:always; background:var(--white); }
+    .page { width:210mm; min-height:297mm; position:relative; page-break-inside:avoid; background:var(--white); }
     .page:last-child { page-break-after:avoid; }
 
     .running-header { position:running(running-header); background:#0f172a; color:var(--white); width:100%; padding:7mm 22mm; display:flex; justify-content:space-between; align-items:center; }
@@ -75,11 +75,6 @@
     .p-num { font-family:'Poppins',sans-serif; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:3px; color:var(--secondary); margin-bottom:6px; }
     .p-title { font-family:'Poppins',sans-serif; font-size:26px; font-weight:900; color:var(--primary); text-transform:uppercase; letter-spacing:-0.5px; margin-bottom:6px; line-height:1.1; }
     .p-rule { width:60px; height:4px; background:var(--secondary); border-radius:2px; margin-bottom:22px; }
-
-    /* Stat card */
-    .stat-card { background:var(--white); border-left:5px solid var(--secondary); padding:14px 18px; border-radius:0 var(--radius) var(--radius) 0; box-shadow:0 3px 12px rgba(0,0,0,0.06); margin:0 0 18px; display:inline-block; }
-    .stat-val { font-family:'Poppins',sans-serif; font-size:28px; font-weight:900; color:var(--primary); display:block; line-height:1; margin-bottom:3px; }
-    .stat-lbl { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:#94a3b8; font-weight:600; }
 
     /* Image block — no background so nothing shows when absent */
     .img-block { width:100%; margin:20px 0; border-radius:var(--radius); overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.06); }
@@ -157,7 +152,6 @@
   <div class="p-num">01</div>
   <div class="p-title">{{customTitle1}}</div>
   <div class="p-rule"></div>
-  {{#if section_executive_summary_stat_val}}<div class="stat-card"><span class="stat-val">{{section_executive_summary_stat_val}}</span><span class="stat-lbl">{{section_executive_summary_stat_lbl}}</span></div>{{/if}}
   <div class="ca">{{section_executive_summary_full_html}}</div>
   {{#if image_1_url}}<div class="img-block"><img src="{{image_1_url}}" alt="{{customTitle1}}"><div class="img-cap">{{customTitle1}} — Strategic Visual</div></div>{{/if}}
 </div></div>
@@ -167,7 +161,6 @@
   <div class="p-num">02</div>
   <div class="p-title">{{customTitle2}}</div>
   <div class="p-rule"></div>
-  {{#if section_industry_analysis_stat_val}}<div class="stat-card"><span class="stat-val">{{section_industry_analysis_stat_val}}</span><span class="stat-lbl">{{section_industry_analysis_stat_lbl}}</span></div>{{/if}}
   <div class="ca">{{section_industry_analysis_full_html}}</div>
 </div></div>
 
@@ -193,7 +186,6 @@
   <div class="p-num">05</div>
   <div class="p-title">{{customTitle5}}</div>
   <div class="p-rule"></div>
-  {{#if section_business_benefits_stat_val}}<div class="stat-card"><span class="stat-val">{{section_business_benefits_stat_val}}</span><span class="stat-lbl">{{section_business_benefits_stat_lbl}}</span></div>{{/if}}
   <div class="ca">{{section_business_benefits_full_html}}</div>
 </div></div>
 
@@ -202,7 +194,6 @@
   <div class="p-num">06</div>
   <div class="p-title">{{customTitle6}}</div>
   <div class="p-rule"></div>
-  {{#if section_case_study_stat_val}}<div class="stat-card"><span class="stat-val">{{section_case_study_stat_val}}</span><span class="stat-lbl">{{section_case_study_stat_lbl}}</span></div>{{/if}}
   <div class="ca">{{section_case_study_full_html}}</div>
 </div></div>
 

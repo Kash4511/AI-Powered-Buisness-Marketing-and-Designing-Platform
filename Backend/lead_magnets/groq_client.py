@@ -45,7 +45,7 @@ _TYPE_MAP = {
     "custom": "custom", "Custom": "custom",
 }
 
-ALLOWED_TAGS = {"p", "strong", "em", "h3", "h4", "ul", "ol", "li", "br", "blockquote"}
+ALLOWED_TAGS = {"p", "strong", "em", "h2", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "span"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -676,15 +676,9 @@ class GroqClient:
             items = [re.sub(r'<[^>]+>',' ',h).strip() for h in re.findall(r'<h3>(.*?)</h3>', html)]
         return "".join(f"<li>{_html_to_text(it)}</li>" for it in items[:5])
 
-    def _extract_stat(self, html: str) -> Tuple[str,str]:
-        if not html: return ("","")
-        m = re.search(r'(\d+(?:\.\d+)?%\+?|\$\d+(?:\.\d+)?[MBKmb]?|\d{2,}(?:,\d{3})*)', html)
-        if not m: return ("","")
-        val = m.group(1)
-        ctx = _html_to_text(html[max(0,m.start()-80):min(len(html),m.end()+80)]).lower()
-        for kw in ["efficiency","savings","roi","reduction","increase","growth","energy","cost"]:
-            if kw in ctx: return (val, kw.title())
-        return (val, "Key Metric")
+    def _extract_stat(self, html: str) -> Tuple[str, str]:
+        # Disabled — random numbers extracted from text create unprofessional stat cards
+        return ("", "")
 
     def ensure_section_content(self, sections, signals, firm_profile):
         return sections
