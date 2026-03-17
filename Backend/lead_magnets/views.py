@@ -334,6 +334,11 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 if empty:
                     logger.warning(f"⚠️ Empty sections: {empty}")
 
+                # ── DIAGNOSTIC: log exact content lengths so we can see what Groq returned
+                for k, *_ in ai_client.SECTIONS:
+                    content = ai_content.get(k, "")
+                    logger.info(f"  [CONTENT] {k}: {len(content)} chars | preview: {content[:80].replace(chr(10),' ')!r}")
+
                 _set_job(job_id, status="processing", progress=65, message="Mapping content to template...")
 
                 template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, signals)
@@ -354,6 +359,8 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                            if not template_vars.get(f"section_{k}_full_html")]
                 if missing:
                     logger.warning(f"⚠️ Missing _full_html vars: {missing}")
+                else:
+                    logger.info(f"✅ All 11 section_*_full_html vars populated")
 
             except Exception as e:
                 logger.error(f"AI Pipeline Error: {e}\n{traceback.format_exc()}")
