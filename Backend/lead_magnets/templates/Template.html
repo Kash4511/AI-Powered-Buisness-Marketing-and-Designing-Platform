@@ -233,6 +233,11 @@
     .bp {
       page: body-page;
       padding: 8mm 20mm 12mm;
+      page-break-inside: auto;
+    }
+    /* From section 2 onward, always start a new page so topics don't mix */
+    .bp + .bp {
+      page-break-before: always;
     }
     .bp-forced {
       page: body-page;
@@ -473,19 +478,6 @@
 </head>
 <body>
 
-<!-- RUNNING ELEMENTS — Prince picks these up via position:running() -->
-<div id="page-header">
-  <div class="ph-left">
-    <div class="ph-bar"></div>
-    <div class="ph-title">{{mainTitle}}</div>
-  </div>
-  <div class="ph-page"></div>
-</div>
-<div id="page-footer">
-  <span>© 2026 {{companyName}}. All rights reserved.</span>
-  <span>{{website}}</span>
-</div>
-
 <!-- ═══════════ PAGE 01: COVER ════════════════════════════════════════════ -->
 <div id="cover">
   <div class="deco-circle-1"></div>
@@ -507,6 +499,21 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- RUNNING ELEMENTS — Prince picks these up via position:running().
+     Declared AFTER the cover so the first visible page is always the cover,
+     and headers/footers only appear on subsequent body pages. -->
+<div id="page-header">
+  <div class="ph-left">
+    <div class="ph-bar"></div>
+    <div class="ph-title">{{mainTitle}}</div>
+  </div>
+  <div class="ph-page"></div>
+</div>
+<div id="page-footer">
+  <span>© 2026 {{companyName}}. All rights reserved.</span>
+  <span>{{website}}</span>
 </div>
 
 <!-- ═══════════ PAGE 02: TERMS ═══════════════════════════════════════════ -->
