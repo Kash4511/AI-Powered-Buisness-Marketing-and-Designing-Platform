@@ -93,8 +93,9 @@
     /* ── CONTENT PAGES — all use content-page @page ─────────────────────── */
     .content-page {
       page: content-page;
-      /* NO min-height — let content determine height naturally */
-      /* NO page-break-inside:avoid on the wrapper — content flows freely */
+      page-break-before: always;   /* each section starts on a fresh page */
+      /* NO min-height — content determines height, no forced blank space */
+      /* NO page-break-inside:avoid — content can flow across pages freely */
       background: var(--white);
       padding: 8mm 22mm 14mm;
     }
