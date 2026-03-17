@@ -513,19 +513,25 @@ class GroqClient:
 
         # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            f"You are writing one section of a PREMIUM $49 downloadable lead magnet on '{topic}' for {audience}.\n\n"
-            "ABSOLUTE RULES — violating any of these means the content is rejected:\n"
+            f"You are writing one section of a PREMIUM, PRINT-READY lead magnet on '{topic}' for {audience}.\n\n"
+            "ABSOLUTE RULES — the section is rejected if any are violated:\n"
             "1. Raw HTML only. Zero markdown. Zero preamble ('Here is...', 'Sure!'). Zero sign-off.\n"
             f"2. Every sentence must be SPECIFIC to '{topic}' and '{audience}'. Zero generic business advice.\n"
-            "3. ZERO repetition. Never repeat a phrase, stat, or idea from earlier in the same section.\n"
-            "4. Stats ONLY if they have: a source name, a unit, and a sentence explaining what they mean.\n"
-            "5. Every section must use at least 2 of these visual elements:\n"
+            "3. ZERO repetition. Never repeat a phrase, claim, or idea inside the same section.\n"
+            "4. DO NOT invent standalone stats like '189', '12%', or vague numeric claims.\n"
+            "   Only use numbers when they are clearly approximate, realistic, and fully explained in context.\n"
+            "   If you are not certain a number is justified, use qualitative language instead.\n"
+            "5. Write from a neutral, expert narrator — never say 'we', 'our firm', or speak as the company.\n"
+            "6. Use concrete, real-world examples drawn from the reader's world: architecture studios, real estate practices,\n"
+            "   and construction/contracting firms. Make it obvious whether the example fits an architect, agent, or contractor.\n"
+            "7. Every section must use at least 2 of these visual elements:\n"
             "   - <blockquote> for an insight, tip, or key takeaway\n"
             "   - <ul>/<li> for a practical list (not bullet-point padding)\n"
             "   - <strong> to highlight the single most important term per paragraph\n"
-            "6. Sections must END with a complete thought. Never truncate mid-sentence.\n"
-            "7. Minimum 350 words. Dense, expert-level prose. No padding.\n"
-            "8. Write like a trusted adviser who has done this 100 times — confident, specific, direct."
+            "8. Sections must END with a complete thought. Never truncate mid-sentence.\n"
+            "9. Minimum 350 words of dense, expert-level prose. No filler, no generic definitions.\n"
+            "10. Write like a senior consultant who has shipped dozens of successful projects in this exact domain —\n"
+            "    confident, specific, direct, and focused on actions the reader can actually take."
         )
 
         sections_content: Dict[str, str] = {}

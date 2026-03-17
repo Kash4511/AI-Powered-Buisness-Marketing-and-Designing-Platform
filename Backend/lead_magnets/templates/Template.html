@@ -180,6 +180,8 @@
       color: #fff;
       margin-bottom: 22px;
       max-width: 430px;
+      word-wrap: break-word;
+      hyphens: auto;
     }
     #cover .cover-accent {
       width: 4px; height: 64px;
@@ -533,6 +535,7 @@
 ═══════════════════════════════════════════════════════════════════════ -->
 
 <!-- SECTION 01: EXECUTIVE SUMMARY -->
+{{#if section_executive_summary_full_html}}
 <div class="bp" id="section-executive_summary">
   <div class="sec-kicker">01</div>
   <div class="sec-title">{{customTitle1}}</div>
@@ -543,8 +546,10 @@
   {{/if}}
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 02: INDUSTRY ANALYSIS -->
+{{#if section_industry_analysis_full_html}}
 <div class="bp" id="section-industry_analysis">
   <div class="sec-kicker">02</div>
   <div class="sec-title">{{customTitle2}}</div>
@@ -552,8 +557,10 @@
   <div class="ca">{{section_industry_analysis_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 03: KEY PRINCIPLES -->
+{{#if section_core_principles_full_html}}
 <div class="bp" id="section-core_principles">
   <div class="sec-kicker">03</div>
   <div class="sec-title">{{customTitle3}}</div>
@@ -561,8 +568,10 @@
   <div class="ca">{{section_core_principles_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 04: PRACTICAL STRATEGIES -->
+{{#if section_practical_strategies_full_html}}
 <div class="bp" id="section-practical_strategies">
   <div class="sec-kicker">04</div>
   <div class="sec-title">{{customTitle4}}</div>
@@ -573,8 +582,10 @@
   {{/if}}
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 05: BUSINESS BENEFITS -->
+{{#if section_business_benefits_full_html}}
 <div class="bp" id="section-business_benefits">
   <div class="sec-kicker">05</div>
   <div class="sec-title">{{customTitle5}}</div>
@@ -582,8 +593,10 @@
   <div class="ca">{{section_business_benefits_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 06: CASE STUDY -->
+{{#if section_case_study_full_html}}
 <div class="bp" id="section-case_study">
   <div class="sec-kicker">06</div>
   <div class="sec-title">{{customTitle6}}</div>
@@ -591,8 +604,10 @@
   <div class="ca">{{section_case_study_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 07: RISK MANAGEMENT -->
+{{#if section_risk_management_full_html}}
 <div class="bp" id="section-risk_management">
   <div class="sec-kicker">07</div>
   <div class="sec-title">{{customTitle7}}</div>
@@ -600,8 +615,10 @@
   <div class="ca">{{section_risk_management_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 08: IMPLEMENTATION ROADMAP -->
+{{#if section_implementation_roadmap_full_html}}
 <div class="bp" id="section-implementation_roadmap">
   <div class="sec-kicker">08</div>
   <div class="sec-title">{{customTitle8}}</div>
@@ -609,8 +626,10 @@
   <div class="ca">{{section_implementation_roadmap_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 09: FUTURE TRENDS -->
+{{#if section_future_trends_full_html}}
 <div class="bp" id="section-future_trends">
   <div class="sec-kicker">09</div>
   <div class="sec-title">{{customTitle9}}</div>
@@ -618,8 +637,10 @@
   <div class="ca">{{section_future_trends_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 10: KEY TAKEAWAYS -->
+{{#if section_key_takeaways_full_html}}
 <div class="bp" id="section-key_takeaways">
   <div class="sec-kicker">10</div>
   <div class="sec-title">{{customTitle10}}</div>
@@ -627,8 +648,10 @@
   <div class="ca">{{section_key_takeaways_full_html}}</div>
   <div class="sec-end"></div>
 </div>
+{{/if}}
 
 <!-- SECTION 11: CALL TO ACTION -->
+{{#if section_call_to_action_full_html}}
 <div class="bp" id="section-call_to_action">
   <div class="sec-kicker">11</div>
   <div class="sec-title">{{customTitle11}}</div>
@@ -641,6 +664,7 @@
     <div class="cta-dt">{{emailAddress}}</div>
   </div>
 </div>
+{{/if}}
 
 </body>
 </html>
