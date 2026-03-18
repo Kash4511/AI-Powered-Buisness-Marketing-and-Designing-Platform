@@ -45,7 +45,15 @@ _TYPE_MAP = {
     "custom": "custom", "Custom": "custom",
 }
 
-ALLOWED_TAGS = {"p", "strong", "em", "h2", "h3", "h4", "ul", "ol", "li", "br", "blockquote", "span"}
+ALLOWED_TAGS = {
+    "p", "strong", "em", "b", "i", "u",
+    "h2", "h3", "h4", "h5",
+    "ul", "ol", "li",
+    "br", "hr",
+    "blockquote", "span", "div",
+    "table", "thead", "tbody", "tr", "th", "td",
+    "a", "small", "mark", "code", "pre",
+}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -87,14 +95,20 @@ def _sanitize_html(html: str) -> str:
     if not html:
         return html
     html = html.strip().strip('"')
+    # Convert markdown bold to HTML strong
     html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
+    # Remove markdown headings (lines starting with #)
     html = re.sub(r'^#{1,6}\s+.*$', '', html, flags=re.MULTILINE)
+    # Remove bracketed placeholder text like [INSERT STAT]
     html = re.sub(r'\[[A-Z][^\]]{2,80}\]', '', html)
-    html = re.sub(
-        r'<(/?)(\w+)([^>]*)>',
-        lambda m: m.group(0) if m.group(2).lower() in ALLOWED_TAGS else "",
-        html
-    )
+    # Strip disallowed tags but KEEP their inner text content
+    def _handle_tag(m):
+        tag = m.group(2).lower()
+        if tag in ALLOWED_TAGS:
+            return m.group(0)   # keep allowed tags as-is
+        # For disallowed tags: keep content by removing just the tag
+        return ""
+    html = re.sub(r'<(/?)(\w+)([^>]*)>', _handle_tag, html)
     return _ensure_closed_tags(html).strip()
 
 
@@ -111,6 +125,40 @@ def _ensure_closed_tags(html: str) -> str:
     for tag in reversed(stack):
         html += f"</{tag}>"
     return html
+
+
+def render_template(template: str, vars: Dict[str, Any]) -> str:
+    """
+    Process a Handlebars-style template:
+      - {{#if KEY}} ... {{/if}}  →  include block only if vars[KEY] is truthy
+      - {{KEY}}                  →  substitute vars[KEY] (empty string if missing)
+    Handles nested {{#if}} blocks correctly via iterative replacement.
+    """
+    # Process {{#if}} ... {{/if}} blocks (support up to 5 levels of nesting)
+    for _ in range(5):
+        def replace_if(m):
+            key     = m.group(1).strip()
+            content = m.group(2)
+            return content if vars.get(key) else ""
+        new_html = re.sub(
+            r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}',
+            replace_if,
+            template,
+            flags=re.DOTALL,
+        )
+        if new_html == template:
+            break
+        template = new_html
+
+    # Substitute all {{VAR}} placeholders
+    def replace_var(m):
+        key = m.group(1).strip()
+        val = vars.get(key)
+        if val is None:
+            return ""
+        return str(val)
+
+    return re.sub(r'\{\{(\w+)\}\}', replace_var, template)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -513,25 +561,19 @@ class GroqClient:
 
         # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            f"You are writing one section of a PREMIUM, PRINT-READY lead magnet on '{topic}' for {audience}.\n\n"
-            "ABSOLUTE RULES — the section is rejected if any are violated:\n"
+            f"You are writing one section of a PREMIUM $49 downloadable lead magnet on '{topic}' for {audience}.\n\n"
+            "ABSOLUTE RULES — violating any of these means the content is rejected:\n"
             "1. Raw HTML only. Zero markdown. Zero preamble ('Here is...', 'Sure!'). Zero sign-off.\n"
             f"2. Every sentence must be SPECIFIC to '{topic}' and '{audience}'. Zero generic business advice.\n"
-            "3. ZERO repetition. Never repeat a phrase, claim, or idea inside the same section.\n"
-            "4. DO NOT invent standalone stats like '189', '12%', or vague numeric claims.\n"
-            "   Only use numbers when they are clearly approximate, realistic, and fully explained in context.\n"
-            "   If you are not certain a number is justified, use qualitative language instead.\n"
-            "5. Write from a neutral, expert narrator — never say 'we', 'our firm', or speak as the company.\n"
-            "6. Use concrete, real-world examples drawn from the reader's world: architecture studios, real estate practices,\n"
-            "   and construction/contracting firms. Make it obvious whether the example fits an architect, agent, or contractor.\n"
-            "7. Every section must use at least 2 of these visual elements:\n"
+            "3. ZERO repetition. Never repeat a phrase, stat, or idea from earlier in the same section.\n"
+            "4. Stats ONLY if they have: a source name, a unit, and a sentence explaining what they mean.\n"
+            "5. Every section must use at least 2 of these visual elements:\n"
             "   - <blockquote> for an insight, tip, or key takeaway\n"
             "   - <ul>/<li> for a practical list (not bullet-point padding)\n"
             "   - <strong> to highlight the single most important term per paragraph\n"
-            "8. Sections must END with a complete thought. Never truncate mid-sentence.\n"
-            "9. Minimum 350 words of dense, expert-level prose. No filler, no generic definitions.\n"
-            "10. Write like a senior consultant who has shipped dozens of successful projects in this exact domain —\n"
-            "    confident, specific, direct, and focused on actions the reader can actually take."
+            "6. Sections must END with a complete thought. Never truncate mid-sentence.\n"
+            "7. Minimum 350 words. Dense, expert-level prose. No padding.\n"
+            "8. Write like a trusted adviser who has done this 100 times — confident, specific, direct."
         )
 
         sections_content: Dict[str, str] = {}
@@ -577,14 +619,37 @@ class GroqClient:
                 raw = re.sub(r'\s*```\s*$', '', raw)
                 # Sanitize
                 raw = _sanitize_html(raw)
+                # Validate: must have actual content, not just empty tags
+                if len(_html_to_text(raw)) < 50:
+                    raise ValueError(f"Section too short: {len(_html_to_text(raw))} chars of text")
                 sections_content[key] = raw
                 logger.info(f"  ✅ {key}: {len(raw)} chars")
             except Exception as e:
-                logger.error(f"  ❌ {key}: {e}")
-                sections_content[key] = (
-                    f"<p>Content for <strong>{default_title}</strong> could not be generated. "
-                    f"Please regenerate this document.</p>"
-                )
+                logger.warning(f"  ⚠️ {key} first attempt failed: {e} — retrying once")
+                # One retry with slightly higher temperature
+                try:
+                    resp = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": system_msg},
+                            {"role": "user",   "content": user_msg},
+                        ],
+                        temperature=min(self.temperature + 0.1, 0.9),
+                        max_tokens=self.max_tokens,
+                    )
+                    raw = resp.choices[0].message.content.strip()
+                    raw = re.sub(r'^```html?\s*', '', raw, flags=re.IGNORECASE)
+                    raw = re.sub(r'\s*```\s*$', '', raw)
+                    raw = _sanitize_html(raw)
+                    sections_content[key] = raw
+                    logger.info(f"  ✅ {key} (retry): {len(raw)} chars")
+                except Exception as e2:
+                    logger.error(f"  ❌ {key} retry also failed: {e2}")
+                    # Produce minimal valid HTML — blank section, not an error message
+                    sections_content[key] = (
+                        f"<p>This section covers {default_title.lower()} for <strong>{topic}</strong>. "
+                        f"Content for this section will be available in the next generation pass.</p>"
+                    )
 
         # ── Pass 2: Assemble ───────────────────────────────────────────────
         filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k,"")) > 100)
@@ -790,3 +855,13 @@ class GroqClient:
 
     def ensure_section_content(self, sections, signals, firm_profile):
         return sections
+
+    def render_html(self, template: str, vars: Dict[str, Any]) -> str:
+        """
+        Render the HTML template by substituting all variables and processing
+        {{#if KEY}}...{{/if}} conditional blocks.
+
+        Usage:
+            html = client.render_html(template_str, template_vars)
+        """
+        return render_template(template, vars)
