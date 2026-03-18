@@ -6,10 +6,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
 
-    /* ── RESET ──────────────────────────────────────────────────────────── */
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* ── CSS VARS ───────────────────────────────────────────────────────── */
     :root {
       --primary:    {{primaryColor}};
       --secondary:  {{secondaryColor}};
@@ -29,14 +27,6 @@
       font-size: 13px;
     }
 
-    /* ─────────────────────────────────────────────────────────────────────
-       PAGE RULES
-       Two named @page rules so cover NEVER gets a header/footer.
-       Content pages get 26mm top (header) and 16mm bottom (footer).
-       We do NOT use page-break-before on every section — instead we use
-       page-break-after on the cover only. Content flows naturally and
-       Prince paginates based on actual content height.
-    ───────────────────────────────────────────────────────────────────── */
     @page cover-page {
       size: A4;
       margin: 0;
@@ -60,33 +50,19 @@
       justify-content: space-between;
       align-items: center;
     }
-    #page-header .ph-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    #page-header .ph-bar {
-      width: 3px;
-      height: 18px;
-      background: var(--secondary);
-      border-radius: 2px;
-    }
+    #page-header .ph-left { display: flex; align-items: center; gap: 10px; }
+    #page-header .ph-bar  { width: 3px; height: 18px; background: var(--secondary); border-radius: 2px; }
     #page-header .ph-title {
       font-family: 'Poppins', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 2.5px;
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 2.5px;
       color: rgba(255,255,255,0.85);
     }
     #page-header .ph-page {
       font-family: 'Poppins', sans-serif;
-      font-size: 9px;
-      font-weight: 600;
+      font-size: 9px; font-weight: 600;
       background: rgba(255,255,255,0.1);
-      padding: 3px 12px;
-      border-radius: 20px;
-      color: #fff;
+      padding: 3px 12px; border-radius: 20px; color: #fff;
     }
     #page-header .ph-page::after { content: counter(page); }
 
@@ -103,12 +79,7 @@
       font-size: 9px;
     }
 
-    /* ─────────────────────────────────────────────────────────────────────
-       COVER PAGE
-       Full A4 height, absolutely positioned zones.
-       page-break-after:always pushes everything after it to a new page.
-       The named page "cover-page" ensures zero header/footer on this page.
-    ───────────────────────────────────────────────────────────────────── */
+    /* ── COVER ──────────────────────────────────────────────────────────── */
     #cover {
       page: cover-page;
       page-break-after: always;
@@ -119,126 +90,71 @@
       position: relative;
       overflow: hidden;
     }
-
-    /* Decorative geometry */
     #cover .deco-circle-1 {
-      position: absolute;
-      width: 340px; height: 340px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.07);
+      position: absolute; width: 340px; height: 340px;
+      border-radius: 50%; border: 1px solid rgba(255,255,255,0.07);
       top: -50px; right: -50px;
     }
     #cover .deco-circle-2 {
-      position: absolute;
-      width: 180px; height: 180px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.05);
+      position: absolute; width: 180px; height: 180px;
+      border-radius: 50%; border: 1px solid rgba(255,255,255,0.05);
       bottom: 80px; left: -40px;
     }
     #cover .deco-bar {
-      position: absolute;
-      top: 0; right: 0;
+      position: absolute; top: 0; right: 0;
       width: 38%; height: 11mm;
       background: var(--secondary);
     }
-
-    /* Cover content */
     #cover .cover-inner {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column; justify-content: flex-end;
       padding: 0 20mm 28mm;
     }
     #cover .cover-kicker {
       font-family: 'Poppins', sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      color: var(--secondary);
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 4px;
+      color: var(--secondary); margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
     }
     #cover .cover-kicker::before {
-      content: '';
-      width: 20px; height: 2px;
-      background: var(--secondary);
-      display: block;
-      flex-shrink: 0;
+      content: ''; width: 20px; height: 2px;
+      background: var(--secondary); display: block; flex-shrink: 0;
     }
     #cover .cover-title {
       font-family: 'Poppins', sans-serif;
-      font-size: 44px;
-      font-weight: 900;
-      line-height: 1.0;
-      text-transform: uppercase;
-      letter-spacing: -1px;
-      color: #fff;
-      margin-bottom: 22px;
-      max-width: 430px;
-      word-wrap: break-word;
-      hyphens: auto;
+      font-size: 44px; font-weight: 900;
+      line-height: 1.0; text-transform: uppercase;
+      letter-spacing: -1px; color: #fff;
+      margin-bottom: 22px; max-width: 430px;
+      word-wrap: break-word; hyphens: auto;
     }
     #cover .cover-accent {
       width: 4px; height: 64px;
-      background: var(--secondary);
-      border-radius: 3px;
-      margin-bottom: 18px;
+      background: var(--secondary); border-radius: 3px; margin-bottom: 18px;
     }
     #cover .cover-subtitle {
-      font-size: 14px;
-      font-weight: 300;
-      line-height: 1.65;
-      color: rgba(255,255,255,0.8);
-      max-width: 380px;
-      margin-bottom: 40px;
+      font-size: 14px; font-weight: 300; line-height: 1.65;
+      color: rgba(255,255,255,0.8); max-width: 380px; margin-bottom: 40px;
     }
     #cover .cover-meta {
       border-top: 1px solid rgba(255,255,255,0.12);
-      padding-top: 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      padding-top: 18px; display: flex;
+      justify-content: space-between; align-items: flex-end;
     }
-    #cover .cover-brand {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 700;
-      font-size: 15px;
-      color: #fff;
-      margin-bottom: 3px;
-    }
-    #cover .cover-tagline {
-      font-size: 10px;
-      color: rgba(255,255,255,0.5);
-    }
-    #cover .cover-contact {
-      text-align: right;
-      font-size: 10px;
-      color: rgba(255,255,255,0.55);
-      line-height: 1.8;
-    }
+    #cover .cover-brand { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 15px; color: #fff; margin-bottom: 3px; }
+    #cover .cover-tagline { font-size: 10px; color: rgba(255,255,255,0.5); }
+    #cover .cover-contact { text-align: right; font-size: 10px; color: rgba(255,255,255,0.55); line-height: 1.8; }
 
-    /* ─────────────────────────────────────────────────────────────────────
-       BODY PAGES
-       All non-cover pages use the body-page @page.
-       No forced page-break-before on sections — Prince flows content
-       naturally. page-break-after:always only on terms and TOC wrappers
-       so those stay on their own pages.
-       Sections flow across as many pages as their content needs.
-    ───────────────────────────────────────────────────────────────────── */
+    /* ── BODY PAGES ─────────────────────────────────────────────────────── */
     .bp {
       page: body-page;
       padding: 8mm 20mm 12mm;
       page-break-inside: auto;
     }
-    /* From section 2 onward, always start a new page so topics don't mix */
-    .bp + .bp {
-      page-break-before: always;
-    }
+    /* Each section starts on a fresh page */
+    .bp + .bp { page-break-before: always; }
+
     .bp-forced {
       page: body-page;
       padding: 8mm 20mm 12mm;
@@ -247,238 +163,71 @@
 
     /* ── TERMS ──────────────────────────────────────────────────────────── */
     .terms-title {
-      font-family: 'Poppins', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      padding-bottom: 10px;
-      border-bottom: 3px solid var(--secondary);
-      display: inline-block;
-      margin-bottom: 22px;
+      font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700;
+      color: var(--primary); text-transform: uppercase; letter-spacing: 2px;
+      padding-bottom: 10px; border-bottom: 3px solid var(--secondary);
+      display: inline-block; margin-bottom: 22px;
     }
-    .terms-body { font-size: 11.5px; line-height: 1.85; color: var(--text); margin-bottom: 14px; }
+    .terms-body  { font-size: 11.5px; line-height: 1.85; color: var(--text); margin-bottom: 14px; }
     .terms-small { font-size: 10.5px; line-height: 1.8; color: var(--text-light); margin-top: 18px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
 
     /* ── TOC ────────────────────────────────────────────────────────────── */
-    .toc-title {
-      font-family: 'Poppins', sans-serif;
-      font-size: 24px;
-      font-weight: 900;
-      color: var(--primary);
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .toc-rule { width: 60px; height: 5px; background: var(--secondary); border-radius: 3px; margin-bottom: 22px; }
-    .toc-item {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px dotted #d1d5db;
-    }
-    .toc-num {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 700;
-      font-size: 11px;
-      color: var(--secondary);
-      width: 28px;
-      flex-shrink: 0;
-    }
-    .toc-label {
-      flex: 1;
-      font-weight: 600;
-      font-size: 11px;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .toc-pg {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 700;
-      font-size: 11px;
-      color: #9ca3af;
-      margin-left: 12px;
-    }
+    .toc-title { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
+    .toc-rule  { width: 60px; height: 5px; background: var(--secondary); border-radius: 3px; margin-bottom: 22px; }
+    .toc-item  { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #d1d5db; }
+    .toc-num   { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: var(--secondary); width: 28px; flex-shrink: 0; }
+    .toc-label { flex: 1; font-weight: 600; font-size: 11px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.4px; }
+    .toc-pg    { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #9ca3af; margin-left: 12px; }
 
     /* ── SECTION HEADER ─────────────────────────────────────────────────── */
     .sec-kicker {
-      font-family: 'Poppins', sans-serif;
-      font-size: 8px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      color: var(--secondary);
-      margin-bottom: 4px;
-      /* Keep kicker glued to the title below it */
-      page-break-after: avoid;
+      font-family: 'Poppins', sans-serif; font-size: 8px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 3px; color: var(--secondary);
+      margin-bottom: 4px; page-break-after: avoid;
     }
     .sec-title {
-      font-family: 'Poppins', sans-serif;
-      font-size: 22px;
-      font-weight: 900;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: -0.3px;
-      line-height: 1.1;
-      margin-bottom: 5px;
-      /* Title stays with first paragraph of content */
-      page-break-after: avoid;
+      font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 900;
+      color: var(--primary); text-transform: uppercase; letter-spacing: -0.3px;
+      line-height: 1.1; margin-bottom: 5px; page-break-after: avoid;
     }
     .sec-rule { width: 50px; height: 4px; background: var(--secondary); border-radius: 2px; margin-bottom: 16px; }
 
     /* ── CONTENT AREA ───────────────────────────────────────────────────── */
-    .ca p {
-      font-size: 13px;
-      line-height: 1.78;
-      color: var(--text);
-      margin-bottom: 13px;
-      /* Prevent widows/orphans */
-      orphans: 3;
-      widows: 3;
-    }
+    .ca p { font-size: 13px; line-height: 1.78; color: var(--text); margin-bottom: 13px; orphans: 3; widows: 3; }
     .ca p strong { color: var(--primary); font-weight: 700; }
-
-    /* h2 inside content — subsection title */
-    .ca h2 {
-      font-family: 'Poppins', sans-serif;
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin: 20px 0 9px;
-      page-break-after: avoid;
-    }
-
-    /* h3 inside content — labelled sub-point */
-    .ca h3 {
-      font-family: 'Poppins', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      border-left: 3px solid var(--secondary);
-      padding-left: 10px;
-      margin: 16px 0 7px;
-      /* Never leave a heading alone at bottom of page */
-      page-break-after: avoid;
-    }
-
-    .ca h4 {
-      font-family: 'Poppins', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--secondary);
-      margin: 13px 0 5px;
-      page-break-after: avoid;
-    }
-
-    /* Lists */
+    .ca h2 { font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.3px; margin: 20px 0 9px; page-break-after: avoid; }
+    .ca h3 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; border-left: 3px solid var(--secondary); padding-left: 10px; margin: 16px 0 7px; page-break-after: avoid; }
+    .ca h4 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--secondary); margin: 13px 0 5px; page-break-after: avoid; }
     .ca ul { margin: 9px 0 14px; padding: 0; list-style: none; }
-    .ca ul li {
-      font-size: 13px;
-      line-height: 1.7;
-      color: var(--text);
-      padding-left: 18px;
-      margin-bottom: 6px;
-      position: relative;
-      page-break-inside: avoid;
-    }
-    .ca ul li::before {
-      content: "▸";
-      position: absolute;
-      left: 0;
-      color: var(--secondary);
-      font-size: 9px;
-      top: 4px;
-    }
+    .ca ul li { font-size: 13px; line-height: 1.7; color: var(--text); padding-left: 18px; margin-bottom: 6px; position: relative; page-break-inside: avoid; }
+    .ca ul li::before { content: "▸"; position: absolute; left: 0; color: var(--secondary); font-size: 9px; top: 4px; }
     .ca ul li strong { color: var(--primary); font-weight: 600; }
-
     .ca ol { margin: 9px 0 14px 16px; }
     .ca ol li { font-size: 13px; line-height: 1.7; color: var(--text); margin-bottom: 6px; page-break-inside: avoid; }
+    .ca blockquote { margin: 16px 0; padding: 12px 16px 12px 14px; background: var(--light); border-left: 4px solid var(--secondary); border-radius: 0 var(--radius) var(--radius) 0; page-break-inside: avoid; }
+    .ca blockquote strong { display: block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--secondary); margin-bottom: 5px; }
+    .ca blockquote p, .ca blockquote { font-size: 12.5px; line-height: 1.7; color: var(--primary); font-style: normal; }
+    .ca em { color: var(--secondary); font-style: italic; }
+    .ca span { display: inline; }
 
-    /* Callout / blockquote */
-    .ca blockquote {
-      margin: 16px 0;
-      padding: 12px 16px 12px 14px;
-      background: var(--light);
-      border-left: 4px solid var(--secondary);
-      border-radius: 0 var(--radius) var(--radius) 0;
-      page-break-inside: avoid;
-    }
-    .ca blockquote strong {
-      display: block;
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--secondary);
-      margin-bottom: 5px;
-    }
-    .ca blockquote p,
-    .ca blockquote {
-      font-size: 12.5px;
-      line-height: 1.7;
-      color: var(--primary);
-      font-style: normal;
-    }
+    /* ── IMAGE BLOCK ─────────────────────────────────────────────────────── */
+    .img-block { width: 100%; margin: 16px 0; border-radius: var(--radius); overflow: hidden; border: 1px solid #e2e8f0; page-break-inside: avoid; }
+    .img-block img { width: 100%; max-height: 180px; object-fit: cover; display: block; }
 
-    /* Image block */
-    .img-block {
-      width: 100%;
-      margin: 16px 0;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid #e2e8f0;
-      page-break-inside: avoid;
-    }
-    .img-block img {
-      width: 100%;
-      max-height: 180px;
-      object-fit: cover;
-      display: block;
-    }
+    /* ── SECTION END MARKER ─────────────────────────────────────────────── */
+    .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; }
 
-    /* Section divider — visual end-of-section marker */
-    .sec-end {
-      margin: 20px 0 0;
-      height: 1px;
-      background: linear-gradient(to right, var(--secondary), transparent);
-      opacity: 0.35;
-    }
-
-    /* Alt background sections */
-    .alt-section { background: var(--highlight); }
-
-    /* CTA contact box */
-    .cta-box {
-      margin-top: 22px;
-      padding: 18px 20px;
-      background: var(--primary);
-      border-radius: var(--radius);
-      color: #fff;
-      page-break-inside: avoid;
-    }
-    .cta-box .cta-lbl {
-      font-family: 'Poppins', sans-serif;
-      font-size: 8px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--secondary);
-      margin-bottom: 7px;
-    }
-    .cta-box .cta-co { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
-    .cta-box .cta-dt { font-size: 11px; opacity: 0.72; margin-top: 2px; }
+    /* ── CTA BOX ────────────────────────────────────────────────────────── */
+    .cta-box { margin-top: 22px; padding: 18px 20px; background: var(--primary); border-radius: var(--radius); color: #fff; page-break-inside: avoid; }
+    .cta-box .cta-lbl { font-family: 'Poppins', sans-serif; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary); margin-bottom: 7px; }
+    .cta-box .cta-co  { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .cta-box .cta-dt  { font-size: 11px; opacity: 0.72; margin-top: 2px; }
 
   </style>
 </head>
 <body>
 
-<!-- ═══════════ PAGE 01: COVER ════════════════════════════════════════════ -->
+<!-- PAGE 01: COVER -->
 <div id="cover">
   <div class="deco-circle-1"></div>
   <div class="deco-circle-2"></div>
@@ -501,9 +250,7 @@
   </div>
 </div>
 
-<!-- RUNNING ELEMENTS — Prince picks these up via position:running().
-     Declared AFTER the cover so the first visible page is always the cover,
-     and headers/footers only appear on subsequent body pages. -->
+<!-- RUNNING ELEMENTS — declared after cover; Prince pulls these into @page margin bands -->
 <div id="page-header">
   <div class="ph-left">
     <div class="ph-bar"></div>
@@ -516,7 +263,7 @@
   <span>{{website}}</span>
 </div>
 
-<!-- ═══════════ PAGE 02: TERMS ═══════════════════════════════════════════ -->
+<!-- PAGE 02: TERMS -->
 <div class="bp-forced">
   <div class="terms-title">{{termsTitle}}</div>
   <div class="terms-body">{{termsSummary}}</div>
@@ -527,19 +274,19 @@
   <div class="terms-small">{{termsParagraph5}}</div>
 </div>
 
-<!-- ═══════════ PAGE 03: TABLE OF CONTENTS ═══════════════════════════════ -->
+<!-- PAGE 03: TABLE OF CONTENTS -->
 <div class="bp-forced">
   <div class="toc-title">{{contentsTitle}}</div>
   <div class="toc-rule"></div>
   {{toc_sections_html}}
 </div>
 
-<!-- ═══════════ SECTIONS 01–11 ══════════════════════════════════════════
-     Each section uses class="bp" (no forced break) so Prince flows
-     content naturally. The section heading gets page-break-after:avoid
-     so headings never orphan at the bottom of a page.
-     Content continues across pages as needed — no blank space.
-═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTIONS 01–11
+     Each section is wrapped in {{#if section_X_full_html}}...{{/if}}.
+     If a section's content is empty (generation failed), the entire
+     <div class="bp"> is omitted — no blank page, no placeholder text.
+     Image {{#if}} blocks are nested INSIDE each section wrapper so they
+     can never leak as raw text if image_N_url is absent. -->
 
 <!-- SECTION 01: EXECUTIVE SUMMARY -->
 {{#if section_executive_summary_full_html}}

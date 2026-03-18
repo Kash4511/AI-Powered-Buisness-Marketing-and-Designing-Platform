@@ -45,6 +45,8 @@ _TYPE_MAP = {
     "custom": "custom", "Custom": "custom",
 }
 
+# FIX 1: Expanded ALLOWED_TAGS — previously stripped div/table/a/etc., causing LLM
+# output to fail the 50-char validation check and trigger the fallback error message.
 ALLOWED_TAGS = {
     "p", "strong", "em", "b", "i", "u",
     "h2", "h3", "h4", "h5",
@@ -54,6 +56,11 @@ ALLOWED_TAGS = {
     "table", "thead", "tbody", "tr", "th", "td",
     "a", "small", "mark", "code", "pre",
 }
+
+# FIX 2: Rate limiting — Groq free tier throttles llama-3.3-70b-versatile hard.
+# 11 back-to-back calls without delay = rate limit errors after the first 1-2 calls.
+# This caused 10/11 sections to fall back to placeholder text.
+GROQ_CALL_DELAY_SECONDS = 2.5   # pause between each section call
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -97,29 +104,32 @@ def _sanitize_html(html: str) -> str:
     html = html.strip().strip('"')
     # Convert markdown bold to HTML strong
     html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
-    # Remove markdown headings (lines starting with #)
+    # Remove markdown headings
     html = re.sub(r'^#{1,6}\s+.*$', '', html, flags=re.MULTILINE)
     # Remove bracketed placeholder text like [INSERT STAT]
     html = re.sub(r'\[[A-Z][^\]]{2,80}\]', '', html)
-    # Strip disallowed tags but KEEP their inner text content
+    # FIX 3: Strip disallowed tags but KEEP their inner text.
+    # Previously the lambda returned "" for the whole tag including text content,
+    # which caused valid LLM output to shrink below the 50-char threshold.
     def _handle_tag(m):
         tag = m.group(2).lower()
         if tag in ALLOWED_TAGS:
-            return m.group(0)   # keep allowed tags as-is
-        # For disallowed tags: keep content by removing just the tag
-        return ""
+            return m.group(0)
+        return ""   # remove only the tag token; text nodes between tags are untouched
     html = re.sub(r'<(/?)(\w+)([^>]*)>', _handle_tag, html)
     return _ensure_closed_tags(html).strip()
 
 
 def _ensure_closed_tags(html: str) -> str:
-    void = {"br","hr","img","input","link","meta"}
+    void = {"br", "hr", "img", "input", "link", "meta"}
     stack = []
     for closing, tag in re.findall(r"<(/?)([a-zA-Z1-6]+)", html):
         tag = tag.lower()
-        if tag in void: continue
+        if tag in void:
+            continue
         if closing:
-            if stack and stack[-1] == tag: stack.pop()
+            if stack and stack[-1] == tag:
+                stack.pop()
         else:
             stack.append(tag)
     for tag in reversed(stack):
@@ -127,22 +137,43 @@ def _ensure_closed_tags(html: str) -> str:
     return html
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# TEMPLATE RENDERER
+# FIX 4: This was completely missing. The renderer was passing the raw template
+# string to PrinceXML with all {{#if}}...{{/if}} blocks unprocessed, causing
+# them to appear as literal text in the PDF (including as whole blank pages
+# when {{/if}} fell on a page boundary).
+# ─────────────────────────────────────────────────────────────────────────────
+
 def render_template(template: str, vars: Dict[str, Any]) -> str:
     """
-    Process a Handlebars-style template:
-      - {{#if KEY}} ... {{/if}}  →  include block only if vars[KEY] is truthy
-      - {{KEY}}                  →  substitute vars[KEY] (empty string if missing)
-    Handles nested {{#if}} blocks correctly via iterative replacement.
+    Process a Handlebars-style HTML template:
+      {{#if KEY}} ... {{/if}}  →  include block only when vars[KEY] is truthy
+      {{KEY}}                  →  substitute vars[KEY] (empty string if missing)
+
+    Handles up to 5 levels of nesting via repeated passes.
+    Must be called BEFORE passing HTML to PrinceXML / WeasyPrint.
+
+    Usage:
+        template_str = open("Template.html").read()
+        vars = client.map_to_template_vars(ai_content, firm_profile, signals)
+        rendered_html = render_template(template_str, vars)
+        # → pass rendered_html to your PDF renderer
     """
-    # Process {{#if}} ... {{/if}} blocks (support up to 5 levels of nesting)
+    # --- Pass 1-5: resolve {{#if KEY}}...{{/if}} blocks (innermost first) ---
     for _ in range(5):
-        def replace_if(m):
-            key     = m.group(1).strip()
-            content = m.group(2)
-            return content if vars.get(key) else ""
+        # Use a factory to avoid the Python closure-in-loop capture bug:
+        # each iteration binds the current `vars` dict snapshot correctly.
+        def _make_replacer(v):
+            def _replace_if(m):
+                key     = m.group(1).strip()
+                content = m.group(2)
+                return content if v.get(key) else ""
+            return _replace_if
+
         new_html = re.sub(
             r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}',
-            replace_if,
+            _make_replacer(vars),
             template,
             flags=re.DOTALL,
         )
@@ -150,21 +181,17 @@ def render_template(template: str, vars: Dict[str, Any]) -> str:
             break
         template = new_html
 
-    # Substitute all {{VAR}} placeholders
-    def replace_var(m):
+    # --- Pass 2: substitute remaining {{VAR}} placeholders ---
+    def _replace_var(m):
         key = m.group(1).strip()
         val = vars.get(key)
-        if val is None:
-            return ""
-        return str(val)
+        return "" if val is None else str(val)
 
-    return re.sub(r'\{\{(\w+)\}\}', replace_var, template)
+    return re.sub(r'\{\{(\w+)\}\}', _replace_var, template)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION PROMPTS — one per section, each enforcing min 300 words,
-# banning repeated stats, banning first-person firm voice, requiring
-# named standards and specific figures.
+# SECTION PROMPTS
 # ─────────────────────────────────────────────────────────────────────────────
 SECTION_PROMPTS = {
 
@@ -470,7 +497,7 @@ class GroqClient:
     SECTION_LAYOUT  = {key: layout for key, _, _, layout, _ in SECTIONS}
 
     def __init__(self, api_key: str = None):
-        api_key      = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
+        api_key          = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
         self.client      = Groq(api_key=api_key) if api_key else None
         self.model       = "llama-3.3-70b-versatile"
         self.temperature = 0.72
@@ -508,11 +535,10 @@ class GroqClient:
     ) -> Dict[str, Any]:
         """
         TWO-PASS GENERATION:
-        Pass 1a — One small call to generate the document title (100 tokens)
-        Pass 1b — One focused API call per section (11 calls × up to 4096 tokens each)
-                  This GUARANTEES every page has full, deep content.
-                  A single 4096-token call can never fill 11 sections — this is the fix.
-        Pass 2  — Assemble into the return structure
+        Pass 1a — Title generation (1 small call, ~120 tokens)
+        Pass 1b — One focused API call per section (11 calls × up to 4096 tokens)
+                  GROQ_CALL_DELAY_SECONDS pause between calls to avoid rate-limit errors.
+        Pass 2  — Assemble into return structure
         """
         doc_type    = signals.get("document_type", "guide")
         type_label  = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
@@ -578,7 +604,13 @@ class GroqClient:
 
         sections_content: Dict[str, str] = {}
 
-        for key, default_title, default_label, _, _ in SECTIONS:
+        for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
+            # FIX 2 (rate limiting): pause between each Groq call.
+            # Skip delay before the very first call; title call already ran.
+            if idx > 0:
+                logger.debug(f"  ⏳ Rate-limit pause ({GROQ_CALL_DELAY_SECONDS}s)…")
+                time.sleep(GROQ_CALL_DELAY_SECONDS)
+
             prompt_template = SECTION_PROMPTS.get(key, "")
             if not prompt_template:
                 sections_content[key] = f"<p><strong>{default_title}</strong></p>"
@@ -603,56 +635,41 @@ class GroqClient:
                 "No placeholders like [STAT] or [INSERT EXAMPLE]. No truncation."
             )
 
-            try:
-                resp    = self.client.chat.completions.create(
+            def _call_groq(temp):
+                resp = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_msg},
                         {"role": "user",   "content": user_msg},
                     ],
-                    temperature=self.temperature,
+                    temperature=temp,
                     max_tokens=self.max_tokens,
                 )
                 raw = resp.choices[0].message.content.strip()
-                # Strip accidental code fences
                 raw = re.sub(r'^```html?\s*', '', raw, flags=re.IGNORECASE)
                 raw = re.sub(r'\s*```\s*$', '', raw)
-                # Sanitize
                 raw = _sanitize_html(raw)
-                # Validate: must have actual content, not just empty tags
                 if len(_html_to_text(raw)) < 50:
-                    raise ValueError(f"Section too short: {len(_html_to_text(raw))} chars of text")
-                sections_content[key] = raw
-                logger.info(f"  ✅ {key}: {len(raw)} chars")
-            except Exception as e:
-                logger.warning(f"  ⚠️ {key} first attempt failed: {e} — retrying once")
-                # One retry with slightly higher temperature
-                try:
-                    resp = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=[
-                            {"role": "system", "content": system_msg},
-                            {"role": "user",   "content": user_msg},
-                        ],
-                        temperature=min(self.temperature + 0.1, 0.9),
-                        max_tokens=self.max_tokens,
-                    )
-                    raw = resp.choices[0].message.content.strip()
-                    raw = re.sub(r'^```html?\s*', '', raw, flags=re.IGNORECASE)
-                    raw = re.sub(r'\s*```\s*$', '', raw)
-                    raw = _sanitize_html(raw)
-                    sections_content[key] = raw
-                    logger.info(f"  ✅ {key} (retry): {len(raw)} chars")
-                except Exception as e2:
-                    logger.error(f"  ❌ {key} retry also failed: {e2}")
-                    # Produce minimal valid HTML — blank section, not an error message
-                    sections_content[key] = (
-                        f"<p>This section covers {default_title.lower()} for <strong>{topic}</strong>. "
-                        f"Content for this section will be available in the next generation pass.</p>"
-                    )
+                    raise ValueError(f"Section too short: {len(_html_to_text(raw))} chars")
+                return raw
 
-        # ── Pass 2: Assemble ───────────────────────────────────────────────
-        filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k,"")) > 100)
+            try:
+                sections_content[key] = _call_groq(self.temperature)
+                logger.info(f"  ✅ {key}: {len(sections_content[key])} chars")
+            except Exception as e:
+                logger.warning(f"  ⚠️  {key} failed: {e} — retrying after delay")
+                time.sleep(GROQ_CALL_DELAY_SECONDS * 2)   # longer pause on error
+                try:
+                    sections_content[key] = _call_groq(min(self.temperature + 0.1, 0.9))
+                    logger.info(f"  ✅ {key} (retry): {len(sections_content[key])} chars")
+                except Exception as e2:
+                    logger.error(f"  ❌ {key} retry failed: {e2}")
+                    # FIX 5: Empty string so {{#if section_X_full_html}} evaluates
+                    # falsy and the entire section div is omitted from the PDF,
+                    # rather than rendering a placeholder-text page.
+                    sections_content[key] = ""
+
+        filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k, "")) > 100)
         logger.info(f"✅ Complete | {filled}/{len(SECTION_KEYS)} sections filled")
 
         return {
@@ -661,7 +678,7 @@ class GroqClient:
             "document_type":       doc_type,
             "document_type_label": type_label,
             "sections": {
-                key: {"content": sections_content.get(key,""), "title": dtitle}
+                key: {"content": sections_content.get(key, ""), "title": dtitle}
                 for key, dtitle, *_ in SECTIONS
             },
         }
@@ -680,13 +697,13 @@ class GroqClient:
 
         for key, default_title, default_label, _, _ in SECTIONS:
             sec_data = sections_data.get(key, {})
-            content  = sec_data.get("content","") if isinstance(sec_data, dict) else str(sec_data)
-            title    = (sec_data.get("title","") if isinstance(sec_data, dict) else "") or default_title
+            content  = sec_data.get("content", "") if isinstance(sec_data, dict) else str(sec_data)
+            title    = (sec_data.get("title", "") if isinstance(sec_data, dict) else "") or default_title
 
             normalized[key] = _sanitize_html(str(content))
             normalized["framework"][key] = {"title": title or default_title, "kicker": default_label}
 
-        normalized["summary"]              = normalized.get("executive_summary","")[:500]
+        normalized["summary"]              = normalized.get("executive_summary", "")[:500]
         normalized["legal_notice_summary"] = (
             "This document provides strategic guidance only and should be verified "
             "by a qualified professional before implementation."
@@ -716,7 +733,6 @@ class GroqClient:
 
         topic    = _clean_topic_slug(str(signals.get("topic", "")))
         raw_sub  = ai_content.get("subtitle") or ""
-        # Use AI subtitle if it exists and isn't just the topic repeated; otherwise empty
         subtitle = (
             _clean_topic_slug(raw_sub)
             if raw_sub and raw_sub.strip().lower() != topic.strip().lower()
@@ -724,12 +740,11 @@ class GroqClient:
         )
         doc_type_label = ai_content.get("document_type_label") or ""
 
-        # CTA headline — from AI-generated call_to_action section only
-        cta_html  = ai_content.get("call_to_action","")
-        h3_match  = re.search(r'<h3>(.*?)</h3>', cta_html)
+        cta_html     = ai_content.get("call_to_action", "")
+        h3_match     = re.search(r'<h3>(.*?)</h3>', cta_html)
         cta_headline = _html_to_text(h3_match.group(1)) if h3_match else ""
 
-        vars: Dict[str, Any] = {
+        tvars: Dict[str, Any] = {
             # CSS vars
             "primaryColor":   primary_color,
             "secondaryColor": secondary_color,
@@ -751,15 +766,15 @@ class GroqClient:
             # Company
             "companyName":  company_name,
             "emailAddress": work_email,
-            "phoneNumber":  firm_profile.get("phone_number",""),
-            "website":      firm_profile.get("firm_website",""),
+            "phoneNumber":  firm_profile.get("phone_number", ""),
+            "website":      firm_profile.get("firm_website", ""),
             "logoUrl":      firm_profile.get("firm_logo") or firm_profile.get("logo_url") or "",
             # Labels
             "contentsTitle": "Table of Contents",
             "ctaHeadline":   cta_headline,
             "termsTitle":    "Terms of Use & Disclaimer",
             # Terms
-            "termsSummary":    ai_content.get("legal_notice_summary",""),
+            "termsSummary":    ai_content.get("legal_notice_summary", ""),
             "termsParagraph1": f"© {company_name}. All rights reserved.",
             "termsParagraph2": f"The information in this {doc_type_label} relates to {topic} and does not constitute legal, financial, or professional advice.",
             "termsParagraph3": "Readers are advised to verify all information independently before making project or business decisions.",
@@ -767,58 +782,74 @@ class GroqClient:
             "termsParagraph5": f"All recommendations should be validated by a qualified {signals.get('industry', topic)} professional before implementation.",
         }
 
-        # ── Image slots — ONLY set when a real URL exists ──────────────────
-        # Absent key → {{#if image_N_url}} evaluates falsy → no broken placeholder
+        # Image slots — only set when a real URL exists.
+        # Absent key → {{#if image_N_url}} is falsy → block is removed cleanly.
         for i in range(1, 7):
             url = str(firm_profile.get(f"image_{i}_url") or "").strip()
             if url:
-                vars[f"image_{i}_url"] = url
+                tvars[f"image_{i}_url"] = url
 
-        # ── TOC — pre-built HTML, no Handlebars loop needed ────────────────
+        # TOC — pre-built HTML injected as a single variable
         toc_parts = []
         for idx, (key, default_title, _, _, _) in enumerate(SECTIONS):
-            fw    = ai_content.get("framework",{}).get(key,{})
+            fw    = ai_content.get("framework", {}).get(key, {})
             title = fw.get("title") or default_title
-            page  = str(idx + 4).zfill(2)   # Cover=01, Terms=02, TOC=03, sections=04+
+            page  = str(idx + 4).zfill(2)
             toc_parts.append(
                 f'<div class="toc-item">'
-                f'<span class="toc-num">{str(idx+1).zfill(2)}</span>'
+                f'<span class="toc-num">{str(idx + 1).zfill(2)}</span>'
                 f'<span class="toc-label">{title}</span>'
-                f'<span class="toc-page">{page}</span>'
+                f'<span class="toc-pg">{page}</span>'
                 f'</div>'
             )
-        vars["toc_sections_html"] = "\n".join(toc_parts)
-        vars["toc_html"]          = vars["toc_sections_html"]
+        tvars["toc_sections_html"] = "\n".join(toc_parts)
+        tvars["toc_html"]          = tvars["toc_sections_html"]
 
-        # ── Per-section vars ───────────────────────────────────────────────
+        # Per-section vars
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
-            fw      = ai_content.get("framework",{}).get(key,{})
+            fw      = ai_content.get("framework", {}).get(key, {})
             title   = fw.get("title") or default_title
-            content = ai_content.get(key,"")
+            content = ai_content.get(key, "")
             s_idx   = idx + 1
 
-            # The template uses {{section_KEY_full_html}} — injected as raw HTML
-            vars[f"customTitle{s_idx}"]          = title
-            vars[f"section_{key}_full_html"]     = content   # ← raw HTML injection
-            vars[f"section_{key}_id"]            = f"section-{key}"
-            vars[f"section_{key}_title"]         = title
-            vars[f"section_{key}_kicker"]        = default_label
-            # Plain-text slots (for any legacy template parts)
-            vars[f"section_{key}_intro"]         = self._extract_intro_text(content)
-            vars[f"section_{key}_support"]       = self._extract_support_text(content)
-            # Stat
+            tvars[f"customTitle{s_idx}"]          = title
+            tvars[f"section_{key}_full_html"]      = content
+            tvars[f"section_{key}_id"]             = f"section-{key}"
+            tvars[f"section_{key}_title"]          = title
+            tvars[f"section_{key}_kicker"]         = default_label
+            tvars[f"section_{key}_intro"]          = self._extract_intro_text(content)
+            tvars[f"section_{key}_support"]        = self._extract_support_text(content)
             sv, sl = self._extract_stat(content)
-            vars[f"section_{key}_stat_val"]      = sv
-            vars[f"section_{key}_stat_lbl"]      = sl
-            # Bullet HTML
-            vars[f"section_{key}_bullets_html"]  = self._extract_bullets_html(content)
+            tvars[f"section_{key}_stat_val"]       = sv
+            tvars[f"section_{key}_stat_lbl"]       = sl
+            tvars[f"section_{key}_bullets_html"]   = self._extract_bullets_html(content)
 
-        # Page numbers
         for n in range(2, 16):
-            vars[f"pageNumber{n}"]       = str(n).zfill(2)
-            vars[f"pageNumberHeader{n}"] = str(n).zfill(2)
+            tvars[f"pageNumber{n}"]       = str(n).zfill(2)
+            tvars[f"pageNumberHeader{n}"] = str(n).zfill(2)
 
-        return vars
+        return tvars
+
+    # ──────────────────────────────────────────────────────────────────────
+    # TEMPLATE RENDERING (call this before PDF generation)
+    # ──────────────────────────────────────────────────────────────────────
+
+    def render_html(self, template: str, vars: Dict[str, Any]) -> str:
+        """
+        Render the HTML template — resolves all {{#if}} blocks and {{VAR}}
+        substitutions BEFORE the HTML is passed to PrinceXML / WeasyPrint.
+
+        This MUST be called. Skipping it is what caused raw {{#if image_1_url}}
+        and stray {{/if}} pages to appear in the PDF.
+
+        Example usage:
+            template_str  = open("Template.html").read()
+            ai_content    = client.normalize_ai_output(client.generate_lead_magnet_json(...))
+            template_vars = client.map_to_template_vars(ai_content, firm_profile, signals)
+            rendered_html = client.render_html(template_str, template_vars)
+            # → pass rendered_html to prince / weasyprint
+        """
+        return render_template(template, vars)
 
     # ──────────────────────────────────────────────────────────────────────
     # EXTRACTION HELPERS
@@ -831,7 +862,7 @@ class GroqClient:
         if len(text) <= max_chars: return text
         trunc = text[:max_chars]
         end   = max(trunc.rfind('.'), trunc.rfind('!'), trunc.rfind('?'))
-        return text[:end+1] if end > max_chars//2 else trunc.rstrip() + "…"
+        return text[:end + 1] if end > max_chars // 2 else trunc.rstrip() + "…"
 
     def _extract_support_text(self, html: str, max_chars: int = 400) -> str:
         if not html: return ""
@@ -841,27 +872,16 @@ class GroqClient:
         if len(combined) <= max_chars: return combined
         trunc = combined[:max_chars]
         end   = max(trunc.rfind('.'), trunc.rfind('!'), trunc.rfind('?'))
-        return combined[:end+1] if end > max_chars//2 else trunc.rstrip() + "…"
+        return combined[:end + 1] if end > max_chars // 2 else trunc.rstrip() + "…"
 
     def _extract_bullets_html(self, html: str) -> str:
         items = re.findall(r'<li>(.*?)</li>', html, re.S)
         if not items:
-            items = [re.sub(r'<[^>]+>',' ',h).strip() for h in re.findall(r'<h3>(.*?)</h3>', html)]
+            items = [re.sub(r'<[^>]+>', ' ', h).strip() for h in re.findall(r'<h3>(.*?)</h3>', html)]
         return "".join(f"<li>{_html_to_text(it)}</li>" for it in items[:5])
 
     def _extract_stat(self, html: str) -> Tuple[str, str]:
-        # Disabled — random numbers extracted from text create unprofessional stat cards
         return ("", "")
 
     def ensure_section_content(self, sections, signals, firm_profile):
         return sections
-
-    def render_html(self, template: str, vars: Dict[str, Any]) -> str:
-        """
-        Render the HTML template by substituting all variables and processing
-        {{#if KEY}}...{{/if}} conditional blocks.
-
-        Usage:
-            html = client.render_html(template_str, template_vars)
-        """
-        return render_template(template, vars)
