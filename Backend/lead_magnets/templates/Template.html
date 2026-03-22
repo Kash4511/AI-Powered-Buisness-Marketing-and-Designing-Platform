@@ -39,8 +39,10 @@
       @bottom-center { content: element(page-footer); width: 100%; }
     }
 
+    /* FIX: removed conflicting display:none — running elements are hidden from
+       normal flow by the position:running() declaration alone; adding display:none
+       also hid them from the paged header/footer slot. */
     #page-header {
-      display: none;
       position: running(page-header);
       width: 100%;
       background: #0f172a;
@@ -66,8 +68,8 @@
     }
     #page-header .ph-page::after { content: counter(page); }
 
+    /* FIX: same display:none removal for footer */
     #page-footer {
-      display: none;
       position: running(page-footer);
       width: 100%;
       background: var(--primary);
@@ -92,7 +94,10 @@
     }
     #cover .deco-circle-1 { position: absolute; width: 340px; height: 340px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.07); top: -50px; right: -50px; }
     #cover .deco-circle-2 { position: absolute; width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.05); bottom: 80px; left: -40px; }
-    #cover .deco-bar { position: absolute; top: 0; right: 0; width: 38%; height: 11mm; background: var(--secondary); }
+
+    /* FIX: deco-bar moved to top-LEFT corner so it no longer overlaps the cover title text */
+    #cover .deco-bar { position: absolute; top: 0; left: 0; width: 38%; height: 11mm; background: var(--secondary); }
+
     #cover .cover-inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 20mm 28mm; }
     #cover .cover-kicker { font-family: 'Poppins', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; color: var(--secondary); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
     #cover .cover-kicker::before { content: ''; width: 20px; height: 2px; background: var(--secondary); display: block; flex-shrink: 0; }
@@ -159,9 +164,6 @@
     .ca ol { margin: 9px 0 14px 16px; }
     .ca ol li { font-size: 13px; line-height: 1.7; color: var(--text); margin-bottom: 6px; page-break-inside: avoid; }
     .ca blockquote { margin: 16px 0; padding: 12px 16px 12px 14px; background: var(--light); border-left: 4px solid var(--secondary); border-radius: 0 var(--radius) var(--radius) 0; page-break-inside: avoid; }
-
-    /* FIX 1 — blockquote strong: changed display:block to display:inline
-       so <strong> labels no longer break sentences onto new lines */
     .ca blockquote strong {
       display: inline;
       font-size: 9px;
@@ -176,8 +178,6 @@
     .ca span { display: inline; }
 
     /* ── IMAGE BLOCK ────────────────────────────────────────────────────── */
-    /* FIX 2 — images now mid-content: margin reduced, max-height reduced
-       so images sit naturally between paragraphs instead of after all content */
     .img-block {
       width: 100%;
       margin: 20px 0;
@@ -193,11 +193,41 @@
       display: block;
     }
 
+    /* ── IMAGE PLACEHOLDER (shown when no URL is supplied) ──────────────── */
+    .img-placeholder {
+      width: 100%;
+      margin: 20px 0;
+      border-radius: var(--radius);
+      border: 2px dashed #cbd5e1;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 160px;
+      page-break-inside: avoid;
+      color: #94a3b8;
+    }
+    .img-placeholder .ph-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.5; }
+    .img-placeholder .ph-label { font-family: 'Poppins', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+
     /* ── SECTION END MARKER ─────────────────────────────────────────────── */
     .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; }
 
     /* ── CTA BOX ────────────────────────────────────────────────────────── */
-    .cta-box { margin-top: 22px; padding: 18px 20px; background: var(--primary); border-radius: var(--radius); color: #fff; page-break-inside: avoid; }
+    /* FIX: CTA box now uses position:relative and clear margin so it always
+       sits below the section content and never overlaps other elements */
+    .cta-box {
+      position: relative;
+      margin-top: 28px;
+      margin-bottom: 0;
+      padding: 18px 20px;
+      background: var(--primary);
+      border-radius: var(--radius);
+      color: #fff;
+      page-break-inside: avoid;
+      clear: both;
+    }
     .cta-box .cta-lbl { font-family: 'Poppins', sans-serif; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary); margin-bottom: 7px; }
     .cta-box .cta-co  { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
     .cta-box .cta-dt  { font-size: 11px; opacity: 0.72; margin-top: 2px; }
@@ -229,19 +259,21 @@
   </div>
 </div>
 
+<!-- RUNNING HEADER & FOOTER (placed once in normal flow; paged media picks them up) -->
+<div id="page-header">
+  <div class="ph-left">
+    <div class="ph-bar"></div>
+    <div class="ph-title">{{mainTitle}}</div>
+  </div>
+  <div class="ph-page"></div>
+</div>
+<div id="page-footer">
+  <span>© 2026 {{companyName}}. All rights reserved.</span>
+  <span>{{website}}</span>
+</div>
+
 <!-- TERMS ═══════════════════════════════════════════════════════════════════ -->
 <div class="bp-forced">
-  <div id="page-header">
-    <div class="ph-left">
-      <div class="ph-bar"></div>
-      <div class="ph-title">{{mainTitle}}</div>
-    </div>
-    <div class="ph-page"></div>
-  </div>
-  <div id="page-footer">
-    <span>© 2026 {{companyName}}. All rights reserved.</span>
-    <span>{{website}}</span>
-  </div>
   <div class="terms-title">{{termsTitle}}</div>
   <div class="terms-body">{{termsSummary}}</div>
   <div class="terms-body">{{termsParagraph1}}</div>
@@ -271,6 +303,11 @@
     {{section_executive_summary_full_html}}
     {{#if image_1_url}}
     <div class="img-block"><img src="{{image_1_url}}" alt="{{customTitle1}}"></div>
+    {{else}}
+    <div class="img-placeholder">
+      <div class="ph-icon">🖼</div>
+      <div class="ph-label">Image Placeholder — Section 1</div>
+    </div>
     {{/if}}
   </div>
   <div class="sec-end"></div>
@@ -284,7 +321,17 @@
     <div class="sec-title">{{customTitle2}}</div>
     <div class="sec-rule"></div>
   </div>
-  <div class="ca">{{section_industry_analysis_full_html}}</div>
+  <div class="ca">
+    {{section_industry_analysis_full_html}}
+    {{#if image_2_url}}
+    <div class="img-block"><img src="{{image_2_url}}" alt="{{customTitle2}}"></div>
+    {{else}}
+    <div class="img-placeholder">
+      <div class="ph-icon">🖼</div>
+      <div class="ph-label">Image Placeholder — Section 2</div>
+    </div>
+    {{/if}}
+  </div>
   <div class="sec-end"></div>
 </div>
 {{/if}}
@@ -310,8 +357,13 @@
   </div>
   <div class="ca">
     {{section_practical_strategies_full_html}}
-    {{#if image_2_url}}
-    <div class="img-block"><img src="{{image_2_url}}" alt="{{customTitle4}}"></div>
+    {{#if image_3_url}}
+    <div class="img-block"><img src="{{image_3_url}}" alt="{{customTitle4}}"></div>
+    {{else}}
+    <div class="img-placeholder">
+      <div class="ph-icon">🖼</div>
+      <div class="ph-label">Image Placeholder — Section 4</div>
+    </div>
     {{/if}}
   </div>
   <div class="sec-end"></div>
@@ -398,6 +450,9 @@
     <div class="sec-rule"></div>
   </div>
   <div class="ca">{{section_call_to_action_full_html}}</div>
+  <div class="sec-end"></div>
+  <!-- FIX: CTA box moved OUTSIDE .ca so it sits below the section rule,
+       not floating inside the content flow -->
   <div class="cta-box">
     <div class="cta-lbl">Get in Touch</div>
     <div class="cta-co">{{companyName}}</div>
