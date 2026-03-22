@@ -60,7 +60,7 @@ ALLOWED_TAGS = {
 # FIX 2: Rate limiting — Groq free tier throttles llama-3.3-70b-versatile hard.
 # 11 back-to-back calls without delay = rate limit errors after the first 1-2 calls.
 # This caused 10/11 sections to fall back to placeholder text.
-GROQ_CALL_DELAY_SECONDS = 2.5   # pause between each section call
+GROQ_CALL_DELAY_SECONDS = 8.0   # pause between each section call
 
 
 # ─────────────────────────────────────────────────────────────────────────────

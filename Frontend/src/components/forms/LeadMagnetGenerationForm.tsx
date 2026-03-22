@@ -91,6 +91,9 @@ const LeadMagnetGenerationForm: React.FC<LeadMagnetGenerationFormProps> = ({
   ]
 
   const handleInputChange = (field: keyof LeadMagnetGeneration, value: string | string[]) => {
+    if (field === 'desired_outcome' || field === 'call_to_action') {
+      setSloganError('')
+    }
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -117,7 +120,18 @@ const LeadMagnetGenerationForm: React.FC<LeadMagnetGenerationFormProps> = ({
   }
 
   const handleSubmit = () => {
+    const desiredOutcome = formData.desired_outcome || ''
+    const callToAction = formData.call_to_action || ''
+    if (!desiredOutcome || desiredOutcome.trim().length < 15) {
+      setSloganError('Please describe your desired outcome in at least 15 characters')
+      return
+    }
+    if (!callToAction || callToAction.trim().length < 15) {
+      setSloganError('Please describe your call to action in at least 15 characters')
+      return
+    }
     if (isFormValid()) {
+      setSloganError('')
       onSubmit(formData as LeadMagnetGeneration)
     }
   }
