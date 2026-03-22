@@ -516,7 +516,10 @@ class GroqClient:
             _TYPE_MAP.get(raw_type) or
             _TYPE_MAP.get(raw_type.lower().replace("-","_").replace(" ","_"), "guide")
         )
-        pain_points = user_answers.get("pain_points", [])
+        pp = user_answers.get("pain_points")
+        if pp is None or (isinstance(pp, list) and len(pp) == 0):
+            pp = user_answers.get("audience_pain_points", [])
+        pain_points = pp if isinstance(pp, list) else ([pp] if pp else [])
         audience    = user_answers.get("target_audience", "Stakeholders")
         return {
             "topic":           _clean_topic_slug(str(user_answers.get("main_topic", "Strategic Design"))),
@@ -524,7 +527,9 @@ class GroqClient:
             "pain_points":     ", ".join(pain_points) if isinstance(pain_points, list) else str(pain_points),
             "psychographics":  str(user_answers.get("psychographics", "")).strip(),
             "firm_usp":        str(user_answers.get("firm_usp", "")).strip(),
-            "desired_outcome": user_answers.get("desired_outcome", ""),
+            "desired_outcome": str(user_answers.get("desired_outcome", "") or "").strip(),
+            "call_to_action":  str(user_answers.get("call_to_action", "") or "").strip(),
+            "special_requests": str(user_answers.get("special_requests", "") or "").strip(),
             "tone":            user_answers.get("tone", "Professional"),
             "industry":        user_answers.get("industry", ""),
             "document_type":   doc_type,
@@ -540,12 +545,20 @@ class GroqClient:
                   GROQ_CALL_DELAY_SECONDS pause between calls to avoid rate-limit errors.
         Pass 2  — Assemble into return structure
         """
+        if not self.client:
+            raise RuntimeError(
+                "Groq is not configured: set the GROQ_API_KEY environment variable."
+            )
+
         doc_type    = signals.get("document_type", "guide")
         type_label  = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
         topic       = signals["topic"]
         audience    = signals["audience"]
         pain_points = signals.get("pain_points", "")
         firm_usp    = signals.get("firm_usp", "")
+        desired_outcome = str(signals.get("desired_outcome", "") or "").strip()
+        call_to_action = str(signals.get("call_to_action", "") or "").strip()
+        special_requests = str(signals.get("special_requests", "") or "").strip()
 
         logger.info(f"🚀 Two-pass | type={doc_type} | topic={topic[:40]}")
 
@@ -628,7 +641,10 @@ class GroqClient:
             user_msg = (
                 f"TOPIC: {topic}\n"
                 f"AUDIENCE: {audience}\n"
-                f"PAIN POINTS: {pain_points}\n\n"
+                f"PAIN POINTS: {pain_points}\n"
+                f"DESIRED OUTCOME: {desired_outcome}\n"
+                f"CALL TO ACTION: {call_to_action}\n"
+                f"SPECIAL REQUESTS: {special_requests}\n\n"
                 f"WRITE SECTION: {default_title}\n\n"
                 f"{section_prompt}\n\n"
                 "CRITICAL: MINIMUM 300 words. Raw HTML only. "

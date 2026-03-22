@@ -1,8 +1,6 @@
 import type { AxiosError } from 'axios';
 import { apiClient } from './apiClient';
 
-let pdfGenerationRunning = false;
-
 // Define types with valid choices
 export interface FirmProfile {
   id?: number;
@@ -186,7 +184,7 @@ export const dashboardApi = {
   // Create lead magnet with comprehensive error handling
   createLeadMagnet: async (data: CreateLeadMagnetRequest): Promise<LeadMagnet> => {
     try {
-      console.log('🚀 Sending lead magnet data:', JSON.stringify(data, null, 2));
+      console.log('🚀 Sending lead magnet data:', data);
       
       // Validate required fields
       if (!data.title || !data.generation_data) {
@@ -259,7 +257,7 @@ export const dashboardApi = {
     generation_data: LeadMagnetGeneration; 
   }): Promise<LeadMagnet> => {
     try {
-      console.log('🚀 Creating lead magnet with data:', JSON.stringify(data, null, 2));
+      console.log('🚀 Creating lead magnet with data:', data);
       
       const response = await apiClient.post('/api/create-lead-magnet/', data);
       
@@ -326,28 +324,37 @@ export const dashboardApi = {
     user_answers?: Record<string, unknown>;
     architectural_images?: string[];
   }): Promise<void> => {
-    if (pdfGenerationRunning) return;
-    pdfGenerationRunning = true;
-    
     try {
-      // 1. Start the job
-      const startRes = await apiClient.post('/api/generate-pdf/start/', data);
-      const { job_id } = startRes.data;
+      // 1. Start the job (returns quickly with job_id; do not time out the whole pipeline here)
+      const startRes = await apiClient.post('/api/generate-pdf/start/', data, {
+        timeout: 20000,
+      });
+      const job_id = startRes.data?.job_id;
+      if (!job_id) {
+        throw new Error('No job_id returned from server');
+      }
 
-      // 2. Poll for status
+      // 2. Poll for status — backend can take several minutes (11× Groq + delays + DocRaptor)
       const pdf_url = await (async () => { 
-          const deadline = Date.now() + 180000; // 3 minutes
-          while (Date.now() < deadline) { 
-              await new Promise(r => setTimeout(r, 3000)); 
-              const jobRes = await apiClient.get(`/api/generate-pdf/status/${job_id}/`);
+          const maxAttempts = 120;
+          const pollIntervalMs = 5000;
+
+          for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              const jobRes = await apiClient.get(`/api/generate-pdf/status/${job_id}/`, {
+                timeout: 30000,
+              });
               const job = jobRes.data;
-              
-              console.log(`PDF ${job.progress}% — ${job.message}`); 
-              
-              if (job.status === 'complete') return job.pdf_url; 
-              if (job.status === 'failed')   throw new Error(job.error || 'Generation failed'); 
-          } 
-          throw new Error('PDF generation timed out'); 
+
+              console.log(`PDF ${job.progress}% — ${job.message}`);
+
+              if (job.status === 'complete') return job.pdf_url;
+              if (job.status === 'failed') throw new Error(job.error || 'Generation failed');
+
+              if (attempt < maxAttempts - 1) {
+                await new Promise((r) => setTimeout(r, pollIntervalMs));
+              }
+          }
+          throw new Error('PDF generation timed out');
       })(); 
 
       // 3. Download the result
@@ -387,8 +394,6 @@ export const dashboardApi = {
     } catch (error) {
       handleApiError(error, 'Generating PDF with AI');
       throw error;
-    } finally {
-      pdfGenerationRunning = false;
     }
   },
 

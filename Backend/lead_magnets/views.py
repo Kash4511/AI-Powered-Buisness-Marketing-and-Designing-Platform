@@ -302,6 +302,9 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 if isinstance(gen_data.audience_pain_points, list)
                 else [gen_data.audience_pain_points]
             ),
+            "desired_outcome":  gen_data.desired_outcome,
+            "call_to_action":   gen_data.call_to_action,
+            "special_requests": gen_data.special_requests or "",
             "tone":             "Professional and Institutional",
             "industry":         "Architecture",
             "document_type":    gen_data.lead_magnet_type or "guide",
@@ -321,7 +324,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
         if use_ai_content:
             try:
                 _set_job(job_id, status="processing", progress=15,
-                         message="Generating AI content — 11 sections (~45–90s)...")
+                         message="Generating AI content — 11 sections (~3–12 min)...")
                 t0 = time.time()
 
                 signals        = ai_client.get_semantic_signals(ai_input)
