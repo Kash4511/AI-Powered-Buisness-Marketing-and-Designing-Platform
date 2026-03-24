@@ -36,14 +36,10 @@ def _resolve_if_blocks(s: str, variables: dict) -> str:
     """
     Stack-based {{#if KEY}}...{{/if}} resolver.
 
-    WHY NOT REGEX:
-    The previous regex approach used non-greedy .*? which matches the FIRST
-    {{/if}} it finds — the inner one in a nested block. When the outer {{#if}}
-    was falsy and removed, the outer {{/if}} was left as an orphan string.
-    PrinceXML then rendered "{{/if}}" as visible text on its own blank page.
-
-    This stack-based approach finds correctly matched open/close pairs at any
-    depth, then evaluates innermost-first until no blocks remain.
+    Handles nested blocks correctly at any depth.
+    The previous regex approach consumed the FIRST {{/if}} it found —
+    the inner one in a nested block — leaving orphan {{/if}} tokens that
+    PrinceXML rendered as visible text on blank pages.
     """
     TOKEN = re.compile(r'\{\{#if\s+(\w+)\}\}|\{\{/if\}\}')
 
@@ -54,9 +50,9 @@ def _resolve_if_blocks(s: str, variables: dict) -> str:
 
         for i, tok in enumerate(tokens):
             if not tok.group(0).startswith('{{#if'):
-                continue  # skip {{/if}} tokens on forward scan
+                continue
 
-            # Find the matching {{/if}} — first one at depth 0
+            # Find the matching {{/if}} at depth 0
             depth = 1
             for j in range(i + 1, len(tokens)):
                 if tokens[j].group(0).startswith('{{#if'):
@@ -91,13 +87,11 @@ def render_template(template_html: str, variables: dict) -> str:
               • All other keys                 → HTML-escaped plain text
               • Unknown keys                   → empty string
     """
-    # Pass 1: resolve conditionals
     result = _resolve_if_blocks(template_html, variables)
 
-    # Clean up blank lines left after block removal
+    # Clean up excessive blank lines left after block removal
     result = re.sub(r'\n[ \t]*\n[ \t]*\n+', '\n\n', result)
 
-    # Pass 2: substitute tokens
     def _replace_token(m: re.Match) -> str:
         key = m.group(1).strip()
         val = variables.get(key)
@@ -121,7 +115,7 @@ class DocRaptorService:
 
     TEMPLATE_REGISTRY = {
         "modern-guide": "Template.html",
-        "brand-assets": "BrandAssets.html",
+        "brand-assets":  "BrandAssets.html",
     }
 
     def __init__(self):
@@ -153,7 +147,7 @@ class DocRaptorService:
         return render_template(html, variables)
 
     def generate_pdf(self, template_id: str, variables: dict) -> dict:
-        # 1. Load template
+        # ── 1. Load template ──────────────────────────────────────────────
         path = self._get_template_path(template_id)
         if not os.path.exists(path):
             return {
@@ -164,50 +158,41 @@ class DocRaptorService:
 
         with open(path, "r", encoding="utf-8") as f:
             template_html = f.read()
-            # DIAGNOSTIC BLOCK — paste this in, redeploy, trigger one generation, then
-# check Render logs for the DIAG lines. Remove once issue is confirmed fixed.
- 
-            import hashlib
-            
-            _tmpl_hash    = hashlib.md5(template_html.encode()).hexdigest()[:8]
-            _has_img_slot = "img-slot"       in template_html
-            _has_img_blk  = "img-block"      in template_html
-            _has_ph_icon  = "ph-icon"        in template_html  # old placeholder class
-            _has_if_img   = "{{#if image_1_url}}" in template_html
-            _if_count     = template_html.count("{{#if")
-            _endif_count  = template_html.count("{{/if}}")
-            
-            logger.info(
-                f"DIAG template | hash={_tmpl_hash} "
-                f"img-slot={_has_img_slot} img-block={_has_img_blk} "
-                f"ph-icon={_has_ph_icon} if-image={_has_if_img} "
-                f"if_blocks={_if_count} endif_blocks={_endif_count}"
-            )
-            
-            # After render_template is called, add this too:
-            # (right after: rendered_html = render_template(template_html, variables))
-            
-            _remaining_if    = rendered_html.count("{{#if")
-            _remaining_endif = rendered_html.count("{{/if}}")
-            _img1_url_raw    = "{{image_1_url}}" in rendered_html   # token not substituted
-            _img1_src_real   = 'src="http'      in rendered_html    # real URL injected
-            _img1_src_empty  = 'src=""'         in rendered_html    # empty src
-            
-            logger.info(
-                f"DIAG rendered | remaining_if={_remaining_if} remaining_endif={_remaining_endif} "
-                f"token_not_subst={_img1_url_raw} real_src={_img1_src_real} empty_src={_img1_src_empty} "
-                f"len={len(rendered_html):,}"
-            )
- 
 
-        # 2. Render
+        # ── DIAGNOSTIC: log template fingerprint so we can confirm the
+        #    correct file is being served after each deploy.
+        logger.info(
+            f"DIAG template | path={path} "
+            f"img-slot={'img-slot' in template_html} "
+            f"img-block={'img-block' in template_html} "
+            f"ph-icon={'ph-icon' in template_html} "
+            f"if-image-1={'{' + '{#if image_1_url}' + '}' in template_html} "
+            f"size={len(template_html):,}"
+        )
+
+        # ── Image URL diagnostic: log which image slots are populated ─────
+        for i in range(1, 4):
+            url = variables.get(f"image_{i}_url", "")
+            logger.info(
+                f"DIAG image_{i}_url | present={bool(url)} "
+                f"value={url[:60] if url else 'ABSENT'!r}"
+            )
+
+        # ── 2. Render ─────────────────────────────────────────────────────
         rendered_html = render_template(template_html, variables)
 
-        # 3. Sanity checks
-        remaining_ifs   = len(re.findall(r'\{\{#if', rendered_html))
-        remaining_endifs = len(re.findall(r'\{\{/if\}\}', rendered_html))
-        escaped_tags    = rendered_html.count("&lt;p&gt;") + rendered_html.count("&lt;h3&gt;")
-        real_tags       = rendered_html.count("<p>") + rendered_html.count("<h3>")
+        # ── DIAGNOSTIC: confirm {{#if}} blocks fully resolved ─────────────
+        remaining_ifs    = rendered_html.count("{{#if")
+        remaining_endifs = rendered_html.count("{{/if}}")
+        escaped_tags     = rendered_html.count("&lt;p&gt;") + rendered_html.count("&lt;h3&gt;")
+        real_tags        = rendered_html.count("<p>") + rendered_html.count("<h3>")
+
+        logger.info(
+            f"DIAG rendered | "
+            f"remaining_if={remaining_ifs} remaining_endif={remaining_endifs} "
+            f"real_tags={real_tags} escaped_tags={escaped_tags} "
+            f"len={len(rendered_html):,}"
+        )
 
         if remaining_ifs or remaining_endifs:
             logger.error(
@@ -216,16 +201,11 @@ class DocRaptorService:
             )
         if escaped_tags > 5:
             logger.error(
-                f"{escaped_tags} escaped HTML tags in output — "
+                f"{escaped_tags} escaped HTML tags detected — "
                 "section_*_html vars were not injected as raw HTML."
             )
 
-        logger.info(
-            f"Rendered | real_tags={real_tags} escaped={escaped_tags} "
-            f"unresolved_ifs={remaining_ifs} len={len(rendered_html):,}"
-        )
-
-        # 4. Send to DocRaptor
+        # ── 3. Send to DocRaptor ──────────────────────────────────────────
         if not self.api_key:
             return {
                 "success": False,
@@ -247,7 +227,9 @@ class DocRaptorService:
                 },
             }
 
-            logger.info(f"→ DocRaptor | test={self.test_mode} | html={len(rendered_html):,} chars")
+            logger.info(
+                f"→ DocRaptor | test={self.test_mode} | html={len(rendered_html):,} chars"
+            )
 
             resp = requests.post(
                 self.api_url,

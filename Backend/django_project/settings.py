@@ -4,7 +4,6 @@ from datetime import timedelta
 from pathlib import Path
 from corsheaders.defaults import default_headers, default_methods
 
-# Load environment variables
 try:
     from dotenv import load_dotenv
     env_path = Path(__file__).resolve().parent.parent / '.env'
@@ -18,26 +17,23 @@ except Exception as e:
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Detect if we are running tests
 TESTING = 'test' in sys.argv or 'pytest' in sys.argv
 
 # -----------------------------
 # Core Config
 # -----------------------------
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
-DEBUG = os.getenv("DEBUG", "true").lower() == "true"
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
-# IMPORTANT: Render does NOT read .env unless added in dashboard
-# Make sure ALLOWED_HOSTS is set in Render environment settings
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,django-msvx.onrender.com,django-six-gamma.vercel.app"
+    "localhost,127.0.0.1,django-msvx.onrender.com"
 ).replace(" ", "").split(",")
 
-# Allow all Render subdomains for flexibility
+# Allow all Render and Vercel subdomains so preview branches work automatically
 ALLOWED_HOSTS.append(".onrender.com")
+ALLOWED_HOSTS.append(".vercel.app")
 
-# Ensure Render's own health-check domain is allowed if needed (though usually handled by Render)
 if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
     ALLOWED_HOSTS.append(os.getenv("RENDER_EXTERNAL_HOSTNAME"))
 
@@ -53,14 +49,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-
     'cloudinary_storage',
     'cloudinary',
-
     'accounts',
     'lead_magnets',
 ]
@@ -71,7 +64,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Add Whitenoise for static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -83,9 +76,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'django_project.urls'
 
-# -----------------------------
-# Templates
-# -----------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -109,7 +99,11 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # -----------------------------
 import dj_database_url
 
-DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL") or os.getenv("SUPABASE_STRING") or os.getenv("DATABASE_URL")
+DATABASE_URL = (
+    os.getenv("SUPABASE_DATABASE_URL")
+    or os.getenv("SUPABASE_STRING")
+    or os.getenv("DATABASE_URL")
+)
 
 if DATABASE_URL:
     DATABASES = {
@@ -119,17 +113,15 @@ if DATABASE_URL:
             ssl_require=True
         )
     }
-    # Ensure sslmode=require for Supabase
     if 'OPTIONS' not in DATABASES['default']:
         DATABASES['default']['OPTIONS'] = {}
     DATABASES['default']['OPTIONS']['sslmode'] = os.getenv("POSTGRES_SSLMODE", "require")
 else:
-    # Fallback to individual vars if DATABASE_URL is missing
-    POSTGRES_DB = os.getenv("POSTGRES_DB")
-    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_DB       = os.getenv("POSTGRES_DB")
+    POSTGRES_USER     = os.getenv("POSTGRES_USER")
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-    POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+    POSTGRES_HOST     = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT     = os.getenv("POSTGRES_PORT", "5432")
 
     if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
         DATABASES = {
@@ -147,9 +139,9 @@ else:
             }
         }
     else:
-        print("❌ No PostgreSQL configuration found. Supabase connection required.")
+        print("❌ No PostgreSQL configuration found.")
         if DEBUG:
-            print("⚠️ Falling back to SQLite for local development DEBUG mode only.")
+            print("⚠️ Falling back to SQLite for local development only.")
             DATABASES = {
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
@@ -157,7 +149,7 @@ else:
                 }
             }
         else:
-            raise Exception("PostgreSQL environment variables are missing. Database connection is required for production.")
+            raise Exception("PostgreSQL environment variables are missing.")
 
 default_db = DATABASES.get('default', {})
 print(f"🔌 DB backend: {default_db.get('ENGINE', '')}")
@@ -176,9 +168,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# -----------------------------
-# Internationalization
-# -----------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -187,17 +176,17 @@ USE_TZ = True
 # -----------------------------
 # Static & Media
 # -----------------------------
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Enable WhiteNoise's Gzip compression of static assets.
-# See: https://whitenoise.readthedocs.io/en/stable/django.html#infinitely-cacheable-assets-and-compression
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # CompressedStaticFilesStorage (not Manifest) — avoids ValueError when
+        # staticfiles.json is missing or stale after a fresh deploy.
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
@@ -208,9 +197,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Cloudinary
 # -----------------------------
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv("CLOUDINARY_CLOUD_NAME"),
-    'API_KEY': os.getenv("CLOUDINARY_API_KEY"),
-    'API_SECRET': os.getenv("CLOUDINARY_API_SECRET"),
+    'CLOUD_NAME':    os.getenv("CLOUDINARY_CLOUD_NAME"),
+    'API_KEY':       os.getenv("CLOUDINARY_API_KEY"),
+    'API_SECRET':    os.getenv("CLOUDINARY_API_SECRET"),
     'RESOURCE_TYPES': ['image', 'video', 'raw'],
 }
 
@@ -230,9 +219,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME":    timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME":   timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS":    False,
     "BLACKLIST_AFTER_ROTATION": False,
 }
 
@@ -244,25 +233,40 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "https://django-six-gamma.vercel.app",
     "https://django-4muchbxg6-kash4511s-projects.vercel.app",
+    "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
+# Covers all current and future Vercel preview branch URLs automatically
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
 CORS_URLS_REGEX = r'^/api/.*$'
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Keep False — the regex above handles all Vercel previews without opening to everyone.
+# Set CORS_ALLOW_ALL_ORIGINS=true in Render env vars only when debugging locally.
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "false").lower() == "true"
 
-CORS_ALLOW_HEADERS = ["*"]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-requested-with",
+    "content-type",
+    "accept",
+    "origin",
+    "authorization",
+    "x-csrftoken",
+]
 
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+CORS_ALLOW_METHODS = list(default_methods)
 
 CSRF_TRUSTED_ORIGINS = [
     "https://django-six-gamma.vercel.app",
+    "https://django-4muchbxg6-kash4511s-projects.vercel.app",
+    "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
     "https://django-msvx.onrender.com",
+    "https://*.vercel.app",
 ]
 
-# -----------------------------
-# Auto Field
-# -----------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
