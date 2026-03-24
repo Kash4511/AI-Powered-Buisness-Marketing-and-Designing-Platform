@@ -39,9 +39,6 @@
       @bottom-center { content: element(page-footer); width: 100%; }
     }
 
-    /* FIX: removed conflicting display:none — running elements are hidden from
-       normal flow by the position:running() declaration alone; adding display:none
-       also hid them from the paged header/footer slot. */
     #page-header {
       position: running(page-header);
       width: 100%;
@@ -68,7 +65,6 @@
     }
     #page-header .ph-page::after { content: counter(page); }
 
-    /* FIX: same display:none removal for footer */
     #page-footer {
       position: running(page-footer);
       width: 100%;
@@ -95,8 +91,7 @@
     #cover .deco-circle-1 { position: absolute; width: 340px; height: 340px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.07); top: -50px; right: -50px; }
     #cover .deco-circle-2 { position: absolute; width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.05); bottom: 80px; left: -40px; }
 
-    /* FIX: deco-bar moved to top-LEFT corner so it no longer overlaps the cover title text */
-    #cover .deco-bar { position: absolute; top: 0; left: 0; width: 38%; height: 11mm; background: var(--secondary); }
+    /* FIX 1: deco-bar REMOVED — no more bar between kicker and title */
 
     #cover .cover-inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 20mm 28mm; }
     #cover .cover-kicker { font-family: 'Poppins', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; color: var(--secondary); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
@@ -177,30 +172,33 @@
     .ca em { color: var(--secondary); font-style: italic; }
     .ca span { display: inline; }
 
-    /* ── IMAGE BLOCK — used when a real URL is available ───────────────── */
+    /* ── IMAGE BLOCK ────────────────────────────────────────────────────── */
+    /* FIX 2: Images now flow naturally with text — no page-break-inside:avoid
+       that was pushing them to the bottom of pages with large whitespace gaps.
+       float:none + clear:both ensures they sit inline after the nearest paragraph. */
     .img-block {
       width: 100%;
-      margin: 20px 0;
+      margin: 16px 0 20px;
       border-radius: var(--radius);
       overflow: hidden;
       border: 1px solid #e2e8f0;
-      page-break-inside: avoid;
+      float: none;
+      clear: both;
     }
     .img-block img {
       width: 100%;
-      max-height: 200px;
+      max-height: 180px;
       object-fit: cover;
       display: block;
     }
 
-    /* ── IMAGE PLACEHOLDER — used when NO url is available ──────────────── */
+    /* ── IMAGE PLACEHOLDER ──────────────────────────────────────────────── */
     .img-placeholder {
       width: 100%;
       margin: 20px 0;
       border-radius: var(--radius);
       border: 2px dashed #cbd5e1;
       background: #f8fafc;
-      page-break-inside: avoid;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -224,8 +222,6 @@
     .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; }
 
     /* ── CTA BOX ────────────────────────────────────────────────────────── */
-    /* FIX: CTA box now uses position:relative and clear margin so it always
-       sits below the section content and never overlaps other elements */
     .cta-box {
       position: relative;
       margin-top: 28px;
@@ -249,7 +245,7 @@
 <div id="cover">
   <div class="deco-circle-1"></div>
   <div class="deco-circle-2"></div>
-  <div class="deco-bar"></div>
+  <!-- deco-bar intentionally removed -->
   <div class="cover-inner">
     <div class="cover-kicker">{{documentTypeLabel}}</div>
     <div class="cover-title">{{mainTitle}}</div>
@@ -269,9 +265,6 @@
 </div>
 
 <!-- TERMS ═══════════════════════════════════════════════════════════════════ -->
-<!-- RUNNING HEADER & FOOTER: placed inside the first body-page div.          -->
-<!-- PrinceXML's position:running() removes them from normal flow correctly   -->
-<!-- only when they are inside a paged element, not between page blocks.      -->
 <div class="bp-forced">
   <div id="page-header">
     <div class="ph-left">
@@ -446,8 +439,6 @@
   </div>
   <div class="ca">{{section_call_to_action_full_html}}</div>
   <div class="sec-end"></div>
-  <!-- FIX: CTA box moved OUTSIDE .ca so it sits below the section rule,
-       not floating inside the content flow -->
   <div class="cta-box">
     <div class="cta-lbl">Get in Touch</div>
     <div class="cta-co">{{companyName}}</div>
