@@ -268,21 +268,22 @@
   </div>
 </div>
 
-<!-- RUNNING HEADER & FOOTER (placed once in normal flow; paged media picks them up) -->
-<div id="page-header">
-  <div class="ph-left">
-    <div class="ph-bar"></div>
-    <div class="ph-title">{{mainTitle}}</div>
-  </div>
-  <div class="ph-page"></div>
-</div>
-<div id="page-footer">
-  <span>© 2026 {{companyName}}. All rights reserved.</span>
-  <span>{{website}}</span>
-</div>
-
 <!-- TERMS ═══════════════════════════════════════════════════════════════════ -->
+<!-- RUNNING HEADER & FOOTER: placed inside the first body-page div.          -->
+<!-- PrinceXML's position:running() removes them from normal flow correctly   -->
+<!-- only when they are inside a paged element, not between page blocks.      -->
 <div class="bp-forced">
+  <div id="page-header">
+    <div class="ph-left">
+      <div class="ph-bar"></div>
+      <div class="ph-title">{{mainTitle}}</div>
+    </div>
+    <div class="ph-page"></div>
+  </div>
+  <div id="page-footer">
+    <span>© 2026 {{companyName}}. All rights reserved.</span>
+    <span>{{website}}</span>
+  </div>
   <div class="terms-title">{{termsTitle}}</div>
   <div class="terms-body">{{termsSummary}}</div>
   <div class="terms-body">{{termsParagraph1}}</div>
