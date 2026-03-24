@@ -164,6 +164,41 @@ class DocRaptorService:
 
         with open(path, "r", encoding="utf-8") as f:
             template_html = f.read()
+            # DIAGNOSTIC BLOCK — paste this in, redeploy, trigger one generation, then
+# check Render logs for the DIAG lines. Remove once issue is confirmed fixed.
+ 
+            import hashlib
+            
+            _tmpl_hash    = hashlib.md5(template_html.encode()).hexdigest()[:8]
+            _has_img_slot = "img-slot"       in template_html
+            _has_img_blk  = "img-block"      in template_html
+            _has_ph_icon  = "ph-icon"        in template_html  # old placeholder class
+            _has_if_img   = "{{#if image_1_url}}" in template_html
+            _if_count     = template_html.count("{{#if")
+            _endif_count  = template_html.count("{{/if}}")
+            
+            logger.info(
+                f"DIAG template | hash={_tmpl_hash} "
+                f"img-slot={_has_img_slot} img-block={_has_img_blk} "
+                f"ph-icon={_has_ph_icon} if-image={_has_if_img} "
+                f"if_blocks={_if_count} endif_blocks={_endif_count}"
+            )
+            
+            # After render_template is called, add this too:
+            # (right after: rendered_html = render_template(template_html, variables))
+            
+            _remaining_if    = rendered_html.count("{{#if")
+            _remaining_endif = rendered_html.count("{{/if}}")
+            _img1_url_raw    = "{{image_1_url}}" in rendered_html   # token not substituted
+            _img1_src_real   = 'src="http'      in rendered_html    # real URL injected
+            _img1_src_empty  = 'src=""'         in rendered_html    # empty src
+            
+            logger.info(
+                f"DIAG rendered | remaining_if={_remaining_if} remaining_endif={_remaining_endif} "
+                f"token_not_subst={_img1_url_raw} real_src={_img1_src_real} empty_src={_img1_src_empty} "
+                f"len={len(rendered_html):,}"
+            )
+ 
 
         # 2. Render
         rendered_html = render_template(template_html, variables)
