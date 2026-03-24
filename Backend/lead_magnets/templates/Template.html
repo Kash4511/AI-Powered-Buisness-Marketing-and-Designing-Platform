@@ -97,7 +97,6 @@
     #cover .cover-kicker { font-family: 'Poppins', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; color: var(--secondary); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
     #cover .cover-kicker::before { content: ''; width: 20px; height: 2px; background: var(--secondary); display: block; flex-shrink: 0; }
     #cover .cover-title { font-family: 'Poppins', sans-serif; font-size: 44px; font-weight: 900; line-height: 1.0; text-transform: uppercase; letter-spacing: -1px; color: #fff; margin-bottom: 22px; max-width: 430px; word-wrap: break-word; hyphens: auto; }
-    #cover .cover-accent { width: 4px; height: 64px; background: var(--secondary); border-radius: 3px; margin-bottom: 18px; }
     #cover .cover-subtitle { font-size: 14px; font-weight: 300; line-height: 1.65; color: rgba(255,255,255,0.8); max-width: 380px; margin-bottom: 40px; }
     #cover .cover-meta { border-top: 1px solid rgba(255,255,255,0.12); padding-top: 18px; display: flex; justify-content: space-between; align-items: flex-end; }
     #cover .cover-brand { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 15px; color: #fff; margin-bottom: 3px; }
@@ -173,22 +172,27 @@
     .ca span { display: inline; }
 
     /* ── IMAGE BLOCK ────────────────────────────────────────────────────── */
-    /* FIX 2: Images now flow naturally with text — no page-break-inside:avoid
-       that was pushing them to the bottom of pages with large whitespace gaps.
-       float:none + clear:both ensures they sit inline after the nearest paragraph. */
+    /* FIX 2: Images now centered horizontally and vertically within container.
+       Increased container height and used flexbox to avoid awkward blank space
+       and ensure perfect positioning. */
     .img-block {
       width: 100%;
-      margin: 16px 0 20px;
+      height: 380px;
+      margin: 24px 0 32px;
       border-radius: var(--radius);
       overflow: hidden;
       border: 1px solid #e2e8f0;
+      background: #fcfdfe;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       float: none;
       clear: both;
     }
     .img-block img {
-      width: 100%;
-      max-height: 180px;
-      object-fit: cover;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
       display: block;
     }
 
@@ -249,7 +253,6 @@
   <div class="cover-inner">
     <div class="cover-kicker">{{documentTypeLabel}}</div>
     <div class="cover-title">{{mainTitle}}</div>
-    <div class="cover-accent"></div>
     <div class="cover-subtitle">{{documentSubtitle}}</div>
     <div class="cover-meta">
       <div>
