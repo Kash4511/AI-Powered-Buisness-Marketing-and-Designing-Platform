@@ -45,8 +45,6 @@ _TYPE_MAP = {
     "custom": "custom", "Custom": "custom",
 }
 
-# FIX 1: Expanded ALLOWED_TAGS — previously stripped div/table/a/etc., causing LLM
-# output to fail the 50-char validation check and trigger the fallback error message.
 ALLOWED_TAGS = {
     "p", "strong", "em", "b", "i", "u",
     "h2", "h3", "h4", "h5",
@@ -57,10 +55,7 @@ ALLOWED_TAGS = {
     "a", "small", "mark", "code", "pre",
 }
 
-# FIX 2: Rate limiting — Groq free tier throttles llama-3.3-70b-versatile hard.
-# 11 back-to-back calls without delay = rate limit errors after the first 1-2 calls.
-# This caused 10/11 sections to fall back to placeholder text.
-GROQ_CALL_DELAY_SECONDS = 8.0   # pause between each section call
+GROQ_CALL_DELAY_SECONDS = 8.0
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -102,20 +97,14 @@ def _sanitize_html(html: str) -> str:
     if not html:
         return html
     html = html.strip().strip('"')
-    # Convert markdown bold to HTML strong
     html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
-    # Remove markdown headings
     html = re.sub(r'^#{1,6}\s+.*$', '', html, flags=re.MULTILINE)
-    # Remove bracketed placeholder text like [INSERT STAT]
     html = re.sub(r'\[[A-Z][^\]]{2,80}\]', '', html)
-    # FIX 3: Strip disallowed tags but KEEP their inner text.
-    # Previously the lambda returned "" for the whole tag including text content,
-    # which caused valid LLM output to shrink below the 50-char threshold.
     def _handle_tag(m):
         tag = m.group(2).lower()
         if tag in ALLOWED_TAGS:
             return m.group(0)
-        return ""   # remove only the tag token; text nodes between tags are untouched
+        return ""
     html = re.sub(r'<(/?)(\w+)([^>]*)>', _handle_tag, html)
     return _ensure_closed_tags(html).strip()
 
@@ -139,10 +128,6 @@ def _ensure_closed_tags(html: str) -> str:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TEMPLATE RENDERER
-# FIX 4: This was completely missing. The renderer was passing the raw template
-# string to PrinceXML with all {{#if}}...{{/if}} blocks unprocessed, causing
-# them to appear as literal text in the PDF (including as whole blank pages
-# when {{/if}} fell on a page boundary).
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_template(template: str, vars: Dict[str, Any]) -> str:
@@ -153,17 +138,8 @@ def render_template(template: str, vars: Dict[str, Any]) -> str:
 
     Handles up to 5 levels of nesting via repeated passes.
     Must be called BEFORE passing HTML to PrinceXML / WeasyPrint.
-
-    Usage:
-        template_str = open("Template.html").read()
-        vars = client.map_to_template_vars(ai_content, firm_profile, signals)
-        rendered_html = render_template(template_str, vars)
-        # → pass rendered_html to your PDF renderer
     """
-    # --- Pass 1-5: resolve {{#if KEY}}...{{/if}} blocks (innermost first) ---
     for _ in range(5):
-        # Use a factory to avoid the Python closure-in-loop capture bug:
-        # each iteration binds the current `vars` dict snapshot correctly.
         def _make_replacer(v):
             def _replace_if(m):
                 key     = m.group(1).strip()
@@ -181,7 +157,6 @@ def render_template(template: str, vars: Dict[str, Any]) -> str:
             break
         template = new_html
 
-    # --- Pass 2: substitute remaining {{VAR}} placeholders ---
     def _replace_var(m):
         key = m.group(1).strip()
         val = vars.get(key)
@@ -538,13 +513,6 @@ class GroqClient:
     def generate_lead_magnet_json(
         self, signals: Dict[str, Any], firm_profile: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """
-        TWO-PASS GENERATION:
-        Pass 1a — Title generation (1 small call, ~120 tokens)
-        Pass 1b — One focused API call per section (11 calls × up to 4096 tokens)
-                  GROQ_CALL_DELAY_SECONDS pause between calls to avoid rate-limit errors.
-        Pass 2  — Assemble into return structure
-        """
         if not self.client:
             raise RuntimeError(
                 "Groq is not configured: set the GROQ_API_KEY environment variable."
@@ -556,8 +524,8 @@ class GroqClient:
         audience    = signals["audience"]
         pain_points = signals.get("pain_points", "")
         firm_usp    = signals.get("firm_usp", "")
-        desired_outcome = str(signals.get("desired_outcome", "") or "").strip()
-        call_to_action = str(signals.get("call_to_action", "") or "").strip()
+        desired_outcome  = str(signals.get("desired_outcome", "") or "").strip()
+        call_to_action   = str(signals.get("call_to_action", "") or "").strip()
         special_requests = str(signals.get("special_requests", "") or "").strip()
 
         logger.info(f"🚀 Two-pass | type={doc_type} | topic={topic[:40]}")
@@ -618,8 +586,6 @@ class GroqClient:
         sections_content: Dict[str, str] = {}
 
         for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
-            # FIX 2 (rate limiting): pause between each Groq call.
-            # Skip delay before the very first call; title call already ran.
             if idx > 0:
                 logger.debug(f"  ⏳ Rate-limit pause ({GROQ_CALL_DELAY_SECONDS}s)…")
                 time.sleep(GROQ_CALL_DELAY_SECONDS)
@@ -674,15 +640,12 @@ class GroqClient:
                 logger.info(f"  ✅ {key}: {len(sections_content[key])} chars")
             except Exception as e:
                 logger.warning(f"  ⚠️  {key} failed: {e} — retrying after delay")
-                time.sleep(GROQ_CALL_DELAY_SECONDS * 2)   # longer pause on error
+                time.sleep(GROQ_CALL_DELAY_SECONDS * 2)
                 try:
                     sections_content[key] = _call_groq(min(self.temperature + 0.1, 0.9))
                     logger.info(f"  ✅ {key} (retry): {len(sections_content[key])} chars")
                 except Exception as e2:
                     logger.error(f"  ❌ {key} retry failed: {e2}")
-                    # FIX 5: Empty string so {{#if section_X_full_html}} evaluates
-                    # falsy and the entire section div is omitted from the PDF,
-                    # rather than rendering a placeholder-text page.
                     sections_content[key] = ""
 
         filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k, "")) > 100)
@@ -798,8 +761,12 @@ class GroqClient:
             "termsParagraph5": f"All recommendations should be validated by a qualified {signals.get('industry', topic)} professional before implementation.",
         }
 
-        # Image slots — only set when a real URL exists.
-        # Absent key → {{#if image_N_url}} is falsy → block is removed cleanly.
+        # ── Image slots ───────────────────────────────────────────────────
+        # Only write image_N_url to tvars when a real URL exists.
+        # The template uses {{#if image_N_url}} blocks — an absent or empty
+        # key evaluates falsy, so the entire img-block div is removed cleanly
+        # by render_template. This means no image AND no placeholder gap when
+        # the user hasn't uploaded an image — the section just ends normally.
         for i in range(1, 7):
             url = str(firm_profile.get(f"image_{i}_url") or "").strip()
             if url:
@@ -854,9 +821,6 @@ class GroqClient:
         """
         Render the HTML template — resolves all {{#if}} blocks and {{VAR}}
         substitutions BEFORE the HTML is passed to PrinceXML / WeasyPrint.
-
-        This MUST be called. Skipping it is what caused raw {{#if image_1_url}}
-        and stray {{/if}} pages to appear in the PDF.
 
         Example usage:
             template_str  = open("Template.html").read()

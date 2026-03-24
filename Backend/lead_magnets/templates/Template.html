@@ -177,7 +177,7 @@
     .ca em { color: var(--secondary); font-style: italic; }
     .ca span { display: inline; }
 
-    /* ── IMAGE BLOCK ────────────────────────────────────────────────────── */
+    /* ── IMAGE BLOCK — used when a real URL is available ───────────────── */
     .img-block {
       width: 100%;
       margin: 20px 0;
@@ -193,23 +193,32 @@
       display: block;
     }
 
-    /* ── IMAGE PLACEHOLDER (shown when no URL is supplied) ──────────────── */
+    /* ── IMAGE PLACEHOLDER — used when NO url is available ──────────────── */
     .img-placeholder {
       width: 100%;
       margin: 20px 0;
       border-radius: var(--radius);
       border: 2px dashed #cbd5e1;
       background: #f8fafc;
+      page-break-inside: avoid;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 8px;
       height: 160px;
-      page-break-inside: avoid;
+    }
+    .img-placeholder .ph-icon {
+      font-size: 22px;
+      opacity: 0.4;
       color: #94a3b8;
     }
-    .img-placeholder .ph-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.5; }
-    .img-placeholder .ph-label { font-family: 'Poppins', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+    .img-placeholder .ph-label {
+      font-family: 'Poppins', sans-serif;
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 2px;
+      color: #94a3b8;
+    }
 
     /* ── SECTION END MARKER ─────────────────────────────────────────────── */
     .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; }
@@ -303,11 +312,6 @@
     {{section_executive_summary_full_html}}
     {{#if image_1_url}}
     <div class="img-block"><img src="{{image_1_url}}" alt="{{customTitle1}}"></div>
-    {{else}}
-    <div class="img-placeholder">
-      <div class="ph-icon">🖼</div>
-      <div class="ph-label">Image Placeholder — Section 1</div>
-    </div>
     {{/if}}
   </div>
   <div class="sec-end"></div>
@@ -325,11 +329,6 @@
     {{section_industry_analysis_full_html}}
     {{#if image_2_url}}
     <div class="img-block"><img src="{{image_2_url}}" alt="{{customTitle2}}"></div>
-    {{else}}
-    <div class="img-placeholder">
-      <div class="ph-icon">🖼</div>
-      <div class="ph-label">Image Placeholder — Section 2</div>
-    </div>
     {{/if}}
   </div>
   <div class="sec-end"></div>
@@ -359,11 +358,6 @@
     {{section_practical_strategies_full_html}}
     {{#if image_3_url}}
     <div class="img-block"><img src="{{image_3_url}}" alt="{{customTitle4}}"></div>
-    {{else}}
-    <div class="img-placeholder">
-      <div class="ph-icon">🖼</div>
-      <div class="ph-label">Image Placeholder — Section 4</div>
-    </div>
     {{/if}}
   </div>
   <div class="sec-end"></div>
