@@ -2,10 +2,43 @@ import os
 import re
 import logging
 import time
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from groq import Groq
+import openai
+import anthropic
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AI CONFIGURATIONS — Comparative settings for fallback models
+# ─────────────────────────────────────────────────────────────────────────────
+AI_CONFIGS = {
+    "groq": {
+        "model": "llama-3.3-70b-versatile",
+        "max_tokens": 4096,
+        "description": "High-speed Llama-3 (Groq)",
+        "context_window": 128000,
+    },
+    "anthropic": {
+        "model": "claude-3-5-sonnet-20241022",
+        "max_tokens": 8192,
+        "description": "Premium reasoning & depth (Anthropic)",
+        "context_window": 200000,
+    },
+    "openai": {
+        "model": "gpt-4o-2024-08-06",
+        "max_tokens": 4096,
+        "description": "Industry-standard precision (OpenAI)",
+        "context_window": 128000,
+    },
+    "google": {
+        "model": "gemini-1.5-pro",
+        "max_tokens": 8192,
+        "description": "Massive context & detail (Google)",
+        "context_window": 2000000,
+    },
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION DEFINITIONS — 11 sections matching Template.html exactly
@@ -472,11 +505,100 @@ class GroqClient:
     SECTION_LAYOUT  = {key: layout for key, _, _, layout, _ in SECTIONS}
 
     def __init__(self, api_key: str = None):
-        api_key          = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
-        self.client      = Groq(api_key=api_key) if api_key else None
-        self.model       = "llama-3.3-70b-versatile"
+        # 1. Groq Client (Primary)
+        groq_api_key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
+        self.groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
+        
+        # 2. Anthropic Client (Fallback 1)
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key) if anthropic_api_key else None
+        
+        # 3. OpenAI Client (Fallback 2)
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        self.openai_client = openai.OpenAI(api_key=openai_api_key) if openai_api_key else None
+        
+        # 4. Google Client (Fallback 3)
+        google_api_key = os.getenv("GOOGLE_API_KEY")
+        if google_api_key:
+            genai.configure(api_key=google_api_key)
+            self.google_model = genai.GenerativeModel(AI_CONFIGS["google"]["model"])
+        else:
+            self.google_model = None
+
+        # Backwards compatibility
+        self.client      = self.groq_client
+        self.model       = AI_CONFIGS["groq"]["model"]
         self.temperature = 0.72
-        self.max_tokens  = 4096
+        self.max_tokens  = AI_CONFIGS["groq"]["max_tokens"]
+
+    def _call_ai_with_fallback(self, system_msg: str, user_msg: str, temperature: float = 0.72) -> str:
+        """
+        Executes AI call with automatic fallback logic across 4 providers.
+        Attempts Groq -> Anthropic -> OpenAI -> Google.
+        """
+        providers = [
+            ("groq",      self.groq_client),
+            ("anthropic", self.anthropic_client),
+            ("openai",    self.openai_client),
+            ("google",    self.google_model)
+        ]
+
+        errors = []
+        for name, client in providers:
+            if not client:
+                logger.debug(f"  ⏭️ Skipping {name} (API key not configured)")
+                continue
+
+            try:
+                config = AI_CONFIGS[name]
+                logger.info(f"  → Calling {name} ({config['model']})…")
+                
+                if name == "groq":
+                    resp = client.chat.completions.create(
+                        model=config["model"],
+                        messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
+                        temperature=temperature,
+                        max_tokens=config["max_tokens"],
+                    )
+                    return resp.choices[0].message.content.strip()
+
+                elif name == "anthropic":
+                    resp = client.messages.create(
+                        model=config["model"],
+                        system=system_msg,
+                        messages=[{"role": "user", "content": user_msg}],
+                        temperature=temperature,
+                        max_tokens=config["max_tokens"],
+                    )
+                    return resp.content[0].text.strip()
+
+                elif name == "openai":
+                    resp = client.chat.completions.create(
+                        model=config["model"],
+                        messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
+                        temperature=temperature,
+                        max_tokens=config["max_tokens"],
+                    )
+                    return resp.choices[0].message.content.strip()
+
+                elif name == "google":
+                    # Google uses a different message structure
+                    prompt = f"SYSTEM: {system_msg}\n\nUSER: {user_msg}"
+                    resp = client.generate_content(
+                        prompt,
+                        generation_config=genai.types.GenerationConfig(
+                            max_output_tokens=config["max_tokens"],
+                            temperature=temperature,
+                        )
+                    )
+                    return resp.text.strip()
+
+            except Exception as e:
+                logger.warning(f"  ⚠️ {name} failed: {str(e)}")
+                errors.append(f"{name}: {str(e)}")
+                continue # Try next provider
+
+        raise RuntimeError(f"All AI providers failed: {'; '.join(errors)}")
 
     # ──────────────────────────────────────────────────────────────────────
     # PUBLIC API
@@ -534,31 +656,20 @@ class GroqClient:
         title    = ""
         subtitle = ""
         try:
-            r = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You write authoritative document titles. "
-                            "Respond with EXACTLY two lines:\n"
-                            "TITLE: [3-6 word title prominently featuring the core topic]\n"
-                            "SUBTITLE: [One sentence value proposition for the target audience]"
-                        ),
-                    },
-                    {
-                        "role": "user",
-                        "content": (
-                            f"Topic: '{topic}' | Audience: {audience} | Type: {type_label}\n"
-                            f"Rules: McKinsey-style, no hyphens/slugs, no marketing fluff, "
-                            f"title must feature '{topic}' clearly."
-                        ),
-                    },
-                ],
-                temperature=0.7,
-                max_tokens=120,
+            system_prompt = (
+                "You write authoritative document titles. "
+                "Respond with EXACTLY two lines:\n"
+                "TITLE: [3-6 word title prominently featuring the core topic]\n"
+                "SUBTITLE: [One sentence value proposition for the target audience]"
             )
-            for line in r.choices[0].message.content.strip().split("\n"):
+            user_prompt = (
+                f"Topic: '{topic}' | Audience: {audience} | Type: {type_label}\n"
+                f"Rules: McKinsey-style, no hyphens/slugs, no marketing fluff, "
+                f"title must feature '{topic}' clearly."
+            )
+            raw_title_resp = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.7)
+            
+            for line in raw_title_resp.split("\n"):
                 if line.upper().startswith("TITLE:"):
                     title = line.split(":", 1)[1].strip()
                 elif line.upper().startswith("SUBTITLE:"):
@@ -617,36 +728,22 @@ class GroqClient:
                 "No placeholders like [STAT] or [INSERT EXAMPLE]. No truncation."
             )
 
-            def _call_groq(temp):
-                resp = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_msg},
-                        {"role": "user",   "content": user_msg},
-                    ],
-                    temperature=temp,
-                    max_tokens=self.max_tokens,
-                )
-                raw = resp.choices[0].message.content.strip()
+            try:
+                raw = self._call_ai_with_fallback(system_msg, user_msg, temperature=self.temperature)
                 raw = re.sub(r'^```html?\s*', '', raw, flags=re.IGNORECASE)
                 raw = re.sub(r'\s*```\s*$', '', raw)
                 raw = _sanitize_html(raw)
+                
                 if len(_html_to_text(raw)) < 50:
-                    raise ValueError(f"Section too short: {len(_html_to_text(raw))} chars")
-                return raw
+                    logger.warning(f"  ⚠️ Section {key} too short, retrying...")
+                    raw = self._call_ai_with_fallback(system_msg, user_msg, temperature=min(self.temperature + 0.1, 0.9))
+                    raw = _sanitize_html(raw)
 
-            try:
-                sections_content[key] = _call_groq(self.temperature)
+                sections_content[key] = raw
                 logger.info(f"  ✅ {key}: {len(sections_content[key])} chars")
             except Exception as e:
-                logger.warning(f"  ⚠️  {key} failed: {e} — retrying after delay")
-                time.sleep(GROQ_CALL_DELAY_SECONDS * 2)
-                try:
-                    sections_content[key] = _call_groq(min(self.temperature + 0.1, 0.9))
-                    logger.info(f"  ✅ {key} (retry): {len(sections_content[key])} chars")
-                except Exception as e2:
-                    logger.error(f"  ❌ {key} retry failed: {e2}")
-                    sections_content[key] = ""
+                logger.error(f"  ❌ {key} failed all providers: {e}")
+                sections_content[key] = ""
 
         filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k, "")) > 100)
         logger.info(f"✅ Complete | {filled}/{len(SECTION_KEYS)} sections filled")
