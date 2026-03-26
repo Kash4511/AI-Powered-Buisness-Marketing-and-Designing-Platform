@@ -2,9 +2,12 @@ import axios from 'axios';
 
 // Resolve API base URL from environment for deployment
 const getApiBaseUrl = () => {
-  // 1. Check for Vite environment variable
-  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) {
-    return (import.meta as any).env.VITE_API_BASE_URL;
+  // 1. Check for Vite environment variables (try both standard and '1' suffix from screenshot)
+  const env = (import.meta as any).env || {};
+  const baseUrl = env.VITE_API_BASE_URL || env.VITE_API_BASE_URL1;
+  
+  if (baseUrl) {
+    return baseUrl;
   }
   
   // 2. Check for global window variable
@@ -43,6 +46,7 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log(`[apiClient] Initializing with base URL: ${API_BASE_URL}`);
 
 // Create axios instance with default config
 const apiClient = axios.create({

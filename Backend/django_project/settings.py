@@ -27,7 +27,7 @@ DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,django-msvx.onrender.com,django-jrl5.onrender.com"
+    "localhost,127.0.0.1,django-msvx.onrender.com,django-jrl5.onrender.com,django-8dru.onrender.com"
 ).replace(" ", "").split(",")
 
 # Allow all Render and Vercel subdomains so preview branches work automatically
@@ -236,6 +236,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
     "https://django-msvx.onrender.com",
     "https://django-jrl5.onrender.com",
+    "https://django-8dru.onrender.com",
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -267,7 +268,7 @@ CORS_ALLOW_METHODS = [
     "PUT",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "false").lower() == "true"
+CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://django-six-gamma.vercel.app",
