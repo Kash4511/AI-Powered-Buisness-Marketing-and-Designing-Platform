@@ -17,26 +17,83 @@
       --text:       {{textColor}};
       --text-light: {{textLightColor}};
       --radius:     6px;
+      --base-gap:   10pt;
     }
 
     body {
       font-family: 'Inter', sans-serif;
       color: var(--text);
       background: #fff;
-      line-height: 1.7;
+      line-height: 1.5;
       font-size: 13px;
     }
 
-    @page cover-page {
+    @page {
       size: A4;
+      margin: 2cm; /* 72pt mirrored margins */
+    }
+
+    @page cover-page {
       margin: 0;
     }
 
     @page body-page {
-      size: A4;
-      margin: 24mm 0 16mm 0;
       @top-center    { content: element(page-header); width: 100%; }
       @bottom-center { content: element(page-footer); width: 100%; }
+    }
+
+    p, li, td {
+      orphans: 2;
+      widows: 2;
+      margin-top: 0;
+      margin-bottom: var(--base-gap);
+    }
+
+    h1, h2, h3 {
+      page-break-after: avoid;
+      margin-top: calc(3 * var(--base-gap));
+      margin-bottom: var(--base-gap);
+      font-family: 'Poppins', sans-serif;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+
+    @media print {
+      h1:nth-of-type(n+2) {
+        page-break-before: always;
+      }
+    }
+
+    .section {
+       margin-bottom: calc(2 * var(--base-gap));
+       page-break-inside: avoid;
+     }
+
+     .page-break {
+       page-break-before: always;
+     }
+
+    figure.parent {
+      display: block;
+      margin-top: 0;
+      margin-bottom: var(--base-gap);
+      page-break-inside: avoid;
+    }
+
+    figure.parent img {
+      display: block;
+      margin: 10pt auto;
+      max-width: 65%;
+      height: auto;
+      border-radius: var(--radius);
+      border: 1px solid #e2e8f0;
+    }
+
+    figure.parent figcaption {
+      text-align: center;
+      font-size: 0.9em;
+      margin-top: calc(0.5 * var(--base-gap));
+      color: var(--text-light);
     }
 
     #page-header {
@@ -146,10 +203,10 @@
     .toc-pg    { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #9ca3af; margin-left: 12px; }
 
     /* ── CONTENT AREA ───────────────────────────────────────────────────── */
-    .ca p { font-size: 13px; line-height: 1.78; color: var(--text); margin-bottom: 13px; orphans: 3; widows: 3; }
+    .ca p { color: var(--text); }
     .ca p strong { color: var(--primary); font-weight: 700; }
-    .ca h2 { font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.3px; margin: 20px 0 9px; page-break-after: avoid; }
-    .ca h3 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; border-left: 3px solid var(--secondary); padding-left: 10px; margin: 16px 0 7px; page-break-after: avoid; }
+    .ca h2 { font-size: 15px; font-weight: 800; letter-spacing: 0.3px; }
+    .ca h3 { font-size: 12px; font-weight: 700; letter-spacing: 0.8px; border-left: 3px solid var(--secondary); padding-left: 10px; }
     .ca h4 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--secondary); margin: 13px 0 5px; page-break-after: avoid; }
     .ca ul { margin: 9px 0 14px; padding: 0; list-style: none; }
     .ca ul li { font-size: 13px; line-height: 1.7; color: var(--text); padding-left: 18px; margin-bottom: 6px; position: relative; page-break-inside: avoid; }
@@ -170,52 +227,6 @@
     .ca blockquote p, .ca blockquote { font-size: 12.5px; line-height: 1.7; color: var(--primary); font-style: normal; }
     .ca em { color: var(--secondary); font-style: italic; }
     .ca span { display: inline; }
-
-    /* ── IMAGE BLOCK ────────────────────────────────────────────────────── */
-    /* FIX 2: Images now flow naturally with text — no page-break-inside:avoid
-       that was pushing them to the bottom of pages with large whitespace gaps.
-       float:none + clear:both ensures they sit inline after the nearest paragraph. */
-    .img-block {
-      width: 100%;
-      margin: 16px 0 20px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid #e2e8f0;
-      float: none;
-      clear: both;
-    }
-    .img-block img {
-      width: 100%;
-      max-height: 180px;
-      object-fit: cover;
-      display: block;
-    }
-
-    /* ── IMAGE PLACEHOLDER ──────────────────────────────────────────────── */
-    .img-placeholder {
-      width: 100%;
-      margin: 20px 0;
-      border-radius: var(--radius);
-      border: 2px dashed #cbd5e1;
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      height: 160px;
-    }
-    .img-placeholder .ph-icon {
-      font-size: 22px;
-      opacity: 0.4;
-      color: #94a3b8;
-    }
-    .img-placeholder .ph-label {
-      font-family: 'Poppins', sans-serif;
-      font-size: 9px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 2px;
-      color: #94a3b8;
-    }
 
     /* ── SECTION END MARKER ─────────────────────────────────────────────── */
     .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; }
@@ -294,7 +305,7 @@
 <div class="bp">
 
 {{#if section_executive_summary_full_html}}
-<div id="section-executive_summary">
+<div id="section-executive_summary" class="section">
   <div class="sec-head">
     <div class="sec-kicker">01</div>
     <div class="sec-title">{{customTitle1}}</div>
@@ -303,7 +314,10 @@
   <div class="ca">
     {{section_executive_summary_full_html}}
     {{#if image_1_url}}
-    <div class="img-block"><img src="{{image_1_url}}" alt="{{customTitle1}}"></div>
+    <figure class="parent">
+      <img src="{{image_1_url}}" alt="{{customTitle1}}">
+      <figcaption>{{customTitle1}}</figcaption>
+    </figure>
     {{/if}}
   </div>
   <div class="sec-end"></div>
@@ -311,7 +325,7 @@
 {{/if}}
 
 {{#if section_industry_analysis_full_html}}
-<div id="section-industry_analysis" class="sec-start">
+<div id="section-industry_analysis" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">02</div>
     <div class="sec-title">{{customTitle2}}</div>
@@ -320,7 +334,10 @@
   <div class="ca">
     {{section_industry_analysis_full_html}}
     {{#if image_2_url}}
-    <div class="img-block"><img src="{{image_2_url}}" alt="{{customTitle2}}"></div>
+    <figure class="parent">
+      <img src="{{image_2_url}}" alt="{{customTitle2}}">
+      <figcaption>{{customTitle2}}</figcaption>
+    </figure>
     {{/if}}
   </div>
   <div class="sec-end"></div>
@@ -328,7 +345,7 @@
 {{/if}}
 
 {{#if section_core_principles_full_html}}
-<div id="section-core_principles" class="sec-start">
+<div id="section-core_principles" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">03</div>
     <div class="sec-title">{{customTitle3}}</div>
@@ -340,7 +357,7 @@
 {{/if}}
 
 {{#if section_practical_strategies_full_html}}
-<div id="section-practical_strategies" class="sec-start">
+<div id="section-practical_strategies" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">04</div>
     <div class="sec-title">{{customTitle4}}</div>
@@ -349,7 +366,10 @@
   <div class="ca">
     {{section_practical_strategies_full_html}}
     {{#if image_3_url}}
-    <div class="img-block"><img src="{{image_3_url}}" alt="{{customTitle4}}"></div>
+    <figure class="parent">
+      <img src="{{image_3_url}}" alt="{{customTitle4}}">
+      <figcaption>{{customTitle4}}</figcaption>
+    </figure>
     {{/if}}
   </div>
   <div class="sec-end"></div>
@@ -357,7 +377,7 @@
 {{/if}}
 
 {{#if section_business_benefits_full_html}}
-<div id="section-business_benefits" class="sec-start">
+<div id="section-business_benefits" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">05</div>
     <div class="sec-title">{{customTitle5}}</div>
@@ -369,7 +389,7 @@
 {{/if}}
 
 {{#if section_case_study_full_html}}
-<div id="section-case_study" class="sec-start">
+<div id="section-case_study" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">06</div>
     <div class="sec-title">{{customTitle6}}</div>
@@ -381,7 +401,7 @@
 {{/if}}
 
 {{#if section_risk_management_full_html}}
-<div id="section-risk_management" class="sec-start">
+<div id="section-risk_management" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">07</div>
     <div class="sec-title">{{customTitle7}}</div>
@@ -393,7 +413,7 @@
 {{/if}}
 
 {{#if section_implementation_roadmap_full_html}}
-<div id="section-implementation_roadmap" class="sec-start">
+<div id="section-implementation_roadmap" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">08</div>
     <div class="sec-title">{{customTitle8}}</div>
@@ -405,7 +425,7 @@
 {{/if}}
 
 {{#if section_future_trends_full_html}}
-<div id="section-future_trends" class="sec-start">
+<div id="section-future_trends" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">09</div>
     <div class="sec-title">{{customTitle9}}</div>
@@ -417,7 +437,7 @@
 {{/if}}
 
 {{#if section_key_takeaways_full_html}}
-<div id="section-key_takeaways" class="sec-start">
+<div id="section-key_takeaways" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">10</div>
     <div class="sec-title">{{customTitle10}}</div>
@@ -429,7 +449,7 @@
 {{/if}}
 
 {{#if section_call_to_action_full_html}}
-<div id="section-call_to_action" class="sec-start">
+<div id="section-call_to_action" class="section page-break">
   <div class="sec-head">
     <div class="sec-kicker">11</div>
     <div class="sec-title">{{customTitle11}}</div>
