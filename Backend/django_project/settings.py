@@ -248,10 +248,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 
 CORS_URLS_REGEX = r'^/api/.*$'
 
-# Keep False — the regex above handles all Vercel previews without opening to everyone.
-# Set CORS_ALLOW_ALL_ORIGINS=true in Render env vars only when debugging locally.
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "false").lower() == "true"
-
+# Important for allowing headers like Authorization and Content-Type in cross-origin requests
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-requested-with",
     "content-type",
@@ -261,7 +258,16 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-csrftoken",
 ]
 
-CORS_ALLOW_METHODS = list(default_methods)
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "false").lower() == "true"
 
 CSRF_TRUSTED_ORIGINS = [
     "https://django-six-gamma.vercel.app",
