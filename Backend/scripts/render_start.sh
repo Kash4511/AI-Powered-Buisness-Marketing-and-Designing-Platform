@@ -7,7 +7,8 @@ set -e
 echo "🚀 Starting Render deployment script..."
 
 # Change to the Backend directory where manage.py is located
-cd Backend
+# (In Docker, this is relative to /app)
+cd Backend || { echo "❌ Could not find Backend directory"; exit 1; }
 
 # Pre-migration connection test
 echo "🔌 Testing database connection..."
