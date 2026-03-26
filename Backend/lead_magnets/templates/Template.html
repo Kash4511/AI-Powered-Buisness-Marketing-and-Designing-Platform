@@ -75,18 +75,21 @@
 
     figure.parent {
       display: block;
+      float: none;
+      clear: both;
       margin-top: 0;
-      margin-bottom: var(--base-gap);
+      margin-bottom: calc(2 * var(--base-gap));
       page-break-inside: avoid;
     }
 
     figure.parent img {
       display: block;
-      margin: 10pt auto;
-      max-width: 65%;
+      width: 100%;
       height: auto;
+      max-height: none;
       border-radius: var(--radius);
       border: 1px solid #e2e8f0;
+      object-fit: cover;
     }
 
     figure.parent figcaption {
