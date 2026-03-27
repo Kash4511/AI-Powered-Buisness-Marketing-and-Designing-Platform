@@ -1,241 +1,536 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>{{documentTitle}} — {{companyName}}</title>
+  <meta charset="UTF-8">
+  <title>{{documentTitle}} — {{companyName}}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-<style>
+    :root {
+      --primary:    {{primaryColor}};
+      --secondary:  {{secondaryColor}};
+      --highlight:  {{highlightColor}};
+      --light:      {{lightColor}};
+      --white:      {{whiteColor}};
+      --text:       {{textColor}};
+      --text-light: {{textLightColor}};
+      --radius:     6px;
+    }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: #fff;
+      line-height: 1.7;
+      font-size: 13px;
+    }
 
-:root {
-  --primary: {{primaryColor}};
-  --secondary: {{secondaryColor}};
-  --text: {{textColor}};
-  --text-light: {{textLightColor}};
-  --light: {{lightColor}};
-}
+    /* ── PAGE RULES ─────────────────────────────────────────────────────────
+       cover-page: zero margin, no header/footer.
+       body-page:  24mm top + 16mm bottom for running header/footer bands.
+    ───────────────────────────────────────────────────────────────────────── */
+    @page cover-page {
+      size: A4;
+      margin: 0;
+    }
 
-body {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text);
-}
+    @page body-page {
+      size: A4;
+      margin: 24mm 0 16mm;
+      @top-center    { content: element(page-header); width: 100%; }
+      @bottom-center { content: element(page-footer); width: 100%; }
+    }
 
-/* PAGE */
-@page {
-  size: A4;
-  margin: 20mm;
-}
+    /* ── RUNNING HEADER ─────────────────────────────────────────────────── */
+    /* ── RUNNING HEADER ─────────────────────────────────────────────────────
+       FIX 1: declared BEFORE the cover div so PrinceXML registers these
+       running elements on the cover page itself. Moving them AFTER the cover
+       caused PrinceXML to allocate a blank page for their flow position.
+    ───────────────────────────────────────────────────────────────────────── */
+    #page-header {
+      position: running(page-header);
+      width: 100%;
+      background: #0f172a;
+      color: #fff;
+      padding: 5.5mm 20mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #page-header .ph-left { display: flex; align-items: center; gap: 10px; }
+    #page-header .ph-bar  { width: 3px; height: 18px; background: var(--secondary); border-radius: 2px; }
+    #page-header .ph-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 2.5px;
+      color: rgba(255,255,255,0.85);
+    }
+    #page-header .ph-page {
+      font-family: 'Poppins', sans-serif;
+      font-size: 9px; font-weight: 600;
+      background: rgba(255,255,255,0.1);
+      padding: 3px 12px; border-radius: 20px; color: #fff;
+    }
+    #page-header .ph-page::after { content: counter(page); }
 
-/* COVER */
-#cover {
-  page-break-after: always;
-  height: 297mm;
-  background: var(--primary);
-  color: white;
-  display: flex;
-  align-items: flex-end;
-  padding: 30mm;
-}
+    /* ── RUNNING FOOTER ─────────────────────────────────────────────────── */
+    /* ── RUNNING FOOTER ───────────────────────────────────────────────────── */
+    #page-footer {
+      position: running(page-footer);
+      width: 100%;
+      background: var(--primary);
+      color: rgba(255,255,255,0.7);
+      padding: 3.5mm 20mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+    }
 
-.cover-title {
-  font-family: 'Poppins';
-  font-size: 42px;
-  font-weight: 800;
-}
+    /* ── COVER ──────────────────────────────────────────────────────────── */
+    /* ── COVER ──────────────────────────────────────────────────────────────
+       Uses cover-page @page → zero margin, no header/footer.
+       page-break-after:always is the ONLY forced break in the document.
+    ───────────────────────────────────────────────────────────────────────── */
+    #cover {
+      page: cover-page;
+      page-break-after: always;
+      width: 210mm;
+      height: 297mm;
+      background: var(--primary);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    #cover .deco-circle-1 {
+      position: absolute; width: 340px; height: 340px;
+      border-radius: 50%; border: 1px solid rgba(255,255,255,0.07);
+      top: -50px; right: -50px;
+    }
+    #cover .deco-circle-2 {
+      position: absolute; width: 180px; height: 180px;
+      border-radius: 50%; border: 1px solid rgba(255,255,255,0.05);
+      bottom: 80px; left: -40px;
+    }
+    #cover .deco-bar {
+      position: absolute; top: 0; right: 0;
+      width: 38%; height: 11mm;
+      background: var(--secondary);
+    }
+    #cover .cover-inner {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 0 20mm 28mm;
+    }
+    #cover .cover-kicker {
+      font-family: 'Poppins', sans-serif;
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 4px;
+      color: var(--secondary); margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    #cover .cover-kicker::before {
+      content: ''; width: 20px; height: 2px;
+      background: var(--secondary); display: block; flex-shrink: 0;
+    }
+    #cover .cover-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 44px; font-weight: 900;
+      line-height: 1.0; text-transform: uppercase;
+      letter-spacing: -1px; color: #fff;
+      margin-bottom: 22px; max-width: 430px;
+      word-wrap: break-word; hyphens: auto;
+    }
+    #cover .cover-accent {
+      width: 4px; height: 64px;
+      background: var(--secondary); border-radius: 3px; margin-bottom: 18px;
+    }
+    #cover .cover-subtitle {
+      font-size: 14px; font-weight: 300; line-height: 1.65;
+      color: rgba(255,255,255,0.8); max-width: 380px; margin-bottom: 40px;
+    }
+    #cover .cover-meta {
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 18px; display: flex;
+      justify-content: space-between; align-items: flex-end;
+    }
+    #cover .cover-brand { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 15px; color: #fff; margin-bottom: 3px; }
+    #cover .cover-tagline { font-size: 10px; color: rgba(255,255,255,0.5); }
+    #cover .cover-contact { text-align: right; font-size: 10px; color: rgba(255,255,255,0.55); line-height: 1.8; }
 
-.cover-subtitle {
-  margin-top: 10px;
-  opacity: 0.8;
-}
+    /* ── BODY PAGES ─────────────────────────────────────────────────────── */
+    /* ── BODY PAGES ─────────────────────────────────────────────────────────
+       FIX 2: Removed `.bp + .bp { page-break-before: always }`.
+       That rule forced every section onto a fresh page, leaving large blank
+       areas when section content was shorter than a full page.
 
-/* SECTION */
-.section {
-  margin-bottom: 25px;
-  page-break-inside: auto;
-}
+       Sections now flow continuously. PrinceXML paginates naturally based on
+       content height — no artificial blank space at the bottom of sections.
 
-/* FORCE NEW PAGE */
-.page-break {
-  page-break-before: always;
-}
+       .bp-forced keeps page-break-after:always for Terms and TOC only,
+       so those always occupy their own pages as expected.
+    ───────────────────────────────────────────────────────────────────────── */
+    .bp {
+      page: body-page;
+      padding: 8mm 20mm 12mm;
+      page-break-inside: auto;
+    }
+    /* Each section starts on a fresh page */
+    .bp + .bp { page-break-before: always; }
 
-/* HEADINGS */
-h1, h2 {
-  font-family: 'Poppins';
-  font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 10px;
-  page-break-after: avoid;
-}
+    .bp-forced {
+      page: body-page;
+      padding: 8mm 20mm 12mm;
+      page-break-after: always;
+    }
 
-h2 {
-  font-size: 20px;
-}
+    /* ── TERMS ──────────────────────────────────────────────────────────── */
+    /* ── TERMS ───────────────────────────────────────────────────────────── */
+    .terms-title {
+      font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700;
+      color: var(--primary); text-transform: uppercase; letter-spacing: 2px;
+      padding-bottom: 10px; border-bottom: 3px solid var(--secondary);
+      display: inline-block; margin-bottom: 22px;
+    }
+    .terms-body  { font-size: 11.5px; line-height: 1.85; color: var(--text); margin-bottom: 14px; }
+    .terms-small { font-size: 10.5px; line-height: 1.8; color: var(--text-light); margin-top: 18px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
 
-/* CONTENT */
+    /* ── TOC ────────────────────────────────────────────────────────────── */
+    /* ── TOC ─────────────────────────────────────────────────────────────── */
+    .toc-title { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
+    .toc-rule  { width: 60px; height: 5px; background: var(--secondary); border-radius: 3px; margin-bottom: 22px; }
+    .toc-item  { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #d1d5db; }
+    .toc-num   { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: var(--secondary); width: 28px; flex-shrink: 0; }
+    .toc-label { flex: 1; font-weight: 600; font-size: 11px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.4px; }
+    .toc-pg    { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #9ca3af; margin-left: 12px; }
+
+    /* ── SECTION HEADER ─────────────────────────────────────────────────── */
+    /* ── SECTION HEADER ──────────────────────────────────────────────────── */
+    .sec-kicker {
+      font-family: 'Poppins', sans-serif; font-size: 8px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 3px; color: var(--secondary);
+      margin-bottom: 4px; page-break-after: avoid;
+      margin-bottom: 4px;
+      /* Keep kicker+title glued together; break BEFORE the kicker if needed */
+      page-break-after: avoid; break-after: avoid;
+    }
+    .sec-title {
+      font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 900;
+      color: var(--primary); text-transform: uppercase; letter-spacing: -0.3px;
+      line-height: 1.1; margin-bottom: 5px; page-break-after: avoid;
+      line-height: 1.1; margin-bottom: 5px;
+      page-break-after: avoid; break-after: avoid;
+      /* Break to new page BEFORE each section heading so sections never
+         start mid-page after a previous section ends */
+      page-break-before: always; break-before: always;
+    }
+    /* The very first section (executive summary) must NOT break before it —
+       it follows the TOC which already has page-break-after:always */
+    .sec-title:first-child,
+    .bp:first-of-type .sec-title {
+      page-break-before: auto; break-before: auto;
+    }
+    .sec-rule { width: 50px; height: 4px; background: var(--secondary); border-radius: 2px; margin-bottom: 16px; }
+
+    /* ── CONTENT AREA ───────────────────────────────────────────────────── */
+    /* ── CONTENT AREA ────────────────────────────────────────────────────── */
+    
+    .ca p strong { color: var(--primary); font-weight: 700; }
+    .ca h2 { font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.3px; margin: 20px 0 9px; page-break-after: avoid; }
+    .ca h3 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; border-left: 3px solid var(--secondary); padding-left: 10px; margin: 16px 0 7px; page-break-after: avoid; }
+    .ca h4 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--secondary); margin: 13px 0 5px; page-break-after: avoid; }
+    .ca ul { margin: 9px 0 14px; padding: 0; list-style: none; }
+    .ca ul li { font-size: 13px; line-height: 1.7; color: var(--text); padding-left: 18px; margin-bottom: 6px; position: relative; page-break-inside: avoid; }
+    .ca ul li::before { content: "▸"; position: absolute; left: 0; color: var(--secondary); font-size: 9px; top: 4px; }
+    .ca ul li strong { color: var(--primary); font-weight: 600; }
+    .ca ol { margin: 9px 0 14px 16px; }
+    .ca ol li { font-size: 13px; line-height: 1.7; color: var(--text); margin-bottom: 6px; page-break-inside: avoid; }
+    .ca blockquote { margin: 16px 0; padding: 12px 16px 12px 14px; background: var(--light); border-left: 4px solid var(--secondary); border-radius: 0 var(--radius) var(--radius) 0; page-break-inside: avoid; }
+    .ca blockquote strong { display: block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--secondary); margin-bottom: 5px; }
+    .ca blockquote p, .ca blockquote { font-size: 12.5px; line-height: 1.7; color: var(--primary); font-style: normal; }
+    .ca em { color: var(--secondary); font-style: italic; }
+    .ca span { display: inline; }
+/* ── CONTENT AREA FIX (FORCE FULL WIDTH FLOW) ───────────────────────────── */
 .ca {
-  width: 100%;
-}
-
-.ca p {
-  margin-bottom: 12px;
-}
-
-/* ✅ IMAGE FIX (THIS IS THE KEY PART) */
-figure {
-  display: block;
-  width: 100%;
-  margin: 18px 0;
-  page-break-inside: avoid;
-}
-
-figure img {
-  width: 100%;
-  height: auto;
-  max-height: 260px;
-  object-fit: cover;
-  display: block;
-  border-radius: 6px;
-}
-
-figcaption {
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-light);
-  margin-top: 6px;
-}
-
-/* 🚫 HARD BLOCK FLOAT KILL (CRITICAL FIX) */
-img, figure {
-  float: none !important;
+  width: 100% !important;
+  display: block !important;
   clear: both !important;
 }
 
-/* CTA */
-.cta-box {
-  margin-top: 20px;
-  padding: 15px;
-  background: var(--primary);
-  color: white;
-  border-radius: 6px;
+.ca p {
+  width: 100% !important;
+  display: block !important;
+  clear: both !important;
 }
 
-</style>
-</head>
+/* ── IMAGE BLOCK FIX (CRITICAL) ─────────────────────────────────────────── */
+.img-block {
+  display: block !important;
+  width: 100% !important;
+  margin: 20px 0 !important;
+  clear: both !important;
 
+  page-break-inside: avoid;
+  break-inside: avoid;
+
+  text-align: center;
+}
+
+/* REMOVE HEIGHT CONSTRAINT — THIS WAS BREAKING LAYOUT */
+.img-block img {
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+
+  border-radius: var(--radius);
+  border: 1px solid #e2e8f0;
+
+  page-break-inside: avoid;
+}
+
+/* 🔥 HARD FLOW RESET AFTER IMAGE (MOST IMPORTANT FIX) */
+.img-block::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+    /* ── SECTION END MARKER ─────────────────────────────────────────────── */
+    /* ── SECTION END MARKER ──────────────────────────────────────────────── */
+    .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; }
+
+    /* ── CTA BOX ────────────────────────────────────────────────────────── */
+    /* ── CTA BOX ─────────────────────────────────────────────────────────── */
+    .cta-box { margin-top: 22px; padding: 18px 20px; background: var(--primary); border-radius: var(--radius); color: #fff; page-break-inside: avoid; }
+    .cta-box .cta-lbl { font-family: 'Poppins', sans-serif; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary); margin-bottom: 7px; }
+    .cta-box .cta-co  { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .cta-box .cta-dt  { font-size: 11px; opacity: 0.72; margin-top: 2px; }
+
+  </style>
+</head>
 <body>
 
-<!-- COVER -->
+<!-- PAGE 01: COVER -->
+<!-- RUNNING ELEMENTS — declared FIRST, before the cover.
+     FIX: PrinceXML registers position:running() elements at the point they
+     appear in the document. If declared after the cover, they cause a blank
+     page between the cover and the Terms page. Declaring them first means
+     they register on the cover's @page context without creating any extra page. -->
+<div id="page-header">
+  <div class="ph-left">
+    <div class="ph-bar"></div>
+    <div class="ph-title">{{mainTitle}}</div>
+  </div>
+  <div class="ph-page"></div>
+</div>
+<div id="page-footer">
+  <span>© 2026 {{companyName}}. All rights reserved.</span>
+  <span>{{website}}</span>
+</div>
+
+<!-- PAGE 01: COVER
+     page:cover-page → zero margin, header/footer suppressed on this page.
+     page-break-after:always → everything after starts on a fresh page. -->
 <div id="cover">
-  <div>
+  <div class="deco-circle-1"></div>
+  <div class="deco-circle-2"></div>
+  <div class="deco-bar"></div>
+  <div class="cover-inner">
+    <div class="cover-kicker">{{documentTypeLabel}}</div>
     <div class="cover-title">{{mainTitle}}</div>
+    <div class="cover-accent"></div>
     <div class="cover-subtitle">{{documentSubtitle}}</div>
+    <div class="cover-meta">
+      <div>
+        <div class="cover-brand">{{companyName}}</div>
+        <div class="cover-tagline">{{documentTypeLabel}} | Strategic Analysis</div>
+      </div>
+      <div class="cover-contact">
+        <div>{{website}}</div>
+        <div>{{emailAddress}}</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- TERMS -->
-<div class="section page-break">
-  <h2>{{termsTitle}}</h2>
-  <div class="ca">
-    <p>{{termsSummary}}</p>
-    <p>{{termsParagraph1}}</p>
-    <p>{{termsParagraph2}}</p>
+<!-- RUNNING ELEMENTS — declared after cover; Prince pulls these into @page margin bands -->
+<div id="page-header">
+  <div class="ph-left">
+    <div class="ph-bar"></div>
+    <div class="ph-title">{{mainTitle}}</div>
   </div>
+  <div class="ph-page"></div>
+</div>
+<div id="page-footer">
+  <span>© 2026 {{companyName}}. All rights reserved.</span>
+  <span>{{website}}</span>
 </div>
 
-<!-- TOC -->
-<div class="section page-break">
-  <h2>{{contentsTitle}}</h2>
+<!-- PAGE 02: TERMS -->
+<!-- PAGE 02: TERMS (bp-forced = page-break-after:always) -->
+<div class="bp-forced">
+  <div class="terms-title">{{termsTitle}}</div>
+  <div class="terms-body">{{termsSummary}}</div>
+  <div class="terms-body">{{termsParagraph1}}</div>
+  <div class="terms-body">{{termsParagraph2}}</div>
+  <div class="terms-body">{{termsParagraph3}}</div>
+  <div class="terms-body">{{termsParagraph4}}</div>
+  <div class="terms-small">{{termsParagraph5}}</div>
+</div>
+
+<!-- PAGE 03: TABLE OF CONTENTS -->
+<!-- PAGE 03: TABLE OF CONTENTS (bp-forced = page-break-after:always) -->
+<div class="bp-forced">
+  <div class="toc-title">{{contentsTitle}}</div>
+  <div class="toc-rule"></div>
   {{toc_sections_html}}
 </div>
 
-<!-- SECTIONS -->
-<div class="section">
+<!-- SECTIONS 01–11
+     Each section is wrapped in {{#if section_X_full_html}}...{{/if}}.
+     If a section's content is empty (generation failed), the entire
+     <div class="bp"> is omitted — no blank page, no placeholder text.
+     Image {{#if}} blocks are nested INSIDE each section wrapper so they
+     can never leak as raw text if image_N_url is absent. -->
+     All sections use class="bp" with NO forced page breaks between them.
+     Instead, each .sec-title has page-break-before:always so the section
+     HEADING always starts on a fresh page, but the content after it flows
+     naturally across as many pages as needed — no blank bottom halves.
 
+     Each section is wrapped in {{#if section_X_full_html}} so entirely
+     failed/empty sections are omitted rather than rendering blank pages. -->
+
+<!-- SECTION 01: EXECUTIVE SUMMARY -->
 {{#if section_executive_summary_full_html}}
-<div class="section page-break">
-  <h2>{{customTitle1}}</h2>
-  <div class="ca">
-    {{section_executive_summary_full_html}}
-
-    {{#if image_1_url}}
-    <figure>
-      <img src="{{image_1_url}}">
-      <figcaption>{{customTitle1}}</figcaption>
-    </figure>
-    {{/if}}
-
-  </div>
+<div class="bp" id="section-executive_summary">
+  <div class="sec-kicker">01</div>
+  <div class="sec-title">{{customTitle1}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_executive_summary_full_html}}</div>
+  {{#if image_1_url}}
+  <div class="img-block"><img src="{{image_1_url}}" alt="{{customTitle1}}"></div>
+  {{/if}}
+  <div class="sec-end"></div>
 </div>
 {{/if}}
 
+<!-- SECTION 02: INDUSTRY ANALYSIS -->
 {{#if section_industry_analysis_full_html}}
-<div class="section page-break">
-  <h2>{{customTitle2}}</h2>
-  <div class="ca">
-    {{section_industry_analysis_full_html}}
-
-    {{#if image_2_url}}
-    <figure>
-      <img src="{{image_2_url}}">
-      <figcaption>{{customTitle2}}</figcaption>
-    </figure>
-    {{/if}}
-
-  </div>
+<div class="bp" id="section-industry_analysis">
+  <div class="sec-kicker">02</div>
+  <div class="sec-title">{{customTitle2}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_industry_analysis_full_html}}</div>
+  <div class="sec-end"></div>
 </div>
 {{/if}}
 
+<!-- SECTION 03: KEY PRINCIPLES -->
 {{#if section_core_principles_full_html}}
-<div class="section page-break">
-  <h2>{{customTitle3}}</h2>
-  <div class="ca">
-    {{section_core_principles_full_html}}
-  </div>
+<div class="bp" id="section-core_principles">
+  <div class="sec-kicker">03</div>
+  <div class="sec-title">{{customTitle3}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_core_principles_full_html}}</div>
+  <div class="sec-end"></div>
 </div>
 {{/if}}
 
+<!-- SECTION 04: PRACTICAL STRATEGIES -->
 {{#if section_practical_strategies_full_html}}
-<div class="section page-break">
-  <h2>{{customTitle4}}</h2>
-  <div class="ca">
-    {{section_practical_strategies_full_html}}
-
-    {{#if image_3_url}}
-    <figure>
-      <img src="{{image_3_url}}">
-      <figcaption>{{customTitle4}}</figcaption>
-    </figure>
-    {{/if}}
-
-  </div>
+<div class="bp" id="section-practical_strategies">
+  <div class="sec-kicker">04</div>
+  <div class="sec-title">{{customTitle4}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_practical_strategies_full_html}}</div>
+  {{#if image_2_url}}
+  <div class="img-block"><img src="{{image_2_url}}" alt="{{customTitle4}}"></div>
+  {{/if}}
+  <div class="sec-end"></div>
 </div>
 {{/if}}
 
+<!-- SECTION 05: BUSINESS BENEFITS -->
+{{#if section_business_benefits_full_html}}
+<div class="bp" id="section-business_benefits">
+  <div class="sec-kicker">05</div>
+  <div class="sec-title">{{customTitle5}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_business_benefits_full_html}}</div>
+  <div class="sec-end"></div>
+</div>
+{{/if}}
+
+<!-- SECTION 06: CASE STUDY -->
+{{#if section_case_study_full_html}}
+<div class="bp" id="section-case_study">
+  <div class="sec-kicker">06</div>
+  <div class="sec-title">{{customTitle6}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_case_study_full_html}}</div>
+  <div class="sec-end"></div>
+</div>
+{{/if}}
+
+<!-- SECTION 07: RISK MANAGEMENT -->
+{{#if section_risk_management_full_html}}
+<div class="bp" id="section-risk_management">
+  <div class="sec-kicker">07</div>
+  <div class="sec-title">{{customTitle7}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_risk_management_full_html}}</div>
+  <div class="sec-end"></div>
+</div>
+{{/if}}
+
+<!-- SECTION 08: IMPLEMENTATION ROADMAP -->
+{{#if section_implementation_roadmap_full_html}}
+<div class="bp" id="section-implementation_roadmap">
+  <div class="sec-kicker">08</div>
+  <div class="sec-title">{{customTitle8}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_implementation_roadmap_full_html}}</div>
+  <div class="sec-end"></div>
+</div>
+{{/if}}
+
+<!-- SECTION 09: FUTURE TRENDS -->
+{{#if section_future_trends_full_html}}
+<div class="bp" id="section-future_trends">
+  <div class="sec-kicker">09</div>
+  <div class="sec-title">{{customTitle9}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_future_trends_full_html}}</div>
+  <div class="sec-end"></div>
+</div>
+{{/if}}
+
+<!-- SECTION 10: KEY TAKEAWAYS -->
+{{#if section_key_takeaways_full_html}}
+<div class="bp" id="section-key_takeaways">
+  <div class="sec-kicker">10</div>
+  <div class="sec-title">{{customTitle10}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_key_takeaways_full_html}}</div>
+  <div class="sec-end"></div>
+</div>
+{{/if}}
+
+<!-- SECTION 11: CALL TO ACTION -->
 {{#if section_call_to_action_full_html}}
-<div class="section page-break">
-  <h2>{{customTitle11}}</h2>
-  <div class="ca">
-    {{section_call_to_action_full_html}}
-  </div>
-
+<div class="bp" id="section-call_to_action">
+  <div class="sec-kicker">11</div>
+  <div class="sec-title">{{customTitle11}}</div>
+  <div class="sec-rule"></div>
+  <div class="ca">{{section_call_to_action_full_html}}</div>
   <div class="cta-box">
-    <strong>{{companyName}}</strong><br>
-    {{website}}
+    <div class="cta-lbl">Get in Touch</div>
+    <div class="cta-co">{{companyName}}</div>
+    <div class="cta-dt">{{website}}</div>
+    <div class="cta-dt">{{emailAddress}}</div>
   </div>
 </div>
 {{/if}}
-
-</div>
 
 </body>
-</html>
