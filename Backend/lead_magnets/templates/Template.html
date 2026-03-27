@@ -4,30 +4,28 @@
 <meta charset="UTF-8">
 <title>{{documentTitle}} — {{companyName}}</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
 
-/* RESET */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* VARIABLES */
 :root {
   --primary: {{primaryColor}};
   --secondary: {{secondaryColor}};
   --text: {{textColor}};
   --text-light: {{textLightColor}};
+  --light: {{lightColor}};
 }
 
-/* BASE */
 body {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  line-height: 1.75;
+  line-height: 1.7;
   color: var(--text);
 }
 
@@ -35,88 +33,6 @@ body {
 @page {
   size: A4;
   margin: 20mm;
-}
-
-/* CONTAINER */
-.bp {
-  width: 100%;
-}
-
-/* SECTION */
-.sec-start {
-  page-break-before: always;
-}
-
-.sec-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 10px;
-}
-
-.sec-rule {
-  width: 50px;
-  height: 4px;
-  background: var(--secondary);
-  margin-bottom: 18px;
-}
-
-/* CONTENT */
-.ca {
-  width: 100% !important;
-}
-
-/* 🔥 HARD RESET AI HTML */
-.ca * {
-  float: none !important;
-  width: auto !important;
-  max-width: 100% !important;
-}
-
-/* TEXT */
-.ca p {
-  margin-bottom: 12px;
-}
-
-.ca h2 {
-  font-size: 15px;
-  margin: 16px 0 6px;
-  color: var(--primary);
-}
-
-.ca ul {
-  margin: 10px 0 14px;
-  padding-left: 16px;
-}
-
-.ca li {
-  margin-bottom: 6px;
-}
-
-/* ✅ IMAGE FIX (CORE FIX) */
-figure {
-  display: block !important;
-  width: 100% !important;
-  margin: 20px 0 !important;
-  clear: both !important;
-  float: none !important;
-  page-break-inside: avoid;
-}
-
-figure img {
-  width: 100% !important;
-  height: auto !important;
-  max-height: 260px;
-  object-fit: cover;
-  display: block;
-}
-
-figcaption {
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-light);
-  margin-top: 6px;
 }
 
 /* COVER */
@@ -131,9 +47,86 @@ figcaption {
 }
 
 .cover-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins';
   font-size: 42px;
   font-weight: 800;
+}
+
+.cover-subtitle {
+  margin-top: 10px;
+  opacity: 0.8;
+}
+
+/* SECTION */
+.section {
+  margin-bottom: 25px;
+  page-break-inside: auto;
+}
+
+/* FORCE NEW PAGE */
+.page-break {
+  page-break-before: always;
+}
+
+/* HEADINGS */
+h1, h2 {
+  font-family: 'Poppins';
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 10px;
+  page-break-after: avoid;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+/* CONTENT */
+.ca {
+  width: 100%;
+}
+
+.ca p {
+  margin-bottom: 12px;
+}
+
+/* ✅ IMAGE FIX (THIS IS THE KEY PART) */
+figure {
+  display: block;
+  width: 100%;
+  margin: 18px 0;
+  page-break-inside: avoid;
+}
+
+figure img {
+  width: 100%;
+  height: auto;
+  max-height: 260px;
+  object-fit: cover;
+  display: block;
+  border-radius: 6px;
+}
+
+figcaption {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 6px;
+}
+
+/* 🚫 HARD BLOCK FLOAT KILL (CRITICAL FIX) */
+img, figure {
+  float: none !important;
+  clear: both !important;
+}
+
+/* CTA */
+.cta-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: var(--primary);
+  color: white;
+  border-radius: 6px;
 }
 
 </style>
@@ -145,91 +138,99 @@ figcaption {
 <div id="cover">
   <div>
     <div class="cover-title">{{mainTitle}}</div>
-    <div>{{documentSubtitle}}</div>
-    <br>
-    <div>{{companyName}}</div>
+    <div class="cover-subtitle">{{documentSubtitle}}</div>
   </div>
 </div>
 
-<div class="bp">
+<!-- TERMS -->
+<div class="section page-break">
+  <h2>{{termsTitle}}</h2>
+  <div class="ca">
+    <p>{{termsSummary}}</p>
+    <p>{{termsParagraph1}}</p>
+    <p>{{termsParagraph2}}</p>
+  </div>
+</div>
 
-<!-- SECTION 1 -->
+<!-- TOC -->
+<div class="section page-break">
+  <h2>{{contentsTitle}}</h2>
+  {{toc_sections_html}}
+</div>
+
+<!-- SECTIONS -->
+<div class="section">
+
 {{#if section_executive_summary_full_html}}
-<div class="sec-start">
-  <div class="sec-title">{{customTitle1}}</div>
-  <div class="sec-rule"></div>
-
-  {{#if image_1_url}}
-  <figure>
-    <img src="{{image_1_url}}">
-    <figcaption>{{customTitle1}}</figcaption>
-  </figure>
-  {{/if}}
-
+<div class="section page-break">
+  <h2>{{customTitle1}}</h2>
   <div class="ca">
     {{section_executive_summary_full_html}}
+
+    {{#if image_1_url}}
+    <figure>
+      <img src="{{image_1_url}}">
+      <figcaption>{{customTitle1}}</figcaption>
+    </figure>
+    {{/if}}
+
   </div>
 </div>
 {{/if}}
 
-<!-- SECTION 2 -->
 {{#if section_industry_analysis_full_html}}
-<div class="sec-start">
-  <div class="sec-title">{{customTitle2}}</div>
-  <div class="sec-rule"></div>
-
-  {{#if image_2_url}}
-  <figure>
-    <img src="{{image_2_url}}">
-    <figcaption>{{customTitle2}}</figcaption>
-  </figure>
-  {{/if}}
-
+<div class="section page-break">
+  <h2>{{customTitle2}}</h2>
   <div class="ca">
     {{section_industry_analysis_full_html}}
+
+    {{#if image_2_url}}
+    <figure>
+      <img src="{{image_2_url}}">
+      <figcaption>{{customTitle2}}</figcaption>
+    </figure>
+    {{/if}}
+
   </div>
 </div>
 {{/if}}
 
-<!-- SECTION 3 -->
 {{#if section_core_principles_full_html}}
-<div class="sec-start">
-  <div class="sec-title">{{customTitle3}}</div>
-  <div class="sec-rule"></div>
-
+<div class="section page-break">
+  <h2>{{customTitle3}}</h2>
   <div class="ca">
     {{section_core_principles_full_html}}
   </div>
 </div>
 {{/if}}
 
-<!-- SECTION 4 -->
 {{#if section_practical_strategies_full_html}}
-<div class="sec-start">
-  <div class="sec-title">{{customTitle4}}</div>
-  <div class="sec-rule"></div>
-
-  {{#if image_3_url}}
-  <figure>
-    <img src="{{image_3_url}}">
-    <figcaption>{{customTitle4}}</figcaption>
-  </figure>
-  {{/if}}
-
+<div class="section page-break">
+  <h2>{{customTitle4}}</h2>
   <div class="ca">
     {{section_practical_strategies_full_html}}
+
+    {{#if image_3_url}}
+    <figure>
+      <img src="{{image_3_url}}">
+      <figcaption>{{customTitle4}}</figcaption>
+    </figure>
+    {{/if}}
+
   </div>
 </div>
 {{/if}}
 
-<!-- CTA -->
 {{#if section_call_to_action_full_html}}
-<div class="sec-start">
-  <div class="sec-title">{{customTitle11}}</div>
-  <div class="sec-rule"></div>
-
+<div class="section page-break">
+  <h2>{{customTitle11}}</h2>
   <div class="ca">
     {{section_call_to_action_full_html}}
+  </div>
+
+  <div class="cta-box">
+    <strong>{{companyName}}</strong><br>
+    {{website}}
   </div>
 </div>
 {{/if}}
