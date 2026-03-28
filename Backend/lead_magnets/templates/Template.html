@@ -27,10 +27,7 @@
       font-size: 13px;
     }
 
-    /* ── PAGE RULES ─────────────────────────────────────────────────────────
-       cover-page: zero margin, no header/footer.
-       body-page:  24mm top + 16mm bottom for running header/footer bands.
-    ───────────────────────────────────────────────────────────────────────── */
+    /* ── PAGE RULES ──────────────────────────────────────────────────────── */
     @page cover-page {
       size: A4;
       margin: 0;
@@ -43,12 +40,7 @@
       @bottom-center { content: element(page-footer); width: 100%; }
     }
 
-    /* ── RUNNING HEADER ─────────────────────────────────────────────────── */
-    /* ── RUNNING HEADER ─────────────────────────────────────────────────────
-       FIX 1: declared BEFORE the cover div so PrinceXML registers these
-       running elements on the cover page itself. Moving them AFTER the cover
-       caused PrinceXML to allocate a blank page for their flow position.
-    ───────────────────────────────────────────────────────────────────────── */
+    /* ── RUNNING HEADER ──────────────────────────────────────────────────── */
     #page-header {
       position: running(page-header);
       width: 100%;
@@ -75,8 +67,7 @@
     }
     #page-header .ph-page::after { content: counter(page); }
 
-    /* ── RUNNING FOOTER ─────────────────────────────────────────────────── */
-    /* ── RUNNING FOOTER ───────────────────────────────────────────────────── */
+    /* ── RUNNING FOOTER ──────────────────────────────────────────────────── */
     #page-footer {
       position: running(page-footer);
       width: 100%;
@@ -89,11 +80,7 @@
       font-size: 9px;
     }
 
-    /* ── COVER ──────────────────────────────────────────────────────────── */
-    /* ── COVER ──────────────────────────────────────────────────────────────
-       Uses cover-page @page → zero margin, no header/footer.
-       page-break-after:always is the ONLY forced break in the document.
-    ───────────────────────────────────────────────────────────────────────── */
+    /* ── COVER ───────────────────────────────────────────────────────────── */
     #cover {
       page: cover-page;
       page-break-after: always;
@@ -160,24 +147,12 @@
     #cover .cover-tagline { font-size: 10px; color: rgba(255,255,255,0.5); }
     #cover .cover-contact { text-align: right; font-size: 10px; color: rgba(255,255,255,0.55); line-height: 1.8; }
 
-    /* ── BODY PAGES ─────────────────────────────────────────────────────── */
-    /* ── BODY PAGES ─────────────────────────────────────────────────────────
-       FIX 2: Removed `.bp + .bp { page-break-before: always }`.
-       That rule forced every section onto a fresh page, leaving large blank
-       areas when section content was shorter than a full page.
-
-       Sections now flow continuously. PrinceXML paginates naturally based on
-       content height — no artificial blank space at the bottom of sections.
-
-       .bp-forced keeps page-break-after:always for Terms and TOC only,
-       so those always occupy their own pages as expected.
-    ───────────────────────────────────────────────────────────────────────── */
+    /* ── BODY PAGES ──────────────────────────────────────────────────────── */
     .bp {
       page: body-page;
       padding: 8mm 20mm 12mm;
       page-break-inside: auto;
     }
-    /* Each section starts on a fresh page */
     .bp + .bp { page-break-before: always; }
 
     .bp-forced {
@@ -186,7 +161,6 @@
       page-break-after: always;
     }
 
-    /* ── TERMS ──────────────────────────────────────────────────────────── */
     /* ── TERMS ───────────────────────────────────────────────────────────── */
     .terms-title {
       font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700;
@@ -197,7 +171,6 @@
     .terms-body  { font-size: 11.5px; line-height: 1.85; color: var(--text); margin-bottom: 14px; }
     .terms-small { font-size: 10.5px; line-height: 1.8; color: var(--text-light); margin-top: 18px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
 
-    /* ── TOC ────────────────────────────────────────────────────────────── */
     /* ── TOC ─────────────────────────────────────────────────────────────── */
     .toc-title { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
     .toc-rule  { width: 60px; height: 5px; background: var(--secondary); border-radius: 3px; margin-bottom: 22px; }
@@ -206,103 +179,149 @@
     .toc-label { flex: 1; font-weight: 600; font-size: 11px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.4px; }
     .toc-pg    { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 11px; color: #9ca3af; margin-left: 12px; }
 
-    /* ── SECTION HEADER ─────────────────────────────────────────────────── */
     /* ── SECTION HEADER ──────────────────────────────────────────────────── */
     .sec-kicker {
       font-family: 'Poppins', sans-serif; font-size: 8px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 3px; color: var(--secondary);
-      margin-bottom: 4px; page-break-after: avoid;
       margin-bottom: 4px;
-      /* Keep kicker+title glued together; break BEFORE the kicker if needed */
       page-break-after: avoid; break-after: avoid;
     }
     .sec-title {
       font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 900;
       color: var(--primary); text-transform: uppercase; letter-spacing: -0.3px;
-      line-height: 1.1; margin-bottom: 5px; page-break-after: avoid;
       line-height: 1.1; margin-bottom: 5px;
       page-break-after: avoid; break-after: avoid;
-      /* Break to new page BEFORE each section heading so sections never
-         start mid-page after a previous section ends */
       page-break-before: always; break-before: always;
     }
-    /* The very first section (executive summary) must NOT break before it —
-       it follows the TOC which already has page-break-after:always */
     .sec-title:first-child,
     .bp:first-of-type .sec-title {
       page-break-before: auto; break-before: auto;
     }
     .sec-rule { width: 50px; height: 4px; background: var(--secondary); border-radius: 2px; margin-bottom: 16px; }
 
-    /* ── CONTENT AREA ───────────────────────────────────────────────────── */
     /* ── CONTENT AREA ────────────────────────────────────────────────────── */
-    
+    .ca {
+      /* FIX: block formatting context prevents children from floating outside */
+      display: block;
+      width: 100%;
+      overflow: hidden;   /* establishes BFC — floated children stay contained */
+      clear: both;
+    }
+
+    .ca p {
+      display: block;
+      width: 100%;
+      /* FIX: clear any float that a prior sibling img may have set */
+      clear: both;
+      margin-bottom: 10px;
+    }
+
     .ca p strong { color: var(--primary); font-weight: 700; }
-    .ca h2 { font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.3px; margin: 20px 0 9px; page-break-after: avoid; }
-    .ca h3 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; border-left: 3px solid var(--secondary); padding-left: 10px; margin: 16px 0 7px; page-break-after: avoid; }
-    .ca h4 { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; color: var(--secondary); margin: 13px 0 5px; page-break-after: avoid; }
+
+    .ca h2 {
+      font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 800;
+      color: var(--primary); text-transform: uppercase; letter-spacing: 0.3px;
+      margin: 20px 0 9px;
+      /* FIX: clear floats before headings so they span full width */
+      clear: both;
+      page-break-after: avoid;
+    }
+    .ca h3 {
+      font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700;
+      color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px;
+      border-left: 3px solid var(--secondary); padding-left: 10px;
+      margin: 16px 0 7px;
+      clear: both;
+      page-break-after: avoid;
+    }
+    .ca h4 {
+      font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700;
+      color: var(--secondary); margin: 13px 0 5px;
+      clear: both;
+      page-break-after: avoid;
+    }
+
     .ca ul { margin: 9px 0 14px; padding: 0; list-style: none; }
-    .ca ul li { font-size: 13px; line-height: 1.7; color: var(--text); padding-left: 18px; margin-bottom: 6px; position: relative; page-break-inside: avoid; }
+    .ca ul li {
+      font-size: 13px; line-height: 1.7; color: var(--text);
+      padding-left: 18px; margin-bottom: 6px; position: relative;
+      page-break-inside: avoid;
+    }
     .ca ul li::before { content: "▸"; position: absolute; left: 0; color: var(--secondary); font-size: 9px; top: 4px; }
     .ca ul li strong { color: var(--primary); font-weight: 600; }
+
     .ca ol { margin: 9px 0 14px 16px; }
     .ca ol li { font-size: 13px; line-height: 1.7; color: var(--text); margin-bottom: 6px; page-break-inside: avoid; }
-    .ca blockquote { margin: 16px 0; padding: 12px 16px 12px 14px; background: var(--light); border-left: 4px solid var(--secondary); border-radius: 0 var(--radius) var(--radius) 0; page-break-inside: avoid; }
+
+    .ca blockquote {
+      margin: 16px 0; padding: 12px 16px 12px 14px;
+      background: var(--light); border-left: 4px solid var(--secondary);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      clear: both;
+      page-break-inside: avoid;
+    }
     .ca blockquote strong { display: block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--secondary); margin-bottom: 5px; }
     .ca blockquote p, .ca blockquote { font-size: 12.5px; line-height: 1.7; color: var(--primary); font-style: normal; }
+
     .ca em { color: var(--secondary); font-style: italic; }
     .ca span { display: inline; }
-/* ── CONTENT AREA FIX (FORCE FULL WIDTH FLOW) ───────────────────────────── */
-.ca {
-  width: 100% !important;
-  display: block !important;
-  clear: both !important;
-}
 
-.ca p {
-  width: 100% !important;
-  display: block !important;
-  clear: both !important;
-}
+    /* ── FIX: KILL FLOATS ON ANY IMG INJECTED INSIDE .ca ────────────────────
+       AI-generated section HTML may wrap images in <p><img></p> or set
+       float/width inline. This rule overrides all of that unconditionally.
+       Images inside the content area always stack full-width below their
+       preceding text — never beside it.
+    ─────────────────────────────────────────────────────────────────────────*/
+    .ca img {
+      display: block !important;
+      float: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 14px 0 !important;
+      clear: both !important;
+      border-radius: var(--radius);
+      border: 1px solid #e2e8f0;
+      page-break-inside: avoid;
+    }
 
-/* ── IMAGE BLOCK FIX (CRITICAL) ─────────────────────────────────────────── */
-.img-block {
-  display: block !important;
-  width: 100% !important;
-  margin: 20px 0 !important;
-  clear: both !important;
+    /* ── IMAGE BLOCK (standalone, outside .ca) ───────────────────────────── */
+    .img-block {
+      display: block;
+      width: 100%;
+      margin: 20px 0;
+      clear: both;
+      float: none;          /* FIX: explicit no-float for PrinceXML */
+      text-align: center;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
 
-  page-break-inside: avoid;
-  break-inside: avoid;
+    .img-block img {
+      display: block !important;
+      float: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 0 auto !important;
+      clear: both !important;
+      border-radius: var(--radius);
+      border: 1px solid #e2e8f0;
+      page-break-inside: avoid;
+    }
 
-  text-align: center;
-}
+    /* Clearfix after every image block */
+    .img-block::after {
+      content: "";
+      display: block;
+      clear: both;
+    }
 
-/* REMOVE HEIGHT CONSTRAINT — THIS WAS BREAKING LAYOUT */
-.img-block img {
-  width: 100% !important;
-  height: auto !important;
-  display: block !important;
-
-  border-radius: var(--radius);
-  border: 1px solid #e2e8f0;
-
-  page-break-inside: avoid;
-}
-
-/* 🔥 HARD FLOW RESET AFTER IMAGE (MOST IMPORTANT FIX) */
-.img-block::after {
-  content: "";
-  display: block;
-  clear: both;
-}
-    /* ── SECTION END MARKER ─────────────────────────────────────────────── */
     /* ── SECTION END MARKER ──────────────────────────────────────────────── */
-    .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; }
+    .sec-end { margin: 20px 0 0; height: 1px; background: linear-gradient(to right, var(--secondary), transparent); opacity: 0.35; clear: both; }
 
-    /* ── CTA BOX ────────────────────────────────────────────────────────── */
     /* ── CTA BOX ─────────────────────────────────────────────────────────── */
-    .cta-box { margin-top: 22px; padding: 18px 20px; background: var(--primary); border-radius: var(--radius); color: #fff; page-break-inside: avoid; }
+    .cta-box { margin-top: 22px; padding: 18px 20px; background: var(--primary); border-radius: var(--radius); color: #fff; page-break-inside: avoid; clear: both; }
     .cta-box .cta-lbl { font-family: 'Poppins', sans-serif; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary); margin-bottom: 7px; }
     .cta-box .cta-co  { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
     .cta-box .cta-dt  { font-size: 11px; opacity: 0.72; margin-top: 2px; }
@@ -311,12 +330,10 @@
 </head>
 <body>
 
-<!-- PAGE 01: COVER -->
 <!-- RUNNING ELEMENTS — declared FIRST, before the cover.
-     FIX: PrinceXML registers position:running() elements at the point they
-     appear in the document. If declared after the cover, they cause a blank
-     page between the cover and the Terms page. Declaring them first means
-     they register on the cover's @page context without creating any extra page. -->
+     PrinceXML registers position:running() elements at the point they
+     appear in the document. Declaring them first prevents a blank page
+     between the cover and the Terms page. -->
 <div id="page-header">
   <div class="ph-left">
     <div class="ph-bar"></div>
@@ -330,7 +347,7 @@
 </div>
 
 <!-- PAGE 01: COVER
-     page:cover-page → zero margin, header/footer suppressed on this page.
+     page:cover-page → zero margin, header/footer suppressed.
      page-break-after:always → everything after starts on a fresh page. -->
 <div id="cover">
   <div class="deco-circle-1"></div>
@@ -354,20 +371,6 @@
   </div>
 </div>
 
-<!-- RUNNING ELEMENTS — declared after cover; Prince pulls these into @page margin bands -->
-<div id="page-header">
-  <div class="ph-left">
-    <div class="ph-bar"></div>
-    <div class="ph-title">{{mainTitle}}</div>
-  </div>
-  <div class="ph-page"></div>
-</div>
-<div id="page-footer">
-  <span>© 2026 {{companyName}}. All rights reserved.</span>
-  <span>{{website}}</span>
-</div>
-
-<!-- PAGE 02: TERMS -->
 <!-- PAGE 02: TERMS (bp-forced = page-break-after:always) -->
 <div class="bp-forced">
   <div class="terms-title">{{termsTitle}}</div>
@@ -379,27 +382,12 @@
   <div class="terms-small">{{termsParagraph5}}</div>
 </div>
 
-<!-- PAGE 03: TABLE OF CONTENTS -->
 <!-- PAGE 03: TABLE OF CONTENTS (bp-forced = page-break-after:always) -->
 <div class="bp-forced">
   <div class="toc-title">{{contentsTitle}}</div>
   <div class="toc-rule"></div>
   {{toc_sections_html}}
 </div>
-
-<!-- SECTIONS 01–11
-     Each section is wrapped in {{#if section_X_full_html}}...{{/if}}.
-     If a section's content is empty (generation failed), the entire
-     <div class="bp"> is omitted — no blank page, no placeholder text.
-     Image {{#if}} blocks are nested INSIDE each section wrapper so they
-     can never leak as raw text if image_N_url is absent. -->
-     All sections use class="bp" with NO forced page breaks between them.
-     Instead, each .sec-title has page-break-before:always so the section
-     HEADING always starts on a fresh page, but the content after it flows
-     naturally across as many pages as needed — no blank bottom halves.
-
-     Each section is wrapped in {{#if section_X_full_html}} so entirely
-     failed/empty sections are omitted rather than rendering blank pages. -->
 
 <!-- SECTION 01: EXECUTIVE SUMMARY -->
 {{#if section_executive_summary_full_html}}
@@ -534,3 +522,4 @@
 {{/if}}
 
 </body>
+</html>

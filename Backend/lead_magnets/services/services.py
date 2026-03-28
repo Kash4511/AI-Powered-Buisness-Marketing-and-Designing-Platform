@@ -36,10 +36,9 @@ def _resolve_if_blocks(s: str, variables: dict) -> str:
     """
     Stack-based {{#if KEY}}...{{/if}} resolver.
 
-    Handles nested blocks correctly at any depth.
-    The previous regex approach consumed the FIRST {{/if}} it found —
-    the inner one in a nested block — leaving orphan {{/if}} tokens that
-    PrinceXML rendered as visible text on blank pages.
+    Handles nested blocks correctly at any depth. The previous regex approach
+    consumed the first {{/if}} it found — the inner one in a nested block —
+    leaving orphan {{/if}} tokens that PrinceXML rendered as visible text.
     """
     TOKEN = re.compile(r'\{\{#if\s+(\w+)\}\}|\{\{/if\}\}')
 
@@ -78,7 +77,7 @@ def render_template(template_html: str, variables: dict) -> str:
     """
     Render a Mustache-style HTML template.
 
-    Pass 1 — Resolve ALL {{#if KEY}}...{{/if}} blocks using a stack-based
+    Pass 1 — Resolve all {{#if KEY}}...{{/if}} blocks using a stack-based
               parser. Correctly handles nested blocks at any depth.
               Falsy blocks are removed entirely — no orphan tags, no blank pages.
 
@@ -108,6 +107,12 @@ def render_template(template_html: str, variables: dict) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class DocRaptorService:
+    """
+    Renders HTML templates via the DocRaptor API (PrinceXML engine) to produce
+    print-quality PDFs. PrinceXML is required — it is the only renderer that
+    correctly handles CSS paged media (@page rules, running headers/footers,
+    page-break-* properties) used throughout Template.html.
+    """
 
     TEMPLATES_DIR = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates"
@@ -159,53 +164,55 @@ class DocRaptorService:
         with open(path, "r", encoding="utf-8") as f:
             template_html = f.read()
 
-        # ── DIAGNOSTIC: log template fingerprint so we can confirm the
-        #    correct file is being served after each deploy.
+        # Diagnostic: log template fingerprint after each deploy
         logger.info(
-            f"DIAG template | path={path} "
-            f"img-slot={'img-slot' in template_html} "
-            f"img-block={'img-block' in template_html} "
-            f"ph-icon={'ph-icon' in template_html} "
-            f"if-image-1={'{' + '{#if image_1_url}' + '}' in template_html} "
-            f"size={len(template_html):,}"
+            "DIAG template | path=%s img-block=%s if-image-1=%s size=%s",
+            path,
+            "img-block" in template_html,
+            "{{#if image_1_url}}" in template_html,
+            f"{len(template_html):,}",
         )
 
-        # ── Image URL diagnostic: log which image slots are populated ─────
+        # Diagnostic: log which image slots are populated
         for i in range(1, 4):
             url = variables.get(f"image_{i}_url", "")
             logger.info(
-                f"DIAG image_{i}_url | present={bool(url)} "
-                f"value={url[:60] if url else 'ABSENT'!r}"
+                "DIAG image_%d_url | present=%s value=%r",
+                i,
+                bool(url),
+                url[:60] if url else "ABSENT",
             )
 
         # ── 2. Render ─────────────────────────────────────────────────────
         rendered_html = render_template(template_html, variables)
 
-        # ── DIAGNOSTIC: confirm {{#if}} blocks fully resolved ─────────────
+        # Diagnostic: confirm {{#if}} blocks fully resolved
         remaining_ifs    = rendered_html.count("{{#if")
         remaining_endifs = rendered_html.count("{{/if}}")
         escaped_tags     = rendered_html.count("&lt;p&gt;") + rendered_html.count("&lt;h3&gt;")
         real_tags        = rendered_html.count("<p>") + rendered_html.count("<h3>")
 
         logger.info(
-            f"DIAG rendered | "
-            f"remaining_if={remaining_ifs} remaining_endif={remaining_endifs} "
-            f"real_tags={real_tags} escaped_tags={escaped_tags} "
-            f"len={len(rendered_html):,}"
+            "DIAG rendered | remaining_if=%d remaining_endif=%d "
+            "real_tags=%d escaped_tags=%d len=%s",
+            remaining_ifs, remaining_endifs, real_tags, escaped_tags,
+            f"{len(rendered_html):,}",
         )
 
         if remaining_ifs or remaining_endifs:
             logger.error(
-                f"render_template left {remaining_ifs} unresolved {{{{#if}}}} "
-                f"and {remaining_endifs} {{{{/if}}}} — will print as text/blank pages."
+                "render_template left %d unresolved {{#if}} and %d {{/if}} "
+                "— these will print as visible text or blank pages.",
+                remaining_ifs, remaining_endifs,
             )
         if escaped_tags > 5:
             logger.error(
-                f"{escaped_tags} escaped HTML tags detected — "
-                "section_*_html vars were not injected as raw HTML."
+                "%d escaped HTML tags detected — section_*_html vars were not "
+                "injected as raw HTML.",
+                escaped_tags,
             )
 
-        # ── 3. Send to DocRaptor ──────────────────────────────────────────
+        # ── 3. Send to DocRaptor (PrinceXML) ─────────────────────────────
         if not self.api_key:
             return {
                 "success": False,
@@ -228,7 +235,8 @@ class DocRaptorService:
             }
 
             logger.info(
-                f"→ DocRaptor | test={self.test_mode} | html={len(rendered_html):,} chars"
+                "→ DocRaptor | test=%s | html=%s chars",
+                self.test_mode, f"{len(rendered_html):,}",
             )
 
             resp = requests.post(
@@ -241,7 +249,10 @@ class DocRaptorService:
             if resp.status_code == 200:
                 title    = variables.get("documentTitle") or variables.get("mainTitle") or "document"
                 filename = re.sub(r"[^\w\-]", "-", str(title).lower())[:60] + ".pdf"
-                logger.info(f"✅ DocRaptor success | {len(resp.content):,} bytes | {filename}")
+                logger.info(
+                    "✅ DocRaptor success | %s bytes | %s",
+                    f"{len(resp.content):,}", filename,
+                )
                 return {
                     "success":      True,
                     "pdf_data":     resp.content,
@@ -250,7 +261,7 @@ class DocRaptorService:
                 }
             else:
                 err = resp.text[:600] if resp.text else "No response body"
-                logger.error(f"DocRaptor HTTP {resp.status_code}: {err}")
+                logger.error("DocRaptor HTTP %d: %s", resp.status_code, err)
                 return {
                     "success": False,
                     "error":   f"DocRaptor returned HTTP {resp.status_code}",
@@ -264,7 +275,7 @@ class DocRaptorService:
                 "details": "Try reducing content size or contact DocRaptor support.",
             }
         except Exception as e:
-            logger.error(f"DocRaptor exception: {e}")
+            logger.error("DocRaptor exception: %s", e)
             return {
                 "success": False,
                 "error":   "Unexpected error calling DocRaptor",
