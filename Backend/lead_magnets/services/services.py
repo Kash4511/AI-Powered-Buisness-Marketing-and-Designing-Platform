@@ -144,8 +144,7 @@ class WeasyPrintService:
     ))
 
     TEMPLATE_REGISTRY = {
-        "modern-guide":   "Template.html",
-        "brand-assets":   "BrandAssets.html",
+        "modern-guide": "Template.html",
     }
 
     def __init__(self):
@@ -194,9 +193,9 @@ class WeasyPrintService:
             template_html = f.read()
 
         logger.info(
-            "WeasyPrint | template loaded | size=%s chars | font_check=%s",
+            "WeasyPrint | template loaded | size=%s chars | preview=%s",
             f"{len(template_html):,}",
-            "Playfair" if "Playfair" in template_html else "OLD-POPPINS-STILL-THERE"
+            template_html[:100].replace("\n", " ")
         )
 
         # ── 2. Render variables into HTML ─────────────────────────────────

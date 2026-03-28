@@ -50,53 +50,6 @@ def _get_job(job_id: str) -> dict:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TEMPLATE RENDERER
-#
-# Rules:
-#   • Any key ending in _html  → raw injection (no HTML escaping)
-#   • toc_sections_html / toc_html → raw injection
-#   • Everything else → HTML-escaped plain text
-#   • {{#if key}} treats empty string / None / 0 as FALSY
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _is_raw_html_key(key: str) -> bool:
-    return key.endswith("_html") or key in {"toc_html", "toc_sections_html"}
-
-
-def _render_template_vars(html: str, vars_dict: dict) -> str:
-    # Pass 1: {{#if key}}...{{/if}}
-    def _resolve_if(m):
-        key     = m.group(1).strip()
-        content = m.group(2)
-        val     = vars_dict.get(key)
-        truthy  = bool(val) and str(val).strip() not in ("", "0", "None")
-        return content if truthy else ""
-
-    html = re.sub(
-        r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}',
-        _resolve_if, html, flags=re.DOTALL,
-    )
-
-    # Pass 2: {{key}}
-    def _replace_var(m):
-        key = m.group(1).strip()
-        val = vars_dict.get(key)
-        if val is None:
-            return ""
-        val_str = str(val)
-        if _is_raw_html_key(key):
-            return val_str
-        return (
-            val_str
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-        )
-
-    return re.sub(r'\{\{\s*(\w+)\s*\}\}', _replace_var, html)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # HEALTH CHECK
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -443,7 +396,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             pdf_vars.setdefault("borderRadius",   "8px")
 
             _set_job(job_id, status="processing", progress=82, message="WeasyPrint rendering PDF...")
-            result = pdf_service.generate_pdf("modern-guide", pdf_vars)
+            result = pdf_service.generate_pdf(template_id or "modern-guide", pdf_vars)
 
             if not result.get("success"):
                 err = result.get("error","PDF generation failed")
@@ -761,11 +714,10 @@ class GenerateDocumentPreviewView(APIView):
             cont = ai.normalize_ai_output(raw)
             tvars= ai.map_to_template_vars(cont, fp, sig)
 
-            path = os.path.join(settings.BASE_DIR,"lead_magnets","templates","Template.html")
-            with open(path,"r",encoding="utf-8") as f:
-                tmpl = f.read()
+            svc  = WeasyPrintService()
+            html = svc.preview_template(request.data.get("template_id", "modern-guide"), tvars)
 
-            return Response({"success":True,"preview_html":_render_template_vars(tmpl,tvars)})
+            return Response({"success":True,"preview_html":html})
         except Exception as e:
             logger.error(f"PreviewView: {e}\n{traceback.format_exc()}")
             return Response({"error":str(e)}, status=502)
