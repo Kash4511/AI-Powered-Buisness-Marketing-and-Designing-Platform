@@ -166,8 +166,12 @@ class DocRaptorService:
     """
 
     TEMPLATES_DIR = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates"
-    )
+    os.path.dirname(os.path.abspath(__file__)),  # services/
+    "..",                                          # lead_magnets/
+    "templates"                                    # lead_magnets/templates/
+)
+    TEMPLATES_DIR = os.path.normpath(TEMPLATES_DIR)
+    logger.info("TEMPLATES_DIR RESOLVED TO: %s", TEMPLATES_DIR)
 
     TEMPLATE_REGISTRY = {
         "modern-guide": "Template.html",
