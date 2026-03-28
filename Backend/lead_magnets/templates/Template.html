@@ -266,40 +266,64 @@
     .ca em { color: var(--secondary); font-style: italic; }
     .ca span { display: inline; }
 
-    /* ── FIX: KILL FLOATS ON ANY IMG INJECTED INSIDE .ca ────────────────────
-       AI-generated section HTML may wrap images in <p><img></p> or set
-       float/width inline. This rule overrides all of that unconditionally.
-       Images inside the content area always stack full-width below their
-       preceding text — never beside it.
+    /* ── NUCLEAR IMG FIX FOR PRINCEXML ──────────────────────────────────────
+       PrinceXML does NOT honour float:none !important on <img> the same way
+       browsers do. The layout bug (text squashed into a narrow left column
+       beside the image) is caused by PrinceXML treating the <img> — or the
+       <p> containing it — as an inline-block or intrinsic-size element that
+       text wraps around.
+
+       The correct PrinceXML fix has THREE parts:
+         1. prince-float: none  — PrinceXML's own float property (overrides
+                                  any float the engine infers from the element)
+         2. display: block      — on BOTH the img AND its parent <p>
+         3. width: 100%         — forces full-width, no room for side-by-side
+
+       We target every selector the AI generator might produce.
     ─────────────────────────────────────────────────────────────────────────*/
+
     .ca img {
-      display: block !important;
+      prince-float: none;
       float: none !important;
+      display: block !important;
       width: 100% !important;
       max-width: 100% !important;
       height: auto !important;
-      margin: 14px 0 !important;
+      margin: 16px 0 !important;
       clear: both !important;
       border-radius: var(--radius);
       border: 1px solid #e2e8f0;
       page-break-inside: avoid;
     }
 
-    /* ── IMAGE BLOCK (standalone, outside .ca) ───────────────────────────── */
+    /* The <p> wrapping an image must also be a full-width block */
+    .ca p:has(img) {
+      display: block !important;
+      width: 100% !important;
+      float: none !important;
+      prince-float: none;
+      clear: both !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* ── IMAGE BLOCK (standalone, placed outside .ca in the template) ────── */
     .img-block {
       display: block;
       width: 100%;
       margin: 20px 0;
       clear: both;
-      float: none;          /* FIX: explicit no-float for PrinceXML */
+      float: none;
+      prince-float: none;
       text-align: center;
       page-break-inside: avoid;
       break-inside: avoid;
     }
 
     .img-block img {
-      display: block !important;
+      prince-float: none;
       float: none !important;
+      display: block !important;
       width: 100% !important;
       max-width: 100% !important;
       height: auto !important;
@@ -310,7 +334,6 @@
       page-break-inside: avoid;
     }
 
-    /* Clearfix after every image block */
     .img-block::after {
       content: "";
       display: block;

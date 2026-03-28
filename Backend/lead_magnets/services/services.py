@@ -32,6 +32,53 @@ def _safe_escape(value: str) -> str:
     return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+# Attributes on <img> tags that cause PrinceXML to treat the image as a float
+# or sized inline-block, squashing adjacent text into a narrow column.
+_IMG_LAYOUT_ATTRS = re.compile(
+    r'''\s*(?:style|width|height|align|hspace|vspace)\s*=\s*(?:"[^"]*"|'[^']*'|\S+)''',
+    re.IGNORECASE,
+)
+
+
+def _sanitize_section_html(html: str) -> str:
+    """
+    Sanitize AI-generated section HTML before injection into the template.
+
+    Problem: The AI generator sometimes produces <img> tags with inline
+    attributes like style="float:right;width:45%" or width="300" that cause
+    PrinceXML to render the image beside the text, squashing paragraphs
+    into a narrow left column.
+
+    Fix:
+      1. Strip all layout-affecting attributes (style, width, height, align,
+         hspace, vspace) from every <img> tag.  The stylesheet rules in
+         Template.html then take full effect — prince-float:none,
+         display:block, width:100%.
+      2. Strip inline style from any <p> tag whose only content is an <img>
+         (same float-squash risk).
+
+    This is a targeted regex pass — it does NOT parse or rewrite general HTML.
+    """
+    if not html or "<img" not in html:
+        return html
+
+    # 1. Strip layout attributes from every <img> tag
+    def _clean_img(m: re.Match) -> str:
+        return _IMG_LAYOUT_ATTRS.sub("", m.group(0))
+
+    html = re.sub(r'<img\b[^>]*>', _clean_img, html, flags=re.IGNORECASE)
+
+    # 2. Strip inline style from <p> tags that wrap only an <img>
+    html = re.sub(
+        r'(<p)\b([^>]*?)\s+style\s*=\s*(?:"[^"]*"|\'[^\']*\')([^>]*>(\s*<img\b[^>]*>\s*)</p>)',
+        r'\1\2\3',
+        html,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+    return html
+
+
 def _resolve_if_blocks(s: str, variables: dict) -> str:
     """
     Stack-based {{#if KEY}}...{{/if}} resolver.
@@ -97,7 +144,11 @@ def render_template(template_html: str, variables: dict) -> str:
         if val is None:
             return ""
         val_str = val if isinstance(val, str) else str(val)
-        return val_str if _is_raw_html_key(key) else _safe_escape(val_str)
+        if _is_raw_html_key(key):
+            # Sanitize AI-generated HTML to strip <img> layout attributes that
+            # cause PrinceXML to float images beside text (narrow-column bug).
+            return _sanitize_section_html(val_str)
+        return _safe_escape(val_str)
 
     return re.sub(r"\{\{\s*([\w]+)\s*\}\}", _replace_token, result)
 
