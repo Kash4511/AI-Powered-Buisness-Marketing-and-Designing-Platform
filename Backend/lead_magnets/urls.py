@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-from .tests_ping import ping
 
 urlpatterns = [
     path('dashboard/stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
@@ -19,7 +18,6 @@ urlpatterns = [
     # Job-based routes (internal/advanced clients)
     path('generate-pdf/start/', views.generate_pdf_start, name='generate_pdf_start'),
     path('generate-pdf/status/<str:job_id>/', views.generate_pdf_status, name='generate_pdf_status'),
-    path('ping/', ping, name='ping'),
     path('health/', views.HealthView.as_view(), name='health'),
     path('brand-assets/preview-pdf/', views.BrandAssetsPDFPreviewView.as_view(), name='brand-assets-preview-pdf'),
     path('preview-template/', views.PreviewTemplateView.as_view(), name='preview-template'),
