@@ -86,9 +86,17 @@ ALLOWED_TAGS = {
     "blockquote", "span", "div",
     "table", "thead", "tbody", "tr", "th", "td",
     "a", "small", "mark", "code", "pre",
+    "img",  # kept so <img> tags are not stripped — but layout attrs are removed below
 }
 
 GROQ_CALL_DELAY_SECONDS = 8.0
+
+# Attributes on <img> that cause PrinceXML to float/resize the image,
+# overriding any stylesheet rule (even !important).
+_IMG_LAYOUT_ATTRS = re.compile(
+    r'''\s*(?:style|width|height|align|hspace|vspace)\s*=\s*(?:"[^"]*"|'[^']*'|\S+)''',
+    re.IGNORECASE,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -126,19 +134,76 @@ def _html_to_text(html: str) -> str:
     return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', html)).strip()
 
 
+def _rewrite_img_tag(tag: str) -> str:
+    """
+    Given a full <img ...> tag string, strip all layout-affecting attributes
+    (style, width, height, align, hspace, vspace) and return a clean tag with
+    only src and alt preserved.
+
+    This is the root fix for the narrow-column layout bug: the AI generates
+    tags like <img src="..." style="float:right;width:45%" width="300">
+    which PrinceXML applies with higher specificity than any stylesheet rule,
+    including !important. Stripping them here lets Template.html's CSS take
+    full control of image sizing and positioning.
+    """
+    # Extract src
+    src_m = re.search(r'\bsrc\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|(\S+))', tag, re.IGNORECASE)
+    src   = (src_m.group(1) or src_m.group(2) or src_m.group(3) or "").strip() if src_m else ""
+    # Extract alt
+    alt_m = re.search(r'\balt\s*=\s*(?:"([^"]*)"|\'([^\']*)\')', tag, re.IGNORECASE)
+    alt   = (alt_m.group(1) or alt_m.group(2) or "").strip() if alt_m else ""
+
+    if not src:
+        return ""  # no src = useless img tag, drop it
+
+    parts = ['<img']
+    parts.append(f' src="{src}"')
+    if alt:
+        parts.append(f' alt="{alt}"')
+    parts.append('>')
+    return "".join(parts)
+
+
 def _sanitize_html(html: str) -> str:
+    """
+    Clean AI-generated HTML before injection into the PDF template.
+
+    Steps:
+      1. Convert **bold** markdown to <strong>.
+      2. Remove markdown headings (# ## etc).
+      3. Remove placeholder brackets like [STAT HERE].
+      4. Rewrite every <img> tag — strip all layout attrs (style/width/height/
+         align), keep only src+alt. This is the primary fix for the image
+         float/narrow-column bug in PrinceXML.
+      5. Strip any HTML tag not in ALLOWED_TAGS.
+      6. Close any unclosed tags.
+    """
     if not html:
         return html
     html = html.strip().strip('"')
+
+    # Step 1: markdown bold → <strong>
     html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
+
+    # Step 2: markdown headings → remove
     html = re.sub(r'^#{1,6}\s+.*$', '', html, flags=re.MULTILINE)
+
+    # Step 3: placeholder brackets
     html = re.sub(r'\[[A-Z][^\]]{2,80}\]', '', html)
+
+    # Step 4: rewrite <img> tags — strip all layout attributes
+    # Must happen BEFORE the tag-allow filter so we don't accidentally
+    # strip the cleaned <img> tag itself.
+    html = re.sub(r'<img\b[^>]*>', lambda m: _rewrite_img_tag(m.group(0)), html, flags=re.IGNORECASE)
+
+    # Step 5: strip disallowed tags (keep allowed ones intact)
     def _handle_tag(m):
         tag = m.group(2).lower()
         if tag in ALLOWED_TAGS:
             return m.group(0)
         return ""
     html = re.sub(r'<(/?)(\w+)([^>]*)>', _handle_tag, html)
+
     return _ensure_closed_tags(html).strip()
 
 
@@ -508,15 +573,15 @@ class GroqClient:
         # 1. Groq Client (Primary)
         groq_api_key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
         self.groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
-        
+
         # 2. Anthropic Client (Fallback 1)
         anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key) if anthropic_api_key else None
-        
+
         # 3. OpenAI Client (Fallback 2)
         openai_api_key = os.getenv("OPENAI_API_KEY")
         self.openai_client = openai.OpenAI(api_key=openai_api_key) if openai_api_key else None
-        
+
         # 4. Google Client (Fallback 3)
         google_api_key = os.getenv("GOOGLE_API_KEY")
         if google_api_key:
@@ -552,7 +617,7 @@ class GroqClient:
             try:
                 config = AI_CONFIGS[name]
                 logger.info(f"  → Calling {name} ({config['model']})…")
-                
+
                 if name == "groq":
                     resp = client.chat.completions.create(
                         model=config["model"],
@@ -582,7 +647,6 @@ class GroqClient:
                     return resp.choices[0].message.content.strip()
 
                 elif name == "google":
-                    # Google uses a different message structure
                     prompt = f"SYSTEM: {system_msg}\n\nUSER: {user_msg}"
                     resp = client.generate_content(
                         prompt,
@@ -596,7 +660,7 @@ class GroqClient:
             except Exception as e:
                 logger.warning(f"  ⚠️ {name} failed: {str(e)}")
                 errors.append(f"{name}: {str(e)}")
-                continue # Try next provider
+                continue
 
         raise RuntimeError(f"All AI providers failed: {'; '.join(errors)}")
 
@@ -668,7 +732,7 @@ class GroqClient:
                 f"title must feature '{topic}' clearly."
             )
             raw_title_resp = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.7)
-            
+
             for line in raw_title_resp.split("\n"):
                 if line.upper().startswith("TITLE:"):
                     title = line.split(":", 1)[1].strip()
@@ -691,7 +755,8 @@ class GroqClient:
             "   - <strong> to highlight the single most important term per paragraph\n"
             "6. Sections must END with a complete thought. Never truncate mid-sentence.\n"
             "7. Minimum 350 words. Dense, expert-level prose. No padding.\n"
-            "8. Write like a trusted adviser who has done this 100 times — confident, specific, direct."
+            "8. Write like a trusted adviser who has done this 100 times — confident, specific, direct.\n"
+            "9. DO NOT include any <img> tags. Text and structure only."
         )
 
         sections_content: Dict[str, str] = {}
@@ -725,7 +790,8 @@ class GroqClient:
                 f"WRITE SECTION: {default_title}\n\n"
                 f"{section_prompt}\n\n"
                 "CRITICAL: MINIMUM 300 words. Raw HTML only. "
-                "No placeholders like [STAT] or [INSERT EXAMPLE]. No truncation."
+                "No placeholders like [STAT] or [INSERT EXAMPLE]. No truncation. "
+                "No <img> tags."
             )
 
             try:
@@ -733,7 +799,7 @@ class GroqClient:
                 raw = re.sub(r'^```html?\s*', '', raw, flags=re.IGNORECASE)
                 raw = re.sub(r'\s*```\s*$', '', raw)
                 raw = _sanitize_html(raw)
-                
+
                 if len(_html_to_text(raw)) < 50:
                     logger.warning(f"  ⚠️ Section {key} too short, retrying...")
                     raw = self._call_ai_with_fallback(system_msg, user_msg, temperature=min(self.temperature + 0.1, 0.9))
@@ -858,18 +924,13 @@ class GroqClient:
             "termsParagraph5": f"All recommendations should be validated by a qualified {signals.get('industry', topic)} professional before implementation.",
         }
 
-        # ── Image slots ───────────────────────────────────────────────────
-        # Only write image_N_url to tvars when a real URL exists.
-        # The template uses {{#if image_N_url}} blocks — an absent or empty
-        # key evaluates falsy, so the entire img-block div is removed cleanly
-        # by render_template. This means no image AND no placeholder gap when
-        # the user hasn't uploaded an image — the section just ends normally.
+        # Image slots — only write when a real URL exists
         for i in range(1, 7):
             url = str(firm_profile.get(f"image_{i}_url") or "").strip()
             if url:
                 tvars[f"image_{i}_url"] = url
 
-        # TOC — pre-built HTML injected as a single variable
+        # TOC
         toc_parts = []
         for idx, (key, default_title, _, _, _) in enumerate(SECTIONS):
             fw    = ai_content.get("framework", {}).get(key, {})
@@ -910,22 +971,7 @@ class GroqClient:
 
         return tvars
 
-    # ──────────────────────────────────────────────────────────────────────
-    # TEMPLATE RENDERING (call this before PDF generation)
-    # ──────────────────────────────────────────────────────────────────────
-
     def render_html(self, template: str, vars: Dict[str, Any]) -> str:
-        """
-        Render the HTML template — resolves all {{#if}} blocks and {{VAR}}
-        substitutions BEFORE the HTML is passed to PrinceXML / WeasyPrint.
-
-        Example usage:
-            template_str  = open("Template.html").read()
-            ai_content    = client.normalize_ai_output(client.generate_lead_magnet_json(...))
-            template_vars = client.map_to_template_vars(ai_content, firm_profile, signals)
-            rendered_html = client.render_html(template_str, template_vars)
-            # → pass rendered_html to prince / weasyprint
-        """
         return render_template(template, vars)
 
     # ──────────────────────────────────────────────────────────────────────
