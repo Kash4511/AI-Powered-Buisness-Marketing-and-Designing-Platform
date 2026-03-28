@@ -28,7 +28,7 @@ from .serializers import (
     FirmProfileSerializer, LeadMagnetGenerationSerializer,
     CreateLeadMagnetSerializer, TemplateSerializer,
 )
-from .services import DocRaptorService, render_template
+from .services import WeasyPrintService, render_template
 from .groq_client import GroqClient
 
 logger = logging.getLogger(__name__)
@@ -412,37 +412,38 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 template_vars[f"customTitle{idx+1}"]      = dtitle
 
         # ── PDF RENDERING ──────────────────────────────────────────────────
-        pdf_service = DocRaptorService()
+        pdf_service = WeasyPrintService()
         try:
-            _set_job(job_id, status="processing", progress=75, message="Rendering PDF via DocRaptor...")
+            _set_job(job_id, status="processing", progress=75, message="Rendering PDF via WeasyPrint...")
             t0 = time.time()
 
-            docraptor_vars = template_vars.copy()
+            # Prepare template variables
+            pdf_vars = template_vars.copy()
 
             # ── Image URL safety: do NOT overwrite non-empty with empty ────
             for i in range(1, 7):
-                existing  = docraptor_vars.get(f"image_{i}_url","")
+                existing  = pdf_vars.get(f"image_{i}_url","")
                 firm_url  = firm_profile.get(f"image_{i}_url","")
                 if not existing and firm_url:
-                    docraptor_vars[f"image_{i}_url"] = firm_url
+                    pdf_vars[f"image_{i}_url"] = firm_url
                 elif not existing and not firm_url:
                     # Remove key entirely → {{#if}} evaluates falsy → no broken block
-                    docraptor_vars.pop(f"image_{i}_url", None)
+                    pdf_vars.pop(f"image_{i}_url", None)
 
             # Colour defaults
-            docraptor_vars.setdefault("primaryColor",   "#1a365d")
-            docraptor_vars.setdefault("secondaryColor", "#c5a059")
-            docraptor_vars.setdefault("accentColor",    "#f8fafc")
-            docraptor_vars.setdefault("highlightColor", "#f4f7f9")
-            docraptor_vars.setdefault("lightColor",     "#f1f5f9")
-            docraptor_vars.setdefault("whiteColor",     "#ffffff")
-            docraptor_vars.setdefault("textColor",      "#1e293b")
-            docraptor_vars.setdefault("textLightColor", "#64748b")
-            docraptor_vars.setdefault("bodyBackground", "#ffffff")
-            docraptor_vars.setdefault("borderRadius",   "8px")
+            pdf_vars.setdefault("primaryColor",   "#1a365d")
+            pdf_vars.setdefault("secondaryColor", "#c5a059")
+            pdf_vars.setdefault("accentColor",    "#f8fafc")
+            pdf_vars.setdefault("highlightColor", "#f4f7f9")
+            pdf_vars.setdefault("lightColor",     "#f1f5f9")
+            pdf_vars.setdefault("whiteColor",     "#ffffff")
+            pdf_vars.setdefault("textColor",      "#1e293b")
+            pdf_vars.setdefault("textLightColor", "#64748b")
+            pdf_vars.setdefault("bodyBackground", "#ffffff")
+            pdf_vars.setdefault("borderRadius",   "8px")
 
-            _set_job(job_id, status="processing", progress=82, message="DocRaptor rendering PDF...")
-            result = pdf_service.generate_pdf("modern-guide", docraptor_vars)
+            _set_job(job_id, status="processing", progress=82, message="WeasyPrint rendering PDF...")
+            result = pdf_service.generate_pdf("modern-guide", pdf_vars)
 
             if not result.get("success"):
                 err = result.get("error","PDF generation failed")
@@ -601,7 +602,7 @@ class ListTemplatesView(APIView):
             db = Template.objects.all()
             if db.exists():
                 return Response({"success":True,"templates":TemplateSerializer(db,many=True,context={"request":request}).data,"count":db.count()})
-            svc = DocRaptorService()
+            svc = WeasyPrintService()
             tmpls = svc.list_templates()
             for t in tmpls:
                 p = os.path.join(settings.MEDIA_ROOT,"template_previews",f"{t['id']}.jpg")
@@ -658,7 +659,7 @@ class PreviewTemplateView(APIView):
         tid  = request.data.get("template_id")
         if not tid: return Response({"error":"template_id is required"}, status=400)
         try:
-            return Response({"success":True,"preview_html":DocRaptorService().preview_template(tid,request.data.get("variables",{}))})
+            return Response({"success":True,"preview_html":WeasyPrintService().preview_template(tid,request.data.get("variables",{}))})
         except Exception as e:
             return Response({"error":"Preview failed","details":str(e)}, status=500)
 
@@ -700,7 +701,7 @@ class FormaAIConversationView(APIView):
         firm  = _build_firm_profile(request.user)
         ua    = {"main_topic":message,"lead_magnet_type":"Custom Guide","desired_outcome":message.strip().replace("\n"," "),"industry":"Architecture"}
         ai    = GroqClient()
-        svc   = DocRaptorService()
+        svc   = WeasyPrintService()
 
         try:
             sig  = ai.get_semantic_signals(ua)
@@ -798,7 +799,7 @@ class BrandAssetsPDFPreviewView(APIView):
             invalid = [c for c in ("primaryColor","secondaryColor") if not hex_re.match(variables.get(c,""))]
             if invalid: return Response({"error":"Invalid color formats","invalid_colors":invalid}, status=400)
 
-            res = DocRaptorService().generate_pdf("brand-assets", variables)
+            res = WeasyPrintService().generate_pdf("brand-assets", variables)
             if res.get("success"):
                 r = HttpResponse(res.get("pdf_data",b""), content_type="application/pdf")
                 r["Content-Disposition"] = 'attachment; filename="brand-assets-preview.pdf"'

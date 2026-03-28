@@ -1,12 +1,12 @@
 """
-services.py — DocRaptor PDF generation + template rendering
+services.py — WeasyPrint PDF generation + template rendering
 """
 
 import os
 import re
 import logging
-import requests
-from django.conf import settings
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,6 @@ def _safe_escape(value: str) -> str:
     return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-# Attributes on <img> tags that cause PrinceXML to treat the image as a float
-# or sized inline-block, squashing adjacent text into a narrow column.
 _IMG_LAYOUT_ATTRS = re.compile(
     r'''\s*(?:style|width|height|align|hspace|vspace)\s*=\s*(?:"[^"]*"|'[^']*'|\S+)''',
     re.IGNORECASE,
@@ -43,32 +41,17 @@ _IMG_LAYOUT_ATTRS = re.compile(
 def _sanitize_section_html(html: str) -> str:
     """
     Sanitize AI-generated section HTML before injection into the template.
-
-    Problem: The AI generator sometimes produces <img> tags with inline
-    attributes like style="float:right;width:45%" or width="300" that cause
-    PrinceXML to render the image beside the text, squashing paragraphs
-    into a narrow left column.
-
-    Fix:
-      1. Strip all layout-affecting attributes (style, width, height, align,
-         hspace, vspace) from every <img> tag.  The stylesheet rules in
-         Template.html then take full effect — prince-float:none,
-         display:block, width:100%.
-      2. Strip inline style from any <p> tag whose only content is an <img>
-         (same float-squash risk).
-
-    This is a targeted regex pass — it does NOT parse or rewrite general HTML.
+    Strips all layout-affecting attributes from <img> tags so the stylesheet
+    takes full control of image sizing and positioning.
     """
     if not html or "<img" not in html:
         return html
 
-    # 1. Strip layout attributes from every <img> tag
     def _clean_img(m: re.Match) -> str:
         return _IMG_LAYOUT_ATTRS.sub("", m.group(0))
 
     html = re.sub(r'<img\b[^>]*>', _clean_img, html, flags=re.IGNORECASE)
 
-    # 2. Strip inline style from <p> tags that wrap only an <img>
     html = re.sub(
         r'(<p)\b([^>]*?)\s+style\s*=\s*(?:"[^"]*"|\'[^\']*\')([^>]*>(\s*<img\b[^>]*>\s*)</p>)',
         r'\1\2\3',
@@ -82,10 +65,7 @@ def _sanitize_section_html(html: str) -> str:
 def _resolve_if_blocks(s: str, variables: dict) -> str:
     """
     Stack-based {{#if KEY}}...{{/if}} resolver.
-
-    Handles nested blocks correctly at any depth. The previous regex approach
-    consumed the first {{/if}} it found — the inner one in a nested block —
-    leaving orphan {{/if}} tokens that PrinceXML rendered as visible text.
+    Handles nested blocks correctly at any depth.
     """
     TOKEN = re.compile(r'\{\{#if\s+(\w+)\}\}|\{\{/if\}\}')
 
@@ -98,7 +78,6 @@ def _resolve_if_blocks(s: str, variables: dict) -> str:
             if not tok.group(0).startswith('{{#if'):
                 continue
 
-            # Find the matching {{/if}} at depth 0
             depth = 1
             for j in range(i + 1, len(tokens)):
                 if tokens[j].group(0).startswith('{{#if'):
@@ -115,7 +94,7 @@ def _resolve_if_blocks(s: str, variables: dict) -> str:
                         break
 
             if changed:
-                break  # restart scan on modified string
+                break
 
     return s
 
@@ -126,7 +105,6 @@ def render_template(template_html: str, variables: dict) -> str:
 
     Pass 1 — Resolve all {{#if KEY}}...{{/if}} blocks using a stack-based
               parser. Correctly handles nested blocks at any depth.
-              Falsy blocks are removed entirely — no orphan tags, no blank pages.
 
     Pass 2 — Substitute {{KEY}} tokens.
               • _html / toc / customTitle keys → raw HTML (no escaping)
@@ -135,7 +113,6 @@ def render_template(template_html: str, variables: dict) -> str:
     """
     result = _resolve_if_blocks(template_html, variables)
 
-    # Clean up excessive blank lines left after block removal
     result = re.sub(r'\n[ \t]*\n[ \t]*\n+', '\n\n', result)
 
     def _replace_token(m: re.Match) -> str:
@@ -145,8 +122,6 @@ def render_template(template_html: str, variables: dict) -> str:
             return ""
         val_str = val if isinstance(val, str) else str(val)
         if _is_raw_html_key(key):
-            # Sanitize AI-generated HTML to strip <img> layout attributes that
-            # cause PrinceXML to float images beside text (narrow-column bug).
             return _sanitize_section_html(val_str)
         return _safe_escape(val_str)
 
@@ -154,34 +129,27 @@ def render_template(template_html: str, variables: dict) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# DOCRAPTOR SERVICE
+# WEASYPRINT SERVICE
 # ─────────────────────────────────────────────────────────────────────────────
 
-class DocRaptorService:
+class WeasyPrintService:
     """
-    Renders HTML templates via the DocRaptor API (PrinceXML engine) to produce
-    print-quality PDFs. PrinceXML is required — it is the only renderer that
-    correctly handles CSS paged media (@page rules, running headers/footers,
-    page-break-* properties) used throughout Template.html.
+    PDF generation service using WeasyPrint (free, open source).
     """
 
-    TEMPLATES_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),  # services/
-    "..",                                          # lead_magnets/
-    "templates"                                    # lead_magnets/templates/
-)
-    TEMPLATES_DIR = os.path.normpath(TEMPLATES_DIR)
-    logger.info("TEMPLATES_DIR RESOLVED TO: %s", TEMPLATES_DIR)
+    TEMPLATES_DIR = os.path.normpath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),  # services/
+        "..",                                         # lead_magnets/
+        "templates"                                   # lead_magnets/templates/
+    ))
 
     TEMPLATE_REGISTRY = {
-        "modern-guide": "Template.html",
-        "brand-assets":  "BrandAssets.html",
+        "modern-guide":   "Template.html",
+        "brand-assets":   "BrandAssets.html",
     }
 
     def __init__(self):
-        self.api_key   = os.getenv("DOCRAPTOR_API_KEY", "")
-        self.test_mode = os.getenv("DOCRAPTOR_TEST_MODE", "false").lower() == "true"
-        self.api_url   = "https://docraptor.com/docs"
+        logger.info("WeasyPrintService initialised | TEMPLATES_DIR=%s", self.TEMPLATES_DIR)
 
     def _get_template_path(self, template_id: str) -> str:
         filename = self.TEMPLATE_REGISTRY.get(template_id, f"{template_id}.html")
@@ -209,130 +177,76 @@ class DocRaptorService:
     def generate_pdf(self, template_id: str, variables: dict) -> dict:
         # ── 1. Load template ──────────────────────────────────────────────
         path = self._get_template_path(template_id)
+
+        logger.info(
+            "WeasyPrint | template=%s | path=%s | exists=%s",
+            template_id, path, os.path.exists(path)
+        )
+
         if not os.path.exists(path):
             return {
                 "success": False,
                 "error":   f"Template file not found: {path}",
-                "details": f"Checked: {path}",
+                "details": f"TEMPLATES_DIR={self.TEMPLATES_DIR}",
             }
 
         with open(path, "r", encoding="utf-8") as f:
             template_html = f.read()
 
-        # Diagnostic: log template fingerprint after each deploy
         logger.info(
-            "DIAG template | path=%s img-block=%s if-image-1=%s size=%s",
-            path,
-            "img-block" in template_html,
-            "{{#if image_1_url}}" in template_html,
+            "WeasyPrint | template loaded | size=%s chars | font_check=%s",
             f"{len(template_html):,}",
+            "Playfair" if "Playfair" in template_html else "OLD-POPPINS-STILL-THERE"
         )
 
-        # Diagnostic: log which image slots are populated
-        for i in range(1, 4):
-            url = variables.get(f"image_{i}_url", "")
-            logger.info(
-                "DIAG image_%d_url | present=%s value=%r",
-                i,
-                bool(url),
-                url[:60] if url else "ABSENT",
-            )
-
-        # ── 2. Render ─────────────────────────────────────────────────────
+        # ── 2. Render variables into HTML ─────────────────────────────────
         rendered_html = render_template(template_html, variables)
 
-        # Diagnostic: confirm {{#if}} blocks fully resolved
+        # Diagnostics
         remaining_ifs    = rendered_html.count("{{#if")
         remaining_endifs = rendered_html.count("{{/if}}")
         escaped_tags     = rendered_html.count("&lt;p&gt;") + rendered_html.count("&lt;h3&gt;")
-        real_tags        = rendered_html.count("<p>") + rendered_html.count("<h3>")
-
-        logger.info(
-            "DIAG rendered | remaining_if=%d remaining_endif=%d "
-            "real_tags=%d escaped_tags=%d len=%s",
-            remaining_ifs, remaining_endifs, real_tags, escaped_tags,
-            f"{len(rendered_html):,}",
-        )
 
         if remaining_ifs or remaining_endifs:
             logger.error(
-                "render_template left %d unresolved {{#if}} and %d {{/if}} "
-                "— these will print as visible text or blank pages.",
+                "render_template left %d unresolved {{#if}} and %d {{/if}}",
                 remaining_ifs, remaining_endifs,
             )
         if escaped_tags > 5:
             logger.error(
-                "%d escaped HTML tags detected — section_*_html vars were not "
-                "injected as raw HTML.",
+                "%d escaped HTML tags detected — section HTML vars not injected as raw HTML",
                 escaped_tags,
             )
 
-        # ── 3. Send to DocRaptor (PrinceXML) ─────────────────────────────
-        if not self.api_key:
-            return {
-                "success": False,
-                "error":   "DOCRAPTOR_API_KEY not configured",
-                "details": "Set the DOCRAPTOR_API_KEY environment variable.",
-            }
-
+        # ── 3. Render PDF with WeasyPrint ─────────────────────────────────
         try:
-            payload = {
-                "user_credentials": self.api_key,
-                "doc": {
-                    "document_content": rendered_html,
-                    "document_type":    "pdf",
-                    "test":             self.test_mode,
-                    "prince_options": {
-                        "media":   "print",
-                        "baseurl": getattr(settings, "SITE_URL", "https://www.kyro.com"),
-                    },
-                },
-            }
+            font_config = FontConfiguration()
+
+            # Base URL set to templates dir so relative assets resolve correctly
+            pdf_data = HTML(
+                string=rendered_html,
+                base_url=self.TEMPLATES_DIR,
+            ).write_pdf(font_config=font_config)
+
+            title    = variables.get("documentTitle") or variables.get("mainTitle") or "document"
+            filename = re.sub(r"[^\w\-]", "-", str(title).lower())[:60] + ".pdf"
 
             logger.info(
-                "→ DocRaptor | test=%s | html=%s chars",
-                self.test_mode, f"{len(rendered_html):,}",
+                "WeasyPrint success | %s bytes | %s",
+                f"{len(pdf_data):,}", filename,
             )
 
-            resp = requests.post(
-                self.api_url,
-                json    = payload,
-                headers = {"Content-Type": "application/json"},
-                timeout = 120,
-            )
-
-            if resp.status_code == 200:
-                title    = variables.get("documentTitle") or variables.get("mainTitle") or "document"
-                filename = re.sub(r"[^\w\-]", "-", str(title).lower())[:60] + ".pdf"
-                logger.info(
-                    "✅ DocRaptor success | %s bytes | %s",
-                    f"{len(resp.content):,}", filename,
-                )
-                return {
-                    "success":      True,
-                    "pdf_data":     resp.content,
-                    "filename":     filename,
-                    "content_type": "application/pdf",
-                }
-            else:
-                err = resp.text[:600] if resp.text else "No response body"
-                logger.error("DocRaptor HTTP %d: %s", resp.status_code, err)
-                return {
-                    "success": False,
-                    "error":   f"DocRaptor returned HTTP {resp.status_code}",
-                    "details": err,
-                }
-
-        except requests.Timeout:
             return {
-                "success": False,
-                "error":   "DocRaptor request timed out after 120s",
-                "details": "Try reducing content size or contact DocRaptor support.",
+                "success":      True,
+                "pdf_data":     pdf_data,
+                "filename":     filename,
+                "content_type": "application/pdf",
             }
+
         except Exception as e:
-            logger.error("DocRaptor exception: %s", e)
+            logger.error("WeasyPrint error: %s", e)
             return {
                 "success": False,
-                "error":   "Unexpected error calling DocRaptor",
+                "error":   "WeasyPrint PDF generation failed",
                 "details": str(e),
             }

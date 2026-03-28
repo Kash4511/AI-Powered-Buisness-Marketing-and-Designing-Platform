@@ -1,6 +1,14 @@
 import json
 import pytest
+import sys
 from unittest.mock import MagicMock, patch
+
+# Mock weasyprint before importing services that depend on it
+mock_weasyprint_mod = MagicMock()
+sys.modules['weasyprint'] = mock_weasyprint_mod
+sys.modules['weasyprint.text'] = MagicMock()
+sys.modules['weasyprint.text.fonts'] = MagicMock()
+
 from django.conf import settings
 
 # Configure minimal Django settings before importing anything that depends on them
@@ -12,8 +20,11 @@ if not settings.configured:
         DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}}
     )
 
+import os
+os.environ['GROQ_API_KEY'] = 'mock_key'
+
 from lead_magnets.services.ai_generator import LeadMagnetAIService
-from lead_magnets.services.services import DocRaptorService
+from lead_magnets.services.services import WeasyPrintService
 
 @pytest.fixture
 def mock_groq_client():
@@ -22,13 +33,15 @@ def mock_groq_client():
         yield client_instance
 
 @pytest.fixture
-def mock_requests():
-    with patch('lead_magnets.services.services.requests') as mock:
-        yield mock
+def mock_weasyprint():
+    with patch('lead_magnets.services.services.HTML') as mock_html:
+        mock_instance = mock_html.return_value
+        mock_instance.write_pdf.return_value = b"%PDF-1.4 Mock Data"
+        yield mock_html
 
-def test_full_pdf_generation_flow(mock_groq_client, mock_requests):
+def test_full_pdf_generation_flow(mock_groq_client, mock_weasyprint):
     """
-    Test the full AI -> Template -> DocRaptor pipeline.
+    Test the full AI -> Template -> WeasyPrint pipeline.
     Mocks external APIs to verify logic and validation.
     """
     # 1. Setup Mock Groq Response
@@ -75,16 +88,8 @@ def test_full_pdf_generation_flow(mock_groq_client, mock_requests):
     assert ai_result['title'] == "Urban Placemaking Guide"
     assert 'expansions' in ai_result
 
-    # 2. Setup Mock DocRaptor Response
-    mock_requests.post.return_value.status_code = 200
-    mock_requests.post.return_value.content = b"%PDF-1.4 Mock Data"
-    mock_requests.head.return_value.status_code = 200 # Mock external asset check
-
-    docraptor_service = DocRaptorService()
-    docraptor_service.api_key = "test_api_key"
-    
-    # Mock render_template_with_vars to return valid HTML
-    docraptor_service.render_template_with_vars = MagicMock(return_value="<html><body><h1>Urban Placemaking Guide</h1></body></html>")
+    # 2. Setup Mock WeasyPrint
+    weasyprint_service = WeasyPrintService()
     
     # Variables mapping (simplified for test)
     variables = {
@@ -93,12 +98,8 @@ def test_full_pdf_generation_flow(mock_groq_client, mock_requests):
         'architecturalImages': ["data:image/png;base64,mock_data"]
     }
 
-    pdf_result = docraptor_service.generate_pdf('modern-guide', variables)
+    pdf_result = weasyprint_service.generate_pdf('modern-guide', variables)
     
     assert pdf_result['success'] is True
     assert pdf_result['pdf_data'] == b"%PDF-1.4 Mock Data"
-    assert mock_requests.post.called
-    
-    # Verify DocRaptor was called with Basic Auth
-    args, kwargs = mock_requests.post.call_args
-    assert kwargs['auth'] == ("test_api_key", "")
+    assert mock_weasyprint.called

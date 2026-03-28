@@ -334,7 +334,7 @@ export const dashboardApi = {
         throw new Error('No job_id returned from server');
       }
 
-      // 2. Poll for status — backend can take several minutes (11× Groq + delays + DocRaptor)
+      // 2. Poll for status — backend can take several minutes (11× Groq + delays + WeasyPrint)
       const pdf_url = await (async () => { 
           const maxAttempts = 120;
           const pollIntervalMs = 5000;
