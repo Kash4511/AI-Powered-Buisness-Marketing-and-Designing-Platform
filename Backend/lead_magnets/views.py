@@ -64,13 +64,17 @@ def _should_stop(job_id: str) -> bool:
 # HEALTH CHECK
 # ─────────────────────────────────────────────────────────────────────────────
 
-@api_view(['GET'])
+@api_view(['GET', 'HEAD'])
 @permission_classes([permissions.AllowAny])
 def health_check(request):
     """
     Simple health check endpoint that returns 200 OK.
     Used by Render to verify the service is running.
+    Handles HEAD requests to prevent 405 Method Not Allowed errors in logs.
     """
+    if request.method == 'HEAD':
+        return Response(status=status.HTTP_200_OK)
+
     return Response({
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),

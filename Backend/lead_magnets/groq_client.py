@@ -89,7 +89,7 @@ ALLOWED_TAGS = {
     "img",  # kept so <img> tags are not stripped — but layout attrs are removed below
 }
 
-GROQ_CALL_DELAY_SECONDS = 8.0
+GROQ_CALL_DELAY_SECONDS = 2.0
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -743,9 +743,7 @@ class GroqClient:
             "   - <ul>/<li> for a practical list (not bullet-point padding)\n"
             "   - <strong> to highlight the single most important term per paragraph\n"
             "6. Sections must END with a complete thought. Never truncate mid-sentence.\n"
-            "7. Minimum 350 words. Dense, expert-level prose. No padding.\n"
-            "8. Write like a trusted adviser who has done this 100 times — confident, specific, direct.\n"
-            "9. DO NOT include any <img> tags. Text and structure only."
+            f"9. DO NOT include any <img> tags. Text and structure only."
         )
 
         sections_content: Dict[str, str] = {}
@@ -778,7 +776,7 @@ class GroqClient:
                 f"SPECIAL REQUESTS: {special_requests}\n\n"
                 f"WRITE SECTION: {default_title}\n\n"
                 f"{section_prompt}\n\n"
-                "CRITICAL: MINIMUM 300 words. Raw HTML only. "
+                "CRITICAL: TARGET 200 words. Raw HTML only. "
                 "No placeholders like [STAT] or [INSERT EXAMPLE]. No truncation. "
                 "No <img> tags."
             )
