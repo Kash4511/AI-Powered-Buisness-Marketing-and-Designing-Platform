@@ -94,6 +94,26 @@ class Download(models.Model):
     class Meta:
         ordering = ['-downloaded_at']
 
+class PDFGenerationJob(models.Model):
+    """Tracks background PDF generation jobs."""
+    job_id = models.CharField(max_length=100, unique=True)
+    lead_magnet = models.ForeignKey(LeadMagnet, on_delete=models.CASCADE, related_name='pdf_jobs')
+    status = models.CharField(max_length=20, default='pending')
+    progress = models.IntegerField(default=0)
+    message = models.CharField(max_length=255, blank=True)
+    pdf_url = models.URLField(blank=True, null=True)
+    error = models.TextField(blank=True, null=True)
+    stop_requested = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Job {self.job_id} - {self.status}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+
 class BrandAsset(models.Model):
     """Stores uploaded brand assets (logos and general images)."""
     ASSET_TYPE_CHOICES = [

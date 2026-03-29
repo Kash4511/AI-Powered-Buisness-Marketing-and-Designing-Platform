@@ -174,6 +174,7 @@ class WeasyPrintService:
         return render_template(html, variables)
 
     def generate_pdf(self, template_id: str, variables: dict) -> dict:
+        logger.info("🚀 [PDF ENGINE] Starting WeasyPrint generation (DocRaptor is NOT being used)")
         # ── 1. Load template ──────────────────────────────────────────────
         path = self._get_template_path(template_id)
 

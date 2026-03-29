@@ -22,6 +22,7 @@ import requests
 from .models import (
     LeadMagnet, Lead, Download, FirmProfile,
     FormaAIConversation, TemplateSelection, Template,
+    PDFGenerationJob,
 )
 from .serializers import (
     LeadMagnetSerializer, LeadSerializer, DashboardStatsSerializer,
@@ -33,20 +34,30 @@ from .groq_client import GroqClient
 
 logger = logging.getLogger(__name__)
 
-_JOBS: dict = {}
-_JOBS_LOCK  = threading.Lock()
-
-
 def _set_job(job_id: str, **kwargs):
-    with _JOBS_LOCK:
-        if job_id not in _JOBS:
-            _JOBS[job_id] = {"created_at": datetime.utcnow()}
-        _JOBS[job_id].update(kwargs)
+    PDFGenerationJob.objects.update_or_create(job_id=job_id, defaults=kwargs)
 
 
 def _get_job(job_id: str) -> dict:
-    with _JOBS_LOCK:
-        return dict(_JOBS.get(job_id, {}))
+    try:
+        job = PDFGenerationJob.objects.get(job_id=job_id)
+        return {
+            "status": job.status,
+            "progress": job.progress,
+            "message": job.message,
+            "pdf_url": job.pdf_url,
+            "error": job.error,
+            "lead_magnet_id": job.lead_magnet_id,
+        }
+    except PDFGenerationJob.DoesNotExist:
+        return {}
+
+
+def _should_stop(job_id: str) -> bool:
+    try:
+        return PDFGenerationJob.objects.get(job_id=job_id).stop_requested
+    except PDFGenerationJob.DoesNotExist:
+        return True
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -239,6 +250,7 @@ def get_theme_palette(request):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _run_generation_job(job_id: str, body: dict, user_id):
+    logger.info(f"🔄 [JOB START] job_id={job_id} | engine=WeasyPrint")
     try:
         from accounts.models import User
         user = User.objects.get(id=user_id)
@@ -253,6 +265,9 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             return
 
         _set_job(job_id, status="processing", progress=5, message="Parsing request...", lead_magnet_id=lead_magnet_id)
+
+        if _should_stop(job_id):
+            logger.info(f"🛑 Job {job_id} terminated before start"); return
 
         try:
             lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=user)
@@ -300,6 +315,8 @@ def _run_generation_job(job_id: str, body: dict, user_id):
 
                 signals        = ai_client.get_semantic_signals(ai_input)
                 raw_ai         = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                if _should_stop(job_id):
+                    logger.info(f"🛑 Job {job_id} terminated during AI generation"); return
                 ai_content     = ai_client.normalize_ai_output(raw_ai)
 
                 logger.info(f"✅ AI done | {time.time()-t0:.1f}s")
@@ -396,6 +413,8 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             pdf_vars.setdefault("borderRadius",   "8px")
 
             _set_job(job_id, status="processing", progress=82, message="WeasyPrint rendering PDF...")
+            if _should_stop(job_id):
+                logger.info(f"🛑 Job {job_id} terminated before rendering"); return
             result = pdf_service.generate_pdf(template_id or "modern-guide", pdf_vars)
 
             if not result.get("success"):
@@ -403,6 +422,8 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 _set_job(job_id, status="failed", error=f"{err}: {result.get('details','')}"); return
 
             _set_job(job_id, status="processing", progress=92, message="Saving to cloud storage...")
+            if _should_stop(job_id):
+                logger.info(f"🛑 Job {job_id} terminated before upload"); return
             pdf_data = result["pdf_data"]
             filename = result.get("filename", f"lead-magnet-{lead_magnet_id}.pdf")
 
@@ -415,11 +436,13 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 lead_magnet.pdf_file = up.get("public_id")
                 lead_magnet.status   = "completed"
                 lead_magnet.save(update_fields=["pdf_file","status"])
+                _set_job(job_id, status="complete", progress=100, message="PDF ready!", pdf_url=up.get("secure_url"))
             except Exception as ue:
                 logger.error(f"Cloudinary fallback: {ue}")
                 lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
                 lead_magnet.status = "completed"
                 lead_magnet.save(update_fields=["status"])
+                _set_job(job_id, status="complete", progress=100, message="PDF ready (local storage fallback)!")
 
             logger.info(f"✅ PDF done | {time.time()-t0:.1f}s")
             _set_job(job_id, status="complete", progress=100,
@@ -427,8 +450,13 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                      message="Your PDF is ready!")
 
         except Exception as e:
-            logger.error(f"PDF Rendering Error: {e}\n{traceback.format_exc()}")
-            _set_job(job_id, status="failed", error=f"PDF rendering failed: {e}")
+            logger.error(f"❌ [PDF ERROR] {e}", exc_info=True)
+            _set_job(job_id, status="failed", error=str(e))
+            try:
+                lm = LeadMagnet.objects.get(id=lead_magnet_id)
+                lm.status = "failed"
+                lm.save(update_fields=["status"])
+            except: pass
 
     except Exception as exc:
         logger.critical(f"Critical job error: {exc}\n{traceback.format_exc()}")
@@ -443,8 +471,29 @@ def _run_generation_job(job_id: str, body: dict, user_id):
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_start(request):
+    lm_id = request.data.get("lead_magnet_id")
+    if lm_id:
+        # Cancel previous jobs for this Lead Magnet in the DB
+        previous_jobs = PDFGenerationJob.objects.filter(
+            lead_magnet_id=lm_id, 
+            status__in=["pending", "processing"]
+        )
+        for job in previous_jobs:
+            job.stop_requested = True
+            job.status = "cancelled"
+            job.message = "Cancelled by a newer generation request"
+            job.save()
+            logger.info(f"🔄 [DB] Cancelled previous job {job.job_id} for LM {lm_id}")
+
     job_id = str(uuid.uuid4())
-    _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None)
+    # Create the job in DB first
+    try:
+        lm = LeadMagnet.objects.get(id=lm_id, owner=request.user)
+    except LeadMagnet.DoesNotExist:
+        return Response({"error":"Lead magnet not found"}, status=404)
+
+    _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None, lead_magnet=lm)
+    
     threading.Thread(target=_run_generation_job, args=(job_id,request.data,request.user.id), daemon=True).start()
     return Response({"job_id":job_id,"status":"pending"}, status=202)
 
@@ -457,6 +506,21 @@ def generate_pdf_status(request, job_id):
         return Response({"error":"Job not found"}, status=404)
     return Response({"job_id":job_id,"status":job.get("status"),"progress":job.get("progress",0),
                      "message":job.get("message",""),"pdf_url":job.get("pdf_url"),"error":job.get("error")})
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_stop(request, job_id):
+    try:
+        job = PDFGenerationJob.objects.get(job_id=job_id)
+        job.stop_requested = True
+        job.status = "terminated"
+        job.message = "Job was stopped by user"
+        job.save()
+        logger.info(f"🛑 Manual termination requested for job {job_id}")
+        return Response({"success":True,"message":"Termination signal sent"})
+    except PDFGenerationJob.DoesNotExist:
+        return Response({"error":"Job not found"}, status=404)
 
 
 @api_view(["POST"])
@@ -484,12 +548,15 @@ def generate_pdf_status_compat(request):
     if not lm_id:
         return Response({"error":"lead_magnet_id is required"}, status=400)
 
-    job = _get_job(job_id) if job_id else None
-    if not job:
-        with _JOBS_LOCK:
-            for _, v in reversed(list(_JOBS.items())):
-                if str(v.get("lead_magnet_id")) == str(lm_id):
-                    job = dict(v); break
+    job_data = None
+    if job_id:
+        job_data = _get_job(job_id)
+    
+    if not job_data:
+        # Fallback: get the latest job for this Lead Magnet
+        latest_job = PDFGenerationJob.objects.filter(lead_magnet_id=lm_id).first()
+        if latest_job:
+            job_data = _get_job(latest_job.job_id)
 
     try:
         lm = LeadMagnet.objects.get(id=lm_id, owner=request.user)
@@ -498,11 +565,15 @@ def generate_pdf_status_compat(request):
 
     if str(lm.status) == "completed" and lm.pdf_file:
         return Response({"status":"ready","pdf_url":f"/api/lead-magnets/{lm_id}/download/"})
-    if job:
-        if job.get("status") == "complete" and lm.pdf_file:
+    
+    if job_data:
+        if job_data.get("status") == "complete" and lm.pdf_file:
             return Response({"status":"ready","pdf_url":f"/api/lead-magnets/{lm_id}/download/"})
-        if job.get("status") in ("failed","error"):
-            return Response({"status":"error","error":job.get("error","Generation failed")})
+        if job_data.get("status") in ("failed","error"):
+            return Response({"status":"error","error":job_data.get("error","Generation failed")})
+        if job_data.get("status") in ("cancelled", "terminated"):
+            return Response({"status":"error","error":"Job was stopped or cancelled"})
+            
     return Response({"status":"pending"})
 
 
