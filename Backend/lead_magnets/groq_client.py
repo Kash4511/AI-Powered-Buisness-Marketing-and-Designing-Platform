@@ -86,7 +86,6 @@ ALLOWED_TAGS = {
     "blockquote", "span", "div",
     "table", "thead", "tbody", "tr", "th", "td",
     "a", "small", "mark", "code", "pre",
-    "img",  # kept so <img> tags are not stripped — but layout attrs are removed below
 }
 
 GROQ_CALL_DELAY_SECONDS = 2.0
@@ -127,33 +126,6 @@ def _html_to_text(html: str) -> str:
     return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', html)).strip()
 
 
-def _rewrite_img_tag(tag: str) -> str:
-    """
-    Given a full <img ...> tag string, strip all layout-affecting attributes
-    (style, width, height, align, hspace, vspace) and return a clean tag with
-    only src and alt preserved.
-
-    This ensures that Template.html's CSS takes full control of image sizing 
-    and positioning.
-    """
-    # Extract src
-    src_m = re.search(r'\bsrc\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|(\S+))', tag, re.IGNORECASE)
-    src   = (src_m.group(1) or src_m.group(2) or src_m.group(3) or "").strip() if src_m else ""
-    # Extract alt
-    alt_m = re.search(r'\balt\s*=\s*(?:"([^"]*)"|\'([^\']*)\')', tag, re.IGNORECASE)
-    alt   = (alt_m.group(1) or alt_m.group(2) or "").strip() if alt_m else ""
-
-    if not src:
-        return ""  # no src = useless img tag, drop it
-
-    parts = ['<img']
-    parts.append(f' src="{src}"')
-    if alt:
-        parts.append(f' alt="{alt}"')
-    parts.append('>')
-    return "".join(parts)
-
-
 def _sanitize_html(html: str) -> str:
     """
     Clean AI-generated HTML before injection into the PDF template.
@@ -162,10 +134,8 @@ def _sanitize_html(html: str) -> str:
       1. Convert **bold** markdown to <strong>.
       2. Remove markdown headings (# ## etc).
       3. Remove placeholder brackets like [STAT HERE].
-      4. Rewrite every <img> tag — strip all layout attrs (style/width/height/
-         align), keep only src+alt.
-      5. Strip any HTML tag not in ALLOWED_TAGS.
-      6. Close any unclosed tags.
+      4. Strip any HTML tag not in ALLOWED_TAGS.
+      5. Close any unclosed tags.
     """
     if not html:
         return html
@@ -180,12 +150,7 @@ def _sanitize_html(html: str) -> str:
     # Step 3: placeholder brackets
     html = re.sub(r'\[[A-Z][^\]]{2,80}\]', '', html)
 
-    # Step 4: rewrite <img> tags — strip all layout attributes
-    # Must happen BEFORE the tag-allow filter so we don't accidentally
-    # strip the cleaned <img> tag itself.
-    html = re.sub(r'<img\b[^>]*>', lambda m: _rewrite_img_tag(m.group(0)), html, flags=re.IGNORECASE)
-
-    # Step 5: strip disallowed tags (keep allowed ones intact)
+    # Step 4: strip disallowed tags (keep allowed ones intact)
     def _handle_tag(m):
         tag = m.group(2).lower()
         if tag in ALLOWED_TAGS:

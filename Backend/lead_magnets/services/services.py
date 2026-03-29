@@ -32,7 +32,7 @@ def _safe_escape(value: str) -> str:
     return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-_IMG_LAYOUT_ATTRS = re.compile(
+_STRIP_ATTRS = re.compile(
     r'''\s*(?:style|width|height|align|hspace|vspace)\s*=\s*(?:"[^"]*"|'[^']*'|\S+)''',
     re.IGNORECASE,
 )
@@ -41,25 +41,21 @@ _IMG_LAYOUT_ATTRS = re.compile(
 def _sanitize_section_html(html: str) -> str:
     """
     Sanitize AI-generated section HTML before injection into the template.
-    Strips all layout-affecting attributes from <img> tags so the stylesheet
-    takes full control of image sizing and positioning.
+    Strips all layout-affecting attributes (style, width, height, align, etc.)
+    from ALL tags. This ensures that Template.html's CSS has absolute control
+    over the document layout and prevents the AI from creating narrowed
+    columns or unexpected floats.
     """
-    if not html or "<img" not in html:
-        return html
+    if not html:
+        return ""
 
-    def _clean_img(m: re.Match) -> str:
-        return _IMG_LAYOUT_ATTRS.sub("", m.group(0))
+    # Strip layout attributes from all tags
+    html = _STRIP_ATTRS.sub("", html)
 
-    html = re.sub(r'<img\b[^>]*>', _clean_img, html, flags=re.IGNORECASE)
+    # Remove any empty <p></p> or <p>  </p> tags that might be left behind
+    html = re.sub(r'<p>\s*</p>', '', html, flags=re.IGNORECASE)
 
-    html = re.sub(
-        r'(<p)\b([^>]*?)\s+style\s*=\s*(?:"[^"]*"|\'[^\']*\')([^>]*>(\s*<img\b[^>]*>\s*)</p>)',
-        r'\1\2\3',
-        html,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-
-    return html
+    return html.strip()
 
 
 def _resolve_if_blocks(s: str, variables: dict) -> str:
