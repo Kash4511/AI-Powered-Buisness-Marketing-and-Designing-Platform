@@ -91,13 +91,6 @@ ALLOWED_TAGS = {
 
 GROQ_CALL_DELAY_SECONDS = 8.0
 
-# Attributes on <img> that cause PrinceXML to float/resize the image,
-# overriding any stylesheet rule (even !important).
-_IMG_LAYOUT_ATTRS = re.compile(
-    r'''\s*(?:style|width|height|align|hspace|vspace)\s*=\s*(?:"[^"]*"|'[^']*'|\S+)''',
-    re.IGNORECASE,
-)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # UTILITIES
@@ -140,11 +133,8 @@ def _rewrite_img_tag(tag: str) -> str:
     (style, width, height, align, hspace, vspace) and return a clean tag with
     only src and alt preserved.
 
-    This is the root fix for the narrow-column layout bug: the AI generates
-    tags like <img src="..." style="float:right;width:45%" width="300">
-    which PrinceXML applies with higher specificity than any stylesheet rule,
-    including !important. Stripping them here lets Template.html's CSS take
-    full control of image sizing and positioning.
+    This ensures that Template.html's CSS takes full control of image sizing 
+    and positioning.
     """
     # Extract src
     src_m = re.search(r'\bsrc\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|(\S+))', tag, re.IGNORECASE)
@@ -173,8 +163,7 @@ def _sanitize_html(html: str) -> str:
       2. Remove markdown headings (# ## etc).
       3. Remove placeholder brackets like [STAT HERE].
       4. Rewrite every <img> tag — strip all layout attrs (style/width/height/
-         align), keep only src+alt. This is the primary fix for the image
-         float/narrow-column bug in PrinceXML.
+         align), keep only src+alt.
       5. Strip any HTML tag not in ALLOWED_TAGS.
       6. Close any unclosed tags.
     """
@@ -235,7 +224,7 @@ def render_template(template: str, vars: Dict[str, Any]) -> str:
       {{KEY}}                  →  substitute vars[KEY] (empty string if missing)
 
     Handles up to 5 levels of nesting via repeated passes.
-    Must be called BEFORE passing HTML to PrinceXML / WeasyPrint.
+    Must be called BEFORE passing HTML to the PDF generator.
     """
     for _ in range(5):
         def _make_replacer(v):

@@ -1,12 +1,7 @@
 services:
   - type: web
     name: django-backend
-    runtime: python
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: sh Backend/scripts/render_start.sh
+    runtime: docker
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
-      - key: POETRY_VERSION
-        value: 1.7.1
