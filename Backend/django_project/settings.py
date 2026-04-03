@@ -9,11 +9,11 @@ try:
     env_path = Path(__file__).resolve().parent.parent / '.env'
     if env_path.exists():
         load_dotenv(env_path)
-        print(f"✅ Loaded .env from: {env_path}")
+        print(f"Loaded .env from: {env_path}")
     else:
-        print(f"⚠️  .env file not found at: {env_path}")
+        print(f" .env file not found at: {env_path}")
 except Exception as e:
-    print(f"⚠️ Error loading .env: {e}")
+    print(f" Error loading .env: {e}")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -139,9 +139,9 @@ else:
             }
         }
     else:
-        print("❌ No PostgreSQL configuration found.")
+        print("No PostgreSQL configuration found.")
         if DEBUG:
-            print("⚠️ Falling back to SQLite for local development only.")
+            print("Falling back to SQLite for local development only.")
             DATABASES = {
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
@@ -152,11 +152,11 @@ else:
             raise Exception("PostgreSQL environment variables are missing.")
 
 default_db = DATABASES.get('default', {})
-print(f"🔌 DB backend: {default_db.get('ENGINE', '')}")
+print(f"DB backend: {default_db.get('ENGINE', '')}")
 if default_db.get('ENGINE') == 'django.db.backends.postgresql':
-    print(f"🔌 DB host: {default_db.get('HOST', '')}")
+    print(f"DB host: {default_db.get('HOST', '')}")
 else:
-    print(f"🔌 DB name: {default_db.get('NAME', '')}")
+    print(f"DB name: {default_db.get('NAME', '')}")
 
 # -----------------------------
 # Password Validation

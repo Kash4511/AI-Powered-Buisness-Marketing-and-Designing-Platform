@@ -5,10 +5,22 @@ services.py — WeasyPrint PDF generation + template rendering
 import os
 import re
 import logging
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
 
 logger = logging.getLogger(__name__)
+
+try:
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+except ImportError:
+    HTML = None
+    CSS = None
+    FontConfiguration = None
+    logger.error("WeasyPrint not found or system libraries missing. PDF generation will be disabled.")
+except Exception as e:
+    HTML = None
+    CSS = None
+    FontConfiguration = None
+    logger.error(f"Error loading WeasyPrint: {e}. PDF generation will be disabled.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
