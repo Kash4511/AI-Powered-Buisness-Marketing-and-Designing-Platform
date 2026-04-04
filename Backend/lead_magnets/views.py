@@ -326,8 +326,11 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 logger.info(f"✅ AI done | {time.time()-t0:.1f}s")
 
                 empty = [k for k, *_ in ai_client.SECTIONS if not ai_content.get(k)]
-                if empty:
-                    logger.warning(f"⚠️ Empty sections: {empty}")
+                if len(empty) == len(ai_client.SECTIONS):
+                    logger.error("❌ All AI sections returned empty. Failing job.")
+                    _set_job(job_id, status="failed", error="AI failed to generate any content. Please check your API keys and topic."); return
+                elif empty:
+                    logger.warning(f"⚠️ Some sections are empty: {empty}")
 
                 # ── DIAGNOSTIC: log exact content lengths so we can see what Groq returned
                 for k, *_ in ai_client.SECTIONS:
@@ -735,6 +738,11 @@ class FormaAIConversationView(APIView):
             sig  = ai.get_semantic_signals(ua)
             raw  = ai.generate_lead_magnet_json(sig, firm)
             cont = ai.normalize_ai_output(raw)
+            
+            # Check if all sections are empty
+            empty_count = sum(1 for k in ai.SECTION_KEYS if not cont.get(k))
+            if empty_count == len(ai.SECTION_KEYS):
+                raise RuntimeError("AI failed to generate any meaningful content. Please try a different message.")
         except Exception as e:
             err = f"AI generation failed: {e}"
             logger.error(f"{err}\n{traceback.format_exc()}")

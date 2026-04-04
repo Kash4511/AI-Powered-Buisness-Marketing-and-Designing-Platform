@@ -184,37 +184,60 @@ def _ensure_closed_tags(html: str) -> str:
 
 def render_template(template: str, vars: Dict[str, Any]) -> str:
     """
-    Process a Handlebars-style HTML template:
-      {{#if KEY}} ... {{/if}}  →  include block only when vars[KEY] is truthy
-      {{KEY}}                  →  substitute vars[KEY] (empty string if missing)
+    Process a Mustache-style HTML template:
+      {{#if KEY}} ... {{else}} ... {{/if}}
+      {{KEY}}
 
-    Handles up to 5 levels of nesting via repeated passes.
-    Must be called BEFORE passing HTML to the PDF generator.
+    Handles nested blocks correctly via recursion/repeated passes.
     """
-    for _ in range(5):
-        def _make_replacer(v):
-            def _replace_if(m):
-                key     = m.group(1).strip()
-                content = m.group(2)
-                return content if v.get(key) else ""
-            return _replace_if
+    if not template:
+        return ""
 
-        new_html = re.sub(
-            r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}',
-            _make_replacer(vars),
-            template,
-            flags=re.DOTALL,
-        )
-        if new_html == template:
-            break
-        template = new_html
+    # Pass 1: Resolve IF blocks
+    changed = True
+    while changed:
+        changed = False
+        # Match {{#if KEY}}...{{/if}} including optional {{else}}
+        # This regex is simpler for the AI-side renderer
+        pattern = re.compile(r'\{\{#if\s+([\w]+)\}\}(.*?)\{\{/if\}\}', re.DOTALL)
+        matches = list(pattern.finditer(template))
 
+        for m in reversed(matches):
+            key = m.group(1)
+            content = m.group(2)
+            val = vars.get(key)
+
+            # Check for {{else}} inside this specific block
+            # We must only match {{else}} that is at the same depth
+            else_pattern = re.compile(r'\{\{else\}\}')
+            parts = else_pattern.split(content)
+
+            is_truthy = False
+            if val:
+                if isinstance(val, str):
+                    is_truthy = bool(val.strip())
+                else:
+                    is_truthy = True
+
+            if is_truthy:
+                # Keep part before else
+                keep = parts[0]
+            else:
+                # Keep part after else (if it exists)
+                keep = parts[1] if len(parts) > 1 else ""
+
+            template = template[:m.start()] + keep + template[m.end():]
+            changed = True
+
+    # Pass 2: Replace variables
     def _replace_var(m):
         key = m.group(1).strip()
         val = vars.get(key)
-        return "" if val is None else str(val)
+        if val is None:
+            return ""
+        return str(val)
 
-    return re.sub(r'\{\{(\w+)\}\}', _replace_var, template)
+    return re.sub(r'\{\{\s*([\w]+)\s*\}\}', _replace_var, template)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

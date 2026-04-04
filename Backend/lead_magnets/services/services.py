@@ -72,10 +72,10 @@ def _sanitize_section_html(html: str) -> str:
 
 def _resolve_if_blocks(s: str, variables: dict) -> str:
     """
-    Stack-based {{#if KEY}}...{{/if}} resolver.
-    Handles nested blocks correctly at any depth.
+    Stack-based {{#if KEY}}...{{else}}...{{/if}} resolver.
+    Handles nested blocks and else-conditions correctly.
     """
-    TOKEN = re.compile(r'\{\{#if\s+(\w+)\}\}|\{\{/if\}\}')
+    TOKEN = re.compile(r'\{\{#if\s+([\w]+)\}\}|\{\{else\}\}|\{\{/if\}\}')
 
     changed = True
     while changed:
@@ -86,22 +86,48 @@ def _resolve_if_blocks(s: str, variables: dict) -> str:
             if not tok.group(0).startswith('{{#if'):
                 continue
 
+            # Find matching else and endif
             depth = 1
+            else_tok = None
+            endif_tok = None
+
             for j in range(i + 1, len(tokens)):
-                if tokens[j].group(0).startswith('{{#if'):
+                ttext = tokens[j].group(0)
+                if ttext.startswith('{{#if'):
                     depth += 1
-                else:
+                elif ttext == '{{/if}}':
                     depth -= 1
                     if depth == 0:
-                        key   = tok.group(1)
-                        val   = variables.get(key, "")
-                        inner = s[tok.end():tokens[j].start()]
-                        keep  = inner if (val and str(val).strip()) else ""
-                        s     = s[:tok.start()] + keep + s[tokens[j].end():]
-                        changed = True
+                        endif_tok = tokens[j]
                         break
+                elif ttext == '{{else}}':
+                    if depth == 1:
+                        else_tok = tokens[j]
 
-            if changed:
+            if endif_tok:
+                key = tok.group(1)
+                val = variables.get(key)
+                # Truthy check: not None, not False, not empty string, not empty list
+                is_truthy = False
+                if val:
+                    if isinstance(val, str):
+                        is_truthy = bool(val.strip())
+                    else:
+                        is_truthy = True
+
+                if is_truthy:
+                    # Keep part before else (or everything if no else)
+                    end_pos = else_tok.start() if else_tok else endif_tok.start()
+                    keep = s[tok.end():end_pos]
+                else:
+                    # Keep part after else (or nothing if no else)
+                    if else_tok:
+                        keep = s[else_tok.end():endif_tok.start()]
+                    else:
+                        keep = ""
+
+                s = s[:tok.start()] + keep + s[endif_tok.end():]
+                changed = True
                 break
 
     return s
@@ -111,29 +137,47 @@ def render_template(template_html: str, variables: dict) -> str:
     """
     Render a Mustache-style HTML template.
 
-    Pass 1 — Resolve all {{#if KEY}}...{{/if}} blocks using a stack-based
-              parser. Correctly handles nested blocks at any depth.
+    Pass 1 — Resolve all {{#if KEY}}...{{else}}...{{/if}} blocks.
+              Correctly handles nested blocks and else conditions.
 
     Pass 2 — Substitute {{KEY}} tokens.
               • _html / toc / customTitle keys → raw HTML (no escaping)
               • All other keys                 → HTML-escaped plain text
               • Unknown keys                   → empty string
     """
+    if not template_html:
+        return ""
+
+    # Resolve if blocks first
     result = _resolve_if_blocks(template_html, variables)
 
+    # Clean up redundant newlines
     result = re.sub(r'\n[ \t]*\n[ \t]*\n+', '\n\n', result)
 
     def _replace_token(m: re.Match) -> str:
         key = m.group(1).strip()
         val = variables.get(key)
-        if val is None:
-            return ""
-        val_str = val if isinstance(val, str) else str(val)
-        if _is_raw_html_key(key):
-            return _sanitize_section_html(val_str)
-        return _safe_escape(val_str)
 
-    return re.sub(r"\{\{\s*([\w]+)\s*\}\}", _replace_token, result)
+        if val is None:
+            # Check if it was an intentional falsey value or just missing
+            if key in variables:
+                return ""
+            # logger.debug(f"Template variable '{{%s}}' not found in context", key)
+            return ""
+
+        val_str = val if isinstance(val, str) else str(val)
+
+        if _is_raw_html_key(key):
+            sanitized = _sanitize_section_html(val_str)
+            # logger.debug("Rendering raw HTML key: %s (length: %d)", key, len(sanitized))
+            return sanitized
+
+        escaped = _safe_escape(val_str)
+        # logger.debug("Rendering plain text key: %s (length: %d)", key, len(escaped))
+        return escaped
+
+    # Match {{key}}, {{ key }}, but NOT {{#if}} or {{/if}}
+    return re.sub(r"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}", _replace_token, result)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -209,6 +253,12 @@ class WeasyPrintService:
 
         # ── 2. Render variables into HTML ─────────────────────────────────
         rendered_html = render_template(template_html, variables)
+
+        logger.info(
+            "WeasyPrint | variables rendered | size=%s chars | preview=%s",
+            f"{len(rendered_html):,}",
+            rendered_html[:100].replace("\n", " ")
+        )
 
         # Diagnostics
         remaining_ifs    = rendered_html.count("{{#if")
