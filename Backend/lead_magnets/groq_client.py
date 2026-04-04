@@ -856,7 +856,7 @@ class GroqClient:
             "documentTitle":     ai_content.get("title") or topic,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
-            "documentSubtitle":  subtitle,
+            "documentSubtitle":  subtitle or f"A comprehensive guide for {signals.get('target_audience', 'professionals')}",
             # Company
             "companyName":  company_name,
             "emailAddress": work_email,
@@ -892,6 +892,7 @@ class GroqClient:
                 f'<div class="toc-item">'
                 f'<span class="toc-num">{str(idx + 1).zfill(2)}</span>'
                 f'<span class="toc-label">{title}</span>'
+                f'<span class="toc-dots"></span>'
                 f'<span class="toc-pg">{page}</span>'
                 f'</div>'
             )
@@ -910,6 +911,7 @@ class GroqClient:
             tvars[f"section_{key}_id"]             = f"section-{key}"
             tvars[f"section_{key}_title"]          = title
             tvars[f"section_{key}_kicker"]         = default_label
+            tvars[f"section_{key}_kicker_label"]   = default_label
             tvars[f"section_{key}_intro"]          = self._extract_intro_text(content)
             tvars[f"section_{key}_support"]        = self._extract_support_text(content)
             sv, sl = self._extract_stat(content)
