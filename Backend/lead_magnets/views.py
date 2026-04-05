@@ -358,12 +358,13 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     template_vars[f"pageNumberHeader{n}"] = str(n).zfill(2)
 
                 # Verify content vars
-                missing = [f"section_{k}_full_html" for k, *_ in ai_client.SECTIONS
+                actual_sections = ai_client.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai_client.GUIDE_SECTIONS)
+                missing = [f"section_{k}_full_html" for k, *_ in actual_sections
                            if not template_vars.get(f"section_{k}_full_html")]
                 if missing:
-                    logger.warning(f"⚠️ Missing _full_html vars: {missing}")
+                    logger.warning(f"⚠️ Missing _full_html vars for {doc_type}: {missing}")
                 else:
-                    logger.info(f"✅ All 11 section_*_full_html vars populated")
+                    logger.info(f"✅ All {len(actual_sections)} section_*_full_html vars populated for {doc_type}")
 
             except Exception as e:
                 logger.error(f"AI Pipeline Error: {e}\n{traceback.format_exc()}")
@@ -427,7 +428,13 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             _set_job(job_id, status="processing", progress=82, message="WeasyPrint rendering PDF...")
             if _should_stop(job_id):
                 logger.info(f"🛑 Job {job_id} terminated before rendering"); return
-            result = pdf_service.generate_pdf(template_id or "modern-guide", pdf_vars)
+            
+            # Strict type mapping: use documentType if template_id is default/none
+            actual_template_id = template_id
+            if actual_template_id in [None, "modern-guide", "default"]:
+                actual_template_id = pdf_vars.get("documentType", "guide")
+                
+            result = pdf_service.generate_pdf(actual_template_id, pdf_vars)
 
             if not result.get("success"):
                 err = result.get("error","PDF generation failed")

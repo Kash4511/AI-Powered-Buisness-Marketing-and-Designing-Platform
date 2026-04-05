@@ -195,8 +195,18 @@ class WeasyPrintService:
         "templates"                                   # lead_magnets/templates/
     ))
 
+    # ─────────────────────────────────────────────────────────────────────────────
+    # TEMPLATE REGISTRY — Strict type-to-template mapping
+    # ─────────────────────────────────────────────────────────────────────────────
     TEMPLATE_REGISTRY = {
-        "modern-guide": "Template.html",
+        "guide":             "guide.html",
+        "checklist":         "checklist.html",
+        "case_study":        "case_study.html",
+        "roi_calculator":    "roi_calculator.html",
+        "trends_report":     "trends_report.html",
+        "design_portfolio":  "design_portfolio.html",
+        "client_onboarding": "client_onboarding.html",
+        "custom":            "custom.html",
     }
 
     def __init__(self):

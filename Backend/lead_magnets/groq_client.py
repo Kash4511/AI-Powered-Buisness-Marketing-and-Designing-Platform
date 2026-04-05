@@ -41,9 +41,10 @@ AI_CONFIGS = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION DEFINITIONS — 11 sections matching Template.html exactly
+# SECTION DEFINITIONS — Type-specific structures
 # ─────────────────────────────────────────────────────────────────────────────
-SECTIONS = [
+
+GUIDE_SECTIONS = [
     ("executive_summary",      "Executive Summary",         "OVERVIEW",   "text-only", ""),
     ("industry_analysis",      "Industry Problem Analysis", "CHALLENGES", "text-only", ""),
     ("core_principles",        "Key Principles",            "PRINCIPLES", "text-only", ""),
@@ -57,7 +58,45 @@ SECTIONS = [
     ("call_to_action",         "Call to Action",            "NEXT STEPS", "text-only", ""),
 ]
 
-SECTION_KEYS = [s[0] for s in SECTIONS]
+CHECKLIST_SECTIONS = [
+    ("introduction",           "Introduction",              "OVERVIEW",   "text-only", ""),
+    ("pre_requisites",         "Pre-Implementation",        "PRE-REQS",   "text-only", ""),
+    ("critical_milestones",    "Critical Milestones",       "MILESTONES", "text-only", ""),
+    ("step_by_step_process",   "Step-by-Step Execution",    "EXECUTION",  "text-only", ""),
+    ("quality_assurance",      "Quality Control",           "QA/QC",      "text-only", ""),
+    ("resource_checklist",     "Resource Checklist",        "RESOURCES",  "text-only", ""),
+    ("safety_compliance",      "Compliance Checklist",      "STANDARDS",  "text-only", ""),
+    ("troubleshooting",        "Troubleshooting Guide",     "SOLUTIONS",  "text-only", ""),
+    ("final_verification",     "Final Verification",        "COMPLETE",   "text-only", ""),
+    ("summary_checklist",      "Summary of Actions",        "SUMMARY",    "text-only", ""),
+    ("call_to_action",         "Call to Action",            "NEXT STEPS", "text-only", ""),
+]
+
+# For other types, we'll use GUIDE_SECTIONS as a baseline but with different prompts
+CASE_STUDY_SECTIONS = [
+    ("executive_summary",      "Executive Summary",         "OVERVIEW",   "text-only", ""),
+    ("client_background",      "Client Background",         "CONTEXT",    "text-only", ""),
+    ("challenge_definition",   "The Challenge",             "PROBLEM",    "text-only", ""),
+    ("solution_overview",      "The Solution",              "APPROACH",   "text-only", ""),
+    ("implementation_detail",  "Implementation",            "PROCESS",    "text-only", ""),
+    ("measurable_results",     "Measurable Results",        "OUTCOMES",   "text-only", ""),
+    ("technical_innovation",   "Technical Innovation",      "EXPERTISE",  "text-only", ""),
+    ("long_term_impact",       "Long-Term Impact",          "VALUE",      "text-only", ""),
+    ("lessons_learned",        "Key Lessons",               "INSIGHTS",   "text-only", ""),
+    ("client_testimonial",     "Client Perspective",        "FEEDBACK",   "text-only", ""),
+    ("call_to_action",         "Call to Action",            "NEXT STEPS", "text-only", ""),
+]
+
+TYPE_CONFIGS = {
+    "guide":             {"sections": GUIDE_SECTIONS},
+    "checklist":         {"sections": CHECKLIST_SECTIONS},
+    "case_study":        {"sections": CASE_STUDY_SECTIONS},
+    "roi_calculator":    {"sections": GUIDE_SECTIONS},
+    "trends_report":     {"sections": GUIDE_SECTIONS},
+    "design_portfolio":  {"sections": GUIDE_SECTIONS},
+    "client_onboarding": {"sections": GUIDE_SECTIONS},
+    "custom":            {"sections": GUIDE_SECTIONS},
+}
 
 DOC_TYPE_LABELS = {
     "guide": "Strategic Guide", "case_study": "Case Study Report",
@@ -540,11 +579,14 @@ Output: raw HTML only.""",
 # ─────────────────────────────────────────────────────────────────────────────
 
 class GroqClient:
-    SECTIONS        = SECTIONS
-    SECTION_KEYS    = SECTION_KEYS
-    DOC_TYPE_LABELS = DOC_TYPE_LABELS
-    _TYPE_MAP       = _TYPE_MAP
-    SECTION_LAYOUT  = {key: layout for key, _, _, layout, _ in SECTIONS}
+    GUIDE_SECTIONS   = GUIDE_SECTIONS
+    DOC_TYPE_LABELS  = DOC_TYPE_LABELS
+    TYPE_CONFIGS     = TYPE_CONFIGS
+    _TYPE_MAP        = _TYPE_MAP
+
+    # For backwards compatibility where code expects .SECTIONS (defaults to guide)
+    SECTIONS         = GUIDE_SECTIONS
+    SECTION_KEYS     = [s[0] for s in GUIDE_SECTIONS]
 
     def __init__(self, api_key: str = None):
         # 1. Groq Client (Primary)
@@ -676,10 +718,12 @@ class GroqClient:
             user_answers.get("document_type") or
             user_answers.get("lead_magnet_type") or "guide"
         ).strip()
-        doc_type = (
-            _TYPE_MAP.get(raw_type) or
-            _TYPE_MAP.get(raw_type.lower().replace("-","_").replace(" ","_"), "guide")
-        )
+        
+        # Strict mapping for absolute type fidelity
+        doc_type = _TYPE_MAP.get(raw_type.lower().replace("-","_").replace(" ","_"), "guide")
+        if doc_type not in TYPE_CONFIGS:
+            doc_type = "guide"
+
         pp = user_answers.get("pain_points")
         if pp is None or (isinstance(pp, list) and len(pp) == 0):
             pp = user_answers.get("audience_pain_points", [])
@@ -708,7 +752,10 @@ class GroqClient:
             )
 
         doc_type    = signals.get("document_type", "guide")
+        type_config = TYPE_CONFIGS.get(doc_type) or TYPE_CONFIGS["guide"]
+        sections    = type_config["sections"]
         type_label  = DOC_TYPE_LABELS.get(doc_type) or DOC_TYPE_LABELS["guide"]
+        
         topic       = signals["topic"]
         audience    = signals["audience"]
         pain_points = signals.get("pain_points", "")
@@ -717,14 +764,14 @@ class GroqClient:
         call_to_action   = str(signals.get("call_to_action", "") or "").strip()
         special_requests = str(signals.get("special_requests", "") or "").strip()
 
-        logger.info(f"🚀 Two-pass | type={doc_type} | topic={topic[:40]}")
+        logger.info(f"🚀 Type-Strict Generation | type={doc_type} | topic={topic[:40]}")
 
         # ── Pass 1a: Title ─────────────────────────────────────────────────
         title    = ""
         subtitle = ""
         try:
             system_prompt = (
-                "You write authoritative document titles. "
+                f"You write authoritative {type_label.upper()} titles. "
                 "Respond with EXACTLY two lines:\n"
                 "TITLE: [3-6 word title prominently featuring the core topic]\n"
                 "SUBTITLE: [One sentence value proposition for the target audience]"
@@ -746,31 +793,31 @@ class GroqClient:
 
         # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            f"You are writing one section of a PREMIUM $49 downloadable lead magnet on '{topic}' for {audience}.\n\n"
+            f"You are writing one section of a PREMIUM {type_label.upper()} on '{topic}' for {audience}.\n\n"
             "ABSOLUTE RULES — violating any of these means the content is rejected:\n"
-            "1. Raw HTML only. Zero markdown. Zero preamble ('Here is...', 'Sure!'). Zero sign-off.\n"
-            f"2. Every sentence must be SPECIFIC to '{topic}' and '{audience}'. Zero generic business advice.\n"
-            "3. ZERO repetition. Never repeat a phrase, stat, or idea from earlier in the same section.\n"
-            "4. Stats ONLY if they have: a source name, a unit, and a sentence explaining what they mean.\n"
-            "5. Every section must use at least 2 of these visual elements:\n"
-            "   - <blockquote> for an insight, tip, or key takeaway\n"
-            "   - <ul>/<li> for a practical list (not bullet-point padding)\n"
-            "   - <strong> to highlight the single most important term per paragraph\n"
-            "6. Sections must END with a complete thought. Never truncate mid-sentence.\n"
-            f"9. DO NOT include any <img> tags. Text and structure only."
+            f"1. This MUST be a {type_label.upper()}. If it's a checklist, use action-oriented items. If it's a guide, use strategic analysis.\n"
+            "2. Raw HTML only. Zero markdown. Zero preamble. Zero sign-off.\n"
+            f"3. Every sentence must be SPECIFIC to '{topic}' and '{audience}'. Zero generic business advice.\n"
+            "4. ZERO repetition. Never repeat a phrase, stat, or idea.\n"
+            "5. Stats ONLY if they have: a source name, a unit, and a sentence explaining what they mean.\n"
+            "6. Every section must use at least 2 of these visual elements: <blockquote>, <ul>/<li>, <strong>.\n"
+            "7. Sections must END with a complete thought. Never truncate mid-sentence.\n"
+            "8. DO NOT include any <img> tags."
         )
 
         sections_content: Dict[str, str] = {}
 
-        for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
+        for idx, (key, default_title, default_label, _, _) in enumerate(sections):
             if idx > 0:
                 logger.debug(f"  ⏳ Rate-limit pause ({GROQ_CALL_DELAY_SECONDS}s)…")
                 time.sleep(GROQ_CALL_DELAY_SECONDS)
 
-            prompt_template = SECTION_PROMPTS.get(key, "")
+            # Try type-specific prompt first, then fallback to general
+            prompt_template = SECTION_PROMPTS.get(f"{doc_type}_{key}") or SECTION_PROMPTS.get(key, "")
+            
             if not prompt_template:
-                sections_content[key] = f"<p><strong>{default_title}</strong></p>"
-                continue
+                # Construct a strict type-aware fallback prompt
+                prompt_template = f"Write a comprehensive {default_title} for this {type_label}. Focus on high-value insights for {audience} regarding {topic}."
 
             try:
                 section_prompt = prompt_template.format(
@@ -778,10 +825,11 @@ class GroqClient:
                     pain_points=pain_points, firm_usp=firm_usp,
                     lead_magnet_type=type_label,
                 )
-            except KeyError:
+            except (KeyError, IndexError):
                 section_prompt = prompt_template
 
             user_msg = (
+                f"DOCUMENT TYPE: {type_label.upper()}\n"
                 f"TOPIC: {topic}\n"
                 f"AUDIENCE: {audience}\n"
                 f"PAIN POINTS: {pain_points}\n"
@@ -790,9 +838,8 @@ class GroqClient:
                 f"SPECIAL REQUESTS: {special_requests}\n\n"
                 f"WRITE SECTION: {default_title}\n\n"
                 f"{section_prompt}\n\n"
-                "CRITICAL: TARGET 200 words. Raw HTML only. "
-                "No placeholders like [STAT] or [INSERT EXAMPLE]. No truncation. "
-                "No <img> tags."
+                f"CRITICAL: This is for a {type_label.upper()}. Ensure content matches this format perfectly. "
+                "TARGET 200 words. Raw HTML only. No <img> tags."
             )
 
             try:
@@ -810,14 +857,13 @@ class GroqClient:
                 logger.info(f"  ✅ {key}: {len(sections_content[key])} chars")
             except Exception as e:
                 logger.error(f"  ❌ {key} failed all providers: {e}")
-                # If it's a configuration error, propagate it immediately
                 if "No AI providers configured" in str(e):
                     raise
-                # Otherwise, mark section as empty and continue (maybe other sections will work)
                 sections_content[key] = ""
 
-        filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k, "")) > 100)
-        logger.info(f"✅ Complete | {filled}/{len(SECTION_KEYS)} sections filled")
+        section_keys = [s[0] for s in sections]
+        filled = sum(1 for k in section_keys if len(sections_content.get(k, "")) > 100)
+        logger.info(f"✅ Complete | {filled}/{len(section_keys)} sections filled")
 
         return {
             "title":               title,
@@ -825,14 +871,16 @@ class GroqClient:
             "document_type":       doc_type,
             "document_type_label": type_label,
             "sections": {
-                key: {"content": sections_content.get(key, ""), "title": dtitle}
-                for key, dtitle, *_ in SECTIONS
+                key: {"content": sections_content.get(key, ""), "title": dtitle, "label": dlabel}
+                for key, dtitle, dlabel, *_ in sections
             },
         }
 
     def normalize_ai_output(self, raw: Dict[str, Any]) -> Dict[str, Any]:
         sections_data = raw.get("sections", {})
         doc_type      = raw.get("document_type", "guide")
+        type_config   = TYPE_CONFIGS.get(doc_type) or TYPE_CONFIGS["guide"]
+        sections      = type_config["sections"]
 
         normalized: Dict[str, Any] = {
             "title":               raw.get("title") or "",
@@ -842,7 +890,7 @@ class GroqClient:
             "framework":           {},
         }
 
-        for key, default_title, default_label, _, _ in SECTIONS:
+        for key, default_title, default_label, _, _ in sections:
             sec_data = sections_data.get(key, {})
             content  = sec_data.get("content", "") if isinstance(sec_data, dict) else str(sec_data)
             title    = (sec_data.get("title", "") if isinstance(sec_data, dict) else "") or default_title
@@ -864,6 +912,9 @@ class GroqClient:
         signals: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         signals = signals or {}
+        doc_type = ai_content.get("document_type", "guide")
+        type_config = TYPE_CONFIGS.get(doc_type) or TYPE_CONFIGS["guide"]
+        sections = type_config["sections"]
 
         def _fix_hex(c):
             if not c: return None
@@ -907,9 +958,10 @@ class GroqClient:
             "onSurfaceColor": "#1a202c",
             # Document
             "documentTitle":     ai_content.get("title") or topic,
+            "documentType":      doc_type,
             "documentTypeLabel": doc_type_label,
             "mainTitle":         ai_content.get("title") or topic,
-            "documentSubtitle":  subtitle or f"A comprehensive guide for {signals.get('target_audience', 'professionals')}",
+            "documentSubtitle":  subtitle or f"A comprehensive {doc_type} for {signals.get('target_audience', 'professionals')}",
             # Company
             "companyName":  company_name,
             "emailAddress": work_email,
@@ -929,7 +981,7 @@ class GroqClient:
             "termsParagraph5": f"All recommendations should be validated by a qualified {signals.get('industry', topic)} professional before implementation.",
         }
 
-        # Image slots — only write when a real URL exists
+        # Image slots
         for i in range(1, 7):
             url = str(firm_profile.get(f"image_{i}_url") or "").strip()
             if url:
@@ -937,7 +989,7 @@ class GroqClient:
 
         # TOC
         toc_parts = []
-        for idx, (key, default_title, _, _, _) in enumerate(SECTIONS):
+        for idx, (key, default_title, _, _, _) in enumerate(sections):
             fw    = ai_content.get("framework", {}).get(key, {})
             title = fw.get("title") or default_title
             page  = str(idx + 4).zfill(2)
@@ -953,7 +1005,7 @@ class GroqClient:
         tvars["toc_html"]          = tvars["toc_sections_html"]
 
         # Per-section vars
-        for idx, (key, default_title, default_label, _, _) in enumerate(SECTIONS):
+        for idx, (key, default_title, default_label, _, _) in enumerate(sections):
             fw      = ai_content.get("framework", {}).get(key, {})
             title   = fw.get("title") or default_title
             content = ai_content.get(key, "")
@@ -972,7 +1024,7 @@ class GroqClient:
             tvars[f"section_{key}_stat_lbl"]       = sl
             tvars[f"section_{key}_bullets_html"]   = self._extract_bullets_html(content)
 
-        for n in range(2, 16):
+        for n in range(2, 20): # Increased range for potential longer docs
             tvars[f"pageNumber{n}"]       = str(n).zfill(2)
             tvars[f"pageNumberHeader{n}"] = str(n).zfill(2)
 
