@@ -358,6 +358,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     template_vars[f"pageNumberHeader{n}"] = str(n).zfill(2)
 
                 # Verify content vars
+                doc_type = ai_input.get("document_type", "guide")
                 actual_sections = ai_client.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai_client.GUIDE_SECTIONS)
                 missing = [f"section_{k}_full_html" for k, *_ in actual_sections
                            if not template_vars.get(f"section_{k}_full_html")]
