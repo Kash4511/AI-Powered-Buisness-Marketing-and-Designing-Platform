@@ -602,7 +602,12 @@ class GroqClient:
                         temperature=temperature,
                         max_tokens=config["max_tokens"],
                     )
-                    return resp.choices[0].message.content.strip()
+                    content = resp.choices[0].message.content.strip()
+                    if content:
+                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
+                        return content
+                    else:
+                        logger.warning(f"  ⚠️ {name} returned empty content")
 
                 elif name == "anthropic":
                     resp = client.messages.create(
@@ -612,7 +617,12 @@ class GroqClient:
                         temperature=temperature,
                         max_tokens=config["max_tokens"],
                     )
-                    return resp.content[0].text.strip()
+                    content = resp.content[0].text.strip()
+                    if content:
+                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
+                        return content
+                    else:
+                        logger.warning(f"  ⚠️ {name} returned empty content")
 
                 elif name == "openai":
                     resp = client.chat.completions.create(
@@ -621,7 +631,12 @@ class GroqClient:
                         temperature=temperature,
                         max_tokens=config["max_tokens"],
                     )
-                    return resp.choices[0].message.content.strip()
+                    content = resp.choices[0].message.content.strip()
+                    if content:
+                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
+                        return content
+                    else:
+                        logger.warning(f"  ⚠️ {name} returned empty content")
 
                 elif name == "google":
                     prompt = f"SYSTEM: {system_msg}\n\nUSER: {user_msg}"
@@ -632,13 +647,24 @@ class GroqClient:
                             temperature=temperature,
                         )
                     )
-                    return resp.text.strip()
+                    content = resp.text.strip()
+                    if content:
+                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
+                        return content
+                    else:
+                        logger.warning(f"  ⚠️ {name} returned empty content")
 
             except Exception as e:
-                logger.warning(f"  ⚠️ {name} failed: {str(e)}")
-                errors.append(f"{name}: {str(e)}")
+                # Log the detailed error message for troubleshooting
+                err_msg = str(e)
+                logger.warning(f"  ❌ {name} failed: {err_msg}")
+                errors.append(f"{name}: {err_msg}")
                 continue
 
+        # If we reach here, all configured providers failed
+        if not errors:
+            raise RuntimeError("No AI providers configured (missing API keys)")
+        
         raise RuntimeError(f"All AI providers failed: {'; '.join(errors)}")
 
     # ──────────────────────────────────────────────────────────────────────
@@ -784,6 +810,10 @@ class GroqClient:
                 logger.info(f"  ✅ {key}: {len(sections_content[key])} chars")
             except Exception as e:
                 logger.error(f"  ❌ {key} failed all providers: {e}")
+                # If it's a configuration error, propagate it immediately
+                if "No AI providers configured" in str(e):
+                    raise
+                # Otherwise, mark section as empty and continue (maybe other sections will work)
                 sections_content[key] = ""
 
         filled = sum(1 for k in SECTION_KEYS if len(sections_content.get(k, "")) > 100)

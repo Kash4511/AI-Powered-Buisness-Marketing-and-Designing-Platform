@@ -34,37 +34,12 @@ class CatchAllMiddleware:
             response = JsonResponse(data, status=500)
             
             # Ensure CORS headers are present even on fatal errors
+            # Only add them if CorsMiddleware didn't already
             origin = request.META.get("HTTP_ORIGIN")
-            if origin:
+            if origin and not response.has_header("Access-Control-Allow-Origin"):
                 response["Access-Control-Allow-Origin"] = origin
                 response["Vary"] = "Origin"
                 response["Access-Control-Allow-Credentials"] = "true"
-                response["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-CSRFToken"
-                response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
             return response
-
-        if request.path.startswith("/api/"):
-            origin = request.META.get("HTTP_ORIGIN")
-            if origin:
-                response["Access-Control-Allow-Origin"] = origin
-                response["Vary"] = "Origin"
-                response["Access-Control-Allow-Credentials"] = "true"
-                response["Access-Control-Allow-Headers"] = (
-                    "Authorization, Content-Type, X-CSRFToken"
-                )
-                response["Access-Control-Allow-Methods"] = (
-                    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-                )
-
-            auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-            if response.status_code == 401 and not auth_header:
-                logger.warning(
-                    "API request missing Authorization header",
-                    extra={
-                        "path": request.path,
-                        "method": request.method,
-                        "origin": origin,
-                    },
-                )
 
         return response

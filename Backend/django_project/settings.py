@@ -228,28 +228,12 @@ SIMPLE_JWT = {
 # -----------------------------
 # CORS + CSRF
 # -----------------------------
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://django-six-gamma.vercel.app",
-    "https://django-4muchbxg6-kash4511s-projects.vercel.app",
-    "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
-    "https://django-msvx.onrender.com",
-    "https://django-jrl5.onrender.com",
-    "https://django-8dru.onrender.com",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# Optional but helps with some older browsers
+CORS_PREFLIGHT_MAX_AGE = 86400
 
-# Covers all current and future Vercel preview branch URLs automatically
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*\.vercel\.app$",
-]
-
-CORS_URLS_REGEX = r'^/api/.*$'
-
-# Important for allowing headers like Authorization and Content-Type in cross-origin requests
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-requested-with",
     "content-type",
@@ -268,8 +252,6 @@ CORS_ALLOW_METHODS = [
     "PUT",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-
 CSRF_TRUSTED_ORIGINS = [
     "https://django-six-gamma.vercel.app",
     "https://django-4muchbxg6-kash4511s-projects.vercel.app",
@@ -277,6 +259,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://django-msvx.onrender.com",
     "https://django-jrl5.onrender.com",
     "https://*.vercel.app",
+    "https://*.onrender.com",
 ]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

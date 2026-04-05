@@ -318,7 +318,12 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 t0 = time.time()
 
                 signals        = ai_client.get_semantic_signals(ai_input)
-                raw_ai         = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                try:
+                    raw_ai         = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                except Exception as e:
+                    logger.error(f"AI Generation Failed: {e}")
+                    _set_job(job_id, status="failed", error=str(e)); return
+
                 if _should_stop(job_id):
                     logger.info(f"🛑 Job {job_id} terminated during AI generation"); return
                 ai_content     = ai_client.normalize_ai_output(raw_ai)
@@ -328,7 +333,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 empty = [k for k, *_ in ai_client.SECTIONS if not ai_content.get(k)]
                 if len(empty) == len(ai_client.SECTIONS):
                     logger.error("❌ All AI sections returned empty. Failing job.")
-                    _set_job(job_id, status="failed", error="AI failed to generate any content. Please check your API keys and topic."); return
+                    _set_job(job_id, status="failed", error="AI failed to generate any content. This usually means your API keys are invalid or missing on Render."); return
                 elif empty:
                     logger.warning(f"⚠️ Some sections are empty: {empty}")
 
