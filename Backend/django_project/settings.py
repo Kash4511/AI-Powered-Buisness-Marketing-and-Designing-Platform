@@ -140,8 +140,8 @@ else:
         }
     else:
         print("No PostgreSQL configuration found.")
-        if DEBUG:
-            print("Falling back to SQLite for local development only.")
+        if DEBUG or TESTING or 'makemigrations' in sys.argv or 'migrate' in sys.argv:
+            print("Falling back to SQLite for local operations.")
             DATABASES = {
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
