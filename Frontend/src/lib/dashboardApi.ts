@@ -138,7 +138,10 @@ export const dashboardApi = {
         total_lead_magnets: 0,
         active_lead_magnets: 0,
         total_downloads: 0,
-        leads_generated: 0
+        leads_generated: 0,
+        ai_credits: 0,
+        ai_credits_used: 0,
+        ai_credits_remaining: 0
       };
     }
   },
