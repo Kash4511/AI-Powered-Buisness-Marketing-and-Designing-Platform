@@ -837,7 +837,7 @@ class GroqClient:
             f"5. PAIN POINT INTEGRATION: Meaningfully weave these pain points into the narrative: {pain_points}. Don't just list them; explain their systemic impact.\n"
             "6. CREDIBLE DATA: Use realistic statistics and cite credible fictionalized or real sources (e.g., EPA, NIST, McKinsey). Every result must have a specific number and unit (e.g., '34.2% reduction').\n"
             "7. RAW HTML ONLY: No markdown, no preamble, no sign-off. Use <h3>, <p>, <strong>, <ul>/<li>, and <blockquote> for visual hierarchy.\n"
-            "8. COMPLETION: Sections must end with a full, impactful thought. Never truncate.\n"
+            "8. COMPLETION: Sections must end with a full, impactful thought. NEVER truncate. Every section MUST fill at least 500 words of deep narrative content.\n"
             "9. NO IMAGES: Do not include any <img> tags."
         )
 
@@ -877,7 +877,7 @@ class GroqClient:
                 f"WRITE SECTION: {default_title}\n\n"
                 f"{section_prompt}\n\n"
                 f"CRITICAL: This is for a {type_label.upper()}. Ensure content matches this format perfectly. "
-                "TARGET 450-500 words per section. Raw HTML only. No <img> tags."
+                "TARGET 500-550 words per section to ensure the page is fully filled. Raw HTML only. No <img> tags."
             )
 
             try:
@@ -945,13 +945,23 @@ class GroqClient:
             "framework":           {},
         }
 
-        for key, default_title, default_label, _, _ in sections:
+        # Per-section normalization with POSITIONAL COMPATIBILITY
+        # This ensures that if we generate a Case Study with its own keys,
+        # it still maps to the GUIDE_SECTIONS keys used in the main template.
+        for idx, (key, default_title, default_label, _, _) in enumerate(sections):
             sec_data = sections_data.get(key, {})
             content  = sec_data.get("content", "") if isinstance(sec_data, dict) else str(sec_data)
             title    = (sec_data.get("title", "") if isinstance(sec_data, dict) else "") or default_title
 
-            normalized[key] = _sanitize_html(str(content))
+            sanitized_content = _sanitize_html(str(content))
+            normalized[key] = sanitized_content
             normalized["framework"][key] = {"title": title or default_title, "kicker": default_label}
+
+            # Map to positional keys for template compatibility
+            if idx < len(GUIDE_SECTIONS):
+                guide_key = GUIDE_SECTIONS[idx][0]
+                normalized[guide_key] = sanitized_content
+                normalized["framework"][guide_key] = {"title": title or default_title, "kicker": default_label}
 
         normalized["summary"]              = normalized.get("executive_summary", "")[:500]
         normalized["legal_notice_summary"] = (

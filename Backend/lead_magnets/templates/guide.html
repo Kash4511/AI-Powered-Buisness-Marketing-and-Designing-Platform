@@ -36,10 +36,10 @@
 
         .page {
             width: 210mm;
-            height: 297mm;
+            height: 297mm; /* Back to fixed height to prevent spilling */
             background: var(--white);
             position: relative;
-            overflow: hidden;
+            overflow: hidden; /* Prevent spilling into next page */
             page-break-after: always;
             margin-bottom: 10px;
             box-shadow: 0 8px 40px rgba(0,0,0,0.22);
@@ -337,8 +337,8 @@
 
         /* Page body */
         .page-body {
-            padding: 12px 14mm 0; /* Reduced from 16px */
-            height: calc(297mm - 59px - 3px - 48px);
+            padding: 12px 14mm 0;
+            height: calc(297mm - 59px - 3px - 48px - 10px); /* Slightly reduced to ensure footer safety */
             overflow: hidden;
         }
 
@@ -555,26 +555,47 @@
         }
         .col-card p { font-size: 13px; margin: 0; line-height: 1.5; }
 
-        /* Image block with alignment options */
+        /* Image block with alignment options and wrapping */
         .img-block {
             width: 100%;
             border-radius: 8px;
             overflow: hidden;
             margin: 18px 0;
-            display: flex;
+            display: block; /* Changed to block to allow centering */
         }
-        .img-block.center { justify-content: center; }
-        .img-block.left { justify-content: flex-start; }
-        .img-block.right { justify-content: flex-end; }
+        
+        .img-block.center { 
+            text-align: center;
+            margin: 24px auto;
+            max-width: 80%;
+        }
+        
+        .img-block.left { 
+            float: left;
+            margin: 0 20px 15px 0;
+            width: 45%;
+        }
+        
+        .img-block.right { 
+            float: right;
+            margin: 0 0 15px 20px;
+            width: 45%;
+        }
 
         .img-block img {
-            width: 100%;
             max-width: 100%;
             height: 220px;
             object-fit: cover;
-            display: block;
+            border-radius: 8px;
+            display: inline-block;
         }
-        .img-block.left img, .img-block.right img { width: 65%; }
+        
+        /* Clear floats after each section content to prevent spill */
+        .section-content::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
 
         /* Placeholder for missing images */
         .img-placeholder {
@@ -1240,9 +1261,9 @@
             <div><div class="section-headline">{{customTitle3}}</div></div>
         </div>
 
-        <!-- Image — Left aligned layout -->
+        <!-- Image — Centred layout -->
         {{#if image_2_url}}
-        <div class="img-block left" style="margin-top:0;">
+        <div class="img-block center" style="margin-top:0;">
             <img src="{{image_2_url}}" alt="Illustration for {{customTitle3}}" style="height:180px;">
         </div>
         {{else}}
@@ -1321,9 +1342,9 @@
             <div><div class="section-headline">{{customTitle5}}</div></div>
         </div>
 
-        <!-- Image — Right aligned layout -->
+        <!-- Image — Centred layout -->
         {{#if image_3_url}}
-        <div class="img-block right" style="margin-top:0;">
+        <div class="img-block center" style="margin-top:0;">
             <img src="{{image_3_url}}" alt="Illustration for {{customTitle5}}" style="height:180px;">
         </div>
         {{else}}
@@ -1483,9 +1504,9 @@
             <div><div class="section-headline">{{customTitle9}}</div></div>
         </div>
 
-        <!-- Image — Left aligned layout -->
+        <!-- Image — Centred layout -->
         {{#if image_5_url}}
-        <div class="img-block left" style="margin-top:0;">
+        <div class="img-block center" style="margin-top:0;">
             <img src="{{image_5_url}}" alt="Illustration for {{customTitle9}}" style="height:180px;">
         </div>
         {{else}}
