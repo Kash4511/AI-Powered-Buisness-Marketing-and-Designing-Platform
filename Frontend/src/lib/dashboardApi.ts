@@ -23,6 +23,9 @@ export interface DashboardStats {
   active_lead_magnets: number;
   total_downloads: number;
   leads_generated: number;
+  ai_credits: number;
+  ai_credits_used: number;
+  ai_credits_remaining: number;
 }
 
 export interface LeadMagnet {

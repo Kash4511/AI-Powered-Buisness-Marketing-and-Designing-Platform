@@ -121,6 +121,10 @@ class DashboardStatsSerializer(serializers.Serializer):
     active_lead_magnets = serializers.IntegerField()
     total_downloads = serializers.IntegerField()
     leads_generated = serializers.IntegerField()
+    # Groq Token Credits
+    ai_credits = serializers.IntegerField(default=1000000)
+    ai_credits_used = serializers.IntegerField(default=0)
+    ai_credits_remaining = serializers.IntegerField(default=1000000)
 
 
 class TemplateSerializer(serializers.ModelSerializer):

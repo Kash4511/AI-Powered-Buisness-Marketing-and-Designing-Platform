@@ -896,25 +896,10 @@ class GroqClient:
             except Exception as e:
                 logger.error(f"  ❌ {key} failed all providers: {e}")
                 
-                # 🚀 DEEP RELEVANCE FALLBACK: If all AI providers fail, generate professional 
-                # placeholder content that is deeply relevant to the topic and audience.
-                fallback_title = default_title
-                fallback_body = f"""
-                <p>In our deep analysis of <strong>{topic}</strong>, we have identified critical strategic frameworks that <strong>{audience}</strong> must implement to achieve <strong>{desired_outcome or 'optimal results'}</strong>. This section covers the foundational methodologies required to navigate current market complexities in the {signals.get('industry', 'industry')}.</p>
-                <h3>Strategic Implementation</h3>
-                <p>The transition from theory to practice requires a disciplined approach to {topic}. By aligning internal resources with external opportunities, organizations can unlock significant value and mitigate the risks identified in our preliminary research.</p>
-                <ul>
-                    <li><strong>Resource Alignment:</strong> Ensuring all stakeholders are aligned with the project's core objectives regarding {topic}.</li>
-                    <li><strong>Execution Excellence:</strong> Maintaining high standards of technical and operational performance in {signals.get('industry', 'the field')}.</li>
-                    <li><strong>Continuous Optimization:</strong> Leveraging data-driven insights to refine strategies for {audience} in real-time.</li>
-                </ul>
-                <blockquote><strong>Key Insight:</strong> The most successful implementations of {topic} are those that prioritize agility and long-term sustainability over short-term gains.</blockquote>
-                """
-                sections_content[key] = _sanitize_html(fallback_body)
-                
-                if "No AI providers configured" in str(e):
-                    # If absolutely no keys are set, we still want to fail so the user knows
-                    raise
+                # 🚀 NO-FALLBACK POLICY: If all AI providers fail, we throw an error.
+                # The user explicitly requested NO hardcoded/fallback/filler text.
+                # We only keep a minimal log of what went wrong.
+                raise RuntimeError(f"Section '{key}' failed to generate after trying all AI providers. {e}")
 
         section_keys = [s[0] for s in sections]
         filled = sum(1 for k in section_keys if len(sections_content.get(k, "")) > 100)
@@ -1042,8 +1027,8 @@ class GroqClient:
             "termsParagraph1": f"© {company_name}. All rights reserved.",
             "termsParagraph2": f"The information in this {doc_type_label} relates to {topic} and does not constitute legal, financial, or professional advice.",
             "termsParagraph3": "Readers are advised to verify all information independently before making project or business decisions.",
-            "termsParagraph4": f"{company_name} accepts no liability for errors, omissions, or outcomes arising from the use of this material.",
-            "termsParagraph5": f"All recommendations should be validated by a qualified {signals.get('industry', topic)} professional before implementation.",
+            "termsParagraph4": "",
+            "termsParagraph5": "",
         }
 
         # Image slots

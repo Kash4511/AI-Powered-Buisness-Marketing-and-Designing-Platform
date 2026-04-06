@@ -157,11 +157,26 @@ class DashboardStatsView(APIView):
     def get(self, request):
         user = request.user
         ulm  = LeadMagnet.objects.filter(owner=user)
+        
+        # Calculate AI Credit stats (Simplified for now: 1M total, subtract usage)
+        # In a real system, you'd track token usage in the PDFGenerationJob model
+        total_credits = 1000000
+        used_credits = 0
+        
+        # Estimate: 50,000 tokens per full lead magnet generation
+        completed_jobs = PDFGenerationJob.objects.filter(lead_magnet__owner=user, status="complete").count()
+        used_credits = completed_jobs * 50000
+        
+        remaining_credits = max(0, total_credits - used_credits)
+
         return Response(DashboardStatsSerializer({
             "total_lead_magnets":  ulm.count(),
             "active_lead_magnets": ulm.filter(Q(status="completed") | Q(status="in-progress")).count(),
             "total_downloads":     Download.objects.filter(lead_magnet__owner=user).count(),
             "leads_generated":     Lead.objects.filter(lead_magnet__owner=user).count(),
+            "ai_credits":          total_credits,
+            "ai_credits_used":     used_credits,
+            "ai_credits_remaining": remaining_credits,
         }).data)
 
 

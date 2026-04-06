@@ -8,7 +8,7 @@ import type { DashboardStats, LeadMagnet } from '../lib/dashboardApi'
 import './Dashboard.css'
 
 const Dashboard: React.FC = () => {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -116,6 +116,40 @@ const Dashboard: React.FC = () => {
     <div className="dashboard">
       <nav className="dashboard-nav">
         <div className="nav-brand">Forma</div>
+        <div className="nav-center-info" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          {stats && (
+            <div className="token-display" style={{ 
+              background: 'rgba(197, 160, 89, 0.1)', 
+              padding: '0.4rem 0.8rem', 
+              borderRadius: '20px',
+              border: '1px solid rgba(197, 160, 89, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.85rem',
+              color: '#c5a059'
+            }}>
+              <span style={{ fontWeight: 600 }}>Groq Tokens:</span>
+              <span>{stats.ai_credits_remaining.toLocaleString()} left</span>
+            </div>
+          )}
+          <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: '#ffffff' }}>
+            <div className="user-avatar" style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '50%', 
+              background: '#c5a059',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '0.9rem'
+            }}>
+              {user?.name?.charAt(0) || 'U'}
+            </div>
+            <span className="user-name" style={{ fontWeight: 500 }}>{user?.name || 'User'}</span>
+          </div>
+        </div>
         <div className="nav-actions">
           <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={18} />
