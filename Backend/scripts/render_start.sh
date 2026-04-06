@@ -15,13 +15,14 @@ echo "🔌 Testing database connection..."
 python scripts/test_db_connection.py || { echo "❌ Database connection failed. Check your DB environment variables and IP allow-list."; exit 1; }
 
 # Retry logic for database migrations
-MAX_RETRIES=5
+MAX_RETRIES=3
 RETRY_COUNT=0
 RETRY_DELAY=5
 
-until python manage.py migrate --noinput || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+# We use --fake-initial to help with out-of-sync database tables
+until python manage.py migrate --noinput --fake-initial || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
   RETRY_COUNT=$((RETRY_COUNT + 1))
-  echo "⚠️ Migration failed. Retrying in $RETRY_DELAY seconds... ($RETRY_COUNT/$MAX_RETRIES)"
+  echo "⚠️ Migration failed. This might be due to duplicate tables. Retrying... ($RETRY_COUNT/$MAX_RETRIES)"
   sleep $RETRY_DELAY
 done
 

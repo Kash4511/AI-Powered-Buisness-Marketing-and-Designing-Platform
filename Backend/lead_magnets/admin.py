@@ -2,8 +2,14 @@ from django.contrib import admin
 from .models import (
     LeadMagnet, Lead, Download, BrandAsset, FirmProfile, 
     LeadMagnetGeneration, FormaAIConversation, Template, 
-    TemplateSelection, SystemConfiguration
+    TemplateSelection, SystemConfiguration, PDFGenerationJob
 )
+
+@admin.register(PDFGenerationJob)
+class PDFGenerationJobAdmin(admin.ModelAdmin):
+    list_display = ('job_id', 'lead_magnet', 'status', 'progress', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('job_id', 'lead_magnet__title')
 
 @admin.register(SystemConfiguration)
 class SystemConfigurationAdmin(admin.ModelAdmin):
