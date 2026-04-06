@@ -333,7 +333,12 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 empty = [k for k, *_ in ai_client.SECTIONS if not ai_content.get(k)]
                 if len(empty) == len(ai_client.SECTIONS):
                     logger.error("❌ All AI sections returned empty. Failing job.")
-                    _set_job(job_id, status="failed", error="AI failed to generate any content. This usually means your API keys are invalid or missing on Render."); return
+                    error_msg = (
+                        "AI failed to generate any content. This usually means your API keys are "
+                        "invalid, expired, or missing on Render. Please verify 'GROQ_API_KEY' or 'OPENAI_API_KEY' "
+                        "is correctly set in your environment variables."
+                    )
+                    _set_job(job_id, status="failed", error=error_msg); return
                 elif empty:
                     logger.warning(f"⚠️ Some sections are empty: {empty}")
 
