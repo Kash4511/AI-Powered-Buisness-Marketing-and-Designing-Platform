@@ -228,7 +228,7 @@ SIMPLE_JWT = {
 # -----------------------------
 # CORS + CSRF
 # -----------------------------
-CORS_ALLOW_ALL_ORIGINS = True # Keep this for general access
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 # Explicitly list some origins for better compatibility with credentials
@@ -237,12 +237,15 @@ CORS_ALLOWED_ORIGINS = [
     "https://django-4muchbxg6-kash4511s-projects.vercel.app",
     "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
     "https://django-msvx.onrender.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 # Support for Vercel preview deployments
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://django-git-.*\.vercel\.app$",
     r"^https://django-.*-kash4511s-projects\.vercel\.app$",
+    r"^https://django-.*-kaashifs-projects\.vercel\.app$",
 ]
 
 # Optional but helps with some older browsers

@@ -20,6 +20,12 @@ AI_CONFIGS = {
         "description": "High-speed Llama-3 (Groq)",
         "context_window": 128000,
     },
+    "groq_fallback": {
+        "model": "llama-3.1-8b-instant",
+        "max_tokens": 4096,
+        "description": "Llama-3 8B (Groq Fallback)",
+        "context_window": 128000,
+    },
     "anthropic": {
         "model": "claude-3-5-sonnet-20241022",
         "max_tokens": 8192,
@@ -643,14 +649,15 @@ class GroqClient:
     def _call_ai_with_fallback(self, system_msg: str, user_msg: str, temperature: float = 0.72) -> Tuple[str, int]:
         """
         Executes AI call with automatic fallback logic across 4 providers.
-        Attempts Groq -> Anthropic -> OpenAI -> Google.
+        Attempts Groq (70B) -> Groq (8B) -> Anthropic -> OpenAI -> Google.
         Returns (content, tokens_used).
         """
         providers = [
-            ("groq",      self.groq_client),
-            ("anthropic", self.anthropic_client),
-            ("openai",    self.openai_client),
-            ("google",    self.google_model)
+            ("groq",          self.groq_client),
+            ("groq_fallback", self.groq_client),
+            ("anthropic",     self.anthropic_client),
+            ("openai",        self.openai_client),
+            ("google",        self.google_model)
         ]
 
         errors = []
@@ -663,20 +670,28 @@ class GroqClient:
                 config = AI_CONFIGS[name]
                 logger.info(f"  → Calling {name} ({config['model']})…")
 
-                if name == "groq":
-                    resp = client.chat.completions.create(
-                        model=config["model"],
-                        messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
-                        temperature=temperature,
-                        max_tokens=config["max_tokens"],
-                    )
-                    content = resp.choices[0].message.content.strip()
-                    tokens = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
-                    if content:
-                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars, {tokens} tokens)")
-                        return content, tokens
-                    else:
-                        logger.warning(f"  ⚠️ {name} returned empty content")
+                if name in ("groq", "groq_fallback"):
+                    try:
+                        resp = client.chat.completions.create(
+                            model=config["model"],
+                            messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
+                            temperature=temperature,
+                            max_tokens=config["max_tokens"],
+                        )
+                        content = resp.choices[0].message.content.strip()
+                        tokens = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
+                        if content:
+                            logger.info(f"  ✅ {name} succeeded ({len(content)} chars, {tokens} tokens)")
+                            return content, tokens
+                        else:
+                            logger.warning(f"  ⚠️ {name} returned empty content")
+                    except Exception as ge:
+                        if "429" in str(ge) and "tokens per day" in str(ge).lower():
+                            err_msg = f"Groq daily token limit reached for model {config['model']}."
+                            logger.warning(f"  ❌ {name} rate limit: {err_msg}")
+                            errors.append(f"{name}: {err_msg}")
+                            continue # Try next provider
+                        raise ge
 
                 elif name == "anthropic":
                     resp = client.messages.create(
