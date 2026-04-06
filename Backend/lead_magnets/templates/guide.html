@@ -28,7 +28,7 @@
             background: #c8cbd2;
             padding: 24px;
             color: var(--text);
-            font-size: 14px; /* Increased from 12.5px */
+            font-size: 15.5px; /* Increased by ~15% from 14px */
         }
 
         /* ── BOOK + PAGE ── */
@@ -446,17 +446,17 @@
             margin-top: 8px;
         }
 
-        p { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 8px; } /* Increased from 12.5px */
+        p { font-size: 15.5px; line-height: 1.65; color: var(--text); margin-bottom: 12px; }
 
         /* ── SECTION CONTENT ── */
-        .section-content { font-size: 14px; line-height: 1.6; color: var(--text); } /* Increased from 12.5px */
+        .section-content { font-size: 15.5px; line-height: 1.65; color: var(--text); }
         .section-content strong { color: var(--primary); font-weight: 600; }
 
         .section-content h3 {
-            font-size: 15px; /* Increased from 12.5px */
+            font-size: 17px;
             font-weight: 600;
             color: var(--primary);
-            margin: 10px 0 4px; /* Slightly reduced margins */
+            margin: 14px 0 6px;
             padding-left: 10px;
             border-left: 3px solid var(--secondary);
             text-transform: none;
@@ -466,11 +466,11 @@
         .section-content blockquote {
             border-left: 4px solid var(--secondary);
             background: var(--light);
-            padding: 10px 14px;
+            padding: 12px 18px;
             border-radius: 0 8px 8px 0;
-            margin: 10px 0;
+            margin: 14px 0;
             font-style: italic;
-            font-size: 14px; /* Increased from 12.5px */
+            font-size: 15.5px;
             color: var(--text-light);
         }
         .section-content blockquote strong { color: var(--primary); font-style: normal; }
@@ -555,19 +555,26 @@
         }
         .col-card p { font-size: 13px; margin: 0; line-height: 1.5; }
 
-        /* Image block */
+        /* Image block with alignment options */
         .img-block {
             width: 100%;
             border-radius: 8px;
             overflow: hidden;
-            margin: 12px 0;
+            margin: 18px 0;
+            display: flex;
         }
+        .img-block.center { justify-content: center; }
+        .img-block.left { justify-content: flex-start; }
+        .img-block.right { justify-content: flex-end; }
+
         .img-block img {
             width: 100%;
-            height: 160px;
+            max-width: 100%;
+            height: 220px;
             object-fit: cover;
             display: block;
         }
+        .img-block.left img, .img-block.right img { width: 65%; }
 
         /* Placeholder for missing images */
         .img-placeholder {
@@ -1151,15 +1158,13 @@
             <div><div class="section-headline">{{customTitle1}}</div></div>
         </div>
 
+        <!-- Image — Centred layout -->
         {{#if image_1_url}}
-        <div class="img-block">
+        <div class="img-block center">
             <img src="{{image_1_url}}" alt="Illustration for {{customTitle1}}">
         </div>
         {{else}}
-        <div class="img-placeholder">
-            <div class="img-placeholder-icon">🏢</div>
-            <div class="img-placeholder-text">Section Image</div>
-        </div>
+        <div style="display:none;"></div>
         {{/if}}
 
         <div class="section-content">{{section_executive_summary_full_html}}</div>
@@ -1235,16 +1240,13 @@
             <div><div class="section-headline">{{customTitle3}}</div></div>
         </div>
 
-        <!-- Image kept small so content fills the page -->
+        <!-- Image — Left aligned layout -->
         {{#if image_2_url}}
-        <div class="img-block" style="margin-top:0;">
-            <img src="{{image_2_url}}" alt="Illustration for {{customTitle3}}" style="height:120px;">
+        <div class="img-block left" style="margin-top:0;">
+            <img src="{{image_2_url}}" alt="Illustration for {{customTitle3}}" style="height:180px;">
         </div>
         {{else}}
-        <div class="img-placeholder" style="height:100px; margin-top:0;">
-            <div class="img-placeholder-icon">⚙️</div>
-            <div class="img-placeholder-text">Section Image</div>
-        </div>
+        <div style="display:none;"></div>
         {{/if}}
 
         <div class="section-content">{{section_core_principles_full_html}}</div>
@@ -1319,15 +1321,13 @@
             <div><div class="section-headline">{{customTitle5}}</div></div>
         </div>
 
+        <!-- Image — Right aligned layout -->
         {{#if image_3_url}}
-        <div class="img-block" style="margin-top:0;">
-            <img src="{{image_3_url}}" alt="Illustration for {{customTitle5}}" style="height:110px;">
+        <div class="img-block right" style="margin-top:0;">
+            <img src="{{image_3_url}}" alt="Illustration for {{customTitle5}}" style="height:180px;">
         </div>
         {{else}}
-        <div class="img-placeholder" style="height:100px; margin-top:0;">
-            <div class="img-placeholder-icon">📈</div>
-            <div class="img-placeholder-text">Section Image</div>
-        </div>
+        <div style="display:none;"></div>
         {{/if}}
 
         <div class="section-content">{{section_business_benefits_full_html}}</div>
@@ -1402,9 +1402,10 @@
             <div><div class="section-headline">{{customTitle7}}</div></div>
         </div>
 
+        <!-- Image — Centred layout -->
         {{#if image_4_url}}
-        <div class="img-block" style="margin-top:0;">
-            <img src="{{image_4_url}}" alt="Illustration for {{customTitle7}}" style="height:110px;">
+        <div class="img-block center" style="margin-top:0;">
+            <img src="{{image_4_url}}" alt="Illustration for {{customTitle7}}" style="height:180px;">
         </div>
         {{else}}
         <div style="display:none;"></div>
@@ -1482,9 +1483,10 @@
             <div><div class="section-headline">{{customTitle9}}</div></div>
         </div>
 
+        <!-- Image — Left aligned layout -->
         {{#if image_5_url}}
-        <div class="img-block" style="margin-top:0;">
-            <img src="{{image_5_url}}" alt="Illustration for {{customTitle9}}" style="height:110px;">
+        <div class="img-block left" style="margin-top:0;">
+            <img src="{{image_5_url}}" alt="Illustration for {{customTitle9}}" style="height:180px;">
         </div>
         {{else}}
         <div style="display:none;"></div>
