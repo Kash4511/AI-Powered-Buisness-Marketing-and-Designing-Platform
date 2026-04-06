@@ -887,9 +887,11 @@ class GroqClient:
             image_slot = SECTION_IMAGE_MAP.get(key)
             has_image = bool(firm_profile.get(image_slot)) if image_slot else False
             
-            # Adjust target word count to fill the page perfectly based on image presence
-            # A4 page with 14.5px font: ~450 words without image, ~250 words with image.
-            target_words = "240-280" if has_image else "420-460"
+            # To fill more than half of the new page (spilling), we target ~1000-1200 words.
+            # A4 page with 14.5px font: ~450 words per page.
+            # 1.5 pages = ~675 words. 2 pages = ~900 words.
+            # We'll target 900-1100 words to ensure it spills and fills a good portion of the 2nd page.
+            target_words = "700-800" if has_image else "900-1100"
             if has_image:
                 logger.info(f"  🖼️ Section {key} has an image. Adjusting target to {target_words} words.")
 

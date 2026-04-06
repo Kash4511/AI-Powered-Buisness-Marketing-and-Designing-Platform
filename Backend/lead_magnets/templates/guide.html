@@ -37,7 +37,7 @@
 
         .page {
             width: 210mm;
-            height: 297mm; /* Fixed height for consistent flexbox footer placement */
+            min-height: 297mm; /* Allowed to spill */
             background: var(--white);
             position: relative;
             page-break-after: always;
@@ -46,6 +46,19 @@
             display: flex;
             flex-direction: column;
             overflow: visible;
+        }
+
+        /* ── PAGE NUMBERING (using WeasyPrint CSS) ── */
+        @page {
+            margin: 0;
+            @bottom-right {
+                content: "PAGE " counter(page);
+                font-family: 'DM Sans', sans-serif;
+                font-size: 10px;
+                color: var(--text-light);
+                padding-right: 20mm;
+                padding-bottom: 15mm;
+            }
         }
 
         /* ════════════════════════════════════════════════════
@@ -563,7 +576,7 @@
         }
         .col-card p { font-size: 13px; margin: 0; line-height: 1.5; }
 
-        /* Image block with alignment options and wrapping */
+        /* ── IMAGE BLOCKS ── */
         .img-block {
             border-radius: 12px;
             overflow: hidden;
@@ -574,8 +587,9 @@
             border: 1px solid rgba(0,0,0,0.06);
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             position: relative;
+            z-index: 5;
         }
-        
+
         /* Decorative accent corner for images */
         .img-block::before {
             content: "";
@@ -593,32 +607,51 @@
             background: var(--secondary);
             z-index: 2;
         }
-        
-        .img-block.center { 
-            text-align: center;
-            margin: 28px auto;
-            max-width: 90%;
+
+        /* Vertical Rectangles (Tall/Narrow) for Left/Right wrapping */
+        .img-block.vertical {
+            width: 35%; /* Narrow for vertical rectangle */
+            height: auto;
         }
-        
+        .img-block.vertical img {
+            width: 100%;
+            height: 420px; /* Tall */
+            object-fit: cover;
+        }
+
+        /* Horizontal Rectangles (Wide/Short) for Center placement */
+        .img-block.horizontal {
+            width: 100%; /* Wide */
+            height: auto;
+            max-width: 95%;
+            margin: 28px auto;
+        }
+        .img-block.horizontal img {
+            width: 100%;
+            height: 240px; /* Short/Wide */
+            object-fit: cover;
+        }
+
         .img-block.left { 
             float: left;
             margin: 6px 24px 18px 0;
-            width: 48%;
         }
         
         .img-block.right { 
             float: right;
             margin: 6px 0 18px 24px;
-            width: 48%;
+        }
+
+        .img-block.center { 
+            text-align: center;
+            margin: 32px auto;
+            clear: both;
         }
 
         .img-block img {
-            max-width: 100%;
-            height: 240px; /* Increased height */
-            object-fit: cover;
-            border-radius: 0; /* Remove individual border-radius since parent has it */
             display: block;
             width: 100%;
+            border-radius: 0;
         }
         
         /* Clear floats after each section content to prevent spill */
@@ -1219,9 +1252,9 @@
             <div><div class="section-headline">{{customTitle1}}</div></div>
         </div>
 
-        <!-- Image — Centred layout -->
+        <!-- Image 1: Vertical Left (Tall rectangle with text wrapping) -->
         {{#if image_1_url}}
-        <div class="img-block center">
+        <div class="img-block vertical left">
             <img src="{{image_1_url}}" alt="Illustration for {{customTitle1}}">
         </div>
         {{else}}
@@ -1301,10 +1334,10 @@
             <div><div class="section-headline">{{customTitle3}}</div></div>
         </div>
 
-        <!-- Image — Centred layout -->
+        <!-- Image 2: Vertical Right (Tall rectangle with text wrapping) -->
         {{#if image_2_url}}
-        <div class="img-block center" style="margin-top:0;">
-            <img src="{{image_2_url}}" alt="Illustration for {{customTitle3}}" style="height:180px;">
+        <div class="img-block vertical right">
+            <img src="{{image_2_url}}" alt="Illustration for {{customTitle3}}">
         </div>
         {{else}}
         <div style="display:none;"></div>
@@ -1382,10 +1415,10 @@
             <div><div class="section-headline">{{customTitle5}}</div></div>
         </div>
 
-        <!-- Image — Centred layout -->
+        <!-- Image 3: Horizontal Center (Wide rectangle) -->
         {{#if image_3_url}}
-        <div class="img-block center" style="margin-top:0;">
-            <img src="{{image_3_url}}" alt="Illustration for {{customTitle5}}" style="height:180px;">
+        <div class="img-block horizontal center">
+            <img src="{{image_3_url}}" alt="Illustration for {{customTitle5}}">
         </div>
         {{else}}
         <div style="display:none;"></div>
@@ -1463,10 +1496,10 @@
             <div><div class="section-headline">{{customTitle7}}</div></div>
         </div>
 
-        <!-- Image — Centred layout -->
+        <!-- Image 4: Horizontal Center -->
         {{#if image_4_url}}
-        <div class="img-block center" style="margin-top:0;">
-            <img src="{{image_4_url}}" alt="Illustration for {{customTitle7}}" style="height:180px;">
+        <div class="img-block horizontal center">
+            <img src="{{image_4_url}}" alt="Illustration for {{customTitle7}}">
         </div>
         {{else}}
         <div style="display:none;"></div>
@@ -1544,10 +1577,10 @@
             <div><div class="section-headline">{{customTitle9}}</div></div>
         </div>
 
-        <!-- Image — Centred layout -->
+        <!-- Image 5: Horizontal Center -->
         {{#if image_5_url}}
-        <div class="img-block center" style="margin-top:0;">
-            <img src="{{image_5_url}}" alt="Illustration for {{customTitle9}}" style="height:180px;">
+        <div class="img-block horizontal center">
+            <img src="{{image_5_url}}" alt="Illustration for {{customTitle9}}">
         </div>
         {{else}}
         <div style="display:none;"></div>
