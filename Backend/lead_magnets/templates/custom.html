@@ -36,13 +36,15 @@
 
         .page {
             width: 210mm;
-            height: 297mm;
+            min-height: 297mm;
             background: var(--white);
             position: relative;
-            overflow: hidden;
+            /* overflow: hidden removed to allow content to flow naturally if it exceeds one page */
             page-break-after: always;
             margin-bottom: 10px;
             box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+            display: flex;
+            flex-direction: column;
         }
 
         /* ════════════════════════════════════════════════════
@@ -338,20 +340,21 @@
         /* Page body */
         .page-body {
             padding: 12px 14mm 0; /* Reduced from 16px */
-            height: calc(297mm - 59px - 3px - 48px);
-            overflow: hidden;
+            flex: 1;
+            min-height: 0;
+            overflow: visible;
         }
 
         /* Footer */
         .page-footer {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
+            position: relative;
             height: 48px;
             background: var(--primary);
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 14mm;
+            margin-top: auto;
             overflow: hidden;
         }
         .page-footer::before {

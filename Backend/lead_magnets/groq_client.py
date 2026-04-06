@@ -888,8 +888,8 @@ class GroqClient:
             has_image = bool(firm_profile.get(image_slot)) if image_slot else False
             
             # Adjust target word count to fill the page perfectly based on image presence
-            # A4 page with 15.5px font: ~550 words without image, ~350 words with image.
-            target_words = "350-400" if has_image else "550-600"
+            # A4 page with 15.5px font: ~450 words without image, ~250 words with image.
+            target_words = "250-300" if has_image else "450-500"
             if has_image:
                 logger.info(f"  🖼️ Section {key} has an image. Adjusting target to {target_words} words.")
 
