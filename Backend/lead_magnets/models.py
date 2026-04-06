@@ -103,6 +103,7 @@ class PDFGenerationJob(models.Model):
     message = models.CharField(max_length=255, blank=True)
     pdf_url = models.URLField(blank=True, null=True)
     error = models.TextField(blank=True, null=True)
+    tokens_used = models.IntegerField(default=0)
     stop_requested = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

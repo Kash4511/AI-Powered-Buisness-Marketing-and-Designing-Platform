@@ -587,6 +587,15 @@ Output: raw HTML only.""",
 # GROQ CLIENT
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Mapping of section keys to their corresponding image variable in templates (e.g., guide.html)
+SECTION_IMAGE_MAP = {
+    "executive_summary": "image_1_url",
+    "core_principles": "image_2_url",
+    "business_benefits": "image_3_url",
+    "risk_management": "image_4_url",
+    "future_trends": "image_5_url",
+}
+
 class GroqClient:
     GUIDE_SECTIONS   = GUIDE_SECTIONS
     DOC_TYPE_LABELS  = DOC_TYPE_LABELS
@@ -631,10 +640,11 @@ class GroqClient:
         self.temperature = 0.72
         self.max_tokens  = AI_CONFIGS["groq"]["max_tokens"]
 
-    def _call_ai_with_fallback(self, system_msg: str, user_msg: str, temperature: float = 0.72) -> str:
+    def _call_ai_with_fallback(self, system_msg: str, user_msg: str, temperature: float = 0.72) -> Tuple[str, int]:
         """
         Executes AI call with automatic fallback logic across 4 providers.
         Attempts Groq -> Anthropic -> OpenAI -> Google.
+        Returns (content, tokens_used).
         """
         providers = [
             ("groq",      self.groq_client),
@@ -661,9 +671,10 @@ class GroqClient:
                         max_tokens=config["max_tokens"],
                     )
                     content = resp.choices[0].message.content.strip()
+                    tokens = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
                     if content:
-                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
-                        return content
+                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars, {tokens} tokens)")
+                        return content, tokens
                     else:
                         logger.warning(f"  ⚠️ {name} returned empty content")
 
@@ -676,9 +687,10 @@ class GroqClient:
                         max_tokens=config["max_tokens"],
                     )
                     content = resp.content[0].text.strip()
+                    tokens = getattr(resp.usage, "input_tokens", 0) + getattr(resp.usage, "output_tokens", 0) if hasattr(resp, "usage") else 0
                     if content:
-                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
-                        return content
+                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars, {tokens} tokens)")
+                        return content, tokens
                     else:
                         logger.warning(f"  ⚠️ {name} returned empty content")
 
@@ -690,9 +702,10 @@ class GroqClient:
                         max_tokens=config["max_tokens"],
                     )
                     content = resp.choices[0].message.content.strip()
+                    tokens = getattr(resp.usage, "total_tokens", 0) if hasattr(resp, "usage") else 0
                     if content:
-                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
-                        return content
+                        logger.info(f"  ✅ {name} succeeded ({len(content)} chars, {tokens} tokens)")
+                        return content, tokens
                     else:
                         logger.warning(f"  ⚠️ {name} returned empty content")
 
@@ -706,9 +719,11 @@ class GroqClient:
                         )
                     )
                     content = resp.text.strip()
+                    # Gemini doesn't always provide simple usage in the same way, estimation or skipping for now
+                    tokens = 0 # Placeholder for Google usage
                     if content:
                         logger.info(f"  ✅ {name} succeeded ({len(content)} chars)")
-                        return content
+                        return content, tokens
                     else:
                         logger.warning(f"  ⚠️ {name} returned empty content")
 
@@ -777,7 +792,7 @@ class GroqClient:
         }
 
     def generate_lead_magnet_json(
-        self, signals: Dict[str, Any], firm_profile: Dict[str, Any]
+        self, signals: Dict[str, Any], firm_profile: Dict[str, Any], on_token_update: Optional[callable] = None
     ) -> Dict[str, Any]:
         if not self.client:
             raise RuntimeError(
@@ -799,6 +814,8 @@ class GroqClient:
 
         logger.info(f"🚀 Type-Strict Generation | type={doc_type} | topic={topic[:40]}")
 
+        total_tokens = 0
+
         # ── Pass 1a: Title ─────────────────────────────────────────────────
         title    = ""
         subtitle = ""
@@ -816,7 +833,10 @@ class GroqClient:
                 f"Desired Outcome: {desired_outcome}\n"
                 f"RULES: Zero marketing fluff. No placeholders. Must feature '{topic}' prominently."
             )
-            raw_title_resp = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.7)
+            raw_title_resp, title_tokens = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.7)
+            total_tokens += title_tokens
+            if on_token_update:
+                on_token_update(total_tokens)
 
             for line in raw_title_resp.split("\n"):
                 if line.upper().startswith("TITLE:"):
@@ -828,16 +848,16 @@ class GroqClient:
 
         # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            f"You are an expert content strategist and premium copywriter writing one section of a {type_label.upper()} on '{topic}' for {audience}.\n\n"
-            "CRITICAL RULES — YOUR CONTENT WILL BE REJECTED IF YOU VIOLATE THESE:\n"
-            f"1. NO PLACEHOLDERS: Never use 'hhhh', 'test', or any filler. If inputs are missing or garbage, infer deeply relevant professional content based on '{topic}'.\n"
-            f"2. DEEP SPECIFICITY: Every sentence must be specific to '{topic}' and the needs of {audience}. Zero generic business advice. If you could swap '{topic}' for another topic and the sentence still works, it's too generic.\n"
-            f"3. UNIQUE CONTENT: Every section must have 100% unique insights. Never repeat stats, phrases, or ideas from other sections.\n"
+            f"You are a premium content strategist writing one section of a {type_label.upper()} on '{topic}' for {audience}.\n\n"
+            "CRITICAL QUALITY RULES:\n"
+            f"1. NO PLACEHOLDERS: Never use 'hhhh', 'test', or any filler. Infer deeply relevant content based on '{topic}'.\n"
+            f"2. DEEP SPECIFICITY: Every sentence must be specific to '{topic}' and {audience}. Zero generic business advice.\n"
+            f"3. VALUE DENSITY: Use fewer tokens by eliminating fluff. Every word must add value. Avoid repetitive transitions.\n"
             f"4. AUDIENCE-CENTRIC: Address {audience} segments by name. Show how {topic} impacts them differently.\n"
-            f"5. PAIN POINT INTEGRATION: Meaningfully weave these pain points into the narrative: {pain_points}. Don't just list them; explain their systemic impact.\n"
-            "6. CREDIBLE DATA: Use realistic statistics and cite credible fictionalized or real sources (e.g., EPA, NIST, McKinsey). Every result must have a specific number and unit (e.g., '34.2% reduction').\n"
-            "7. RAW HTML ONLY: No markdown, no preamble, no sign-off. Use <h3>, <p>, <strong>, <ul>/<li>, and <blockquote> for visual hierarchy.\n"
-            "8. COMPLETION: Sections must end with a full, impactful thought. NEVER truncate. Every section MUST fill at least 500 words of deep narrative content.\n"
+            f"5. PAIN POINT INTEGRATION: Weave these pain points into the narrative: {pain_points}.\n"
+            "6. CREDIBLE DATA: Use realistic statistics with specific numbers and units (e.g., '34.2% reduction').\n"
+            "7. RAW HTML ONLY: Use <h3>, <p>, <strong>, <ul>/<li>, and <blockquote>. No markdown.\n"
+            "8. COMPLETION: Sections must end with a full, impactful thought. NEVER truncate.\n"
             "9. NO IMAGES: Do not include any <img> tags."
         )
 
@@ -847,6 +867,16 @@ class GroqClient:
             if idx > 0:
                 logger.debug(f"  ⏳ Rate-limit pause ({GROQ_CALL_DELAY_SECONDS}s)…")
                 time.sleep(GROQ_CALL_DELAY_SECONDS)
+
+            # Check if this section has an image slot and if an image URL is provided
+            image_slot = SECTION_IMAGE_MAP.get(key)
+            has_image = bool(firm_profile.get(image_slot)) if image_slot else False
+            
+            # Adjust target word count to fill the page perfectly based on image presence
+            # A4 page with 15.5px font: ~550 words without image, ~350 words with image.
+            target_words = "350-400" if has_image else "550-600"
+            if has_image:
+                logger.info(f"  🖼️ Section {key} has an image. Adjusting target to {target_words} words.")
 
             # Try type-specific prompt first, then fallback to general
             prompt_template = SECTION_PROMPTS.get(f"{doc_type}_{key}") or SECTION_PROMPTS.get(key, "")
@@ -877,18 +907,22 @@ class GroqClient:
                 f"WRITE SECTION: {default_title}\n\n"
                 f"{section_prompt}\n\n"
                 f"CRITICAL: This is for a {type_label.upper()}. Ensure content matches this format perfectly. "
-                "TARGET 500-550 words per section to ensure the page is fully filled. Raw HTML only. No <img> tags."
+                f"TARGET {target_words} words for this section to ensure the page is perfectly filled. Raw HTML only. No <img> tags."
             )
 
             try:
-                raw = self._call_ai_with_fallback(system_msg, user_msg, temperature=self.temperature)
+                raw, tokens = self._call_ai_with_fallback(system_msg, user_msg, temperature=self.temperature)
+                total_tokens += tokens
+                if on_token_update:
+                    on_token_update(total_tokens)
                 raw = re.sub(r'^```html?\s*', '', raw, flags=re.IGNORECASE)
                 raw = re.sub(r'\s*```\s*$', '', raw)
                 raw = _sanitize_html(raw)
 
                 if len(_html_to_text(raw)) < 50:
                     logger.warning(f"  ⚠️ Section {key} too short, retrying...")
-                    raw = self._call_ai_with_fallback(system_msg, user_msg, temperature=min(self.temperature + 0.1, 0.9))
+                    raw, tokens = self._call_ai_with_fallback(system_msg, user_msg, temperature=min(self.temperature + 0.1, 0.9))
+                    total_tokens += tokens
                     raw = _sanitize_html(raw)
 
                 sections_content[key] = raw
@@ -903,13 +937,14 @@ class GroqClient:
 
         section_keys = [s[0] for s in sections]
         filled = sum(1 for k in section_keys if len(sections_content.get(k, "")) > 100)
-        logger.info(f"✅ Complete | {filled}/{len(section_keys)} sections filled")
+        logger.info(f"✅ Complete | {filled}/{len(section_keys)} sections filled | Total tokens: {total_tokens}")
 
         return {
             "title":               title,
             "subtitle":            subtitle,
             "document_type":       doc_type,
             "document_type_label": type_label,
+            "tokens_used":         total_tokens,
             "sections": {
                 key: {"content": sections_content.get(key, ""), "title": dtitle, "label": dlabel}
                 for key, dtitle, dlabel, *_ in sections

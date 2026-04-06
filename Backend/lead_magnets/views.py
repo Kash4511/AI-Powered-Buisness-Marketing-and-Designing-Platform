@@ -158,14 +158,14 @@ class DashboardStatsView(APIView):
         user = request.user
         ulm  = LeadMagnet.objects.filter(owner=user)
         
-        # Calculate AI Credit stats (Simplified for now: 1M total, subtract usage)
-        # In a real system, you'd track token usage in the PDFGenerationJob model
+        # Calculate real AI Credit stats from PDFGenerationJob
         total_credits = 1000000
-        used_credits = 0
-        
-        # Estimate: 50,000 tokens per full lead magnet generation
-        completed_jobs = PDFGenerationJob.objects.filter(lead_magnet__owner=user, status="complete").count()
-        used_credits = completed_jobs * 50000
+        from django.db.models import Sum
+        # Count tokens from ALL jobs associated with the user, regardless of status
+        # This ensures failed jobs are also deducted from the balance
+        used_credits = PDFGenerationJob.objects.filter(
+            lead_magnet__owner=user
+        ).aggregate(Sum('tokens_used'))['tokens_used__sum'] or 0
         
         remaining_credits = max(0, total_credits - used_credits)
 
@@ -333,17 +333,27 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 t0 = time.time()
 
                 signals        = ai_client.get_semantic_signals(ai_input)
+                
+                # Callback to update tokens in real-time
+                def _on_tokens(t):
+                    _set_job(job_id, tokens_used=t)
+
                 try:
-                    raw_ai         = ai_client.generate_lead_magnet_json(signals, firm_profile)
+                    raw_ai         = ai_client.generate_lead_magnet_json(signals, firm_profile, on_token_update=_on_tokens)
                 except Exception as e:
                     logger.error(f"AI Generation Failed: {e}")
                     _set_job(job_id, status="failed", error=str(e)); return
 
                 if _should_stop(job_id):
                     logger.info(f"🛑 Job {job_id} terminated during AI generation"); return
+                
                 ai_content     = ai_client.normalize_ai_output(raw_ai)
+                tokens_used    = raw_ai.get("tokens_used", 0)
+                
+                # Final token update for the job
+                _set_job(job_id, tokens_used=tokens_used)
 
-                logger.info(f"✅ AI done | {time.time()-t0:.1f}s")
+                logger.info(f"✅ AI done | {time.time()-t0:.1f}s | Tokens: {tokens_used}")
 
                 empty = [k for k, *_ in ai_client.SECTIONS if not ai_content.get(k)]
                 if len(empty) == len(ai_client.SECTIONS):
