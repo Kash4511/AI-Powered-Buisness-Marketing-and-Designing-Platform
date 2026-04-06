@@ -285,162 +285,171 @@ def render_template(template: str, vars: Dict[str, Any]) -> str:
 SECTION_PROMPTS = {
 
 "executive_summary": """\
-Write the EXECUTIVE SUMMARY section for a premium guide on **{topic}** for **{audience}**.
+Write the EXECUTIVE SUMMARY for a premium guide on **{topic}** for **{audience}**.
 
 MANDATORY STRUCTURE (follow exactly):
 
-<p>[HOOK — open with a single provocative fact or market reality specific to {topic}. Not "In this guide". Not "Welcome". A fact that makes {audience} stop and pay attention. 80-100 words.]</p>
+<p>[HOOK — Open with a provocative market reality or high-stakes fact specific to {topic}. Make {audience} feel the urgency. 80-100 words.]</p>
 
-<p>[THE PROBLEM — why {topic} is harder than most {audience} realise right now. Name the specific friction, cost, or consequence they are likely experiencing. Reference a real market condition or constraint. 120-150 words.]</p>
+<p>[THE SYSTEMIC PROBLEM — Explain why {topic} is failing most {audience} today. Name the specific friction or cost they are ignoring. 120-150 words.]</p>
 
-<p>[THE OPPORTUNITY — what mastering {topic} actually unlocks. Be specific: cost saved, revenue gained, risk avoided, competitive position improved. Name a concrete outcome. 120-150 words.]</p>
+<p>[THE STRATEGIC OPPORTUNITY — What mastering {topic} actually unlocks. Be specific about revenue, risk, or competitive standing. 120-150 words.]</p>
 
-<blockquote><strong>What this guide delivers:</strong> [3-4 specific things the reader will be able to DO after reading — not "understand" or "learn about" — actual actions they can take on {topic}. 100-120 words.]</blockquote>
+<blockquote><strong>Strategic Objectives:</strong> [3-4 high-impact actions the reader will be equipped to take after reading this guide. 100-120 words.]</blockquote>
 
-<p>[CLOSING — one sentence that makes the reader want to turn the page. Reference the first section they are about to read. 40-60 words.]</p>
+<p>[CLOSING — A powerful transition sentence leading into the Industry Analysis. 40-60 words.]</p>
 
-BANNED: "In this guide...", "It is important to note...", "our firm", "we believe", any sentence that could apply to a different topic.
+BANNED: "In this guide", "Welcome", placeholders, generic advice.
 Output: raw HTML only.""",
 
 "industry_analysis": """\
-Write the INDUSTRY PROBLEM ANALYSIS section for a premium guide on **{topic}** for **{audience}**.
+Write the INDUSTRY PROBLEM ANALYSIS for a premium guide on **{topic}** for **{audience}**.
 
-This section must make the reader feel SEEN — like you understand their exact frustrations with {topic}.
-Pain points to address: {pain_points}
+This section must demonstrate deep empathy and expertise. The reader should feel you understand their exact frustrations.
+Target Audience: {audience}
+Pain Points to weave in: {pain_points}
 
 MANDATORY STRUCTURE:
 
-<p>[A deep-dive opener that names the core systemic tension in {topic}. Why is this happening now? What are the underlying forces? 100-120 words.]</p>
+<p>[THE CORE TENSION — A sophisticated opening that names the systemic friction in {topic}. Why is this a 'wicked problem' for {audience}? 100-120 words.]</p>
 
-<h3>[Problem 1 — Financial/Cost: a specific cost problem in {topic}]</h3>
-<p>[What triggers this problem, how it compounds, what it actually costs. 120-140 words. Include a realistic figure with context.]</p>
-<p><strong>Why this matters:</strong> [The long-term consequence for {audience} if this goes unaddressed. 60-80 words.]</p>
+<h3>[Problem 1 — Economic Impact: A specific, quantifiable financial burden in {topic}]</h3>
+<p>[The mechanism of this problem, how it compounds, and the hidden costs. Include realistic figures. 120-140 words.]</p>
+<p><strong>Strategic Consequence:</strong> [The long-term erosion of value for {audience} if ignored. 60-80 words.]</p>
 
-<h3>[Problem 2 — Execution/Technical: a specific doing problem in {topic}]</h3>
-<p>[The specific operational or technical failure mode. What people try and why it fails. Use industry-specific terminology. 120-140 words.]</p>
-<p><strong>Why this matters:</strong> [Downstream consequence. 60-80 words.]</p>
+<h3>[Problem 2 — Operational Bottlenecks: A specific execution failure in {topic}]</h3>
+<p>[Technical or operational complexity that stalls progress. Why traditional solutions fail. 120-140 words.]</p>
+<p><strong>Strategic Consequence:</strong> [Impact on timelines and stakeholder trust. 60-80 words.]</p>
 
-<h3>[Problem 3 — Compliance/Standards: a specific rules or requirements problem in {topic}]</h3>
-<p>[What the regulation/standard requires, where people fall short, what it costs to get wrong. 120-140 words.]</p>
-<p><strong>Why this matters:</strong> [Consequence. 60-80 words.]</p>
+<h3>[Problem 3 — Regulatory/Compliance Friction: Specific to {topic}]</h3>
+<p>[The shifting landscape of rules and standards. The cost of non-compliance. 120-140 words.]</p>
+<p><strong>Strategic Consequence:</strong> [Legal and reputational risk. 60-80 words.]</p>
 
-<h3>[Problem 4 — People/Stakeholder: a specific communication or alignment problem in {topic}]</h3>
-<p>[The human side of the problem — misaligned expectations, knowledge gaps, trust failures. 120-140 words.]</p>
-<p><strong>Why this matters:</strong> [Consequence. 60-80 words.]</p>
+<h3>[Problem 4 — Stakeholder Alignment: The human element of {topic}]</h3>
+<p>[Communication gaps, misaligned incentives, or resistance to change. 120-140 words.]</p>
+<p><strong>Strategic Consequence:</strong> [Impact on organizational agility. 60-80 words.]</p>
 
-<blockquote><strong>The pattern:</strong> [A 4-5 sentence observation about what connects all 4 problems — the underlying root cause in {topic} that, if fixed, fixes most of the rest. 100-120 words.]</blockquote>
+<blockquote><strong>The Root Cause:</strong> [A high-level synthesis of what connects these 4 problems. What is the single shift required to fix the system? 100-120 words.]</blockquote>
 
-BANNED: Generic problems that could apply to any industry. Every problem must be specific to {topic}.
+BANNED: Generic problems, placeholders, "one-size-fits-all" advice.
 Output: raw HTML only.""",
 
 "core_principles": """\
-Write the KEY PRINCIPLES section for a premium guide on **{topic}** for **{audience}**.
+Write the KEY PRINCIPLES for a premium guide on **{topic}** for **{audience}**.
 
-These are not tips. These are the non-negotiable foundations that separate people who get results in {topic} from those who don't.
+These are the foundational axioms of success. Do not write tips; write governing laws of {topic}.
 
 MANDATORY STRUCTURE:
 
-<p>[Opener: why these principles exist — what happens to {audience} who skip them. 100-120 words. Specific to {topic}.]</p>
+<p>[THE PHILOSOPHY — Why these principles are non-negotiable for {audience}. What separates the 1% who master {topic} from the 99% who struggle? 100-120 words.]</p>
 
-<h3>Principle 1: [Name — make it memorable, specific to {topic}]</h3>
-<p>[What this principle means in practice for {topic}. The insight behind it. What it looks like when followed vs ignored. Include a real-world implication. 140-160 words.]</p>
+<h3>Principle 1: [A sophisticated, unique name for a foundational rule of {topic}]</h3>
+<p>[The logic of this principle. Why it works, what it prevents, and how it challenges conventional wisdom in {topic}. 150-180 words.]</p>
+<p><strong>The Implementation:</strong> [What this looks like in practice for {audience}. 60-80 words.]</p>
 
 <h3>Principle 2: [Different dimension of {topic}]</h3>
-<p>[Same format. Different domain. 140-160 words.]</p>
+<p>[Same high-depth format. 150-180 words.]</p>
+<p><strong>The Implementation:</strong> [Same format. 60-80 words.]</p>
 
 <h3>Principle 3: [Different dimension]</h3>
-<p>[140-160 words.]</p>
+<p>[150-180 words.]</p>
+<p><strong>The Implementation:</strong> [60-80 words.]</p>
 
 <h3>Principle 4: [Different dimension]</h3>
-<p>[140-160 words.]</p>
+<p>[150-180 words.]</p>
+<p><strong>The Implementation:</strong> [60-80 words.]</p>
 
-<blockquote><strong>The master principle:</strong> [A sophisticated paragraph that ties all 4 together — the single idea that defines excellence in {topic}. 80-100 words.]</blockquote>
+<blockquote><strong>The Master Principle:</strong> [The single unifying idea that connects all 4 principles. The ultimate takeaway for {audience} regarding {topic}. 100-120 words.]</blockquote>
 
-BANNED: Principles that are obvious or generic. Each must teach something that a professional in {topic} might not already know.
+BANNED: Obvious advice, placeholders, generic lists.
 Output: raw HTML only.""",
 
 "practical_strategies": """\
-Write the PRACTICAL STRATEGIES section for a premium guide on **{topic}** for **{audience}**.
+Write the PRACTICAL STRATEGIES for a premium guide on **{topic}** for **{audience}**.
 
-These strategies must be immediately actionable. Not theory. Not "consider doing X". Specific steps.
-Pain points: {pain_points}
+These are the 'how-to' playbooks. They must be technical, actionable, and sophisticated.
+Target Audience: {audience}
+Pain Points to solve: {pain_points}
 
 MANDATORY STRUCTURE:
 
-<p>[A detailed opener explaining why most strategic execution in {topic} fails at the first hurdle. What is the fundamental mismatch between theory and practice? 100-120 words.]</p>
+<p>[THE EXECUTION GAP — Why most {audience} fail to move from strategy to results in {topic}. What is the 'last mile' problem? 100-120 words.]</p>
 
-<h3>Strategy 1: [Action-verb title — what to DO, specific to {topic}]</h3>
-<p>[A deep dive into the execution of this strategy. Name the specific steps, tools, or methods required. What does the day-to-day implementation look like for {audience}? 140-160 words.]</p>
+<h3>Strategy 1: [A high-impact, action-oriented title specific to {topic}]</h3>
+<p>[A detailed, step-by-step breakdown of the execution. Name the tools, frameworks, and specific decisions required for success in {topic}. 180-220 words.]</p>
 <ul>
-  <li><strong>Do this first:</strong> [The single most important first action with context. 40-50 words.]</li>
-  <li><strong>Watch out for:</strong> [The specific technical or political mistake that kills this strategy in {topic}. 40-50 words.]</li>
-  <li><strong>You know it's working when:</strong> [A clear, measurable signal of success in {topic}. 40-50 words.]</li>
+  <li><strong>The Critical Path:</strong> [The absolute first move. 50-60 words.]</li>
+  <li><strong>The Pitfall:</strong> [The most common execution mistake. 50-60 words.]</li>
+  <li><strong>The Success Metric:</strong> [How {audience} will know this is working. 50-60 words.]</li>
 </ul>
 
 <h3>Strategy 2: [Different phase or dimension of {topic}]</h3>
-<p>[Same detailed format as Strategy 1. 140-160 words.]</p>
+<p>[Same high-depth format. 180-220 words.]</p>
 <ul>
-  <li><strong>Do this first:</strong> [First action. 40-50 words.]</li>
-  <li><strong>Watch out for:</strong> [Specific mistake. 40-50 words.]</li>
-  <li><strong>You know it's working when:</strong> [Success signal. 40-50 words.]</li>
+  <li><strong>The Critical Path:</strong> [50-60 words.]</li>
+  <li><strong>The Pitfall:</strong> [50-60 words.]</li>
+  <li><strong>The Success Metric:</strong> [50-60 words.]</li>
 </ul>
 
 <h3>Strategy 3: [Different phase or dimension]</h3>
-<p>[140-160 words.]</p>
+<p>[Same high-depth format. 180-220 words.]</p>
 <ul>
-  <li><strong>Do this first:</strong> [First action. 40-50 words.]</li>
-  <li><strong>Watch out for:</strong> [Specific mistake. 40-50 words.]</li>
-  <li><strong>You know it's working when:</strong> [Success signal. 40-50 words.]</li>
+  <li><strong>The Critical Path:</strong> [50-60 words.]</li>
+  <li><strong>The Pitfall:</strong> [50-60 words.]</li>
+  <li><strong>The Success Metric:</strong> [50-60 words.]</li>
 </ul>
 
-<blockquote><strong>The execution sequence:</strong> [A 4-5 sentence summary of how these 3 strategies create a virtuous cycle in {topic} — the logic of their order. 100-120 words.]</blockquote>
+<blockquote><strong>The Virtuous Cycle:</strong> [How these 3 strategies reinforce each other. What is the flywheel effect? 100-120 words.]</blockquote>
 
-BANNED: Vague advice. "Consider...", "You might want to...", "It is recommended that...". Every strategy must tell the reader exactly what to do.
+BANNED: Generic advice, "consider doing X", placeholders.
 Output: raw HTML only.""",
 
 "business_benefits": """\
-Write the BUSINESS BENEFITS section for a premium guide on **{topic}** for **{audience}**.
+Write the BUSINESS BENEFITS for a premium guide on **{topic}** for **{audience}**.
 
-This section must make the business case so clearly that a {audience} could use it to justify investment in {topic} to a decision-maker.
+This is the business case. Every benefit must be tied to a specific financial or strategic outcome.
 
 MANDATORY STRUCTURE:
 
-<p>[A powerful opener challenging the biggest misconceptions about the ROI of {topic}. Why is it an investment, not a cost? 100-120 words.]</p>
+<p>[THE VALUE PROPOSITION — A powerful opening challenging the misconception that {topic} is a cost. Why is it a high-yield investment for {audience}? 100-120 words.]</p>
 
-<h3>[Benefit 1: Financial — specific return, saving, or revenue impact from {topic}]</h3>
-<p>[Explain exactly how {topic} generates this financial outcome. Be specific about the technical or market mechanism. Include realistic ROI projections with context. 160-180 words.]</p>
+<h3>[Benefit 1: Direct Financial Return — Specific to {topic}]</h3>
+<p>[Explain the exact mechanism of cost saving or revenue generation. Be specific about the ROI. Include a realistic figure and unit. 180-220 words.]</p>
+<p><strong>The Bottom Line:</strong> [The impact on the P&L. 60-80 words.]</p>
 
-<h3>[Benefit 2: Operational — specific efficiency, time, or performance improvement from {topic}]</h3>
-<p>[Different metric from Benefit 1. Explain the mechanism in detail. 160-180 words.]</p>
+<h3>[Benefit 2: Operational Efficiency — Specific to {topic}]</h3>
+<p>[How {topic} streamlines workflows, reduces risk, or improves performance. 180-220 words.]</p>
+<p><strong>The Bottom Line:</strong> [The impact on organizational capacity. 60-80 words.]</p>
 
-<h3>[Benefit 3: Strategic — competitive, reputational, or compliance advantage from {topic}]</h3>
-<p>[Long-term positioning value. How {topic} changes the firm's standing in the market. 160-180 words.]</p>
+<h3>[Benefit 3: Strategic Advantage — Specific to {topic}]</h3>
+<p>[How {topic} creates a competitive moat or reputational leadership for {audience}. 180-220 words.]</p>
+<p><strong>The Bottom Line:</strong> [The impact on market position. 60-80 words.]</p>
 
-<blockquote><strong>The compounding value:</strong> [A detailed analysis of how these 3 benefits reinforce each other to create a lasting competitive moat in {topic}. 100-120 words.]</blockquote>
+<blockquote><strong>The Compounding Value:</strong> [How these 3 benefits reinforce each other to create a lasting strategic advantage. 100-120 words.]</blockquote>
 
-BANNED: Benefits that sound good but are impossible to verify. "Improve morale", "enhance reputation" without specifics. Every benefit needs a mechanism.
+BANNED: Generic benefits, placeholders, "soft" metrics without proof.
 Output: raw HTML only.""",
 
 "case_study": """\
-Write the REAL WORLD CASE STUDY section for a premium guide on **{topic}** for **{audience}**.
+Write a REAL WORLD CASE STUDY for a premium guide on **{topic}** for **{audience}**.
 
-This must read like a real case study — specific, credible, detailed. Not a vague story.
+This must read like a high-stakes success story. Specific, credible, and evidence-backed.
 
 MANDATORY STRUCTURE:
 
-<h3>Case Study: [Specific descriptive title that names a concrete fictional organization, e.g. "Global Retailer Revitalizes Operations via {topic}"]</h3>
+<h3>Case Study: [A sophisticated title naming a specific fictional entity, e.g. "Global Retailer Achieves 42% ROI via {topic}"]</h3>
 
-<p><strong>The situation:</strong> [Organisation type, size/scale, location type, what they were trying to achieve with {topic}. Be specific. 100-120 words.]</p>
+<p><strong>The Context:</strong> [Establish the organization: Name, scale, and specific industry standing. Why were they at a breaking point regarding {topic}? 120-150 words.]</p>
 
-<p><strong>The problem:</strong> [The exact challenge they faced with {topic}. What had already failed. What was at stake. Name the specific technical or strategic bottleneck. 120-140 words.]</p>
+<p><strong>The Crisis:</strong> [The specific technical or strategic failure that prompted action. What was at stake? 140-160 words.]</p>
 
-<p><strong>The approach:</strong> [What they actually did — specific steps, tools, methods, decisions. No generics like "they implemented best practices". Name the actual things they did related to {topic}. 160-180 words.]</p>
+<p><strong>The Intervention:</strong> [What was actually done. Name the specific framework, steps, and tools. 180-220 words.]</p>
 
-<p><strong>The results:</strong> [At minimum 3 detailed outcomes. Each must use a different metric. Numbers must feel realistic and earned, not round. E.g. "37% reduction" not "40% reduction". 120-140 words.]</p>
+<p><strong>The Measurable Impact:</strong> [3-4 detailed outcomes. Use specific, non-round numbers and units. 140-160 words.]</p>
 
-<blockquote><strong>The lesson for {audience}:</strong> [A sophisticated analysis of the transferable insight from this case — what it proves about {topic} that others should replicate. 80-100 words.]</blockquote>
+<blockquote><strong>The Transferable Lesson:</strong> [The sophisticated insight from this case that {audience} must apply to their own operations. 100-120 words.]</blockquote>
 
-BANNED: The word "implement", "leverage", "utilize". Vague outcomes like "significant improvement". Every result must have a number and a unit.
+BANNED: Generic stories, placeholders, "one size fits all" success.
 Output: raw HTML only.""",
 
 "risk_management": """\
@@ -552,24 +561,24 @@ BANNED: Vague takeaways like "sustainable architecture is important". Every take
 Output: raw HTML only.""",
 
 "call_to_action": """\
-Write the CALL TO ACTION section for a premium guide on **{topic}** for **{audience}**.
+Write the CALL TO ACTION for a premium guide on **{topic}** for **{audience}**.
 
-This section converts readers into enquiries. It must feel like an invitation from a trusted expert.
+This is the conversion point. It must feel like an invitation from a peer, not a sales pitch.
 
 MANDATORY STRUCTURE:
 
 <h3>[A strategic heading that speaks to the transition from insight to execution for {topic}]</h3>
-<p>[A detailed acknowledgement of what the reader has achieved by completing this guide. Reference the specific complexity of {topic}. Why is the "last mile" of execution where most value is lost? 120-140 words.]</p>
+<p>[The Value Realization: Acknowledge the reader's new expertise. Why is the 'last mile' of implementation where {audience} actually wins or loses in {topic}? 140-160 words.]</p>
 
-<h3>What our Strategic Consultation looks like</h3>
-<p>[A concrete description of the first meeting. What specific technical or business bottlenecks in {topic} will be addressed? What is the tangible takeaway? 120-140 words.]</p>
+<h3>The First 90 Days: A Strategic Partnership</h3>
+<p>[Describe the immediate path forward. What technical or strategic roadblocks in {topic} will we solve together? What is the tangible deliverable of the first session? 140-160 words.]</p>
 
-<h3>Why acting on {topic} today is a strategic necessity</h3>
-<p>[A detailed analysis of the opportunity cost of delay. Reference a specific market, regulatory, or technical pressure relevant to {topic}. 110-130 words.]</p>
+<h3>The Cost of Inaction</h3>
+<p>[A detailed analysis of the opportunity cost of delay. Reference specific market, technical, or regulatory pressures in {topic}. 120-140 words.]</p>
 
-<blockquote><strong>The immediate next step:</strong> [A clear, professional, and low-pressure action. Explain exactly what will happen after they take this step. 60-80 words.]</blockquote>
+<blockquote><strong>The Path Forward:</strong> [A clear, professional next step. Explain exactly what happens after they take this action. Use the provided action if it's real, otherwise infer a premium consultation: {call_to_action}. 60-80 words.]</blockquote>
 
-BANNED: "Contact us today!", "Don't miss out!", "Limited time offer", "Our team of experts". Write as a peer to {audience}.
+BANNED: Sales clichés, "Contact us today", placeholders, generic calls.
 Output: raw HTML only.""",
 }
 
@@ -736,14 +745,31 @@ class GroqClient:
             pp = user_answers.get("audience_pain_points", [])
         pain_points = pp if isinstance(pp, list) else ([pp] if pp else [])
         audience    = user_answers.get("target_audience", "Stakeholders")
+        
+        # 🚀 PLACEHOLDER SANITIZATION: Detect and remove "hhhh" style placeholders
+        # If CTA or Desired Outcome is garbage, we set it to empty so the AI can infer better ones.
+        def _is_placeholder(s: str) -> bool:
+            if not s: return False
+            s = s.strip().lower()
+            # Detect repeated characters (e.g., "hhhh", "xxxx") or very short strings
+            if len(s) > 0 and len(set(s)) == 1 and len(s) > 3: return True
+            if s in ("test", "test message", "xxx", "abc", "asdf"): return True
+            return False
+
+        desired_outcome = str(user_answers.get("desired_outcome", "") or "").strip()
+        if _is_placeholder(desired_outcome): desired_outcome = ""
+
+        call_to_action = str(user_answers.get("call_to_action", "") or "").strip()
+        if _is_placeholder(call_to_action): call_to_action = ""
+
         return {
             "topic":           _clean_topic_slug(str(user_answers.get("main_topic", "Strategic Design"))),
             "audience":        ", ".join(audience) if isinstance(audience, list) else str(audience),
             "pain_points":     ", ".join(pain_points) if isinstance(pain_points, list) else str(pain_points),
             "psychographics":  str(user_answers.get("psychographics", "")).strip(),
             "firm_usp":        str(user_answers.get("firm_usp", "")).strip(),
-            "desired_outcome": str(user_answers.get("desired_outcome", "") or "").strip(),
-            "call_to_action":  str(user_answers.get("call_to_action", "") or "").strip(),
+            "desired_outcome": desired_outcome,
+            "call_to_action":  call_to_action,
             "special_requests": str(user_answers.get("special_requests", "") or "").strip(),
             "tone":            user_answers.get("tone", "Professional"),
             "industry":        user_answers.get("industry", ""),
@@ -778,15 +804,17 @@ class GroqClient:
         subtitle = ""
         try:
             system_prompt = (
-                f"You write authoritative {type_label.upper()} titles. "
+                f"You are a world-class McKinsey-style consultant and professional copywriter. "
+                f"You write authoritative, high-impact titles for a PREMIUM {type_label.upper()} on '{topic}'.\n\n"
                 "Respond with EXACTLY two lines:\n"
-                "TITLE: [3-6 word title prominently featuring the core topic]\n"
-                "SUBTITLE: [One sentence value proposition for the target audience]"
+                "TITLE: [A sophisticated 3-6 word title that sounds like a $100k strategic report]\n"
+                "SUBTITLE: [A compelling one-sentence value proposition that targets the audience's deepest needs]"
             )
             user_prompt = (
                 f"Topic: '{topic}' | Audience: {audience} | Type: {type_label}\n"
-                f"Rules: McKinsey-style, no hyphens/slugs, no marketing fluff, "
-                f"title must feature '{topic}' clearly."
+                f"Pain Points: {pain_points}\n"
+                f"Desired Outcome: {desired_outcome}\n"
+                f"RULES: Zero marketing fluff. No placeholders. Must feature '{topic}' prominently."
             )
             raw_title_resp = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.7)
 
@@ -800,16 +828,17 @@ class GroqClient:
 
         # ── Pass 1b: Per-section generation ───────────────────────────────
         system_msg = (
-            f"You are writing one section of a PREMIUM {type_label.upper()} on '{topic}' for {audience}.\n\n"
-            "ABSOLUTE RULES — violating any of these means the content is rejected:\n"
-            f"1. This MUST be a {type_label.upper()}. If it's a checklist, use action-oriented items. If it's a guide, use strategic analysis.\n"
-            "2. Raw HTML only. Zero markdown. Zero preamble. Zero sign-off.\n"
-            f"3. Every sentence must be SPECIFIC to '{topic}' and '{audience}'. Zero generic business advice.\n"
-            "4. ZERO repetition. Never repeat a phrase, stat, or idea.\n"
-            "5. Stats ONLY if they have: a source name, a unit, and a sentence explaining what they mean.\n"
-            "6. Every section must use at least 2 of these visual elements: <blockquote>, <ul>/<li>, <strong>.\n"
-            "7. Sections must END with a complete thought. Never truncate mid-sentence.\n"
-            "8. DO NOT include any <img> tags."
+            f"You are an expert content strategist and premium copywriter writing one section of a {type_label.upper()} on '{topic}' for {audience}.\n\n"
+            "CRITICAL RULES — YOUR CONTENT WILL BE REJECTED IF YOU VIOLATE THESE:\n"
+            f"1. NO PLACEHOLDERS: Never use 'hhhh', 'test', or any filler. If inputs are missing or garbage, infer deeply relevant professional content based on '{topic}'.\n"
+            f"2. DEEP SPECIFICITY: Every sentence must be specific to '{topic}' and the needs of {audience}. Zero generic business advice. If you could swap '{topic}' for another topic and the sentence still works, it's too generic.\n"
+            f"3. UNIQUE CONTENT: Every section must have 100% unique insights. Never repeat stats, phrases, or ideas from other sections.\n"
+            f"4. AUDIENCE-CENTRIC: Address {audience} segments by name. Show how {topic} impacts them differently.\n"
+            f"5. PAIN POINT INTEGRATION: Meaningfully weave these pain points into the narrative: {pain_points}. Don't just list them; explain their systemic impact.\n"
+            "6. CREDIBLE DATA: Use realistic statistics and cite credible fictionalized or real sources (e.g., EPA, NIST, McKinsey). Every result must have a specific number and unit (e.g., '34.2% reduction').\n"
+            "7. RAW HTML ONLY: No markdown, no preamble, no sign-off. Use <h3>, <p>, <strong>, <ul>/<li>, and <blockquote> for visual hierarchy.\n"
+            "8. COMPLETION: Sections must end with a full, impactful thought. Never truncate.\n"
+            "9. NO IMAGES: Do not include any <img> tags."
         )
 
         sections_content: Dict[str, str] = {}
@@ -831,6 +860,8 @@ class GroqClient:
                     topic=topic, audience=audience,
                     pain_points=pain_points, firm_usp=firm_usp,
                     lead_magnet_type=type_label,
+                    desired_outcome=desired_outcome,
+                    call_to_action=call_to_action,
                 )
             except (KeyError, IndexError):
                 section_prompt = prompt_template
