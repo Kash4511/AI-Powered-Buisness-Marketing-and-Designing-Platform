@@ -33,10 +33,15 @@ fi
 
 echo "✅ Migrations completed successfully."
 
-# Collect static files (optional, recommended to run in Build Command instead)
-# Move this to your Build Command: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
-# echo "📦 Collecting static files..."
-# python manage.py collectstatic --noinput
+# Ensure static files directory exists
+mkdir -p staticfiles
+
+# Collect static files if they are missing
+echo "📦 Checking static files..."
+python manage.py collectstatic --noinput --clear || echo "⚠️ Warning: collectstatic failed, proceeding anyway."
+
+# Default to port 10000 if PORT is not set
+PORT=${PORT:-10000}
 
 # Start Gunicorn
 echo "🌐 Starting Gunicorn on port $PORT..."
@@ -47,4 +52,6 @@ exec gunicorn django_project.wsgi:application \
     --timeout 300 \
     --graceful-timeout 300 \
     --keep-alive 5 \
-    --log-level info
+    --log-level info \
+    --access-logfile - \
+    --error-logfile -

@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
+ENV PORT=10000
 
 # Set the working directory
 WORKDIR /app
@@ -29,11 +29,18 @@ COPY . .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Create staticfiles directory to avoid warnings
+RUN mkdir -p Backend/staticfiles
+
+# Run collectstatic during build phase
+# (Using a dummy SECRET_KEY if needed, but here we just ensure the dir exists)
+RUN cd Backend && python manage.py collectstatic --noinput --clear || true
+
 # Ensure the start script is executable
 RUN chmod +x Backend/scripts/render_start.sh
 
-# Expose the port
-EXPOSE 8000
+# Expose the port (Render defaults to 10000)
+EXPOSE 10000
 
 # Run the app
 CMD ["sh", "Backend/scripts/render_start.sh"]

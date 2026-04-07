@@ -10,10 +10,12 @@ try:
     if env_path.exists():
         load_dotenv(env_path)
         print(f"Loaded .env from: {env_path}")
-    else:
+    elif os.getenv("DEBUG", "false").lower() == "true":
+        # Only show the warning in development/debug mode
         print(f" .env file not found at: {env_path}")
 except Exception as e:
-    print(f" Error loading .env: {e}")
+    if os.getenv("DEBUG", "false").lower() == "true":
+        print(f" Error loading .env: {e}")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
