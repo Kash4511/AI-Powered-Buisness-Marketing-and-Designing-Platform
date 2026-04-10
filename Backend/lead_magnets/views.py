@@ -387,9 +387,84 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     template_vars[f"pageNumber{n}"]       = str(n).zfill(2)
                     template_vars[f"pageNumberHeader{n}"] = str(n).zfill(2)
 
-                # Verify content vars
+                # ── CONSTRUCT DYNAMIC SECTIONS HTML ───────────────────────────
                 doc_type = ai_input.get("document_type", "guide")
                 actual_sections = ai_client.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai_client.GUIDE_SECTIONS)
+                
+                sections_html_list = []
+                toc_html_list = []
+                
+                for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
+                    page_num = str(idx + 4).zfill(2)
+                    num_str  = str(idx + 1).zfill(2)
+                    
+                    # 1. TOC Item
+                    toc_html_list.append(f"""
+                        <div class="toc-item">
+                            <span class="toc-num">{num_str}</span><span class="toc-label">{template_vars.get(f"customTitle{idx+1}", dtitle)}</span>
+                            <span class="toc-dots"></span><span class="toc-pg">{page_num}</span>
+                        </div>
+                    """)
+                    
+                    # 2. Section Image
+                    image_url = template_vars.get(f"image_{idx+1}_url")
+                    if not image_url and idx < 6: # Try firm profile if not in template_vars
+                        image_url = firm_profile.get(f"image_{idx+1}_url")
+                    
+                    image_html = ""
+                    if image_url:
+                        # Determine layout based on user's request: 1st/2nd vertical, 3rd horizontal center
+                        if idx == 0:
+                            image_html = f'<div class="img-block vertical left"><img src="{image_url}" alt=""></div>'
+                        elif idx == 1:
+                            image_html = f'<div class="img-block vertical right"><img src="{image_url}" alt=""></div>'
+                        elif idx == 2:
+                            image_html = f'<div class="img-block horizontal center"><img src="{image_url}" alt=""></div>'
+                        else:
+                            image_html = f'<div class="img-block horizontal center"><img src="{image_url}" alt=""></div>'
+                    
+                    # 3. Logo HTML
+                    logo_url = template_vars.get("logoUrl") or firm_profile.get("logo_url")
+                    logo_html = f'<img src="{logo_url}" alt="">' if logo_url else '<div class="footer-logo-inner"></div>'
+                    
+                    # 4. Full Page
+                    sections_html_list.append(f"""
+                        <div class="page content-page">
+                            <div class="page-header">
+                                <div class="page-header-left">
+                                    <div class="page-header-bar"></div>
+                                    <div>
+                                        <span class="page-header-kicker">{template_vars.get(f"section_{key}_kicker", dkicker)}</span>
+                                        <div class="page-header-title">{template_vars.get(f"section_{key}_title", dlabel)}</div>
+                                    </div>
+                                </div>
+                                <div class="page-number-badge">PAGE {page_num}</div>
+                            </div>
+                            <div class="header-rule"></div>
+
+                            <div class="page-body">
+                                <div class="section-intro-block">
+                                    <div class="section-intro-num">{num_str}</div>
+                                    <div><div class="section-headline">{template_vars.get(f"customTitle{idx+1}", dtitle)}</div></div>
+                                </div>
+                                {image_html}
+                                <div class="section-content">{template_vars.get(f"section_{key}_full_html", "")}</div>
+                            </div>
+
+                            <div class="page-footer">
+                                <div class="footer-left">
+                                    <div class="footer-logo">{logo_html}</div>
+                                    <span class="footer-company">{template_vars.get("companyName")}</span>
+                                </div>
+                                <span class="footer-right">{template_vars.get("website")}</span>
+                            </div>
+                        </div>
+                    """)
+
+                template_vars["sections_html"] = "\n".join(sections_html_list)
+                template_vars["toc_html"]      = "\n".join(toc_html_list)
+
+                # Verify content vars
                 missing = [f"section_{k}_full_html" for k, *_ in actual_sections
                            if not template_vars.get(f"section_{k}_full_html")]
                 if missing:
@@ -401,6 +476,10 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 logger.error(f"AI Pipeline Error: {e}\n{traceback.format_exc()}")
                 _set_job(job_id, status="failed", error=f"AI generation failed: {e}"); return
         else:
+            # Fallback for manual content (no AI)
+            doc_type = ai_input.get("document_type", "guide")
+            actual_sections = ai_client.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai_client.GUIDE_SECTIONS)
+            
             template_vars = {
                 "primaryColor":   firm_profile.get("primary_brand_color") or "#1a365d",
                 "secondaryColor": firm_profile.get("secondary_brand_color") or "#c5a059",
@@ -414,16 +493,31 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 "emailAddress":     firm_profile.get("work_email") or "",
                 "phoneNumber":      firm_profile.get("phone_number") or "",
                 "website":          firm_profile.get("firm_website") or "",
-                "toc_sections_html": "",
+                "toc_html": "",
+                "sections_html": "",
                 "termsTitle": "Terms of Use", "termsSummary": "",
                 "termsParagraph1":"","termsParagraph2":"","termsParagraph3":"",
                 "termsParagraph4":"","termsParagraph5":"",
                 "contentsTitle": "Table of Contents",
+                "documentTypeLabel": ai_input.get("lead_magnet_type", "Strategic Guide")
             }
-            for idx, (key, dtitle, *_) in enumerate(GroqClient.SECTIONS):
-                template_vars[f"section_{key}_full_html"] = ""
-                template_vars[f"section_{key}_id"]        = f"section-{key}"
-                template_vars[f"customTitle{idx+1}"]      = dtitle
+            
+            sections_html_list = []
+            for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
+                num_str = str(idx + 1).zfill(2)
+                page_num = str(idx + 4).zfill(2)
+                sections_html_list.append(f"""
+                    <div class="page content-page">
+                        <div class="page-body">
+                            <div class="section-intro-block">
+                                <div class="section-intro-num">{num_str}</div>
+                                <div><div class="section-headline">{dtitle}</div></div>
+                            </div>
+                            <div class="section-content"><p>Content for {dtitle} goes here...</p></div>
+                        </div>
+                    </div>
+                """)
+            template_vars["sections_html"] = "\n".join(sections_html_list)
 
         # ── PDF RENDERING ──────────────────────────────────────────────────
         pdf_service = WeasyPrintService()

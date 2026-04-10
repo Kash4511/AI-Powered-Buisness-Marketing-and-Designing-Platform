@@ -199,14 +199,15 @@ class WeasyPrintService:
     # TEMPLATE REGISTRY — Strict type-to-template mapping
     # ─────────────────────────────────────────────────────────────────────────────
     TEMPLATE_REGISTRY = {
-        "guide":             "guide.html",
-        "checklist":         "checklist.html",
-        "case_study":        "case_study.html",
-        "roi_calculator":    "roi_calculator.html",
-        "trends_report":     "trends_report.html",
-        "design_portfolio":  "design_portfolio.html",
-        "client_onboarding": "client_onboarding.html",
-        "custom":            "custom.html",
+        "guide":             "Template.html",
+        "checklist":         "Template.html",
+        "case_study":        "Template.html",
+        "roi_calculator":    "Template.html",
+        "trends_report":     "Template.html",
+        "design_portfolio":  "Template.html",
+        "client_onboarding": "Template.html",
+        "custom":            "Template.html",
+        "default":           "Template.html",
     }
 
     def __init__(self):
