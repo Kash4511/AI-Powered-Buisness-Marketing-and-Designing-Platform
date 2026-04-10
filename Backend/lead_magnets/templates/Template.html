@@ -45,7 +45,7 @@
             box-shadow: 0 8px 40px rgba(0,0,0,0.22);
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* FIX: was 'visible' — prevents bleed outside page bounds */
+            overflow: visible; /* FIX: allows content to flow onto next page if it exceeds A4 height */
         }
 
         /* ── PAGE NUMBERING (using WeasyPrint CSS) ── */
@@ -468,7 +468,18 @@
         .toc-pg { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--primary); }
 
         /* ── TERMS ── */
-        .terms-body { padding: 10mm 14mm 0; text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 180mm; margin: 0 auto; }
+        .terms-page-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10mm 14mm;
+        }
+        .terms-body { 
+            text-align: center; 
+            max-width: 180mm; 
+            margin: 0 auto; 
+        }
         .terms-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 22px; }
         .terms-summary { background: var(--light); border-left: 4px solid var(--secondary); border-radius: 0 8px 8px 0; padding: 12px 16px; text-align: left; margin-bottom: 18px; font-size: 12.5px; color: var(--text); line-height: 1.7; }
 
@@ -525,11 +536,13 @@
         <div class="page-header-left"><div class="page-header-bar"></div><div><span class="page-header-kicker">Legal</span><div class="page-header-title">Terms of Use &amp; Disclaimer</div></div></div>
     </div>
     <div class="header-rule"></div>
-    <div class="terms-body">
-        <div class="terms-title">{{termsTitle}}</div>
-        <div class="terms-summary">{{termsSummary}}</div>
-        <p>{{termsParagraph1}}</p><p>{{termsParagraph2}}</p><p>{{termsParagraph3}}</p><p>{{termsParagraph4}}</p>
-        <p style="font-size:11px; color:#777; margin-top:16px;">{{termsParagraph5}}</p>
+    <div class="terms-page-body">
+        <div class="terms-body">
+            <div class="terms-title">{{termsTitle}}</div>
+            <div class="terms-summary">{{termsSummary}}</div>
+            <p>{{termsParagraph1}}</p><p>{{termsParagraph2}}</p><p>{{termsParagraph3}}</p><p>{{termsParagraph4}}</p>
+            <p style="font-size:11px; color:#777; margin-top:16px;">{{termsParagraph5}}</p>
+        </div>
     </div>
     <div class="page-footer">
         <div class="footer-left"><div class="footer-logo">{{#if logoUrl}}<img src="{{logoUrl}}" alt="">{{else}}<div class="footer-logo-inner"></div>{{/if}}</div><span class="footer-company">{{companyName}}</span></div>
