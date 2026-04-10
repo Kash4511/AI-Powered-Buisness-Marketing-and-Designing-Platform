@@ -45,7 +45,7 @@
             box-shadow: 0 8px 40px rgba(0,0,0,0.22);
             display: flex;
             flex-direction: column;
-            overflow: visible;
+            overflow: hidden; /* FIX: was 'visible' — prevents bleed outside page bounds */
         }
 
         /* ── PAGE NUMBERING (using WeasyPrint CSS) ── */
@@ -212,6 +212,7 @@
             align-items: center;
             position: relative;
             overflow: hidden;
+            flex-shrink: 0; /* FIX: prevent header from shrinking */
         }
 
         .page-header-left {
@@ -249,12 +250,15 @@
             height: 3px;
             background: var(--secondary);
             position: relative;
+            flex-shrink: 0; /* FIX: prevent rule from shrinking */
         }
 
         .page-body {
-            padding: 12px 14mm 0;
+            padding: 12px 14mm 14px; /* FIX: added bottom padding */
             flex: 1;
             overflow: visible;
+            /* FIX: prevent content from overflowing the page container */
+            min-height: 0;
         }
 
         .page-footer {
@@ -267,6 +271,7 @@
             padding: 0 14mm;
             margin-top: auto;
             overflow: hidden;
+            flex-shrink: 0; /* FIX: prevent footer from shrinking */
         }
         .page-footer::before {
             content: '';
@@ -368,29 +373,82 @@
         }
 
         /* ── IMAGE BLOCKS ── */
+        /* FIX: Constrain all images so they never bleed outside the page */
         .img-block {
             border-radius: 12px;
             overflow: hidden;
-            margin: 18px 0;
+            margin: 14px 0;
             display: block;
             break-inside: avoid;
             background: #ffffff;
             border: 1px solid rgba(0,0,0,0.06);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
             position: relative;
-            z-index: 5;
+            z-index: 1; /* FIX: was 5 — no need for high z-index that punches through */
+            max-width: 100%; /* FIX: hard cap so images never exceed page width */
         }
 
-        .img-block.vertical { width: 35%; height: auto; }
-        .img-block.vertical img { width: 100%; height: 420px; object-fit: cover; }
-        .img-block.horizontal { width: 100%; height: auto; max-width: 95%; margin: 28px auto; }
-        .img-block.horizontal img { width: 100%; height: 240px; object-fit: cover; }
-        .img-block.left { float: left; margin: 6px 24px 18px 0; }
-        .img-block.right { float: right; margin: 6px 0 18px 24px; }
-        .img-block.center { text-align: center; margin: 32px auto; clear: both; }
-        .img-block img { display: block; width: 100%; }
+        /* FIX: Vertical images — narrower and shorter to stay within column */
+        .img-block.vertical {
+            width: 32%;
+            height: auto;
+        }
+        .img-block.vertical img {
+            width: 100%;
+            height: 280px; /* FIX: was 420px — reduced so tall images don't push content off page */
+            object-fit: cover;
+            object-position: center top; /* FIX: favour top of image (faces/subjects) */
+            display: block;
+        }
 
-        .section-content::after { content: ""; display: table; clear: both; }
+        /* FIX: Horizontal images — reduced height to be less intrusive */
+        .img-block.horizontal {
+            width: 100%;
+            max-width: 92%;
+            margin: 18px auto;
+        }
+        .img-block.horizontal img {
+            width: 100%;
+            height: 200px; /* FIX: was 240px */
+            object-fit: cover;
+            display: block;
+        }
+
+        .img-block.left {
+            float: left;
+            margin: 4px 20px 12px 0; /* FIX: tighter margins so text wraps cleanly */
+        }
+        .img-block.right {
+            float: right;
+            margin: 4px 0 12px 20px;
+        }
+        .img-block.center {
+            text-align: center;
+            margin: 24px auto;
+            clear: both;
+            float: none;
+        }
+
+        /* FIX: All img tags inside blocks must be fully contained */
+        .img-block img {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* FIX: Clearfix after section content to contain floats */
+        .section-content::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        /* FIX: page-body also needs clearfix */
+        .page-body::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
 
         /* ── TOC ── */
         .toc-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
