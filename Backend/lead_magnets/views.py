@@ -438,10 +438,14 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                             <div class="page-body">
                                 <div class="section-intro-block">
                                     <div class="section-intro-num">{num_str}</div>
-                                    <div><div class="section-headline">{template_vars.get(f"customTitle{idx+1}", dtitle)}</div></div>
+                                    <div class="section-headline">{template_vars.get(f"customTitle{idx+1}", dtitle)}</div>
                                 </div>
+                                
                                 {image_html}
-                                <div class="section-content">{template_vars.get(f"section_{key}_full_html", "")}</div>
+                                
+                                <div class="section-content">
+                                    {template_vars.get(f"section_{key}_full_html", "")}
+                                </div>
                             </div>
                         </div>
                     """)

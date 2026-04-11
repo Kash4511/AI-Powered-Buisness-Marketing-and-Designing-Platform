@@ -26,16 +26,18 @@
         body {
             font-family: 'DM Sans', sans-serif;
             background: #c8cbd2;
-            padding: 24px;
+            padding: 0;
+            margin: 0;
             color: var(--text);
             font-size: 14.5px;
             line-height: 1.6;
+            width: 100%;
         }
 
         /* ── PAGE NUMBERING & RUNNING ELEMENTS ── */
         @page {
             size: A4;
-            margin: 20mm 0 22mm; /* Reserve space for running header/footer */
+            margin: 25mm 18mm 25mm; /* Standard margins for professional document flow */
             
             @top-center {
                 content: element(header);
@@ -48,9 +50,9 @@
         #running-header {
             position: running(header);
             width: 100%;
-            height: 56px;
+            height: 15mm;
             background: var(--primary);
-            padding: 0 14mm;
+            padding: 0 5mm;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -61,9 +63,9 @@
         #running-footer {
             position: running(footer);
             width: 100%;
-            height: 48px;
+            height: 12mm;
             background: var(--primary);
-            padding: 0 14mm;
+            padding: 0 5mm;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -81,28 +83,29 @@
         /* Hide running elements on cover and back-cover */
         @page:first { margin: 0; @top-center { content: none; } @bottom-center { content: none; } }
         .cover, .back-cover { page-break-before: always; page-break-after: always; }
-        @page {
-            @top-center { content: element(header); }
-            @bottom-center { content: element(footer); }
-        }
 
-        .book { width: 210mm; margin: 0 auto; }
+        .book { width: 100%; max-width: 100%; }
 
-        /* Remove fixed height and flex to allow natural page breaks */
+        /* CONTENT PAGES: Removed fixed heights and widths to allow natural breaking */
         .page {
-            width: 210mm;
             background: var(--white);
             position: relative;
             padding: 0;
             margin: 0;
-            overflow: visible;
-            min-height: 297mm; /* Ensure at least A4 height */
+            overflow: visible; /* Ensure content can overflow and trigger page breaks */
+            display: block;
         }
 
         .content-page {
             page-break-before: always;
-            page-break-after: auto;
-            padding: 0; /* Let running margins handle it */
+            page-break-inside: auto; /* Allow content to split across pages */
+        }
+
+        .page-body {
+            padding: 5mm 0; /* Vertical spacing only, side margins handled by @page */
+            overflow: visible;
+            display: block;
+            clear: both;
         }
 
         /* ════════════════════════════════════════════════════
@@ -246,17 +249,16 @@
             width: 100%;
         }
 
-        /* ── INNER PAGE LAYOUT ── */
         .page-header {
             background: var(--primary);
             height: 56px;
-            padding: 0 14mm;
+            padding: 0 5mm;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: relative;
             overflow: hidden;
-            flex-shrink: 0; /* FIX: prevent header from shrinking */
+            flex-shrink: 0; 
         }
 
         .page-header-left {
@@ -294,15 +296,8 @@
             height: 3px;
             background: var(--secondary);
             position: relative;
-            flex-shrink: 0; /* FIX: prevent rule from shrinking */
-        }
-
-        .page-body {
-            padding: 12px 14mm 14px; /* FIX: added bottom padding */
-            flex: 1;
-            overflow: visible;
-            /* FIX: prevent content from overflowing the page container */
-            min-height: 0;
+            flex-shrink: 0; 
+            margin-bottom: 5mm;
         }
 
         .page-footer {
@@ -312,10 +307,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 14mm;
+            padding: 0 5mm;
             margin-top: auto;
             overflow: hidden;
-            flex-shrink: 0; /* FIX: prevent footer from shrinking */
+            flex-shrink: 0; 
         }
         .page-footer::before {
             content: '';
@@ -418,8 +413,9 @@
             clear: both;
         }
 
-        .section-content p {
+        .section-content p, .section-content ul {
             margin-bottom: 12px;
+            clear: none; /* Allow text/lists to wrap around images */
         }
 
         /* ── IMAGE BLOCKS ── */
@@ -432,18 +428,18 @@
             background: #ffffff;
             border: 1px solid rgba(0,0,0,0.06);
             box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-            position: relative;
-            z-index: 1; 
             max-width: 100%; 
+            clear: both; /* Default to clear to prevent overlap with preceding content */
         }
 
         .img-block.vertical {
-            width: 32%;
+            width: 38%; /* Slightly wider for better presence */
             height: auto;
+            clear: none; /* Allow text to flow next to vertical images */
         }
         .img-block.vertical img {
             width: 100%;
-            height: 280px; 
+            height: 240px; /* Reduced height to ensure it fits with text */
             object-fit: cover;
             object-position: center top; 
             display: block;
@@ -451,24 +447,25 @@
 
         .img-block.horizontal {
             width: 100%;
-            max-width: 92%;
-            margin: 18px auto;
+            max-width: 100%;
+            margin: 18px 0;
+            clear: both; /* Horizontal images always break the flow */
         }
         .img-block.horizontal img {
             width: 100%;
-            height: 200px; 
+            height: 220px; 
             object-fit: cover;
             display: block;
         }
 
         .img-block.left {
             float: left;
-            margin: 8px 20px 14px 0;
-            clear: left; /* Ensure it starts below any other left-floated image */
+            margin: 4px 18px 12px 0;
+            clear: left; 
         }
         .img-block.right {
             float: right;
-            margin: 8px 0 14px 20px;
+            margin: 4px 0 12px 18px;
             clear: right;
         }
         .img-block.center {
@@ -488,14 +485,14 @@
         /* FIX: Clearfix after section content to contain floats */
         .section-content::after {
             content: "";
-            display: table;
+            display: block;
             clear: both;
         }
 
         /* FIX: page-body also needs clearfix */
         .page-body::after {
             content: "";
-            display: table;
+            display: block;
             clear: both;
         }
 
@@ -550,7 +547,6 @@
             body { background: white; padding: 0; }
             .book { box-shadow: none; }
             .page { margin-bottom: 0; box-shadow: none; }
-            @page { size: A4; margin: 0; }
         }
     </style>
 </head>
