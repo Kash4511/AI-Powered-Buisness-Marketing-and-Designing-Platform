@@ -32,33 +32,77 @@
             line-height: 1.6;
         }
 
-        /* ── BOOK + PAGE ── */
-        .book { width: 210mm; margin: 0 auto; }
-
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            background: var(--white);
-            position: relative;
-            page-break-after: always;
-            margin-bottom: 10px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.22);
-            display: flex;
-            flex-direction: column;
-            overflow: visible; /* FIX: allows content to flow onto next page if it exceeds A4 height */
+        /* ── PAGE NUMBERING & RUNNING ELEMENTS ── */
+        @page {
+            size: A4;
+            margin: 20mm 0 22mm; /* Reserve space for running header/footer */
+            
+            @top-center {
+                content: element(header);
+            }
+            @bottom-center {
+                content: element(footer);
+            }
         }
 
-        /* ── PAGE NUMBERING (using WeasyPrint CSS) ── */
+        #running-header {
+            position: running(header);
+            width: 100%;
+            height: 56px;
+            background: var(--primary);
+            padding: 0 14mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--secondary);
+            z-index: 1000;
+        }
+
+        #running-footer {
+            position: running(footer);
+            width: 100%;
+            height: 48px;
+            background: var(--primary);
+            padding: 0 14mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid var(--secondary);
+            z-index: 1000;
+        }
+
+        /* Running Title Logic */
+        .page-header-title { string-set: section-title content(); }
+        .page-header-kicker { string-set: section-kicker content(); }
+
+        .running-title-text::after { content: string(section-title); }
+        .running-kicker-text::after { content: string(section-kicker); }
+
+        /* Hide running elements on cover and back-cover */
+        @page:first { margin: 0; @top-center { content: none; } @bottom-center { content: none; } }
+        .cover, .back-cover { page-break-before: always; page-break-after: always; }
         @page {
+            @top-center { content: element(header); }
+            @bottom-center { content: element(footer); }
+        }
+
+        .book { width: 210mm; margin: 0 auto; }
+
+        /* Remove fixed height and flex to allow natural page breaks */
+        .page {
+            width: 210mm;
+            background: var(--white);
+            position: relative;
+            padding: 0;
             margin: 0;
-            @bottom-right {
-                content: "PAGE " counter(page);
-                font-family: 'DM Sans', sans-serif;
-                font-size: 10px;
-                color: var(--text-light);
-                padding-right: 20mm;
-                padding-bottom: 15mm;
-            }
+            overflow: visible;
+            min-height: 297mm; /* Ensure at least A4 height */
+        }
+
+        .content-page {
+            page-break-before: always;
+            page-break-after: auto;
+            padding: 0; /* Let running margins handle it */
         }
 
         /* ════════════════════════════════════════════════════
@@ -358,6 +402,7 @@
             padding-left: 10px;
             border-left: 3px solid var(--secondary);
             break-after: avoid;
+            clear: both; /* Ensure headers don't wrap around images in a messy way */
         }
 
         .section-content blockquote {
@@ -370,10 +415,14 @@
             font-size: 15.5px;
             color: var(--text-light);
             break-inside: avoid;
+            clear: both;
+        }
+
+        .section-content p {
+            margin-bottom: 12px;
         }
 
         /* ── IMAGE BLOCKS ── */
-        /* FIX: Constrain all images so they never bleed outside the page */
         .img-block {
             border-radius: 12px;
             overflow: hidden;
@@ -384,24 +433,22 @@
             border: 1px solid rgba(0,0,0,0.06);
             box-shadow: 0 6px 20px rgba(0,0,0,0.08);
             position: relative;
-            z-index: 1; /* FIX: was 5 — no need for high z-index that punches through */
-            max-width: 100%; /* FIX: hard cap so images never exceed page width */
+            z-index: 1; 
+            max-width: 100%; 
         }
 
-        /* FIX: Vertical images — narrower and shorter to stay within column */
         .img-block.vertical {
             width: 32%;
             height: auto;
         }
         .img-block.vertical img {
             width: 100%;
-            height: 280px; /* FIX: was 420px — reduced so tall images don't push content off page */
+            height: 280px; 
             object-fit: cover;
-            object-position: center top; /* FIX: favour top of image (faces/subjects) */
+            object-position: center top; 
             display: block;
         }
 
-        /* FIX: Horizontal images — reduced height to be less intrusive */
         .img-block.horizontal {
             width: 100%;
             max-width: 92%;
@@ -409,18 +456,20 @@
         }
         .img-block.horizontal img {
             width: 100%;
-            height: 200px; /* FIX: was 240px */
+            height: 200px; 
             object-fit: cover;
             display: block;
         }
 
         .img-block.left {
             float: left;
-            margin: 4px 20px 12px 0; /* FIX: tighter margins so text wraps cleanly */
+            margin: 8px 20px 14px 0;
+            clear: left; /* Ensure it starts below any other left-floated image */
         }
         .img-block.right {
             float: right;
-            margin: 4px 0 12px 20px;
+            margin: 8px 0 14px 20px;
+            clear: right;
         }
         .img-block.center {
             text-align: center;
@@ -506,6 +555,27 @@
     </style>
 </head>
 <body>
+<!-- RUNNING HEADER/FOOTER (Repeats on every page except cover) -->
+<div id="running-header">
+    <div class="page-header-left">
+        <div class="page-header-bar"></div>
+        <div>
+            <span class="page-header-kicker running-kicker-text"></span>
+            <div class="page-header-title running-title-text"></div>
+        </div>
+    </div>
+</div>
+
+<div id="running-footer">
+    <div class="footer-left">
+        <div class="footer-logo">
+            {{#if logoUrl}}<img src="{{logoUrl}}" alt="">{{else}}<div class="footer-logo-inner"></div>{{/if}}
+        </div>
+        <span class="footer-company">{{companyName}}</span>
+    </div>
+    <span class="footer-right">{{website}}</span>
+</div>
+
 <div class="book">
 
 <!-- PAGE 1 — COVER -->
@@ -532,10 +602,10 @@
 
 <!-- PAGE 2 — TERMS -->
 <div class="page content-page">
-    <div class="page-header">
-        <div class="page-header-left"><div class="page-header-bar"></div><div><span class="page-header-kicker">Legal</span><div class="page-header-title">Terms of Use &amp; Disclaimer</div></div></div>
+    <div style="display:none;">
+        <span class="page-header-kicker">Legal</span>
+        <div class="page-header-title">Terms & Disclaimer</div>
     </div>
-    <div class="header-rule"></div>
     <div class="terms-page-body">
         <div class="terms-body">
             <div class="terms-title">{{termsTitle}}</div>
@@ -544,18 +614,14 @@
             <p style="font-size:11px; color:#777; margin-top:16px;">{{termsParagraph5}}</p>
         </div>
     </div>
-    <div class="page-footer">
-        <div class="footer-left"><div class="footer-logo">{{#if logoUrl}}<img src="{{logoUrl}}" alt="">{{else}}<div class="footer-logo-inner"></div>{{/if}}</div><span class="footer-company">{{companyName}}</span></div>
-        <span class="footer-right">{{website}}</span>
-    </div>
 </div>
 
 <!-- PAGE 3 — TABLE OF CONTENTS -->
 <div class="page content-page">
-    <div class="page-header">
-        <div class="page-header-left"><div class="page-header-bar"></div><div><span class="page-header-kicker">Navigation</span><div class="page-header-title">Table of Contents</div></div></div>
+    <div style="display:none;">
+        <span class="page-header-kicker">Navigation</span>
+        <div class="page-header-title">Table of Contents</div>
     </div>
-    <div class="header-rule"></div>
     <div class="page-body">
         <div style="margin-bottom:16px; margin-top:4px;"><div class="section-headline" style="font-size:20px;">{{contentsTitle}}</div></div>
         {{toc_html}}
@@ -564,10 +630,6 @@
                 This document contains {{companyName}}'s proprietary research and strategic frameworks. All content is intended for professional use and should be read in full before implementation.
             </p>
         </div>
-    </div>
-    <div class="page-footer">
-        <div class="footer-left"><div class="footer-logo">{{#if logoUrl}}<img src="{{logoUrl}}" alt="">{{else}}<div class="footer-logo-inner"></div>{{/if}}</div><span class="footer-company">{{companyName}}</span></div>
-        <span class="footer-right">{{website}}</span>
     </div>
 </div>
 

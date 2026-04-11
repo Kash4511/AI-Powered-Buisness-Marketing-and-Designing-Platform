@@ -430,17 +430,10 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     # 4. Full Page
                     sections_html_list.append(f"""
                         <div class="page content-page">
-                            <div class="page-header">
-                                <div class="page-header-left">
-                                    <div class="page-header-bar"></div>
-                                    <div>
-                                        <span class="page-header-kicker">{template_vars.get(f"section_{key}_kicker", dkicker)}</span>
-                                        <div class="page-header-title">{template_vars.get(f"section_{key}_title", dlabel)}</div>
-                                    </div>
-                                </div>
-                                <div class="page-number-badge">PAGE {page_num}</div>
+                            <div style="display:none;">
+                                <span class="page-header-kicker">{template_vars.get(f"section_{key}_kicker", dkicker)}</span>
+                                <div class="page-header-title">{template_vars.get(f"section_{key}_title", dlabel)}</div>
                             </div>
-                            <div class="header-rule"></div>
 
                             <div class="page-body">
                                 <div class="section-intro-block">
@@ -449,14 +442,6 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                                 </div>
                                 {image_html}
                                 <div class="section-content">{template_vars.get(f"section_{key}_full_html", "")}</div>
-                            </div>
-
-                            <div class="page-footer">
-                                <div class="footer-left">
-                                    <div class="footer-logo">{logo_html}</div>
-                                    <span class="footer-company">{template_vars.get("companyName")}</span>
-                                </div>
-                                <span class="footer-right">{template_vars.get("website")}</span>
                             </div>
                         </div>
                     """)
