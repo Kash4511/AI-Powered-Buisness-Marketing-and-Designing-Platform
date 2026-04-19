@@ -461,27 +461,23 @@ Output: raw HTML only.""",
 "risk_management": """\
 Write the RISK MANAGEMENT section for a premium guide on **{topic}** for **{audience}**.
 
-These risks must be the ones that actually hurt people in {topic} — not obvious generic risks.
+These risks must be the ones that actually hurt people in {topic} — not obvious generic risks. Focus on precision and brevity to avoid repetitive content.
 
 MANDATORY STRUCTURE:
 
-<p>[A deep-dive opener explaining why risk management in {topic} is different from general risk thinking — the specific technical or market nature of failure in this domain. 100-120 words.]</p>
+<p>[A high-impact opener (60-80 words) explaining the unique technical or market failure mode of {topic}. Avoid generic risk theory.]</p>
 
-<h3>[Risk 1: Technical/Execution — a specific failure mode in {topic} that catches experts off guard]</h3>
-<p>[How it manifests, what triggers it, why even experienced {audience} miss it. 120-140 words.]</p>
-<p><strong>How to prevent it:</strong> [Specific action, checklist, test, or process that neutralises this risk in {topic}. 80-100 words.]</p>
+<h3>[Risk 1: Technical/Execution — A specific, non-obvious failure mode]</h3>
+<p>[How it manifests and why experts miss it. 100-120 words. No repetitive stats.]</p>
+<p><strong>Prevention:</strong> [One specific safeguard. 50-70 words.]</p>
 
-<h3>[Risk 2: Compliance/Legal — a specific regulatory or standards risk in {topic}]</h3>
-<p>[What the rule requires, where people fall short, what the consequence is. 120-140 words.]</p>
-<p><strong>How to prevent it:</strong> [Specific technical or administrative safeguard. 80-100 words.]</p>
+<h3>[Risk 2: Commercial/Strategic — The risk that kills the ROI]</h3>
+<p>[The hidden mechanism that erodes value. 100-120 words.]</p>
+<p><strong>Prevention:</strong> [One specific commercial safeguard. 50-70 words.]</p>
 
-<h3>[Risk 3: Commercial/Strategic — a risk that kills the business case for {topic}]</h3>
-<p>[How this risk emerges, often late in the process, and why it is hard to see coming. 120-140 words.]</p>
-<p><strong>How to prevent it:</strong> [Specific commercial safeguard. 80-100 words.]</p>
+<blockquote><strong>The Critical Oversight:</strong> [The single most underestimated risk in {topic}. 3-4 punchy sentences. 70-90 words.]</blockquote>
 
-<blockquote><strong>The risk most people skip:</strong> [Name the single most underestimated risk in {topic} and why it gets ignored by the industry. 4-5 sentences. 100-120 words.]</blockquote>
-
-BANNED: Generic risks like "budget overrun" or "timeline slippage" without specific causes tied to {topic}.
+BANNED: Generic risks like "budget", "timelines", or "communication". No repetitive "XX.X%" statistics.
 Output: raw HTML only.""",
 
 "implementation_roadmap": """\
@@ -867,10 +863,10 @@ class GroqClient:
             "CRITICAL QUALITY RULES:\n"
             f"1. NO PLACEHOLDERS: Never use 'hhhh', 'test', or any filler. Infer deeply relevant content based on '{topic}'.\n"
             f"2. DEEP SPECIFICITY: Every sentence must be specific to '{topic}' and {audience}. Zero generic business advice.\n"
-            f"3. VALUE DENSITY: Use fewer tokens by eliminating fluff. Every word must add value. Avoid repetitive transitions.\n"
+            f"3. VALUE DENSITY: Use fewer tokens by eliminating fluff. Every word must add value. Avoid repetitive transitions or 'filler' paragraphs.\n"
             f"4. AUDIENCE-CENTRIC: Address {audience} segments by name. Show how {topic} impacts them differently.\n"
             f"5. PAIN POINT INTEGRATION: Weave these pain points into the narrative: {pain_points}.\n"
-            "6. CREDIBLE DATA: Use realistic statistics with specific numbers and units (e.g., '34.2% reduction').\n"
+            "6. VARIED EVIDENCE: Avoid repetitive 'XX.X%' statistics. Use varied proof: market signals, specific technical constraints, or relative performance metrics.\n"
             "7. RAW HTML ONLY: Use <h3>, <p>, <strong>, <ul>/<li>, and <blockquote>. No markdown.\n"
             "8. COMPLETION: Sections must end with a full, impactful thought. NEVER truncate.\n"
             "9. NO IMAGES: Do not include any <img> tags."
@@ -887,11 +883,10 @@ class GroqClient:
             image_slot = SECTION_IMAGE_MAP.get(key)
             has_image = bool(firm_profile.get(image_slot)) if image_slot else False
             
-            # To fill more than half of the new page (spilling), we target ~1000-1200 words.
+            # Reduce word count to avoid over-dense pages and repetition.
             # A4 page with 14.5px font: ~450 words per page.
-            # 1.5 pages = ~675 words. 2 pages = ~900 words.
-            # We'll target 900-1100 words to ensure it spills and fills a good portion of the 2nd page.
-            target_words = "700-800" if has_image else "900-1100"
+            # We target ~1.2 to 1.5 pages per section to ensure flow without bloat.
+            target_words = "450-550" if has_image else "600-750"
             if has_image:
                 logger.info(f"  🖼️ Section {key} has an image. Adjusting target to {target_words} words.")
 
