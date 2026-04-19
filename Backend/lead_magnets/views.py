@@ -428,7 +428,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     
                     return f"""
                         <div class="page content-page">
-                            <div style="display:none;">
+                            <div class="string-container">
                                 <span class="page-header-kicker">{kicker}</span>
                                 <div class="page-header-title">{title}</div>
                             </div>
@@ -465,6 +465,10 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     # We'll use a simple regex to split by common tags
                     chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>|<blockquote.*?>.*?</blockquote>)', section_html, flags=re.DOTALL)
                     chunks = [c.strip() for c in chunks if c.strip()]
+                    
+                    if not chunks and section_html.strip():
+                        # Fallback: if no tags found but there is text, treat it as one chunk
+                        chunks = [section_html.strip()]
                     
                     for chunk in chunks:
                         chunk_len = len(re.sub('<[^<]+?>', '', chunk)) # Strip HTML for length estimation
@@ -549,6 +553,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             }
             
             sections_html_list = []
+            toc_html_list = []
             page_count = 4
             for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
                 num_str = str(idx + 1).zfill(2)
@@ -564,7 +569,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
 
                 sections_html_list.append(f"""
                     <div class="page content-page">
-                        <div style="display:none;">
+                        <div class="string-container">
                             <span class="page-header-kicker">{dkicker}</span>
                             <div class="page-header-title">{dlabel}</div>
                         </div>

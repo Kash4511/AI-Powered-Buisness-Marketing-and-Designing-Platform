@@ -34,71 +34,103 @@
             width: 100%;
         }
 
-        /* ── PAGE NUMBERING & RUNNING ELEMENTS ── */
+        /* ── PAGE DEFAULTS ── */
         @page {
             size: A4;
-            margin: 25mm 18mm 25mm; /* Standard margins for professional document flow */
-            
-            @top-center {
-                content: element(header);
-            }
-            @bottom-center {
-                content: element(footer);
-            }
+            margin: 0;
+        }
+
+        /* Hide running elements on cover page explicitly */
+        @page:first {
+            @top-center { content: none !important; }
+            @bottom-center { content: none !important; }
+        }
+
+        .book {
+            width: 210mm;
+            margin: 0 auto;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            background: #ffffff;
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+
+        /* Cover should have no margins and special background */
+        .page.cover {
+            padding: 0;
+        }
+
+        .content-page {
+            padding: 28mm 18mm 25mm; /* Apply margins as padding */
+        }
+
+        /* ── RUNNING HEADER/FOOTER ── */
+        @page {
+            @top-center { content: element(header); }
+            @bottom-center { content: element(footer); }
         }
 
         #running-header {
             position: running(header);
-            width: 100%;
+            display: block;
+            width: 210mm;
             height: 15mm;
             background: var(--primary);
-            padding: 0 5mm;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            color: #ffffff;
             border-bottom: 3px solid var(--secondary);
-            z-index: 1000;
+            padding: 0 18mm;
+            box-sizing: border-box;
         }
 
         #running-footer {
             position: running(footer);
-            width: 100%;
+            display: block;
+            width: 210mm;
             height: 12mm;
             background: var(--primary);
-            padding: 0 5mm;
+            color: #ffffff;
+            border-top: 2px solid var(--secondary);
+            padding: 0 18mm;
+            box-sizing: border-box;
+        }
+        
+        .page-header-left {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .page-footer-inner {
+            height: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-top: 2px solid var(--secondary);
-            z-index: 1000;
         }
 
-        /* Running Title Logic */
+        /* Dynamic Title Logic */
         .page-header-title { string-set: section-title content(); }
         .page-header-kicker { string-set: section-kicker content(); }
 
         .running-title-text::after { content: string(section-title); }
         .running-kicker-text::after { content: string(section-kicker); }
 
-        /* Hide running elements on cover and back-cover */
-        @page:first { margin: 0; @top-center { content: none; } @bottom-center { content: none; } }
-        .cover, .back-cover { page-break-before: always; page-break-after: always; }
-
-        .book { width: 100%; max-width: 100%; }
-
-        /* CONTENT PAGES: Removed fixed heights and widths to allow natural breaking */
-        .page {
-            background: var(--white);
-            position: relative;
-            padding: 0;
-            margin: 0;
-            overflow: visible; /* Ensure content can overflow and trigger page breaks */
-            display: block;
-        }
-
-        .content-page {
-            page-break-before: always;
-            page-break-inside: auto; /* Allow content to split across pages */
+        /* Hidden source for strings */
+        .string-container {
+            position: absolute;
+            top: -100px;
+            left: 0;
+            visibility: hidden;
+            height: 0;
+            width: 100%;
+            overflow: hidden;
         }
 
         .page-body {
@@ -632,7 +664,7 @@
 
 <!-- PAGE 2 — TERMS -->
 <div class="page content-page">
-    <div style="display:none;">
+    <div class="string-container">
         <span class="page-header-kicker">Legal</span>
         <div class="page-header-title">Terms & Disclaimer</div>
     </div>
@@ -647,12 +679,13 @@
 </div>
 
 <!-- PAGE 3 — TABLE OF CONTENTS -->
-<div class="page content-page">
-    <div style="display:none;">
-        <span class="page-header-kicker">Navigation</span>
-        <div class="page-header-title">Table of Contents</div>
-    </div>
-    <div class="page-body">
+    <div class="page content-page">
+        <div class="string-container">
+            <span class="page-header-kicker">Navigation</span>
+            <div class="page-header-title">Table of Contents</div>
+        </div>
+
+        <div class="page-body">
         <div style="margin-bottom:16px; margin-top:4px;"><div class="section-headline" style="font-size:20px;">{{contentsTitle}}</div></div>
         {{toc_html}}
         <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">
