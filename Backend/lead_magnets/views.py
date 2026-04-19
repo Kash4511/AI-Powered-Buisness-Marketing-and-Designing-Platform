@@ -387,68 +387,125 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     template_vars[f"pageNumber{n}"]       = str(n).zfill(2)
                     template_vars[f"pageNumberHeader{n}"] = str(n).zfill(2)
 
-                # ── CONSTRUCT DYNAMIC SECTIONS HTML ───────────────────────────
+                # ── CONSTRUCT DYNAMIC SECTIONS HTML (INTELLIGENT LAYOUT) ──────
                 doc_type = ai_input.get("document_type", "guide")
                 actual_sections = ai_client.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai_client.GUIDE_SECTIONS)
                 
                 sections_html_list = []
                 toc_html_list = []
                 
-                for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
-                    page_num = str(idx + 4).zfill(2)
-                    num_str  = str(idx + 1).zfill(2)
+                # Intelligent Page Layout Constants
+                 MAX_CHARS_PER_PAGE = 3200  # Approx 40 lines of 80 chars
+                 MIN_FILL_RATIO = 0.75
+                 TARGET_CHARS_PER_PAGE = 2800 # Target slightly less to account for headings/spacing
+                
+                current_page_content = []
+                current_page_chars = 0
+                page_count = 4 # Start after Cover, Terms, TOC
+                
+                # Image usage tracking
+                used_image_indices = set()
+                
+                def get_next_image(is_vertical=False):
+                    for i in range(len(architectural_images)):
+                        if i not in used_image_indices:
+                            used_image_indices.add(i)
+                            url = _resolve_image_url(architectural_images[i])
+                            if not url: continue
+                            
+                            # Determine style
+                            if is_vertical:
+                                style = "vertical left" if len(used_image_indices) % 2 == 1 else "vertical right"
+                            else:
+                                style = "horizontal center"
+                            
+                            return f'<div class="img-block {style}"><img src="{url}" alt=""></div>'
+                    return ""
+
+                def create_page_html(content_html, page_num, kicker, title, image_html=""):
+                    num_str = str(page_num - 3).zfill(2) # Section number
+                    display_num = str(page_num).zfill(2)
                     
-                    # 1. TOC Item
-                    toc_html_list.append(f"""
-                        <div class="toc-item">
-                            <span class="toc-num">{num_str}</span><span class="toc-label">{template_vars.get(f"customTitle{idx+1}", dtitle)}</span>
-                            <span class="toc-dots"></span><span class="toc-pg">{page_num}</span>
-                        </div>
-                    """)
-                    
-                    # 2. Section Image
-                    image_url = template_vars.get(f"image_{idx+1}_url")
-                    if not image_url and idx < 6: # Try firm profile if not in template_vars
-                        image_url = firm_profile.get(f"image_{idx+1}_url")
-                    
-                    image_html = ""
-                    if image_url:
-                        # Determine layout based on user's request: 1st/2nd vertical, 3rd horizontal center
-                        if idx == 0:
-                            image_html = f'<div class="img-block vertical left"><img src="{image_url}" alt=""></div>'
-                        elif idx == 1:
-                            image_html = f'<div class="img-block vertical right"><img src="{image_url}" alt=""></div>'
-                        elif idx == 2:
-                            image_html = f'<div class="img-block horizontal center"><img src="{image_url}" alt=""></div>'
-                        else:
-                            image_html = f'<div class="img-block horizontal center"><img src="{image_url}" alt=""></div>'
-                    
-                    # 3. Logo HTML
-                    logo_url = template_vars.get("logoUrl") or firm_profile.get("logo_url")
-                    logo_html = f'<img src="{logo_url}" alt="">' if logo_url else '<div class="footer-logo-inner"></div>'
-                    
-                    # 4. Full Page
-                    sections_html_list.append(f"""
+                    return f"""
                         <div class="page content-page">
                             <div style="display:none;">
-                                <span class="page-header-kicker">{template_vars.get(f"section_{key}_kicker", dkicker)}</span>
-                                <div class="page-header-title">{template_vars.get(f"section_{key}_title", dlabel)}</div>
+                                <span class="page-header-kicker">{kicker}</span>
+                                <div class="page-header-title">{title}</div>
                             </div>
 
                             <div class="page-body">
                                 <div class="section-intro-block">
                                     <div class="section-intro-num">{num_str}</div>
-                                    <div class="section-headline">{template_vars.get(f"customTitle{idx+1}", dtitle)}</div>
+                                    <div class="section-headline">{title}</div>
                                 </div>
                                 
                                 {image_html}
                                 
                                 <div class="section-content">
-                                    {template_vars.get(f"section_{key}_full_html", "")}
+                                    {content_html}
                                 </div>
                             </div>
                         </div>
+                    """
+
+                for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
+                    section_html = template_vars.get(f"section_{key}_full_html", "")
+                    section_title = template_vars.get(f"customTitle{idx+1}", dtitle)
+                    section_kicker = template_vars.get(f"section_{key}_kicker", dkicker)
+                    
+                    # Add to TOC
+                    toc_html_list.append(f"""
+                        <div class="toc-item">
+                            <span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span>
+                            <span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span>
+                        </div>
                     """)
+                    
+                    # Split section content into chunks (paragraphs/headers)
+                     # We'll use a simple regex to split by common tags
+                     chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>|<blockquote.*?>.*?</blockquote>)', section_html, flags=re.DOTALL)
+                     chunks = [c.strip() for c in chunks if c.strip()]
+                    
+                    for chunk in chunks:
+                        chunk_len = len(re.sub('<[^<]+?>', '', chunk)) # Strip HTML for length estimation
+                        
+                        if current_page_chars + chunk_len > TARGET_CHARS_PER_PAGE:
+                            # Page is full. Check fill ratio.
+                            fill_ratio = current_page_chars / MAX_CHARS_PER_PAGE
+                            image_html = ""
+                            
+                            if fill_ratio < MIN_FILL_RATIO:
+                                # Not enough content, add an image to fill gap
+                                image_html = get_next_image(is_vertical=False)
+                            
+                            # Create the page
+                            sections_html_list.append(create_page_html("\n".join(current_page_content), page_count, section_kicker, section_title, image_html))
+                            
+                            # Reset for next page
+                            page_count += 1
+                            current_page_content = [chunk]
+                            current_page_chars = chunk_len
+                        else:
+                            current_page_content.append(chunk)
+                            current_page_chars += chunk_len
+                    
+                    # After finishing a section, if we have content, we might want to start a new page for the next section
+                    # or continue if there's enough space. For now, let's force a new page per section as per original design
+                    # but ensure the current page is "full enough"
+                    if current_page_content:
+                        fill_ratio = current_page_chars / MAX_CHARS_PER_PAGE
+                        image_html = ""
+                        
+                        # Strategically insert image if not full enough or just for visual balance
+                        if fill_ratio < 0.5:
+                            image_html = get_next_image(is_vertical=False)
+                        elif fill_ratio < 0.8:
+                            image_html = get_next_image(is_vertical=True)
+                            
+                        sections_html_list.append(create_page_html("\n".join(current_page_content), page_count, section_kicker, section_title, image_html))
+                        page_count += 1
+                        current_page_content = []
+                        current_page_chars = 0
 
                 template_vars["sections_html"] = "\n".join(sections_html_list)
                 template_vars["toc_html"]      = "\n".join(toc_html_list)
@@ -492,11 +549,25 @@ def _run_generation_job(job_id: str, body: dict, user_id):
             }
             
             sections_html_list = []
+            page_count = 4
             for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
                 num_str = str(idx + 1).zfill(2)
-                page_num = str(idx + 4).zfill(2)
+                page_num = str(page_count).zfill(2)
+                
+                # TOC Item
+                toc_html_list.append(f"""
+                    <div class="toc-item">
+                        <span class="toc-num">{num_str}</span><span class="toc-label">{dtitle}</span>
+                        <span class="toc-dots"></span><span class="toc-pg">{page_num}</span>
+                    </div>
+                """)
+
                 sections_html_list.append(f"""
                     <div class="page content-page">
+                        <div style="display:none;">
+                            <span class="page-header-kicker">{dkicker}</span>
+                            <div class="page-header-title">{dlabel}</div>
+                        </div>
                         <div class="page-body">
                             <div class="section-intro-block">
                                 <div class="section-intro-num">{num_str}</div>
@@ -506,7 +577,9 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                         </div>
                     </div>
                 """)
+                page_count += 1
             template_vars["sections_html"] = "\n".join(sections_html_list)
+            template_vars["toc_html"]      = "\n".join(toc_html_list)
 
         # ── PDF RENDERING ──────────────────────────────────────────────────
         pdf_service = WeasyPrintService()
@@ -881,14 +954,99 @@ class FormaAIConversationView(APIView):
         tvars["emailAddress"] = tvars.get("emailAddress") or firm.get("work_email","")
         tvars["website"]      = tvars.get("website")      or firm.get("firm_website","")
 
-        # Architectural images — only set when non-empty
-        for i, img in enumerate(arch_imgs[:2]):
-            import base64
-            data = base64.b64encode(img.read()).decode("utf-8")
-            ext  = img.name.split(".")[-1].lower()
-            mime = f"image/{ext}" if ext in ("jpg","jpeg","png","gif") else "image/jpeg"
-            tvars[f"image_{i+1}_url"] = f"data:{mime};base64,{data}"
+        # ── INTELLIGENT PAGE LAYOUT FOR CHAT PDF ──────────────────────
+        architectural_images = arch_imgs # For get_next_image helper
+        used_image_indices = set()
+        
+        def get_next_image(is_vertical=False):
+            for i in range(len(architectural_images)):
+                if i not in used_image_indices:
+                    used_image_indices.add(i)
+                    url = architectural_images[i] # In chat view, these are already processed or are files
+                    if not url: continue
+                    
+                    # Convert file to data URI if it's a file
+                    if hasattr(url, 'read'):
+                        import base64
+                        url.seek(0)
+                        data = base64.b64encode(url.read()).decode("utf-8")
+                        ext  = url.name.split(".")[-1].lower()
+                        mime = f"image/{ext}" if ext in ("jpg","jpeg","png","gif") else "image/jpeg"
+                        url = f"data:{mime};base64,{data}"
+                    
+                    style = "vertical left" if len(used_image_indices) % 2 == 1 else "vertical right"
+                    if not is_vertical: style = "horizontal center"
+                    return f'<div class="img-block {style}"><img src="{url}" alt=""></div>'
+            return ""
 
+        def create_page_html(content_html, page_num, kicker, title, image_html=""):
+            num_str = str(page_num - 3).zfill(2)
+            return f"""
+                <div class="page content-page">
+                    <div style="display:none;"><span class="page-header-kicker">{kicker}</span><div class="page-header-title">{title}</div></div>
+                    <div class="page-body">
+                        <div class="section-intro-block">
+                            <div class="section-intro-num">{num_str}</div>
+                            <div class="section-headline">{title}</div>
+                        </div>
+                        {image_html}
+                        <div class="section-content">{content_html}</div>
+                    </div>
+                </div>
+            """
+
+        MAX_CHARS_PER_PAGE = 3200
+         TARGET_CHARS_PER_PAGE = 2800
+         MIN_FILL_RATIO = 0.75
+         sections_html_list = []
+        toc_html_list = []
+        page_count = 4
+
+        for idx, key in enumerate(ai.SECTION_KEYS):
+            content_html = cont.get(key, "")
+            if not content_html: continue
+            
+            section_title = tvars.get(f"customTitle{idx+1}", key.replace("_", " ").title())
+            section_kicker = "AI Analysis"
+            
+            # TOC
+            toc_html_list.append(f"""
+                <div class="toc-item">
+                    <span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span>
+                    <span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span>
+                </div>
+            """)
+            
+            # Simple chunking for chat response
+            chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>)', content_html, flags=re.DOTALL)
+            chunks = [c.strip() for c in chunks if c.strip()]
+            
+            curr_content = []
+            curr_chars = 0
+            
+            for chunk in chunks:
+                 chunk_len = len(re.sub('<[^<]+?>', '', chunk))
+                 if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE:
+                     img = get_next_image(is_vertical=False) if curr_chars / MAX_CHARS_PER_PAGE < MIN_FILL_RATIO else ""
+                     sections_html_list.append(create_page_html("\n".join(curr_content), page_count, section_kicker, section_title, img))
+                    page_count += 1
+                    curr_content = [chunk]
+                    curr_chars = chunk_len
+                else:
+                    curr_content.append(chunk)
+                    curr_chars += chunk_len
+            
+            if curr_content:
+                fill = curr_chars / MAX_CHARS_PER_PAGE
+                img = ""
+                if fill < 0.5: img = get_next_image(is_vertical=False)
+                elif fill < 0.8: img = get_next_image(is_vertical=True)
+                
+                sections_html_list.append(create_page_html("\n".join(curr_content), page_count, section_kicker, section_title, img))
+                page_count += 1
+
+        tvars["sections_html"] = "\n".join(sections_html_list)
+        tvars["toc_html"]      = "\n".join(toc_html_list)
         title = tvars.get("mainTitle") or "Generated Document"
         conv.messages.append({"role":"assistant","content":f"Generated: {title}."})
         conv.save()

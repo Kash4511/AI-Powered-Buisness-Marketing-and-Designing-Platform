@@ -418,61 +418,95 @@
             clear: none; /* Allow text/lists to wrap around images */
         }
 
-        /* ── IMAGE BLOCKS ── */
+        /* ── IMAGE BLOCKS (Intelligent Design) ── */
         .img-block {
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            margin: 14px 0;
+            margin: 24px 0;
             display: block;
             break-inside: avoid;
             background: #ffffff;
-            border: 1px solid rgba(0,0,0,0.06);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.07), 0 4px 10px rgba(0,0,0,0.03);
             max-width: 100%; 
-            clear: both; /* Default to clear to prevent overlap with preceding content */
+            clear: both;
+            position: relative;
+        }
+
+        /* Subtle overlay for better integration */
+        .img-block::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 16px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+            pointer-events: none;
         }
 
         .img-block.vertical {
-            width: 38%; /* Slightly wider for better presence */
+            width: 42%; 
             height: auto;
-            clear: none; /* Allow text to flow next to vertical images */
+            clear: none;
         }
         .img-block.vertical img {
             width: 100%;
-            height: 240px; /* Reduced height to ensure it fits with text */
+            height: 320px; 
             object-fit: cover;
-            object-position: center top; 
+            object-position: center center; 
             display: block;
+            transition: transform 0.3s ease;
         }
 
         .img-block.horizontal {
             width: 100%;
             max-width: 100%;
-            margin: 18px 0;
-            clear: both; /* Horizontal images always break the flow */
+            margin: 32px 0;
+            clear: both;
         }
         .img-block.horizontal img {
             width: 100%;
-            height: 220px; 
+            height: 280px; 
             object-fit: cover;
+            object-position: center center;
             display: block;
         }
 
         .img-block.left {
             float: left;
-            margin: 4px 18px 12px 0;
+            margin: 8px 24px 20px 0;
             clear: left; 
+            border-left: 4px solid var(--secondary);
         }
         .img-block.right {
             float: right;
-            margin: 4px 0 12px 18px;
+            margin: 8px 0 20px 24px;
             clear: right;
+            border-right: 4px solid var(--secondary);
         }
         .img-block.center {
             text-align: center;
-            margin: 24px auto;
+            margin: 36px auto;
             clear: both;
             float: none;
+            border-bottom: 4px solid var(--secondary);
+        }
+
+        /* Image Placeholder Text/Icon (if no image or for better UI) */
+        .img-block img:not([src]), .img-block img[src=""] {
+            display: none;
+        }
+        .img-block:empty::before {
+            content: "Architectural Vision";
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            background: var(--light);
+            color: var(--text-light);
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         /* FIX: All img tags inside blocks must be fully contained */
