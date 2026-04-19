@@ -395,9 +395,9 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 toc_html_list = []
                 
                 # Intelligent Page Layout Constants
-                 MAX_CHARS_PER_PAGE = 3200  # Approx 40 lines of 80 chars
-                 MIN_FILL_RATIO = 0.75
-                 TARGET_CHARS_PER_PAGE = 2800 # Target slightly less to account for headings/spacing
+                MAX_CHARS_PER_PAGE = 3200  # Approx 40 lines of 80 chars
+                MIN_FILL_RATIO = 0.75
+                TARGET_CHARS_PER_PAGE = 2800 # Target slightly less to account for headings/spacing
                 
                 current_page_content = []
                 current_page_chars = 0
@@ -462,9 +462,9 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     """)
                     
                     # Split section content into chunks (paragraphs/headers)
-                     # We'll use a simple regex to split by common tags
-                     chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>|<blockquote.*?>.*?</blockquote>)', section_html, flags=re.DOTALL)
-                     chunks = [c.strip() for c in chunks if c.strip()]
+                    # We'll use a simple regex to split by common tags
+                    chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>|<blockquote.*?>.*?</blockquote>)', section_html, flags=re.DOTALL)
+                    chunks = [c.strip() for c in chunks if c.strip()]
                     
                     for chunk in chunks:
                         chunk_len = len(re.sub('<[^<]+?>', '', chunk)) # Strip HTML for length estimation
@@ -996,9 +996,9 @@ class FormaAIConversationView(APIView):
             """
 
         MAX_CHARS_PER_PAGE = 3200
-         TARGET_CHARS_PER_PAGE = 2800
-         MIN_FILL_RATIO = 0.75
-         sections_html_list = []
+        TARGET_CHARS_PER_PAGE = 2800
+        MIN_FILL_RATIO = 0.75
+        sections_html_list = []
         toc_html_list = []
         page_count = 4
 
@@ -1025,10 +1025,10 @@ class FormaAIConversationView(APIView):
             curr_chars = 0
             
             for chunk in chunks:
-                 chunk_len = len(re.sub('<[^<]+?>', '', chunk))
-                 if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE:
-                     img = get_next_image(is_vertical=False) if curr_chars / MAX_CHARS_PER_PAGE < MIN_FILL_RATIO else ""
-                     sections_html_list.append(create_page_html("\n".join(curr_content), page_count, section_kicker, section_title, img))
+                chunk_len = len(re.sub('<[^<]+?>', '', chunk))
+                if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE:
+                    img = get_next_image(is_vertical=False) if curr_chars / MAX_CHARS_PER_PAGE < MIN_FILL_RATIO else ""
+                    sections_html_list.append(create_page_html("\n".join(curr_content), page_count, section_kicker, section_title, img))
                     page_count += 1
                     curr_content = [chunk]
                     curr_chars = chunk_len
