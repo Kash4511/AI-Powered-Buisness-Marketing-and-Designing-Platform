@@ -395,13 +395,13 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 toc_html_list = []
                 
                 # Intelligent Page Layout Constants
-                MAX_CHARS_PER_PAGE = 3200  # Approx 40 lines of 80 chars
+                MAX_CHARS_PER_PAGE = 3200
                 MIN_FILL_RATIO = 0.75
-                TARGET_CHARS_PER_PAGE = 2800 # Target slightly less to account for headings/spacing
+                TARGET_CHARS_PER_PAGE = 2800
                 
                 current_page_content = []
                 current_page_chars = 0
-                page_count = 4 # Start after Cover, Terms, TOC
+                page_count = 4
                 
                 # Image usage tracking
                 used_image_indices = set()

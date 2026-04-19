@@ -108,6 +108,15 @@ DATABASE_URL = (
 )
 
 if DATABASE_URL:
+    # 🚀 SUPABASE POOLER FIX:
+    # If using Supabase pooler (pooler.supabase.com) and username is just 'postgres',
+    # we need to append the project ref to the username: 'postgres.PROJECT_REF'
+    # We try to find PROJECT_REF in env vars if it's not in the URL.
+    project_ref = os.getenv("SUPABASE_PROJECT_REF") or os.getenv("SUPABASE_PROJECT_ID")
+    if project_ref and "pooler.supabase.com" in DATABASE_URL and "postgres:" in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.replace("postgres:", f"postgres.{project_ref}:")
+        print(f"🔧 Auto-patched DATABASE_URL with project ref: {project_ref}")
+
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -118,6 +127,14 @@ if DATABASE_URL:
     if 'OPTIONS' not in DATABASES['default']:
         DATABASES['default']['OPTIONS'] = {}
     DATABASES['default']['OPTIONS']['sslmode'] = os.getenv("POSTGRES_SSLMODE", "require")
+    
+    # Extra diagnostic for Supabase errors
+    db_host = DATABASES['default'].get('HOST', '')
+    db_user = DATABASES['default'].get('USER', '')
+    if "pooler.supabase.com" in db_host and "." not in db_user:
+        print("⚠️ WARNING: You are connecting to Supabase Pooler but your username does not contain a project reference.")
+        print("⚠️ This will likely cause 'FATAL: Tenant or user not found'.")
+        print("⚠️ Fix: Change your username to 'postgres.YOUR_PROJECT_REF' in the connection string.")
 else:
     POSTGRES_DB       = os.getenv("POSTGRES_DB")
     POSTGRES_USER     = os.getenv("POSTGRES_USER")
