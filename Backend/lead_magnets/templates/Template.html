@@ -37,7 +37,7 @@
         /* ── PAGE DEFAULTS ── */
         @page {
             size: A4;
-            margin: 32mm 18mm 28mm; /* Reserved space for header (32mm) and footer (28mm) */
+            margin: 22mm 18mm 18mm; /* Reduced to match header (22mm) and footer (18mm) heights exactly */
             
             @top-center {
                 content: element(header);
@@ -78,7 +78,7 @@
         }
 
         .content-page {
-            padding: 0; /* Margins are now handled by @page */
+            padding: 8mm 0 4mm; /* Added controlled breathing room below header and above footer */
         }
 
         /* ── RUNNING HEADER/FOOTER ── */
@@ -88,7 +88,7 @@
             justify-content: space-between;
             align-items: center;
             width: 210mm;
-            height: 22mm; /* Substantially thicker as requested */
+            height: 22mm; 
             background: var(--primary);
             color: #ffffff;
             border-bottom: 6px solid var(--secondary);
@@ -102,7 +102,7 @@
             justify-content: space-between;
             align-items: center;
             width: 210mm;
-            height: 18mm; /* Substantially thicker as requested */
+            height: 18mm; 
             background: var(--primary);
             color: #ffffff;
             border-top: 5px solid var(--secondary);
@@ -115,6 +115,15 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            flex: 1;
+        }
+
+        .page-header-right {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
         .page-header-bar {
@@ -139,7 +148,7 @@
         }
 
         .footer-logo {
-            width: 32px; height: 32px; /* Slightly larger logo */
+            width: 32px; height: 32px; 
             background: white;
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
@@ -153,6 +162,9 @@
 
         .running-title-text::after { content: string(section-title); }
         .running-kicker-text::after { content: string(section-kicker); }
+        
+        /* Page Numbering Logic */
+        .page-number::after { content: "Page " counter(page) " of " counter(pages); }
 
         /* Hidden source for strings */
         .string-container {
@@ -166,7 +178,7 @@
         }
 
         .page-body {
-            padding: 5mm 0; /* Vertical spacing only, side margins handled by @page */
+            padding: 0; /* Gaps removed, spacing handled by page margins */
             overflow: visible;
             display: block;
             clear: both;
@@ -545,7 +557,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 10mm 14mm;
+            padding: 0; /* Handled by .content-page and @page margins */
         }
         .terms-body { 
             text-align: center; 
@@ -585,6 +597,9 @@
             <span class="page-header-kicker running-kicker-text"></span>
             <div class="page-header-title running-title-text"></div>
         </div>
+    </div>
+    <div class="page-header-right">
+        <span class="page-number"></span>
     </div>
 </div>
 
