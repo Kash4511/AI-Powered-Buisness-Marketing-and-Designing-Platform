@@ -37,15 +37,15 @@
         /* ── PAGE DEFAULTS ── */
         @page {
             size: A4;
-            margin: 22mm 18mm 18mm; /* Reduced to match header (22mm) and footer (18mm) heights exactly */
+            margin: 22mm 18mm 18mm; /* Reserved space for header (22mm) and footer (18mm) */
             
             @top-center {
                 content: element(header);
-                width: 210mm;
+                width: 100%;
             }
             @bottom-center {
                 content: element(footer);
-                width: 210mm;
+                width: 100%;
             }
         }
 
@@ -57,13 +57,15 @@
         }
 
         .book {
-            width: 210mm;
+            width: 100%;
+            max-width: 210mm;
             margin: 0 auto;
         }
 
         .page {
-            width: 210mm;
-            height: 297mm;
+            width: 100%;
+            height: 100%;
+            min-height: 297mm;
             position: relative;
             overflow: hidden;
             box-sizing: border-box;
@@ -87,12 +89,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 210mm;
+            width: 100%;
             height: 22mm; 
             background: var(--primary);
             color: #ffffff;
             border-bottom: 6px solid var(--secondary);
-            padding: 0 18mm;
+            padding: 0 10mm;
             box-sizing: border-box;
         }
 
@@ -101,12 +103,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 210mm;
+            width: 100%;
             height: 18mm; 
             background: var(--primary);
             color: #ffffff;
             border-top: 5px solid var(--secondary);
-            padding: 0 18mm;
+            padding: 0 10mm;
             box-sizing: border-box;
         }
         
