@@ -155,36 +155,54 @@ class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        ulm  = LeadMagnet.objects.filter(owner=user)
-        
-        # Calculate real AI Credit stats from PDFGenerationJob
-        total_credits = 1000000
-        from django.db.models import Sum
-        # Count tokens from ALL jobs associated with the user, regardless of status
-        # This ensures failed jobs are also deducted from the balance
-        used_credits = PDFGenerationJob.objects.filter(
-            lead_magnet__owner=user
-        ).aggregate(Sum('tokens_used'))['tokens_used__sum'] or 0
-        
-        remaining_credits = max(0, total_credits - used_credits)
+        try:
+            user = request.user
+            ulm  = LeadMagnet.objects.filter(owner=user)
+            
+            # Calculate real AI Credit stats from PDFGenerationJob
+            total_credits = 10000000
+            if user.is_superuser:
+                total_credits = 999999999
+                
+            from django.db.models import Sum
+            # Count tokens from ALL jobs associated with the user, regardless of status
+            used_credits = PDFGenerationJob.objects.filter(
+                lead_magnet__owner=user
+            ).aggregate(Sum('tokens_used'))['tokens_used__sum'] or 0
+            
+            remaining_credits = max(0, total_credits - used_credits)
 
-        return Response(DashboardStatsSerializer({
-            "total_lead_magnets":  ulm.count(),
-            "active_lead_magnets": ulm.filter(Q(status="completed") | Q(status="in-progress")).count(),
-            "total_downloads":     Download.objects.filter(lead_magnet__owner=user).count(),
-            "leads_generated":     Lead.objects.filter(lead_magnet__owner=user).count(),
-            "ai_credits":          total_credits,
-            "ai_credits_used":     used_credits,
-            "ai_credits_remaining": remaining_credits,
-        }).data)
+            return Response(DashboardStatsSerializer({
+                "total_lead_magnets":  ulm.count(),
+                "active_lead_magnets": ulm.filter(Q(status="completed") | Q(status="in-progress")).count(),
+                "total_downloads":     Download.objects.filter(lead_magnet__owner=user).count(),
+                "leads_generated":     Lead.objects.filter(lead_magnet__owner=user).count(),
+                "ai_credits":          total_credits,
+                "ai_credits_used":     used_credits,
+                "ai_credits_remaining": remaining_credits,
+            }).data)
+        except Exception as e:
+            logger.error(f"❌ [STATS ERROR] {user.email if 'user' in locals() else 'unknown'}: {e}\n{traceback.format_exc()}")
+            return Response({"error":"Failed to fetch dashboard stats","details":str(e)}, status=500)
 
 
 class LeadMagnetListCreateView(generics.ListCreateAPIView):
     serializer_class   = LeadMagnetSerializer
     permission_classes = [permissions.IsAuthenticated]
-    def get_queryset(self): return LeadMagnet.objects.filter(owner=self.request.user)
-    def perform_create(self, s): s.save(owner=self.request.user)
+    
+    def get_queryset(self): 
+        try:
+            return LeadMagnet.objects.filter(owner=self.request.user)
+        except Exception as e:
+            logger.error(f"❌ [LM LIST ERROR] {self.request.user.email}: {e}\n{traceback.format_exc()}")
+            raise
+            
+    def perform_create(self, s): 
+        try:
+            s.save(owner=self.request.user)
+        except Exception as e:
+            logger.error(f"❌ [LM CREATE ERROR] {self.request.user.email}: {e}\n{traceback.format_exc()}")
+            raise
 
 
 class LeadMagnetDetailView(generics.RetrieveUpdateDestroyAPIView):
