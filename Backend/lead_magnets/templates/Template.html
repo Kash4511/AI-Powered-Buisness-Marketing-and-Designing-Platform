@@ -37,15 +37,17 @@
         /* ── PAGE DEFAULTS ── */
         @page {
             size: A4;
-            margin: 22mm 18mm 18mm; /* Reserved space for header (22mm) and footer (18mm) */
+            margin: 22mm 18mm 18mm; 
             
             @top-center {
                 content: element(header);
                 width: 100%;
+                vertical-align: top; /* Flush to top */
             }
             @bottom-center {
                 content: element(footer);
                 width: 100%;
+                vertical-align: bottom; /* Flush to bottom */
             }
         }
 
@@ -80,11 +82,11 @@
         }
 
         .content-page {
-            padding: 8mm 0 4mm; /* Added controlled breathing room below header and above footer */
+            padding: 0; /* Gaps removed for true flush layout */
         }
 
         /* ── RUNNING HEADER/FOOTER ── */
-        #running-header {
+        header#running-header {
             position: running(header);
             display: flex;
             justify-content: space-between;
@@ -98,7 +100,7 @@
             box-sizing: border-box;
         }
 
-        #running-footer {
+        footer#running-footer {
             position: running(footer);
             display: flex;
             justify-content: space-between;
@@ -126,6 +128,9 @@
             color: rgba(255,255,255,0.7);
             letter-spacing: 1px;
             text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .page-header-bar {
@@ -156,6 +161,20 @@
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
             flex-shrink: 0;
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 10px;
+            margin-left: 15px;
+            opacity: 0.6;
+        }
+        .footer-social-icon {
+            width: 14px;
+            height: 14px;
+            border: 1px solid white;
+            border-radius: 3px;
+            display: inline-block;
         }
 
         /* Dynamic Title Logic */
@@ -592,28 +611,33 @@
 </head>
 <body>
 <!-- RUNNING HEADER/FOOTER (Repeats on every page except cover) -->
-<div id="running-header">
+<header id="running-header" role="banner" aria-label="Document Header">
     <div class="page-header-left">
-        <div class="page-header-bar"></div>
+        <div class="page-header-bar" aria-hidden="true"></div>
         <div>
             <span class="page-header-kicker running-kicker-text"></span>
             <div class="page-header-title running-title-text"></div>
         </div>
     </div>
     <div class="page-header-right">
-        <span class="page-number"></span>
+        <span class="page-number" aria-label="Page number"></span>
     </div>
-</div>
+</header>
 
-<div id="running-footer">
+<footer id="running-footer" role="contentinfo" aria-label="Document Footer">
     <div class="footer-left">
         <div class="footer-logo">
-            {{#if logoUrl}}<img src="{{logoUrl}}" alt="">{{else}}<div class="footer-logo-inner"></div>{{/if}}
+            {{#if logoUrl}}<img src="{{logoUrl}}" alt="{{companyName}} Logo">{{else}}<div class="footer-logo-inner" aria-hidden="true"></div>{{/if}}
         </div>
         <span class="footer-company">{{companyName}}</span>
+        <div class="footer-socials" aria-label="Social media links">
+            <span class="footer-social-icon" aria-hidden="true"></span>
+            <span class="footer-social-icon" aria-hidden="true"></span>
+            <span class="footer-social-icon" aria-hidden="true"></span>
+        </div>
     </div>
-    <span class="footer-right">{{website}}</span>
-</div>
+    <span class="footer-right" aria-label="Company website">{{website}}</span>
+</footer>
 
 <div class="book">
 
