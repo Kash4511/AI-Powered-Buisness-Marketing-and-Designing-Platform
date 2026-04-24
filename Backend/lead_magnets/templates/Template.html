@@ -37,17 +37,17 @@
         /* ── PAGE DEFAULTS ── */
         @page {
             size: A4;
-            margin: 22mm 18mm 18mm; 
+            margin: 22mm 0 18mm; /* Side margins set to 0 to allow full-width header/footer bars */
             
             @top-center {
                 content: element(header);
                 width: 100%;
-                vertical-align: top; /* Flush to top */
+                vertical-align: top;
             }
             @bottom-center {
                 content: element(footer);
                 width: 100%;
-                vertical-align: bottom; /* Flush to bottom */
+                vertical-align: bottom;
             }
         }
 
@@ -82,7 +82,7 @@
         }
 
         .content-page {
-            padding: 0; /* Gaps removed for true flush layout */
+            padding: 8mm 18mm 4mm; /* Re-applied 18mm side margins as padding for content safety */
         }
 
         /* ── RUNNING HEADER/FOOTER ── */
@@ -441,6 +441,8 @@
         .section-content p, .section-content ul {
             margin-bottom: 12px;
             clear: none; /* Allow text/lists to wrap around images */
+            orphans: 3; /* Minimum lines at bottom of page */
+            widows: 3;  /* Minimum lines at top of next page */
         }
 
         /* ── IMAGE BLOCKS (Intelligent Design) ── */

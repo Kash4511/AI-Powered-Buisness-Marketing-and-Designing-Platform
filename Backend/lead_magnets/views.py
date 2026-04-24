@@ -470,16 +470,23 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                         # Fallback: if no tags found but there is text, treat it as one chunk
                         chunks = [section_html.strip()]
                     
-                    for chunk in chunks:
+                    # Smart Pagination & Content Fitting
+                    for c_idx, chunk in enumerate(chunks):
                         chunk_len = len(re.sub('<[^<]+?>', '', chunk)) # Strip HTML for length estimation
+                        is_last_chunk = (c_idx == len(chunks) - 1)
                         
-                        if current_page_chars + chunk_len > TARGET_CHARS_PER_PAGE:
-                            # Page is full. Check fill ratio.
+                        # "Smart Squeeze": If this chunk causes overflow but it's the last one,
+                        # and the overflow is minor (<15% of page), squeeze it in.
+                        overflow_chars = (current_page_chars + chunk_len) - TARGET_CHARS_PER_PAGE
+                        can_squeeze = is_last_chunk and overflow_chars < (MAX_CHARS_PER_PAGE - TARGET_CHARS_PER_PAGE)
+                        
+                        if current_page_chars + chunk_len > TARGET_CHARS_PER_PAGE and not can_squeeze:
+                            # Page is full. Check fill ratio for image placement.
                             fill_ratio = current_page_chars / MAX_CHARS_PER_PAGE
                             image_html = ""
                             
+                            # Only add image if we have significant space and it's not a "squeezed" page
                             if fill_ratio < MIN_FILL_RATIO:
-                                # Not enough content, add an image to fill gap
                                 image_html = get_next_image(is_vertical=False)
                             
                             # Create the page
@@ -961,9 +968,58 @@ class FormaAIConversationView(APIView):
                 
                 _set_job(jid, status="processing", progress=60, message="Formatting content...")
                 tvars = ai.map_to_template_vars(cont, firm, sig)
+                tvars["companyName"]  = tvars.get("companyName")  or firm.get("firm_name") or "Your Company"
+                tvars["emailAddress"] = tvars.get("emailAddress") or firm.get("work_email","")
+                tvars["website"]      = tvars.get("website")      or firm.get("firm_website","")
+
+                # Smart Pagination & Content Fitting for Chat
+                sections_html_list = []
+                toc_html_list = []
+                page_count = 4
                 
-                # ... (rest of layout logic from below) ...
-                # For brevity in this fix, I'll keep it simple or just use a message
+                # Image usage tracking
+                used_image_indices = set()
+                architectural_images = [] # In chat thread, we'd need to handle files if passed
+
+                def get_next_img(is_vertical=False):
+                    return "" # Placeholder for now as files are tricky in background threads
+
+                for idx, key in enumerate(ai.SECTION_KEYS):
+                    content_html = cont.get(key, "")
+                    if not content_html: continue
+                    section_title = tvars.get(f"customTitle{idx+1}", key.replace("_", " ").title())
+                    
+                    # TOC
+                    toc_html_list.append(f'<div class="toc-item"><span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span><span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span></div>')
+                    
+                    chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>)', content_html, flags=re.DOTALL)
+                    chunks = [c.strip() for c in chunks if c.strip()]
+                    
+                    curr_content = []
+                    curr_chars = 0
+                    
+                    for c_idx, chunk in enumerate(chunks):
+                        chunk_len = len(re.sub('<[^<]+?>', '', chunk))
+                        is_last = (c_idx == len(chunks) - 1)
+                        overflow = (curr_chars + chunk_len) - TARGET_CHARS_PER_PAGE
+                        can_squeeze = is_last and overflow < (MAX_CHARS_PER_PAGE - TARGET_CHARS_PER_PAGE)
+
+                        if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE and not can_squeeze:
+                            img = get_next_img() if curr_chars / MAX_CHARS_PER_PAGE < MIN_FILL_RATIO else ""
+                            sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Analysis", section_title, img))
+                            page_count += 1
+                            curr_content = [chunk]
+                            curr_chars = chunk_len
+                        else:
+                            curr_content.append(chunk)
+                            curr_chars += chunk_len
+                    
+                    if curr_content:
+                        sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Analysis", section_title, ""))
+                        page_count += 1
+
+                tvars["sections_html"] = "\n".join(sections_html_list)
+                tvars["toc_html"]      = "\n".join(toc_html_list)
                 
                 conv.messages.append({"role":"assistant","content":f"AI has generated your document: {tvars.get('mainTitle')}."})
                 conv.save()
