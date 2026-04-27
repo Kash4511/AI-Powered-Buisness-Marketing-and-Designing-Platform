@@ -31,7 +31,7 @@
             color: var(--text);
             font-size: 14.5px;
             line-height: 1.6;
-            width: 100%;
+            width: 210mm;
         }
 
         /* ── PAGE DEFAULTS ── */
@@ -59,20 +59,28 @@
         }
 
         .book {
-            width: 100%;
-            max-width: 210mm;
-            margin: 0 auto;
+            width: 210mm;
+            margin: 0;
+            padding: 0;
         }
 
         .page {
-            width: 100%;
+            width: 210mm;
+            min-height: 297mm;
             position: relative;
             background: #ffffff;
             page-break-after: always;
-            /* Allow page breaks within long sections */
             page-break-inside: auto;
             display: block;
             clear: both;
+            overflow: visible;
+        }
+
+        /* Cover and Back Cover must be exactly one page */
+        .page.cover, .page.back-cover {
+            height: 297mm;
+            page-break-inside: avoid;
+            overflow: hidden;
         }
 
         /* Cover should have no margins and special background */
@@ -81,11 +89,7 @@
         }
 
         .content-page {
-            /* Use margin for side safety so it repeats on broken pages */
-            margin-left: 18mm;
-            margin-right: 18mm;
-            padding-top: 8mm;
-            padding-bottom: 4mm;
+            padding: 8mm 18mm 4mm;
         }
 
         /* ── RUNNING HEADER/FOOTER ── */
@@ -94,7 +98,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
+            width: 210mm; 
             height: 22mm; 
             background: var(--primary);
             color: #ffffff;
@@ -108,7 +112,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
+            width: 210mm; 
             height: 18mm; 
             background: var(--primary);
             color: #ffffff;
@@ -235,11 +239,12 @@
 
         .cover-top-area {
             flex: 1;
-            padding: 25mm 20mm 0;
+            padding: 25mm 20mm 10mm;
             display: flex;
             flex-direction: column;
             position: relative;
             z-index: 2;
+            height: auto;
         }
 
         .cover-logo-row {
@@ -322,7 +327,7 @@
         .cover-bottom-panel {
             background: rgba(255, 255, 255, 0.03);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15mm 20mm;
+            padding: 20mm 20mm;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 30px;
