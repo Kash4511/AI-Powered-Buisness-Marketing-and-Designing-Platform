@@ -37,7 +37,7 @@
         /* ── PAGE DEFAULTS ── */
         @page {
             size: A4;
-            margin: 22mm 0 18mm; /* Side margins set to 0 to allow full-width header/footer bars */
+            margin: 28mm 0 22mm; /* Side margins 0 for full-width header/footer bars */
             
             @top-center {
                 content: element(header);
@@ -66,14 +66,13 @@
 
         .page {
             width: 100%;
-            height: 100%;
-            min-height: 297mm;
             position: relative;
-            overflow: hidden;
-            box-sizing: border-box;
             background: #ffffff;
             page-break-after: always;
-            page-break-inside: avoid;
+            /* Allow page breaks within long sections */
+            page-break-inside: auto;
+            display: block;
+            clear: both;
         }
 
         /* Cover should have no margins and special background */
@@ -82,7 +81,11 @@
         }
 
         .content-page {
-            padding: 8mm 18mm 4mm; /* Re-applied 18mm side margins as padding for content safety */
+            /* Use margin for side safety so it repeats on broken pages */
+            margin-left: 18mm;
+            margin-right: 18mm;
+            padding-top: 8mm;
+            padding-bottom: 4mm;
         }
 
         /* ── RUNNING HEADER/FOOTER ── */
@@ -199,10 +202,12 @@
         }
 
         .page-body {
-            padding: 0; /* Gaps removed, spacing handled by page margins */
+            padding: 0; 
             overflow: visible;
             display: block;
             clear: both;
+            position: relative;
+            width: 100%;
         }
 
         /* ════════════════════════════════════════════════════
@@ -383,6 +388,7 @@
             align-items: flex-start;
             margin-bottom: 14px;
             break-inside: avoid;
+            break-after: avoid; /* Don't break after the headline before content starts */
         }
 
         .section-intro-num {
@@ -441,8 +447,8 @@
         .section-content p, .section-content ul {
             margin-bottom: 12px;
             clear: none; /* Allow text/lists to wrap around images */
-            orphans: 3; /* Minimum lines at bottom of page */
-            widows: 3;  /* Minimum lines at top of next page */
+            orphans: 4; /* Increased for better content containment */
+            widows: 4;  
         }
 
         /* ── IMAGE BLOCKS (Intelligent Design) ── */

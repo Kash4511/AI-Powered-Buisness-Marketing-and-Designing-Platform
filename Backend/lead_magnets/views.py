@@ -415,7 +415,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                 # Intelligent Page Layout Constants
                 MAX_CHARS_PER_PAGE = 3200
                 MIN_FILL_RATIO = 0.75
-                TARGET_CHARS_PER_PAGE = 2800
+                TARGET_CHARS_PER_PAGE = 2600
                 
                 current_page_content = []
                 current_page_chars = 0
@@ -445,7 +445,7 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     display_num = str(page_num).zfill(2)
                     
                     return f"""
-                        <div class="page content-page">
+                        <div class="page content-page" style="clear: both;">
                             <div class="string-container">
                                 <span class="page-header-kicker">{kicker}</span>
                                 <div class="page-header-title">{title}</div>
