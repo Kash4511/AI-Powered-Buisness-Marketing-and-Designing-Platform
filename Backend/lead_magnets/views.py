@@ -405,21 +405,12 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     template_vars[f"pageNumber{n}"]       = str(n).zfill(2)
                     template_vars[f"pageNumberHeader{n}"] = str(n).zfill(2)
 
-                # ── CONSTRUCT DYNAMIC SECTIONS HTML (INTELLIGENT LAYOUT) ──────
+                # ── CONSTRUCT DYNAMIC SECTIONS HTML (NATURAL LAYOUT) ──────
                 doc_type = ai_input.get("document_type", "guide")
                 actual_sections = ai_client.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai_client.GUIDE_SECTIONS)
                 
                 sections_html_list = []
                 toc_html_list = []
-                
-                # Intelligent Page Layout Constants
-                MAX_CHARS_PER_PAGE = 3200
-                MIN_FILL_RATIO = 0.75
-                TARGET_CHARS_PER_PAGE = 2600
-                
-                current_page_content = []
-                current_page_chars = 0
-                page_count = 4
                 
                 # Image usage tracking
                 used_image_indices = set()
@@ -440,12 +431,11 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                             return f'<div class="img-block {style}"><img src="{url}" alt=""></div>'
                     return ""
 
-                def create_page_html(content_html, page_num, kicker, title, image_html=""):
-                    num_str = str(page_num - 3).zfill(2) # Section number
-                    display_num = str(page_num).zfill(2)
+                def create_section_html(content_html, section_idx, kicker, title, image_html=""):
+                    num_str = str(section_idx + 1).zfill(2) # Section number
                     
                     return f"""
-                        <div class="page content-page" style="clear: both;">
+                        <div class="page content-page" id="sec-{section_idx}" style="clear: both;">
                             <div class="string-container">
                                 <span class="page-header-kicker">{kicker}</span>
                                 <div class="page-header-title">{title}</div>
@@ -471,70 +461,19 @@ def _run_generation_job(job_id: str, body: dict, user_id):
                     section_title = template_vars.get(f"customTitle{idx+1}", dtitle)
                     section_kicker = template_vars.get(f"section_{key}_kicker", dkicker)
                     
-                    # Add to TOC
+                    # Add to TOC using target-counter
                     toc_html_list.append(f"""
                         <div class="toc-item">
                             <span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span>
-                            <span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span>
+                            <span class="toc-dots"></span><span class="toc-pg"><a href="#sec-{idx}" class="toc-link" style="text-decoration:none; color:inherit;"></a></span>
                         </div>
                     """)
                     
-                    # Split section content into chunks (paragraphs/headers)
-                    # We'll use a simple regex to split by common tags
-                    chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>|<blockquote.*?>.*?</blockquote>)', section_html, flags=re.DOTALL)
-                    chunks = [c.strip() for c in chunks if c.strip()]
+                    # Strategically insert image
+                    image_html = get_next_image(is_vertical=(idx % 2 == 1))
                     
-                    if not chunks and section_html.strip():
-                        # Fallback: if no tags found but there is text, treat it as one chunk
-                        chunks = [section_html.strip()]
-                    
-                    # Smart Pagination & Content Fitting
-                    for c_idx, chunk in enumerate(chunks):
-                        chunk_len = len(re.sub('<[^<]+?>', '', chunk)) # Strip HTML for length estimation
-                        is_last_chunk = (c_idx == len(chunks) - 1)
-                        
-                        # "Smart Squeeze": If this chunk causes overflow but it's the last one,
-                        # and the overflow is minor (<15% of page), squeeze it in.
-                        overflow_chars = (current_page_chars + chunk_len) - TARGET_CHARS_PER_PAGE
-                        can_squeeze = is_last_chunk and overflow_chars < (MAX_CHARS_PER_PAGE - TARGET_CHARS_PER_PAGE)
-                        
-                        if current_page_chars + chunk_len > TARGET_CHARS_PER_PAGE and not can_squeeze:
-                            # Page is full. Check fill ratio for image placement.
-                            fill_ratio = current_page_chars / MAX_CHARS_PER_PAGE
-                            image_html = ""
-                            
-                            # Only add image if we have significant space and it's not a "squeezed" page
-                            if fill_ratio < MIN_FILL_RATIO:
-                                image_html = get_next_image(is_vertical=False)
-                            
-                            # Create the page
-                            sections_html_list.append(create_page_html("\n".join(current_page_content), page_count, section_kicker, section_title, image_html))
-                            
-                            # Reset for next page
-                            page_count += 1
-                            current_page_content = [chunk]
-                            current_page_chars = chunk_len
-                        else:
-                            current_page_content.append(chunk)
-                            current_page_chars += chunk_len
-                    
-                    # After finishing a section, if we have content, we might want to start a new page for the next section
-                    # or continue if there's enough space. For now, let's force a new page per section as per original design
-                    # but ensure the current page is "full enough"
-                    if current_page_content:
-                        fill_ratio = current_page_chars / MAX_CHARS_PER_PAGE
-                        image_html = ""
-                        
-                        # Strategically insert image if not full enough or just for visual balance
-                        if fill_ratio < 0.5:
-                            image_html = get_next_image(is_vertical=False)
-                        elif fill_ratio < 0.8:
-                            image_html = get_next_image(is_vertical=True)
-                            
-                        sections_html_list.append(create_page_html("\n".join(current_page_content), page_count, section_kicker, section_title, image_html))
-                        page_count += 1
-                        current_page_content = []
-                        current_page_chars = 0
+                    # Pass the entire section and let WeasyPrint naturally paginate it
+                    sections_html_list.append(create_section_html(section_html, idx, section_kicker, section_title, image_html))
 
                 template_vars["sections_html"] = "\n".join(sections_html_list)
                 template_vars["toc_html"]      = "\n".join(toc_html_list)
