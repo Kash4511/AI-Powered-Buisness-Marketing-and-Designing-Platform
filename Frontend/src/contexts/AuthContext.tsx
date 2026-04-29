@@ -57,6 +57,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     checkAuth()
+    
+    const handleAuthExpired = () => {
+      console.log('AuthContext: Token expired, logging out');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      setUser(null);
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => {
+      window.removeEventListener('auth:expired', handleAuthExpired);
+    };
   }, [])
 
   const login = async (email: string, password: string) => {

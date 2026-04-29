@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react'
@@ -18,8 +18,16 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   
-  // Get success message from navigation state
-  const successMessage = location.state?.message
+  // Get success/error message from navigation state
+  const successMessage = location.state?.message && !location.state?.isError ? location.state.message : null
+  const errorMessage = location.state?.message && location.state?.isError ? location.state.message : null
+
+  // Initialize error state with error message from location if present
+  useEffect(() => {
+    if (errorMessage) {
+      setError(errorMessage)
+    }
+  }, [errorMessage])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

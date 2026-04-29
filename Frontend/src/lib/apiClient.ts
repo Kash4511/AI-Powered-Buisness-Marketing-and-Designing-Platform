@@ -120,6 +120,11 @@ apiClient.interceptors.response.use(
     
     if (!canRefresh) {
       console.error(`[API Response Error] ${error.response?.status} ${error.config?.url}`, error.response?.data || error.message);
+      if (error.response?.status === 401 && !isAuthRequest) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+      }
     }
     
     // If error is 401 and we haven't tried to refresh token yet, and it's NOT an auth request
@@ -133,6 +138,7 @@ apiClient.interceptors.response.use(
           // No refresh token, clear tokens and let app routing handle navigation
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          window.dispatchEvent(new CustomEvent('auth:expired'));
           return Promise.reject(error);
         }
         
@@ -157,6 +163,7 @@ apiClient.interceptors.response.use(
         console.error('Token refresh failed:', refreshError.response?.status, refreshError.response?.data);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        window.dispatchEvent(new CustomEvent('auth:expired'));
         return Promise.reject(refreshError);
       }
     }
