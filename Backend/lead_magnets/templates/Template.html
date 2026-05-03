@@ -30,7 +30,7 @@
             margin: 0;
             color: var(--text);
             font-size: 14.5px;
-            line-height: 1.6;
+            line-height: 1.7;
             width: 100%;
         }
 
@@ -417,9 +417,9 @@
             font-size: 24px;
             font-weight: 700;
             color: var(--primary);
-            line-height: 1.2;
-            margin-bottom: 8px;
-            margin-top: 4px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            margin-top: 24px;
         }
         .section-headline::after {
             content: '';
@@ -427,17 +427,18 @@
             width: 36px; height: 3px;
             background: var(--secondary);
             border-radius: 2px;
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
-        .section-content { font-size: 14.5px; line-height: 1.6; color: var(--text); }
+        .section-content { font-size: 14.5px; line-height: 1.7; color: var(--text); }
         .section-content h3 {
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 600;
             color: var(--primary);
-            margin: 12px 0 4px;
-            padding-left: 10px;
+            margin: 28px 0 16px;
+            padding-left: 12px;
             border-left: 3px solid var(--secondary);
+            line-height: 1.5;
             break-after: avoid;
             clear: both;
         }
@@ -445,21 +446,33 @@
         .section-content blockquote {
             border-left: 4px solid var(--secondary);
             background: var(--light);
-            padding: 10px 16px;
+            padding: 12px 18px;
             border-radius: 0 8px 8px 0;
-            margin: 12px 0;
+            margin: 20px 0;
             font-style: italic;
             font-size: 15px;
             color: var(--text-light);
+            line-height: 1.7;
             break-inside: avoid;
             clear: both;
         }
 
         .section-content p, .section-content ul {
-            margin-bottom: 10px;
+            margin-bottom: 18px;
+            line-height: 1.75;
             clear: none;
             orphans: 3;
             widows: 3;  
+        }
+        .section-content ul {
+            padding-left: 20px;
+        }
+        .section-content ul li {
+            margin-bottom: 12px;
+            line-height: 1.75;
+        }
+        .section-content ul li:last-child {
+            margin-bottom: 0;
         }
 
         /* ── IMAGE BLOCKS (Intelligent Design) ── */
