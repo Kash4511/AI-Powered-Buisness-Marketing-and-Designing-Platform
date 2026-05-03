@@ -397,9 +397,9 @@
             display: flex;
             gap: 14px;
             align-items: flex-start;
-            margin-bottom: 14px;
+            margin-bottom: 18px; /* Standardized gap before content */
             break-inside: avoid;
-            break-after: avoid; /* Don't break after the headline before content starts */
+            break-after: avoid;
         }
 
         .section-intro-num {
@@ -418,7 +418,7 @@
             font-weight: 700;
             color: var(--primary);
             line-height: 1.5;
-            margin-bottom: 16px;
+            margin-bottom: 0; /* Remove internal margin to prevent double-spacing */
             margin-top: 24px;
         }
         .section-headline::after {
