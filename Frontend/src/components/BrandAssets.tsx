@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, FileText, Download, Plus, Settings, LogOut, Palette } from 'lucide-react'
+import { ArrowLeft, FileText, Download, Plus, Settings, LogOut, Palette, Upload, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useBrand } from '../contexts/BrandContext'
 import { dashboardApi } from '../lib/dashboardApi'
@@ -54,6 +54,7 @@ const BrandAssets: React.FC = () => {
   const [hasExistingAssets, setHasExistingAssets] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const handleLogout = () => {
     logout()
@@ -88,6 +89,9 @@ const BrandAssets: React.FC = () => {
             preferred_font_style: profile.preferred_font_style || 'no-preference',
             branding_guidelines: profile.branding_guidelines || ''
           });
+          if (profile.logo) {
+            setLogoPreview(typeof profile.logo === 'string' ? profile.logo : null);
+          }
           if (profile.primary_brand_color || profile.branding_guidelines) {
             setHasExistingAssets(true)
           }
@@ -102,9 +106,41 @@ const BrandAssets: React.FC = () => {
     loadBrandAssets()
   }, [])
 
-  const handleInputChange = (field: keyof FirmProfile, value: string | string[]) => {
+  const handleInputChange = (field: keyof FirmProfile, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validation
+    const validTypes = ['image/jpeg', 'image/png', 'image/svg+xml'];
+    if (!validTypes.includes(file.type)) {
+      setFormErrors(['Invalid file type. Please upload JPG, PNG, or SVG.']);
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setFormErrors(['File too large. Maximum size is 2MB.']);
+      return;
+    }
+
+    handleInputChange('logo', file);
+    setFormErrors([]);
+
+    // Preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    handleInputChange('logo', null);
+    setLogoPreview(null);
+  };
 
   const handleSpecialtyToggle = (specialty: string) => {
     const current = formData.industry_specialties || []
@@ -294,6 +330,33 @@ const BrandAssets: React.FC = () => {
               {currentStep === 'firm-profile' && (
                 <div className="form-section">
                   <h2 className="section-title">Firm Information</h2>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Firm Logo</label>
+                    <div className="logo-upload-container">
+                      {logoPreview ? (
+                        <div className="logo-preview-wrapper">
+                          <img src={logoPreview} alt="Logo Preview" className="logo-preview-img" />
+                          <button className="remove-logo-btn" onClick={removeLogo}>
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="logo-upload-placeholder">
+                          <Upload size={24} />
+                          <span>Upload Logo</span>
+                          <input
+                            type="file"
+                            className="hidden-file-input"
+                            onChange={handleLogoChange}
+                            accept=".jpg,.jpeg,.png,.svg"
+                          />
+                        </label>
+                      )}
+                    </div>
+                    <p className="field-description">Supported: JPG, PNG, SVG (Max 2MB). Recommended: 150x50px</p>
+                  </div>
+
                   <div className="form-group">
                     <label className="form-label">Firm Name *</label>
                     <input

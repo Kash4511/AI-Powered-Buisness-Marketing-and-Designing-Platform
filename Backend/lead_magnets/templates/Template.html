@@ -161,30 +161,33 @@
         .footer-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
         }
 
         .footer-logo {
-            width: 32px; height: 32px; 
-            background: white;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
+            width: 150px; 
+            height: 48px; 
+            background: transparent;
+            border-radius: 4px;
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-start;
             overflow: hidden;
             flex-shrink: 0;
         }
 
-        .footer-socials {
-            display: flex;
-            gap: 10px;
-            margin-left: 15px;
-            opacity: 0.6;
+        .footer-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            object-position: left center;
         }
-        .footer-social-icon {
-            width: 14px;
-            height: 14px;
-            border: 1px solid white;
-            border-radius: 3px;
-            display: inline-block;
+
+        .footer-logo-inner {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
         }
 
         /* Dynamic Title Logic */
@@ -415,7 +418,7 @@
             font-weight: 700;
             color: var(--primary);
             line-height: 1.2;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             margin-top: 4px;
         }
         .section-headline::after {
@@ -424,7 +427,7 @@
             width: 36px; height: 3px;
             background: var(--secondary);
             border-radius: 2px;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .section-content { font-size: 14.5px; line-height: 1.6; color: var(--text); }
@@ -432,31 +435,31 @@
             font-size: 17px;
             font-weight: 600;
             color: var(--primary);
-            margin: 14px 0 6px;
+            margin: 12px 0 4px;
             padding-left: 10px;
             border-left: 3px solid var(--secondary);
             break-after: avoid;
-            clear: both; /* Ensure headers don't wrap around images in a messy way */
+            clear: both;
         }
 
         .section-content blockquote {
             border-left: 4px solid var(--secondary);
             background: var(--light);
-            padding: 12px 18px;
+            padding: 10px 16px;
             border-radius: 0 8px 8px 0;
-            margin: 14px 0;
+            margin: 12px 0;
             font-style: italic;
-            font-size: 15.5px;
+            font-size: 15px;
             color: var(--text-light);
             break-inside: avoid;
             clear: both;
         }
 
         .section-content p, .section-content ul {
-            margin-bottom: 12px;
-            clear: none; /* Allow text/lists to wrap around images */
-            orphans: 4; /* Increased for better content containment */
-            widows: 4;  
+            margin-bottom: 10px;
+            clear: none;
+            orphans: 3;
+            widows: 3;  
         }
 
         /* ── IMAGE BLOCKS (Intelligent Design) ── */
@@ -646,11 +649,6 @@
             {{#if logoUrl}}<img src="{{logoUrl}}" alt="{{companyName}} Logo">{{else}}<div class="footer-logo-inner" aria-hidden="true"></div>{{/if}}
         </div>
         <span class="footer-company">{{companyName}}</span>
-        <div class="footer-socials" aria-label="Social media links">
-            <span class="footer-social-icon" aria-hidden="true"></span>
-            <span class="footer-social-icon" aria-hidden="true"></span>
-            <span class="footer-social-icon" aria-hidden="true"></span>
-        </div>
     </div>
     <span class="footer-right" aria-label="Company website">{{website}}</span>
 </footer>

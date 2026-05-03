@@ -200,6 +200,96 @@
   flex: 1;
 }
 
+/* Logo Upload */
+.logo-upload-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.logo-preview-wrapper {
+  position: relative;
+  width: 150px;
+  height: 80px;
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-preview-img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.remove-logo-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-logo-btn:hover {
+  background: rgb(255, 0, 0);
+}
+
+.logo-upload-placeholder {
+  width: 150px;
+  height: 80px;
+  background: #000;
+  border: 2px dashed #333;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #888;
+}
+
+.logo-upload-placeholder:hover {
+  border-color: #2a5766;
+  color: #2a5766;
+  background: rgba(42, 87, 102, 0.05);
+}
+
+.logo-upload-placeholder span {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.error-text {
+  color: #ff4444;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.field-description {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 0.5rem;
+}
+
 /* Form actions */
 .form-actions {
   display: flex;
