@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_project.settings')
 django.setup()
 
 from lead_magnets.models import TemplateSelection, FirmProfile
-from lead_magnets.perplexity_client import PerplexityClient
+from lead_magnets.groq_client import GroqClient
 import json
 
 def main():
@@ -52,7 +52,7 @@ def main():
         'tagline': fp.tagline if fp else '',
     } if fp else {}
     
-    client = PerplexityClient()
+    client = GroqClient()
     template_vars = client.map_to_template_vars(ai_content, firm_profile_dict)
     
     print(f"\n🔍 Template Variables Summary:")

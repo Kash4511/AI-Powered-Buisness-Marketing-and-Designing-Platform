@@ -39,6 +39,7 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if email and password:
+<<<<<<< HEAD
             email_norm = (email or "").strip().lower()
             user = authenticate(username=email_norm, password=password)
             if not user:
@@ -48,11 +49,29 @@ class UserLoginSerializer(serializers.Serializer):
                     user = candidate
                 else:
                     raise serializers.ValidationError('Invalid credentials')
+=======
+            # Normalize email for case-insensitive lookup
+            email = email.lower().strip()
+            print(f"DEBUG: Login validation for email: {email}")
+            user = authenticate(username=email, password=password)
+            print(f"DEBUG: Authenticate result: {user}")
+            
+            if not user:
+                # Log detailed failure for debugging (don't return sensitive info to client)
+                from .models import User
+                user_exists = User.objects.filter(email=email).exists()
+                print(f"DEBUG: User exists check for {email}: {user_exists}")
+                if not user_exists:
+                    raise serializers.ValidationError({'email': ['Account with this email does not exist.']})
+                else:
+                    raise serializers.ValidationError({'password': ['Incorrect password.']})
+                
+>>>>>>> Kaashifs-Branch
             if not user.is_active:
-                raise serializers.ValidationError('User account is disabled')
+                raise serializers.ValidationError({'non_field_errors': ['User account is disabled.']})
             attrs['user'] = user
         else:
-            raise serializers.ValidationError('Must include email and password')
+            raise serializers.ValidationError({'non_field_errors': ['Must include email and password.']})
         return attrs
 
 class UserSerializer(serializers.ModelSerializer):

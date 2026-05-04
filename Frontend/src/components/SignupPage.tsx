@@ -60,20 +60,28 @@ const SignupPage: React.FC = () => {
     } catch (err: unknown) {
       console.error('Signup error:', err)
       const asObj = err as Record<string, unknown>
-      const response = asObj.response as { data?: unknown } | undefined
+      const response = asObj.response as { data?: any } | undefined
       const data = response?.data
+      
       if (data && typeof data === 'object') {
-        const errorData = data as Record<string, unknown>
-        if (Array.isArray(errorData.email) && typeof errorData.email[0] === 'string') {
-          setError(errorData.email[0] as string)
-        } else if (Array.isArray(errorData.password) && typeof errorData.password[0] === 'string') {
-          setError(errorData.password[0] as string)
-        } else if (Array.isArray(errorData.non_field_errors) && typeof errorData.non_field_errors[0] === 'string') {
-          setError(errorData.non_field_errors[0] as string)
-        } else if (typeof errorData.detail === 'string') {
-          setError(errorData.detail as string)
+        // Handle the custom_exception_handler format: { error: string, details: any }
+        const details = data.details || data;
+        
+        if (typeof details === 'string') {
+          setError(details);
+        } else if (typeof details === 'object' && details !== null) {
+          const detailObj = details as Record<string, any>;
+          // Look for common DRF error keys inside details
+          const firstError = 
+            (Array.isArray(detailObj.email) && `Email: ${detailObj.email[0]}`) ||
+            (Array.isArray(detailObj.password) && `Password: ${detailObj.password[0]}`) ||
+            (Array.isArray(detailObj.non_field_errors) && detailObj.non_field_errors[0]) ||
+            detailObj.detail ||
+            data.error ||
+            'Registration failed. Please check your information.';
+          setError(typeof firstError === 'string' ? firstError : 'Registration failed. Please check your information.');
         } else {
-          setError('Registration failed. Please check your information.')
+          setError(data.error || 'Registration failed. Please check your information.');
         }
       } else if (
         (asObj.code === 'ECONNABORTED') ||

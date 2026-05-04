@@ -1,34 +1,47 @@
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
+<<<<<<< HEAD
 from django.core.exceptions import ImproperlyConfigured
+=======
+from corsheaders.defaults import default_headers, default_methods
+>>>>>>> Kaashifs-Branch
 
-# Load environment variables
 try:
     from dotenv import load_dotenv
     env_path = Path(__file__).resolve().parent.parent / '.env'
     if env_path.exists():
         load_dotenv(env_path)
-        print(f"✅ Loaded .env from: {env_path}")
-    else:
-        print(f"⚠️  .env file not found at: {env_path}")
+        print(f"Loaded .env from: {env_path}")
+    elif os.getenv("DEBUG", "false").lower() == "true":
+        # Only show the warning in development/debug mode
+        print(f" .env file not found at: {env_path}")
 except Exception as e:
-    print(f"⚠️ Error loading .env: {e}")
+    if os.getenv("DEBUG", "false").lower() == "true":
+        print(f" Error loading .env: {e}")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+TESTING = 'test' in sys.argv or 'pytest' in sys.argv
 
 # -----------------------------
 # Core Config
 # -----------------------------
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
-DEBUG = os.getenv("DEBUG", "true").lower() == "true"
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
-# IMPORTANT: Render does NOT read .env unless added in dashboard
-# Make sure ALLOWED_HOSTS is set in Render environment settings
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,django-msvx.onrender.com,django-six-gamma.vercel.app"
-).split(",")
+    "localhost,127.0.0.1,django-msvx.onrender.com,django-jrl5.onrender.com,django-8dru.onrender.com"
+).replace(" ", "").split(",")
+
+# Allow all Render and Vercel subdomains so preview branches work automatically
+ALLOWED_HOSTS.append(".onrender.com")
+ALLOWED_HOSTS.append(".vercel.app")
+
+if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(os.getenv("RENDER_EXTERNAL_HOSTNAME"))
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -42,14 +55,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-
     'cloudinary_storage',
     'cloudinary',
-
     'accounts',
     'lead_magnets',
 ]
@@ -60,6 +70,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -71,9 +82,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'django_project.urls'
 
-# -----------------------------
-# Templates
-# -----------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -95,6 +103,7 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # -----------------------------
 # Database
 # -----------------------------
+<<<<<<< HEAD
 # Defaults to SQLite for local development. If Postgres env vars are present,
 # configures Postgres (compatible with Supabase).
 POSTGRES_DB = os.getenv("POSTGRES_DB")
@@ -113,49 +122,100 @@ _db_url_keys = [
     "SUPERBASE_STRING",
 ]
 DATABASE_URL = next((os.getenv(k) for k in _db_url_keys if os.getenv(k)), None)
+=======
+import dj_database_url
 
-if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
+DATABASE_URL = (
+    os.getenv("SUPABASE_DATABASE_URL")
+    or os.getenv("SUPABASE_STRING")
+    or os.getenv("DATABASE_URL")
+)
+
+if DATABASE_URL:
+    # 🚀 SUPABASE POOLER FIX:
+    # If using Supabase pooler (pooler.supabase.com) and username is just 'postgres',
+    # we need to append the project ref to the username: 'postgres.PROJECT_REF'
+    # We try to find PROJECT_REF in env vars if it's not in the URL.
+    project_ref = os.getenv("SUPABASE_PROJECT_REF") or os.getenv("SUPABASE_PROJECT_ID")
+    if project_ref and "pooler.supabase.com" in DATABASE_URL and "postgres:" in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.replace("postgres:", f"postgres.{project_ref}:")
+        print(f"🔧 Auto-patched DATABASE_URL with project ref: {project_ref}")
+>>>>>>> Kaashifs-Branch
+
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': POSTGRES_DB,
-            'USER': POSTGRES_USER,
-            'PASSWORD': POSTGRES_PASSWORD,
-            'HOST': POSTGRES_HOST,
-            'PORT': POSTGRES_PORT,
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {
-                'sslmode': POSTGRES_SSLMODE,
-            },
-        }
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
+<<<<<<< HEAD
 elif DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
     try:
         from urllib.parse import urlparse, parse_qs
         parsed = urlparse(DATABASE_URL)
         qs = parse_qs(parsed.query)
+=======
+    if 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {}
+    DATABASES['default']['OPTIONS']['sslmode'] = os.getenv("POSTGRES_SSLMODE", "require")
+    
+    # Extra diagnostic for Supabase errors
+    db_host = DATABASES['default'].get('HOST', '')
+    db_user = DATABASES['default'].get('USER', '')
+    if "pooler.supabase.com" in db_host and "." not in db_user:
+        print("⚠️ WARNING: You are connecting to Supabase Pooler but your username does not contain a project reference.")
+        print("⚠️ This will likely cause 'FATAL: Tenant or user not found'.")
+        print("⚠️ Fix: Change your username to 'postgres.YOUR_PROJECT_REF' in the connection string.")
+else:
+    POSTGRES_DB       = os.getenv("POSTGRES_DB")
+    POSTGRES_USER     = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_HOST     = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT     = os.getenv("POSTGRES_PORT", "5432")
+
+    if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
+>>>>>>> Kaashifs-Branch
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': parsed.path.lstrip('/'),
-                'USER': parsed.username or '',
-                'PASSWORD': parsed.password or '',
-                'HOST': parsed.hostname or '',
-                'PORT': str(parsed.port or '5432'),
-                'CONN_MAX_AGE': 600,
+                'NAME': POSTGRES_DB,
+                'USER': POSTGRES_USER,
+                'PASSWORD': POSTGRES_PASSWORD,
+                'HOST': POSTGRES_HOST,
+                'PORT': POSTGRES_PORT,
+                'CONN_MAX_AGE': 0 if TESTING else 600,
                 'OPTIONS': {
-                    'sslmode': (qs.get('sslmode', ['require'])[0]),
+                    'sslmode': os.getenv("POSTGRES_SSLMODE", "require"),
                 },
             }
         }
+<<<<<<< HEAD
     except Exception:
         raise ImproperlyConfigured("Invalid DATABASE_URL")
 else:
     raise ImproperlyConfigured("PostgreSQL configuration is required")
+=======
+    else:
+        print("No PostgreSQL configuration found.")
+        if DEBUG or TESTING or 'makemigrations' in sys.argv or 'migrate' in sys.argv:
+            print("Falling back to SQLite for local operations.")
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': BASE_DIR / 'db.sqlite3',
+                }
+            }
+        else:
+            raise Exception("PostgreSQL environment variables are missing.")
+>>>>>>> Kaashifs-Branch
 
 default_db = DATABASES.get('default', {})
-print(f"🔌 DB backend: {default_db.get('ENGINE', '')}")
-print(f"🔌 DB name: {default_db.get('NAME', '')}")
+print(f"DB backend: {default_db.get('ENGINE', '')}")
+if default_db.get('ENGINE') == 'django.db.backends.postgresql':
+    print(f"DB host: {default_db.get('HOST', '')}")
+else:
+    print(f"DB name: {default_db.get('NAME', '')}")
 
 # -----------------------------
 # Password Validation
@@ -167,9 +227,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# -----------------------------
-# Internationalization
-# -----------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -178,8 +235,19 @@ USE_TZ = True
 # -----------------------------
 # Static & Media
 # -----------------------------
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        # CompressedStaticFilesStorage (not Manifest) — avoids ValueError when
+        # staticfiles.json is missing or stale after a fresh deploy.
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -188,11 +256,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Cloudinary
 # -----------------------------
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv("CLOUDINARY_CLOUD_NAME"),
-    'API_KEY': os.getenv("CLOUDINARY_API_KEY"),
-    'API_SECRET': os.getenv("CLOUDINARY_API_SECRET"),
+    'CLOUD_NAME':    os.getenv("CLOUDINARY_CLOUD_NAME"),
+    'API_KEY':       os.getenv("CLOUDINARY_API_KEY"),
+    'API_SECRET':    os.getenv("CLOUDINARY_API_SECRET"),
+    'RESOURCE_TYPES': ['image', 'video', 'raw'],
 }
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 # -----------------------------
 # Authentication
@@ -210,36 +278,54 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME":    timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME":   timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS":    False,
     "BLACKLIST_AFTER_ROTATION": False,
 }
 
 # -----------------------------
 # CORS + CSRF
 # -----------------------------
+<<<<<<< HEAD
+=======
+CORS_ALLOW_ALL_ORIGINS = True
+>>>>>>> Kaashifs-Branch
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://django-six-gamma.vercel.app",
-    "https://django-4muchbxg6-kash4511s-projects.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+# Also keep regexes for safety in some environments
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://django-.*\.vercel\.app$",
+    r"^https://django-.*-kash4511s-projects\.vercel\.app$",
 ]
 
+<<<<<<< HEAD
 # Allow all vercel subdomains for convenience in development/previews
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https:\/\/django-.*\.vercel\.app$",
 ]
 
 CORS_URLS_REGEX = r'^/api/.*$'
+=======
+# Ensure CSRF also trusts the Vercel domains
+CSRF_TRUSTED_ORIGINS = [
+    "https://django-six-gamma.vercel.app",
+    "https://django-msvx.onrender.com",
+    "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
+]
+>>>>>>> Kaashifs-Branch
 
-# Restrict CORS to known frontends for security; do not allow all origins
-CORS_ALLOW_ALL_ORIGINS = False
+# Optional but helps with some older browsers
+CORS_PREFLIGHT_MAX_AGE = 86400
 
-CORS_ALLOW_HEADERS = ["*"]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-requested-with",
+    "content-type",
+    "accept",
+    "origin",
+    "authorization",
+    "x-csrftoken",
+]
 
 CORS_ALLOW_METHODS = [
     "DELETE",
@@ -250,7 +336,14 @@ CORS_ALLOW_METHODS = [
     "PUT",
 ]
 
-# -----------------------------
-# Auto Field
-# -----------------------------
+CSRF_TRUSTED_ORIGINS = [
+    "https://django-six-gamma.vercel.app",
+    "https://django-4muchbxg6-kash4511s-projects.vercel.app",
+    "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
+    "https://django-msvx.onrender.com",
+    "https://django-jrl5.onrender.com",
+    "https://*.vercel.app",
+    "https://*.onrender.com",
+]
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

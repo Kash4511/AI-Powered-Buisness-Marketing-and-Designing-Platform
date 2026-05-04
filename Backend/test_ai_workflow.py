@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Test the full AI content generation workflow with the new Perplexity API key.
-This script tests the actual PerplexityClient class used in the lead magnet generation.
+Test the full AI content generation workflow with the Groq API key.
+This script tests the actual GroqClient class used in the lead magnet generation.
 """
 
 import os
@@ -20,16 +20,16 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 django.setup()
 
 # Import after Django setup
-from lead_magnets.perplexity_client import PerplexityClient
+from lead_magnets.groq_client import GroqClient
 
 def test_ai_workflow():
     print("🚀 Testing Full AI Content Generation Workflow...")
     print("=" * 60)
     
     try:
-        # Initialize the PerplexityClient
-        print("🔧 Initializing PerplexityClient...")
-        client = PerplexityClient()
+        # Initialize the GroqClient
+        print("🔧 Initializing GroqClient...")
+        client = GroqClient()
         
         # Test sample lead magnet generation
         print("📝 Testing lead magnet content generation...")
@@ -149,8 +149,8 @@ if __name__ == "__main__":
     print(f"   Full Workflow: {'✅ PASS' if workflow_success else '❌ FAIL'}")
     
     if workflow_success:
-        print("\n🎉 AI workflow test passed! New API key is fully functional.")
-        print("✅ The new Perplexity API key is working correctly for lead magnet generation.")
+        print("\n🎉 AI workflow test passed! Groq API is fully functional.")
+        print("✅ The Groq API is working correctly for lead magnet generation.")
     else:
         print("\n💥 Workflow test failed. Please check the error messages above.")
     

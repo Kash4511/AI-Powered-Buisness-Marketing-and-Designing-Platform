@@ -1,10 +1,6 @@
 import type { AxiosError } from 'axios';
 import { apiClient } from './apiClient';
 
-// Define the base URL for API requests
-const API_BASE_URL = '/api';
-let pdfGenerationRunning = false;
-
 // Define types with valid choices
 export interface FirmProfile {
   id?: number;
@@ -27,6 +23,9 @@ export interface DashboardStats {
   active_lead_magnets: number;
   total_downloads: number;
   leads_generated: number;
+  ai_credits: number;
+  ai_credits_used: number;
+  ai_credits_remaining: number;
 }
 
 export interface LeadMagnet {
@@ -97,8 +96,9 @@ const handleApiError = (error: unknown, context: string) => {
     if (err.response.data instanceof Blob) {
       errorMessage = 'PDF generation failed. Check server logs for details.';
     } else if (typeof err.response.data === 'object' && err.response.data !== null) {
-      const errorData = err.response.data as { error?: string; details?: string };
-      errorMessage = errorData.error || errorData.details || JSON.stringify(err.response.data);
+      const errorData = err.response.data as { error?: string; details?: any };
+      const detailsStr = errorData.details ? JSON.stringify(errorData.details) : '';
+      errorMessage = `${errorData.error || 'Validation error'} ${detailsStr}`.trim();
     } else {
       errorMessage = String(err.response.data || 'Unknown error');
     }
@@ -130,7 +130,7 @@ export const dashboardApi = {
   // Dashboard stats
   getStats: async (): Promise<DashboardStats> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/dashboard/stats/`);
+      const response = await apiClient.get('/api/dashboard/stats/');
       return response.data;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -138,7 +138,10 @@ export const dashboardApi = {
         total_lead_magnets: 0,
         active_lead_magnets: 0,
         total_downloads: 0,
-        leads_generated: 0
+        leads_generated: 0,
+        ai_credits: 0,
+        ai_credits_used: 0,
+        ai_credits_remaining: 0
       };
     }
   },
@@ -146,7 +149,7 @@ export const dashboardApi = {
   // Get valid choices from server
   getValidChoices: async (): Promise<{lead_magnet_types: string[], main_topics: string[]}> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/valid-choices/`);
+      const response = await apiClient.get('/api/valid-choices/');
       return response.data;
     } catch {
       console.log('Valid choices endpoint not available, using discovered choices');
@@ -160,7 +163,7 @@ export const dashboardApi = {
   // Templates - FIXED VERSION
   getTemplates: async (): Promise<PDFTemplate[]> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/templates/`);
+      const response = await apiClient.get('/api/templates/');
       // Handle different response structures
       if (response.data.templates) {
         return response.data.templates;
@@ -178,7 +181,7 @@ export const dashboardApi = {
   
   selectTemplate: async (request: TemplateSelectionRequest): Promise<void> => {
     try {
-      await apiClient.post(`${API_BASE_URL}/select-template/`, request);
+      await apiClient.post('/api/select-template/', request);
     } catch (error) {
       handleApiError(error, 'Selecting template');
     }
@@ -187,13 +190,26 @@ export const dashboardApi = {
   // Create lead magnet with comprehensive error handling
   createLeadMagnet: async (data: CreateLeadMagnetRequest): Promise<LeadMagnet> => {
     try {
-      console.log('🚀 Sending lead magnet data:', JSON.stringify(data, null, 2));
+      console.log('🚀 Sending lead magnet data:', data);
       
       // Validate required fields
       if (!data.title || !data.generation_data) {
         throw new Error('Title and generation_data are required');
       }
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, data);
+
+      // 1. Rate Limiting Check (Local)
+      const lastCreated = localStorage.getItem('last_lead_magnet_created');
+      if (lastCreated) {
+        const diff = Date.now() - parseInt(lastCreated);
+        if (diff < 30000) { // 30 seconds local cooldown
+          throw new Error(`Rate limit: Please wait ${Math.ceil((30000 - diff) / 1000)}s before creating another lead magnet.`);
+        }
+      }
+
+      const response = await apiClient.post('/api/create-lead-magnet/', data);
+      
+      // Update rate limit timestamp
+      localStorage.setItem('last_lead_magnet_created', Date.now().toString());
       
       console.log('✅ Lead magnet created successfully:', response.data);
       return response.data;
@@ -229,7 +245,7 @@ export const dashboardApi = {
 
       console.log('📤 Sending validated data:', JSON.stringify(validatedData, null, 2));
 
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, validatedData);
+      const response = await apiClient.post('/api/create-lead-magnet/', validatedData);
       
       console.log('✅ Lead magnet created successfully:', response.data);
       return response.data;
@@ -247,56 +263,57 @@ export const dashboardApi = {
     generation_data: LeadMagnetGeneration; 
   }): Promise<LeadMagnet> => {
     try {
-      console.log('🚀 Creating lead magnet with data:', JSON.stringify(data, null, 2));
+      console.log('🚀 Creating lead magnet with data:', data);
       
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, data);
+      const response = await apiClient.post('/api/create-lead-magnet/', data);
       
       console.log('✅ Lead magnet created successfully:', response.data);
       return response.data;
     } catch (error) {
+      // The instruction mentions fixing a silent failure in this function.
+      // We ensure the error is always propagated to the caller.
       handleApiError(error, 'Creating lead magnet with data');
       throw error;
     }
   },
 
   // Firm profile
-  getFirmProfile: async (): Promise<FirmProfile> => {
+  getFirmProfile: async (): Promise<FirmProfile | null> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/firm-profile/`);
+      const response = await apiClient.get('/api/firm-profile/');
       return response.data;
     } catch (error) {
-      handleApiError(error, 'Fetching firm profile');
-      throw error;
+      console.error('Error fetching firm profile:', error);
+      return null;
     }
   },
 
-  updateFirmProfile: async (profileData: Partial<FirmProfile>): Promise<FirmProfile> => {
+  updateFirmProfile: async (data: Partial<FirmProfile>): Promise<FirmProfile> => {
     try {
       const formData = new FormData();
-      
-      Object.entries(profileData).forEach(([key, value]) => {
+      Object.entries(data).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          if (key === 'logo' && value instanceof File) {
-            formData.append('logo', value);
-          } else if (Array.isArray(value)) {
-            // Ensure arrays (e.g., industry_specialties) are sent as valid JSON
-            formData.append(key, JSON.stringify(value));
-          } else if (key === 'firm_website' && typeof value === 'string') {
-            // Normalize website to include protocol for URLField validation
-            const trimmed = value.trim();
-            const hasProtocol = /^https?:\/\//i.test(trimmed);
-            const normalized = trimmed && !hasProtocol ? `https://${trimmed}` : trimmed;
-            formData.append(key, normalized);
-          } else if (key === 'work_email' && typeof value === 'string') {
-            const normalizedEmail = value.trim();
-            formData.append(key, normalizedEmail);
+          if (key === 'industry_specialties' && Array.isArray(value)) {
+            value.forEach(v => formData.append('industry_specialties', v));
+          } else if (key === 'logo') {
+            if (value instanceof File) {
+              formData.append('logo', value);
+            }
+            // Skip if logo is a string (URL) or anything else
+          } else if (key === 'preferred_cover_image') {
+            if (value instanceof File) {
+              formData.append('preferred_cover_image', value);
+            }
+            // Skip if it's a string (URL)
           } else {
             formData.append(key, String(value));
           }
         }
       });
-      const response = await apiClient.patch(`${API_BASE_URL}/firm-profile/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await apiClient.patch('/api/firm-profile/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       return response.data;
     } catch (error) {
@@ -305,19 +322,16 @@ export const dashboardApi = {
     }
   },
 
-  // Lead magnets - THIS GENERATES THE PDF
-  generatePDFWithAI: async (request: { 
+  // Lead magnets - ASYNC JOB PATTERN
+  generatePDFWithAI: async (data: { 
     template_id: string; 
     lead_magnet_id: number; 
     use_ai_content: boolean;
     user_answers?: Record<string, unknown>;
     architectural_images?: string[];
   }): Promise<void> => {
-    if (pdfGenerationRunning) {
-      return;
-    }
-    pdfGenerationRunning = true;
     try {
+<<<<<<< HEAD
       const response = await apiClient.post(`${API_BASE_URL}/generate-pdf/`, request, {
         responseType: 'blob',
         validateStatus: (status) => (status >= 200 && status < 300) || status === 202,
@@ -343,14 +357,81 @@ export const dashboardApi = {
       // Handle legacy 409 Conflict or unexpected 202 if Axios treated it as an error
       if (err.response && (err.response.status === 409 || err.response.status === 202)) {
         return await dashboardApi.startPolling(request.lead_magnet_id);
+=======
+      // 1. Start the job (returns quickly with job_id; do not time out the whole pipeline here)
+      const startRes = await apiClient.post('/api/generate-pdf/start/', data, {
+        timeout: 20000,
+      });
+      const job_id = startRes.data?.job_id;
+      if (!job_id) {
+        throw new Error('No job_id returned from server');
+>>>>>>> Kaashifs-Branch
       }
+
+      // 2. Poll for status — backend can take several minutes (11× Groq + delays + WeasyPrint)
+      const pdf_url = await (async () => { 
+          const maxAttempts = 120;
+          const pollIntervalMs = 5000;
+
+          for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              const jobRes = await apiClient.get(`/api/generate-pdf/status/${job_id}/`, {
+                timeout: 30000,
+              });
+              const job = jobRes.data;
+
+              console.log(`PDF ${job.progress}% — ${job.message}`);
+
+              if (job.status === 'complete') return job.pdf_url;
+              if (job.status === 'failed') throw new Error(job.error || 'Generation failed');
+
+              if (attempt < maxAttempts - 1) {
+                await new Promise((r) => setTimeout(r, pollIntervalMs));
+              }
+          }
+          throw new Error('PDF generation timed out');
+      })(); 
+
+      // 3. Download the result
+      if (pdf_url) {
+        try {
+          // Strictly use apiClient for secure authenticated blob download.
+          // No fallback logic to window.open or direct URLs.
+          console.log('🔄 Initiating secure authenticated download for:', pdf_url);
+          
+          const downloadRes = await apiClient.get(pdf_url, { 
+            responseType: 'blob',
+            // Ensure timeout is sufficient for proxy stream
+            timeout: 60000 
+          });
+          
+          // Create a blob from the response data
+          const blob = new Blob([downloadRes.data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          
+          // Trigger download using a hidden link
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `lead-magnet-${data.lead_magnet_id}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          
+          // Clean up the URL object
+          window.URL.revokeObjectURL(url);
+          console.log('✅ Secure download successful');
+          
+        } catch (downloadErr) {
+          console.error('❌ Secure download failed:', downloadErr);
+          throw new Error('Failed to download PDF. Please try again or contact support.');
+        }
+      }
+    } catch (error) {
       handleApiError(error, 'Generating PDF with AI');
       throw error;
-    } finally {
-      pdfGenerationRunning = false;
     }
   },
 
+<<<<<<< HEAD
   // Helper for polling PDF generation status
   startPolling: async (lead_magnet_id: number): Promise<void> => {
     const poll = async (): Promise<string> => {
@@ -447,122 +528,21 @@ export const dashboardApi = {
     user_answers?: Record<string, unknown>;
     architectural_images?: string[];
   }): Promise<string> => {
+=======
+  getGeneratePDFStatus: async (job_id: string): Promise<{ 
+    status: string; 
+    progress: number; 
+    message: string; 
+    pdf_url?: string; 
+    error?: string; 
+  }> => {
+>>>>>>> Kaashifs-Branch
     try {
-      const response = await apiClient.post(`${API_BASE_URL}/generate-pdf/`, request, {
-        responseType: 'blob'
-      });
-      
-      // Success response (status 200), check if response is actually a PDF
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const arrayBuffer = await blob.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      
-      // Check for PDF magic bytes: %PDF (first 4 bytes should be 0x25 0x50 0x44 0x46)
-      if (uint8Array.length >= 4 && 
-          uint8Array[0] === 0x25 && 
-          uint8Array[1] === 0x50 && 
-          uint8Array[2] === 0x44 && 
-          uint8Array[3] === 0x46) {
-        const url = window.URL.createObjectURL(blob);
-        return url; // caller should revoke when done
-      } else {
-        // Response is not a PDF, likely an error message in JSON format
-        const text = await blob.text();
-        let errorData: { error?: string; details?: string };
-        try {
-          errorData = JSON.parse(text);
-        } catch {
-          errorData = { error: 'PDF generation failed', details: 'Response was not a valid PDF' };
-        }
-        throw new Error(
-          `PDF generation failed: ${errorData.error || 'Unknown error'}\n` +
-          `Details: ${errorData.details || 'No details available'}`
-        );
-      }
+      const response = await apiClient.get(`/api/generate-pdf/status/${job_id}/`);
+      return response.data;
     } catch (error) {
-      const err = error as AxiosError;
-      if (err.response && err.response.status === 409) {
-        return '';
-      }
-      if (error instanceof Error && error.message.includes('Generating PDF preview URL failed')) {
-        throw error;
-      }
-      
-      if (err.response && err.response.data instanceof Blob) {
-        const blob = err.response.data as Blob;
-        let text = '';
-        let parseError: Error | null = null;
-        
-        try {
-          text = await blob.text();
-        } catch (textError) {
-          parseError = textError as Error;
-          console.error('Generating PDF preview URL - Error reading blob as text:', textError);
-        }
-        
-        if (text) {
-          // Try to parse as JSON
-          let errorData: { error?: string; details?: string; message?: string } | null = null;
-          let errorMessage = 'Unknown error';
-          let errorDetails = '';
-          
-          try {
-            errorData = JSON.parse(text);
-            // Extract error message from various possible fields
-            if (errorData) {
-              errorMessage = errorData.error || errorData.message || 'PDF generation failed';
-              errorDetails = errorData.details || '';
-            } else {
-              errorMessage = text || 'PDF generation failed';
-              errorDetails = 'Could not parse error response as JSON';
-            }
-          } catch {
-            // If JSON parsing fails, use the raw text
-            errorData = null;
-            errorMessage = text || 'PDF generation failed';
-            errorDetails = 'Could not parse error response as JSON';
-          }
-          
-          // Build the full error message
-          const fullErrorMessage = errorDetails 
-            ? `${errorMessage}\nDetails: ${errorDetails}`
-            : errorMessage;
-          
-          console.error('Generating PDF preview URL - Server Error:', {
-            status: err.response.status,
-            statusText: err.response.statusText,
-            error: errorMessage,
-            details: errorDetails,
-            rawText: text.length > 200 ? text.substring(0, 200) + '...' : text
-          });
-          
-          throw new Error(
-            `Generating PDF preview URL failed: ${err.response.status} ${err.response.statusText}\n` +
-            `${fullErrorMessage}`
-          );
-        } else {
-          // Could not read blob text
-          const status = err.response?.status || 500;
-          const statusText = err.response?.statusText || 'Internal Server Error';
-          console.error('Generating PDF preview URL - Could not read error blob:', parseError);
-          throw new Error(
-            `Generating PDF preview URL failed: ${status} ${statusText}\n` +
-            `Details: Unable to read server error response. Please check server logs.`
-          );
-        }
-      } else {
-        if (err.response) {
-          const status = err.response.status;
-          if (status >= 500) {
-            throw new Error('Server error, try again later');
-          }
-          const data = err.response.data as { error?: string; details?: string };
-          const msg = (data && (data.error || data.details)) || `${status} Error`;
-          throw new Error(msg);
-        }
-        handleApiError(error, 'Generating PDF preview URL');
-        throw error;
-      }
+      handleApiError(error, 'Fetching PDF status');
+      throw error;
     }
   },
 
@@ -571,7 +551,7 @@ export const dashboardApi = {
     firm_profile: Record<string, unknown>;
   }): Promise<{ slogan: string }> => {
     try {
-      const response = await apiClient.post(`${API_BASE_URL}/generate-slogan/`, request);
+      const response = await apiClient.post('/api/generate-slogan/', request);
       return response.data;
     } catch (error) {
       handleApiError(error, 'Generating slogan');
@@ -582,7 +562,7 @@ export const dashboardApi = {
   // Brand assets PDF preview
   generateBrandAssetsPDFPreview: async (): Promise<string> => {
     try {
-      const response = await apiClient.post(`${API_BASE_URL}/brand-assets/preview-pdf/`, {}, {
+      const response = await apiClient.post('/api/brand-assets/preview-pdf/', {}, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
@@ -595,17 +575,17 @@ export const dashboardApi = {
 
   getLeadMagnets: async (): Promise<LeadMagnet[]> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/lead-magnets/`);
+      const response = await apiClient.get('/api/lead-magnets/');
       return response.data;
     } catch (error) {
-      handleApiError(error, 'Fetching lead magnets');
-      throw error;
+      console.error('Error fetching lead magnets:', error);
+      return [];
     }
   },
 
-  getLeadMagnet: async (id: number): Promise<LeadMagnet> => {
+  getLeadMagnetById: async (id: number): Promise<LeadMagnet> => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/lead-magnets/${id}/`);
+      const response = await apiClient.get(`/api/lead-magnets/${id}/`);
       return response.data;
     } catch (error) {
       handleApiError(error, `Fetching lead magnet ${id}`);
@@ -631,7 +611,7 @@ export const dashboardApi = {
 
     try {
       console.log('🧪 Testing lead magnet creation with valid choices:', testData);
-      const response = await apiClient.post(`${API_BASE_URL}/create-lead-magnet/`, testData);
+      const response = await apiClient.post('/api/create-lead-magnet/', testData);
       console.log('✅ Test successful:', response.data);
       return response.data;
     } catch (error) {
@@ -674,9 +654,10 @@ export const dashboardApi = {
   // Delete lead magnet
   deleteLeadMagnet: async (id: number): Promise<void> => {
     try {
-      await apiClient.delete(`${API_BASE_URL}/lead-magnets/${id}/`);
+      await apiClient.delete(`/api/lead-magnets/${id}/`);
     } catch (error) {
       handleApiError(error, `Deleting lead magnet ${id}`);
+      throw error;
     }
   }
 };

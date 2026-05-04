@@ -5,3 +5,6 @@ __pycache__/
 # Django logs
 *.log
 __pycache__/
+
+# PDF artifacts
+*.pdf

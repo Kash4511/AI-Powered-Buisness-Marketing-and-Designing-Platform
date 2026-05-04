@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Upload, X } from 'lucide-react'
 import type { FirmProfile } from '../../lib/dashboardApi'
 import './FirmProfileForm.css'
 
@@ -50,6 +51,11 @@ const FirmProfileForm: React.FC<FirmProfileFormProps> = ({
     ...initialData
   })
 
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    typeof initialData.logo === 'string' ? initialData.logo : null
+  )
+  const [error, setError] = useState<string | null>(null)
+
   const [currentStep, setCurrentStep] = useState(0)
 
   const steps = [
@@ -57,8 +63,38 @@ const FirmProfileForm: React.FC<FirmProfileFormProps> = ({
     'Industry & Size'
   ]
 
-  const handleInputChange = (field: keyof FirmProfile, value: string | string[]) => {
+  const handleInputChange = (field: keyof FirmProfile, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/svg+xml']
+    if (!validTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload JPG, PNG, or SVG.')
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('File too large. Maximum size is 2MB.')
+      return
+    }
+
+    handleInputChange('logo', file)
+    setError(null)
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeLogo = () => {
+    handleInputChange('logo', null)
+    setLogoPreview(null)
   }
 
   const handleSpecialtyToggle = (specialty: string) => {
@@ -102,6 +138,38 @@ const FirmProfileForm: React.FC<FirmProfileFormProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="form-group"
+            >
+              <label className="form-label">Firm Logo</label>
+              <div className="logo-upload-container">
+                {logoPreview ? (
+                  <div className="logo-preview-wrapper">
+                    <img src={logoPreview} alt="Logo Preview" className="logo-preview-img" />
+                    <button className="remove-logo-btn" onClick={removeLogo}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="logo-upload-placeholder">
+                    <Upload size={24} />
+                    <span>Upload Logo</span>
+                    <input
+                      type="file"
+                      className="hidden-file-input"
+                      onChange={handleLogoChange}
+                      accept=".jpg,.jpeg,.png,.svg"
+                    />
+                  </label>
+                )}
+              </div>
+              {error && <p className="error-text">{error}</p>}
+              <p className="field-description">Supported: JPG, PNG, SVG (Max 2MB)</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
               className="form-group"
             >
               <label className="form-label">Firm Name *</label>

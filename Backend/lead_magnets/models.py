@@ -44,6 +44,29 @@ class LeadMagnet(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+class SystemConfiguration(models.Model):
+    """Stores global system configurations, prompts, and static content."""
+    CONFIG_TYPE_CHOICES = [
+        ('text', 'Plain Text'),
+        ('json', 'JSON Object'),
+        ('html', 'HTML Content'),
+    ]
+
+    key = models.CharField(max_length=255, unique=True)
+    value = models.TextField()
+    config_type = models.CharField(max_length=10, choices=CONFIG_TYPE_CHOICES, default='text')
+    description = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.key} ({self.config_type})"
+
+    class Meta:
+        verbose_name = 'System Configuration'
+        verbose_name_plural = 'System Configurations'
+
 class Lead(models.Model):
     lead_magnet = models.ForeignKey(LeadMagnet, on_delete=models.CASCADE, related_name='leads')
     email = models.EmailField()
@@ -71,6 +94,27 @@ class Download(models.Model):
     
     class Meta:
         ordering = ['-downloaded_at']
+
+class PDFGenerationJob(models.Model):
+    """Tracks background PDF generation jobs."""
+    job_id = models.CharField(max_length=100, unique=True)
+    lead_magnet = models.ForeignKey(LeadMagnet, on_delete=models.CASCADE, related_name='pdf_jobs')
+    status = models.CharField(max_length=20, default='pending')
+    progress = models.IntegerField(default=0)
+    message = models.CharField(max_length=255, blank=True)
+    pdf_url = models.URLField(blank=True, null=True)
+    error = models.TextField(blank=True, null=True)
+    tokens_used = models.IntegerField(default=0)
+    stop_requested = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Job {self.job_id} - {self.status}"
+
+    class Meta:
+        ordering = ['-created_at']
+
 
 class BrandAsset(models.Model):
     """Stores uploaded brand assets (logos and general images)."""

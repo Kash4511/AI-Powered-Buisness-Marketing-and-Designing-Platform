@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: django-backend
+    runtime: docker
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PORT
+        value: 10000
+    healthCheckPath: /
+    # For Docker services, Render can auto-detect the port from EXPOSE,
+    # but explicitly setting it here is safer.
+    # Note: If the service is already created, you may need to update 
+    # the port in the Render Dashboard Settings.
+
