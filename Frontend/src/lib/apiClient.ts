@@ -75,11 +75,6 @@ apiClient.interceptors.request.use(
     }
 
     const token = localStorage.getItem('access_token');
-<<<<<<< HEAD
-    // Only add token if it's a request to our own API
-    const isInternalRequest = !config.url?.startsWith('http') || config.url.startsWith(API_BASE_URL);
-    if (token && isInternalRequest) {
-=======
     
     // Skip token for auth endpoints to avoid expired token blocking login (401)
     const isAuthEndpoint = config.url?.includes('/api/auth/login/') || 
@@ -93,7 +88,6 @@ apiClient.interceptors.request.use(
     const isSameOrigin = config.url?.startsWith(apiClient.defaults.baseURL || '');
     
     if (token && !isAuthEndpoint && (isRelative || isSameOrigin)) {
->>>>>>> Kaashifs-Branch
       config.headers.Authorization = `Bearer ${token}`;
     }
     

@@ -331,33 +331,6 @@ export const dashboardApi = {
     architectural_images?: string[];
   }): Promise<void> => {
     try {
-<<<<<<< HEAD
-      const response = await apiClient.post(`${API_BASE_URL}/generate-pdf/`, request, {
-        responseType: 'blob',
-        validateStatus: (status) => (status >= 200 && status < 300) || status === 202,
-      });
-
-      // Handle 202 Accepted - Start polling
-      if (response.status === 202) {
-        return await dashboardApi.startPolling(request.lead_magnet_id);
-      }
-
-      const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `lead-magnet-${request.lead_magnet_id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      return;
-    } catch (error) {
-      const err = error as AxiosError;
-      // Handle legacy 409 Conflict or unexpected 202 if Axios treated it as an error
-      if (err.response && (err.response.status === 409 || err.response.status === 202)) {
-        return await dashboardApi.startPolling(request.lead_magnet_id);
-=======
       // 1. Start the job (returns quickly with job_id; do not time out the whole pipeline here)
       const startRes = await apiClient.post('/api/generate-pdf/start/', data, {
         timeout: 20000,
@@ -365,7 +338,6 @@ export const dashboardApi = {
       const job_id = startRes.data?.job_id;
       if (!job_id) {
         throw new Error('No job_id returned from server');
->>>>>>> Kaashifs-Branch
       }
 
       // 2. Poll for status — backend can take several minutes (11× Groq + delays + WeasyPrint)
@@ -431,104 +403,6 @@ export const dashboardApi = {
     }
   },
 
-<<<<<<< HEAD
-  // Helper for polling PDF generation status
-  startPolling: async (lead_magnet_id: number): Promise<void> => {
-    const poll = async (): Promise<string> => {
-      const statusResp = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/`, {
-        params: { lead_magnet_id }
-      });
-      const data = statusResp.data as { status?: string; pdf_url?: string; error?: string };
-      
-      if (data && data.status === 'ready' && data.pdf_url) {
-        return data.pdf_url;
-      }
-      
-      if (data && data.status === 'error') {
-        throw new Error(data.error || 'PDF generation failed on the server');
-      }
-      
-      return '';
-    };
-
-    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    let attempts = 0;
-    const maxAttempts = 40;
-    const intervalMs = 2500;
-
-    while (attempts < maxAttempts) {
-      const pdfUrl = await poll();
-      if (pdfUrl) {
-        // Ensure the URL is absolute
-        let finalUrl = pdfUrl;
-        if (!pdfUrl.startsWith('http') && apiClient.defaults.baseURL) {
-          const base = apiClient.defaults.baseURL.replace(/\/$/, '');
-          const path = pdfUrl.startsWith('/') ? pdfUrl : `/${pdfUrl}`;
-          finalUrl = `${base}${path}`;
-        }
-
-        console.log('PDF generation complete, downloading from:', finalUrl);
-        
-        try {
-          // Fetch the PDF using apiClient to include the Authorization header
-          const pdfResponse = await apiClient.get(finalUrl, {
-            responseType: 'blob'
-          });
-          
-          if (pdfResponse.status !== 200) {
-            throw new Error(`Unexpected status ${pdfResponse.status} while downloading PDF`);
-          }
-
-          const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-          
-          // Verify the blob is actually a PDF
-          if (blob.size < 100) {
-            const text = await blob.text();
-            console.error('Downloaded blob is too small, content:', text);
-            throw new Error('Downloaded file is not a valid PDF');
-          }
-
-          const blobUrl = window.URL.createObjectURL(blob);
-          
-          // Trigger download
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.setAttribute('download', `lead-magnet-${lead_magnet_id}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          
-          // Cleanup
-          document.body.removeChild(link);
-          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
-          return;
-        } catch (downloadError) {
-          console.error('Error downloading PDF with auth:', downloadError);
-          const err = downloadError as AxiosError;
-          const errorMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-          throw new Error(`Failed to download PDF after generation: ${errorMsg}`);
-        }
-      }
-      attempts += 1;
-      await wait(intervalMs);
-    }
-    throw new Error('PDF generation did not complete in time');
-  },
-
-  getGeneratePDFStatus: async (lead_magnet_id: number): Promise<{ status: string; pdf_url?: string }> => {
-    const response = await apiClient.get(`${API_BASE_URL}/generate-pdf/status/`, {
-      params: { lead_magnet_id }
-    });
-    return response.data;
-  },
-
-  // Lead magnets - Generate PDF and return a preview URL (no auto-download)
-  generatePDFWithAIUrl: async (request: {
-    template_id: string;
-    lead_magnet_id: number;
-    user_answers?: Record<string, unknown>;
-    architectural_images?: string[];
-  }): Promise<string> => {
-=======
   getGeneratePDFStatus: async (job_id: string): Promise<{ 
     status: string; 
     progress: number; 
@@ -536,7 +410,6 @@ export const dashboardApi = {
     pdf_url?: string; 
     error?: string; 
   }> => {
->>>>>>> Kaashifs-Branch
     try {
       const response = await apiClient.get(`/api/generate-pdf/status/${job_id}/`);
       return response.data;

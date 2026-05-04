@@ -45,13 +45,9 @@ class UserRegistrationView(generics.CreateAPIView):
             logger.warning("UserRegistrationView: duplicate email")
             return Response({'error': 'Registration failed', 'details': {'email': ['Email already exists']}}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-<<<<<<< HEAD
-            logger.exception("UserRegistrationView: unexpected error")
-            return Response({'error': 'Registration failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-=======
             logger.exception("UserRegistrationView: unexpected error", extra={"email": request.data.get('email')})
             return Response({'error': 'Registration failed', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> Kaashifs-Branch
+
 
     def options(self, request, *args, **kwargs):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
@@ -85,13 +81,9 @@ class UserLoginView(APIView):
             logger.warning("UserLoginView: invalid login", extra={"details": e.detail})
             return Response({'error': 'Login failed', 'details': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-<<<<<<< HEAD
-            logger.exception("UserLoginView: unexpected error")
-            return Response({'error': 'Login failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-=======
             logger.exception("UserLoginView: unexpected error", extra={"email": request.data.get('email')})
             return Response({'error': 'Login failed', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> Kaashifs-Branch
+
 
     def options(self, request, *args, **kwargs):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)

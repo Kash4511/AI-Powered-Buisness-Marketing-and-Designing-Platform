@@ -5,12 +5,8 @@ class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
-<<<<<<< HEAD
-        email = (email or "").strip().lower()
-=======
-        # Normalize email to lowercase and strip whitespace
         email = email.lower().strip()
->>>>>>> Kaashifs-Branch
+
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)

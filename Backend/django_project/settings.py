@@ -2,11 +2,9 @@ import os
 import sys
 from datetime import timedelta
 from pathlib import Path
-<<<<<<< HEAD
 from django.core.exceptions import ImproperlyConfigured
-=======
 from corsheaders.defaults import default_headers, default_methods
->>>>>>> Kaashifs-Branch
+
 
 try:
     from dotenv import load_dotenv
@@ -103,26 +101,6 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # -----------------------------
 # Database
 # -----------------------------
-<<<<<<< HEAD
-# Defaults to SQLite for local development. If Postgres env vars are present,
-# configures Postgres (compatible with Supabase).
-POSTGRES_DB = os.getenv("POSTGRES_DB")
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "require")
-_db_url_keys = [
-    "SUPABASE_POOLED_URL",
-    "DATABASE_URL",
-    "SUPABASE_DB_URL",
-    "SUPABASE_DATABASE_URL",
-    "SUPABASE_CONNECTION_STRING",
-    "SUPABASE_POSTGRES_URL",
-    "SUPERBASE_STRING",
-]
-DATABASE_URL = next((os.getenv(k) for k in _db_url_keys if os.getenv(k)), None)
-=======
 import dj_database_url
 
 DATABASE_URL = (
@@ -140,7 +118,6 @@ if DATABASE_URL:
     if project_ref and "pooler.supabase.com" in DATABASE_URL and "postgres:" in DATABASE_URL:
         DATABASE_URL = DATABASE_URL.replace("postgres:", f"postgres.{project_ref}:")
         print(f"🔧 Auto-patched DATABASE_URL with project ref: {project_ref}")
->>>>>>> Kaashifs-Branch
 
     DATABASES = {
         'default': dj_database_url.config(
@@ -149,13 +126,6 @@ if DATABASE_URL:
             ssl_require=True
         )
     }
-<<<<<<< HEAD
-elif DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
-    try:
-        from urllib.parse import urlparse, parse_qs
-        parsed = urlparse(DATABASE_URL)
-        qs = parse_qs(parsed.query)
-=======
     if 'OPTIONS' not in DATABASES['default']:
         DATABASES['default']['OPTIONS'] = {}
     DATABASES['default']['OPTIONS']['sslmode'] = os.getenv("POSTGRES_SSLMODE", "require")
@@ -175,7 +145,6 @@ else:
     POSTGRES_PORT     = os.getenv("POSTGRES_PORT", "5432")
 
     if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
->>>>>>> Kaashifs-Branch
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
@@ -190,25 +159,14 @@ else:
                 },
             }
         }
-<<<<<<< HEAD
-    except Exception:
-        raise ImproperlyConfigured("Invalid DATABASE_URL")
-else:
-    raise ImproperlyConfigured("PostgreSQL configuration is required")
-=======
     else:
         print("No PostgreSQL configuration found.")
-        if DEBUG or TESTING or 'makemigrations' in sys.argv or 'migrate' in sys.argv:
-            print("Falling back to SQLite for local operations.")
-            DATABASES = {
-                'default': {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME': BASE_DIR / 'db.sqlite3',
-                }
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
             }
-        else:
-            raise Exception("PostgreSQL environment variables are missing.")
->>>>>>> Kaashifs-Branch
+        }
 
 default_db = DATABASES.get('default', {})
 print(f"DB backend: {default_db.get('ENGINE', '')}")
@@ -287,10 +245,7 @@ SIMPLE_JWT = {
 # -----------------------------
 # CORS + CSRF
 # -----------------------------
-<<<<<<< HEAD
-=======
 CORS_ALLOW_ALL_ORIGINS = True
->>>>>>> Kaashifs-Branch
 CORS_ALLOW_CREDENTIALS = True
 
 # Also keep regexes for safety in some environments
@@ -299,21 +254,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://django-.*-kash4511s-projects\.vercel\.app$",
 ]
 
-<<<<<<< HEAD
-# Allow all vercel subdomains for convenience in development/previews
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https:\/\/django-.*\.vercel\.app$",
-]
-
 CORS_URLS_REGEX = r'^/api/.*$'
-=======
-# Ensure CSRF also trusts the Vercel domains
-CSRF_TRUSTED_ORIGINS = [
-    "https://django-six-gamma.vercel.app",
-    "https://django-msvx.onrender.com",
-    "https://django-git-kaashifs-branch-kash4511s-projects.vercel.app",
-]
->>>>>>> Kaashifs-Branch
+
 
 # Optional but helps with some older browsers
 CORS_PREFLIGHT_MAX_AGE = 86400

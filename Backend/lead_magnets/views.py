@@ -18,12 +18,7 @@ from django.http import HttpResponse, FileResponse
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
 import requests
-<<<<<<< HEAD
-import threading
 from django.db import connection
-=======
-
->>>>>>> Kaashifs-Branch
 from .models import (
     LeadMagnet, Lead, Download, FirmProfile,
     FormaAIConversation, TemplateSelection, Template,
@@ -263,7 +258,6 @@ class FirmProfileView(generics.RetrieveUpdateAPIView):
         logger.error(f"FirmProfile update failed: {serializer.errors}")
         return Response({"error":"Firm profile update failed","details":serializer.errors}, status=400)
 
-<<<<<<< HEAD
 class DBStatusView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request):
@@ -294,7 +288,7 @@ class DBStatusView(APIView):
         except Exception as e:
             logger.exception("DB status check failed")
             return Response({'ok': False, 'error': str(e)}, status=500)
-=======
+
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
@@ -318,32 +312,6 @@ def get_theme_palette(request):
         palette.update({"surface":"#1a202c","onSurface":"#f7fafc","accent":"#2d3748","highlight":"#4a5568"})
     return Response(palette)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# BACKGROUND GENERATION JOB
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _run_generation_job(job_id: str, body: dict, user_id):
-    logger.info(f"🔄 [JOB START] job_id={job_id} | engine=WeasyPrint")
-    try:
-        from accounts.models import User
-        user = User.objects.get(id=user_id)
-
-        template_id          = body.get("template_id")
-        lead_magnet_id       = body.get("lead_magnet_id")
-        use_ai_content       = bool(body.get("use_ai_content", True))
-        architectural_images = body.get("architectural_images", [])
-
-        if not template_id or not lead_magnet_id:
-            _set_job(job_id, status="failed", error="template_id and lead_magnet_id are required")
-            return
-
-        _set_job(job_id, status="processing", progress=5, message="Parsing request...", lead_magnet_id=lead_magnet_id)
-
-        if _should_stop(job_id):
-            logger.info(f"🛑 Job {job_id} terminated before start"); return
->>>>>>> Kaashifs-Branch
-
 def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content, user_answers, architectural_images):
     """Background task for PDF generation to avoid HTTP timeouts"""
     try:
@@ -353,34 +321,6 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
         template_selection = TemplateSelection.objects.filter(lead_magnet=lead_magnet).first()
         
         try:
-<<<<<<< HEAD
-            fp = FirmProfile.objects.get(user=user)
-            firm_profile = {
-                'firm_name': fp.firm_name or user.email.split('@')[0],
-                'work_email': fp.work_email or user.email,
-                'phone_number': fp.phone_number,
-                'firm_website': fp.firm_website,
-                'primary_brand_color': fp.primary_brand_color,
-                'secondary_brand_color': fp.secondary_brand_color,
-                'logo_url': fp.logo.url if fp.logo else '',
-                'industry': 'Architecture',
-            }
-        except FirmProfile.DoesNotExist:
-            firm_profile = {
-                'firm_name': user.email.split('@')[0],
-                'work_email': user.email,
-                'phone_number': '',
-                'firm_website': '',
-                'primary_brand_color': '',
-                'secondary_brand_color': '',
-                'logo_url': '',
-                'industry': 'Architecture',
-            }
-
-        ai_client = PerplexityClient()
-        template_service = DocRaptorService()
-        template_vars = {}
-=======
             lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=user)
         except LeadMagnet.DoesNotExist:
             _set_job(job_id, status="failed", error="Lead magnet not found"); return
@@ -417,7 +357,7 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
             url = _resolve_image_url(raw)
             if url:
                 firm_profile[f"image_{i}_url"] = url
->>>>>>> Kaashifs-Branch
+
 
         if use_ai_content:
             answers_for_ai = user_answers or (template_selection.captured_answers if template_selection else {})
@@ -446,37 +386,6 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                         answers_for_ai[key] = ''
 
             try:
-<<<<<<< HEAD
-                ai_content = ai_client.generate_lead_magnet_json(user_answers=answers_for_ai, firm_profile=firm_profile)
-            except Exception as ai_err:
-                logger.warning(f"AI content generation failed, using fallback: {ai_err}")
-                # Minimal fallback AI content
-                title = (answers_for_ai.get('main_topic') or lead_magnet.title or 'Professional Guide')
-                subtitle = (answers_for_ai.get('desired_outcome') or '').strip()
-                cover = {"title": title, "subtitle": subtitle, "company_name": firm_profile.get('firm_name', '')}
-                contact = {
-                    "title": "Contact & Next Steps",
-                    "email": firm_profile.get("work_email", ""),
-                    "phone": firm_profile.get("phone_number", ""),
-                    "website": firm_profile.get("firm_website", ""),
-                    "offer_name": "Strategy Session",
-                    "action_cta": (answers_for_ai.get('call_to_action') or '').strip()
-                }
-                contents = {"title": "Contents", "items": [str(answers_for_ai.get('main_topic') or 'Overview')]}
-                sections = [
-                    {"title": "Overview", "content": (lead_magnet.description or "This guide provides actionable steps.")},
-                    {"title": "Key Considerations", "content": "Benefits, trade-offs, and pitfalls to avoid."},
-                    {"title": "Implementation", "content": "Recommendations and next steps."},
-                    {"title": "Examples", "content": "Illustrative scenarios showing application."},
-                ]
-                terms = {"title": "Terms of Use", "summary": "For internal use; no warranty.", "paragraphs": ["Use responsibly."]}
-                ai_content = {"style": {}, "cover": cover, "contents": contents, "sections": sections, "contact": contact, "terms": terms, "brand": {"logo_url": firm_profile.get("logo_url", "")}}
-            template_vars = ai_client.map_to_template_vars(ai_content, firm_profile, answers_for_ai)
-            if template_selection:
-                template_selection.ai_generated_content = ai_content
-                template_selection.captured_answers = answers_for_ai
-                template_selection.save(update_fields=['ai_generated_content', 'captured_answers'])
-=======
                 _set_job(job_id, status="processing", progress=15,
                          message="Generating AI content — 11 sections (~3–12 min)...")
                 t0 = time.time()
@@ -620,23 +529,13 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
             except Exception as e:
                 logger.error(f"AI Pipeline Error: {e}\n{traceback.format_exc()}")
                 _set_job(job_id, status="failed", error=f"AI generation failed: {e}"); return
->>>>>>> Kaashifs-Branch
+
         else:
             # Fallback for manual content (no AI)
             doc_type = ai_input.get("document_type", "guide")
             actual_sections = ai_client.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai_client.GUIDE_SECTIONS)
             
             template_vars = {
-<<<<<<< HEAD
-                'primaryColor': firm_profile.get('primary_brand_color') or '',
-                'secondaryColor': firm_profile.get('secondary_brand_color') or '',
-                'companyName': firm_profile.get('firm_name') or '',
-                'mainTitle': user_answers.get('main_topic') or '',
-                'documentSubtitle': user_answers.get('desired_outcome') or '',
-                'emailAddress': firm_profile.get('work_email') or '',
-                'phoneNumber': firm_profile.get('phone_number') or '',
-                'website': firm_profile.get('firm_website') or '',
-=======
                 "primaryColor":   firm_profile.get("primary_brand_color") or "#1a365d",
                 "secondaryColor": firm_profile.get("secondary_brand_color") or "#c5a059",
                 "highlightColor": "#f4f7f9", "lightColor": "#f1f5f9",
@@ -656,7 +555,6 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 "termsParagraph4":"","termsParagraph5":"",
                 "contentsTitle": "Table of Contents",
                 "documentTypeLabel": ai_input.get("lead_magnet_type", "Strategic Guide")
->>>>>>> Kaashifs-Branch
             }
             
             sections_html_list = []
@@ -673,214 +571,6 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                         <span class="toc-dots"></span><span class="toc-pg">{page_num}</span>
                     </div>
                 """)
-
-<<<<<<< HEAD
-        if isinstance(architectural_images, list) and architectural_images:
-            img_list = []
-            for i, img in enumerate(architectural_images):
-                src = ""
-                if isinstance(img, str):
-                    src = img
-                elif isinstance(img, dict) and 'src' in img:
-                    src = img['src']
-                
-                if src:
-                    # Basic validation: check if it's a data URL or a web URL
-                    if src.startswith('data:image/') or src.startswith('http'):
-                        img_list.append({'src': src, 'alt': f'Architectural Image {i+1}'})
-                        logger.info(f"Image {i+1} added to PDF task (type: {'base64' if src.startswith('data:') else 'URL'})")
-                    else:
-                        logger.warning(f"Image {i+1} rejected: invalid format")
-
-            if img_list:
-                # Add to template_vars so map_to_template_vars can use it
-                template_vars['architecturalImages'] = img_list
-                # Re-map images in case they were missed
-                ai_client.map_images_to_vars(template_vars, img_list)
-
-        for k, v in list(template_vars.items()):
-            if isinstance(v, str) and len(v) > 8000:
-                # Do not truncate image URLs or base64 data as it breaks them
-                if not any(x in k.lower() for x in ['image', 'logo']):
-                    template_vars[k] = v[:8000]
-
-        result = template_service.generate_pdf_with_ai_content(template_id, template_vars)
-
-        if result.get('success'):
-            pdf_data = result.get('pdf_data', b'')
-            filename = result.get('filename', f'lead-magnet-{lead_magnet_id}.pdf')
-            
-            logger.info(f"Background Task: Saving PDF for lead magnet {lead_magnet_id}...")
-            # Save the file to the FileField
-            lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
-            
-            # Re-fetch the lead magnet to ensure we have the latest data
-            lead_magnet.refresh_from_db()
-            lead_magnet.status = 'completed'
-            lead_magnet.save(update_fields=['status'])
-            
-            logger.info(f"Background Task: PDF generation completed successfully for {lead_magnet_id}. URL: {lead_magnet.pdf_file.url if lead_magnet.pdf_file else 'None'}")
-            
-            if template_selection:
-                template_selection.status = 'pdf-generated'
-                template_selection.save(update_fields=['status'])
-        else:
-            lead_magnet.status = 'error'
-            # Persist a short error reason for status endpoint consumption
-            try:
-                lead_magnet.description = f"PDF generation failed: {result.get('error', 'unknown')} | {str(result.get('details', ''))[:500]}"
-            except Exception:
-                pass
-            lead_magnet.save(update_fields=['status'])
-            
-    except Exception as e:
-        logger.error(f"Error in background PDF generation for lead magnet {lead_magnet_id}: {str(e)}", exc_info=True)
-        try:
-            lm = LeadMagnet.objects.get(id=lead_magnet_id)
-            lm.status = 'error'
-            try:
-                lm.description = f"PDF generation exception: {str(e)}"
-            except Exception:
-                pass
-            lm.save(update_fields=['status'])
-        except Exception:
-            pass
-    finally:
-        connection.close()
-
-@api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf(request):
-    try:
-        logger.info('GeneratePDFView: request received', extra={
-            'user': str(getattr(request.user, 'id', 'anonymous')),
-            'path': str(getattr(request, 'path', ''))
-        })
-        
-        template_id = request.data.get('template_id')
-        lead_magnet_id = request.data.get('lead_magnet_id')
-        use_ai_content = bool(request.data.get('use_ai_content', True))
-        user_answers = request.data.get('user_answers', {}) or {}
-        architectural_images = request.data.get('architectural_images', []) or []
-
-        if not template_id:
-            return Response({'error': 'template_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        if not lead_magnet_id:
-            return Response({'error': 'lead_magnet_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
-        except LeadMagnet.DoesNotExist:
-            return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        if str(lead_magnet.status) == 'in-progress':
-            status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={lead_magnet_id}")
-            return Response({
-                'status': 'in_progress',
-                'lead_magnet_id': lead_magnet_id,
-                'status_url': status_url,
-                'retry_after_seconds': 3
-            }, status=status.HTTP_202_ACCEPTED)
-
-        # Start background generation
-        lead_magnet.status = 'in-progress'
-        lead_magnet.save(update_fields=['status'])
-        
-        # Start thread
-        thread = threading.Thread(
-            target=run_pdf_generation_task,
-            args=(lead_magnet_id, request.user.id, template_id, use_ai_content, user_answers, architectural_images)
-        )
-        thread.start()
-        
-        status_url = request.build_absolute_uri(f"/api/generate-pdf/status/?lead_magnet_id={lead_magnet_id}")
-        return Response({
-            'status': 'in_progress',
-            'message': 'PDF generation started in background',
-            'lead_magnet_id': lead_magnet_id,
-            'status_url': status_url,
-            'retry_after_seconds': 5
-        }, status=status.HTTP_202_ACCEPTED) # Return 202 to trigger frontend polling
-
-    except Exception as e:
-        logger.exception('GeneratePDFView: unexpected exception')
-        return Response({'error': 'PDF generation failed', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-from django.http import FileResponse, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
-
-class DownloadPDFView(APIView):
-    """View to serve the generated PDF file directly, handling local vs cloud storage."""
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, lead_magnet_id):
-        try:
-            lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
-            
-            if not lead_magnet.pdf_file:
-                logger.warning(f"DownloadPDFView: PDF not found for lead magnet {lead_magnet_id}")
-                return Response({'error': 'PDF file not generated yet'}, status=status.HTTP_404_NOT_FOUND)
-            
-            # If it's a Cloudinary URL, redirect directly
-            try:
-                url = lead_magnet.pdf_file.url
-                if url.startswith('http') and 'res.cloudinary.com' in url:
-                    logger.info(f"DownloadPDFView: Redirecting to Cloudinary URL for lead magnet {lead_magnet_id}")
-                    return HttpResponseRedirect(url)
-            except Exception:
-                pass
-            
-            # Serve local file from disk
-            try:
-                file_handle = lead_magnet.pdf_file.open('rb')
-                response = FileResponse(file_handle, content_type='application/pdf')
-                filename = os.path.basename(lead_magnet.pdf_file.name)
-                response['Content-Disposition'] = f'attachment; filename="{filename}"'
-                logger.info(f"DownloadPDFView: Serving local PDF file for lead magnet {lead_magnet_id}")
-                return response
-            except FileNotFoundError:
-                logger.error(f"DownloadPDFView: Local file not found on disk for {lead_magnet_id}")
-                return Response({'error': 'PDF file not found on server disk'}, status=status.HTTP_404_NOT_FOUND)
-                
-        except LeadMagnet.DoesNotExist:
-            return Response({'error': 'Lead magnet not found'}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            logger.exception(f"DownloadPDFView: Unexpected error serving PDF for {lead_magnet_id}")
-            return Response({'error': 'Failed to serve PDF', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-class GeneratePDFStatusView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_permissions(self):
-        if self.request.method == 'OPTIONS':
-            return [permissions.AllowAny()]
-        return [permission() for permission in self.permission_classes]
-
-    def get(self, request):
-        lead_magnet_id = request.query_params.get('lead_magnet_id')
-        if not lead_magnet_id:
-            return Response({'error': 'lead_magnet_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            lead_magnet = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
-=======
-                sections_html_list.append(f"""
-                    <div class="page content-page">
-                        <div class="string-container">
-                            <span class="page-header-kicker">{dkicker}</span>
-                            <div class="page-header-title">{dlabel}</div>
-                        </div>
-                        <div class="page-body">
-                            <div class="section-intro-block">
-                                <div class="section-intro-num">{num_str}</div>
-                                <div><div class="section-headline">{dtitle}</div></div>
-                            </div>
-                            <div class="section-content"><p>Content for {dtitle} goes here...</p></div>
-                        </div>
-                    </div>
-                """)
-                page_count += 1
-            template_vars["sections_html"] = "\n".join(sections_html_list)
-            template_vars["toc_html"]      = "\n".join(toc_html_list)
 
         # ── PDF RENDERING ──────────────────────────────────────────────────
         pdf_service = WeasyPrintService()
@@ -969,130 +659,6 @@ class GeneratePDFStatusView(APIView):
         logger.critical(f"Critical job error: {exc}\n{traceback.format_exc()}")
         _set_job(job_id, status="failed", error=str(exc))
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ENDPOINTS
-# ─────────────────────────────────────────────────────────────────────────────
-
-@csrf_exempt
-@api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf_start(request):
-    lm_id = request.data.get("lead_magnet_id")
-    if lm_id:
-        # Cancel previous jobs for this Lead Magnet in the DB
-        previous_jobs = PDFGenerationJob.objects.filter(
-            lead_magnet_id=lm_id, 
-            status__in=["pending", "processing"]
-        )
-        for job in previous_jobs:
-            job.stop_requested = True
-            job.status = "cancelled"
-            job.message = "Cancelled by a newer generation request"
-            job.save()
-            logger.info(f"🔄 [DB] Cancelled previous job {job.job_id} for LM {lm_id}")
-
-    job_id = str(uuid.uuid4())
-    # Create the job in DB first
-    try:
-        lm = LeadMagnet.objects.get(id=lm_id, owner=request.user)
-    except LeadMagnet.DoesNotExist:
-        return Response({"error":"Lead magnet not found"}, status=404)
-
-    _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None, lead_magnet=lm)
-    
-    threading.Thread(target=_run_generation_job, args=(job_id,request.data,request.user.id), daemon=True).start()
-    return Response({"job_id":job_id,"status":"pending"}, status=202)
-
-
-@api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf_status(request, job_id):
-    job = _get_job(job_id)
-    if not job:
-        return Response({"error":"Job not found"}, status=404)
-    return Response({"job_id":job_id,"status":job.get("status"),"progress":job.get("progress",0),
-                     "message":job.get("message",""),"pdf_url":job.get("pdf_url"),"error":job.get("error")})
-
-
-@api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf_stop(request, job_id):
-    try:
-        job = PDFGenerationJob.objects.get(job_id=job_id)
-        job.stop_requested = True
-        job.status = "terminated"
-        job.message = "Job was stopped by user"
-        job.save()
-        logger.info(f"🛑 Manual termination requested for job {job_id}")
-        return Response({"success":True,"message":"Termination signal sent"})
-    except PDFGenerationJob.DoesNotExist:
-        return Response({"error":"Job not found"}, status=404)
-
-
-@api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf_compat(request):
-    body   = request.data
-    job_id = str(uuid.uuid4())
-    _set_job(job_id, status="pending", progress=0, pdf_url=None, error=None,
-             lead_magnet_id=body.get("lead_magnet_id"))
-    threading.Thread(target=_run_generation_job, args=(job_id,body,request.user.id), daemon=True).start()
-    return Response({
-        "status":"in_progress","message":"PDF generation started",
-        "lead_magnet_id":body.get("lead_magnet_id"),
-        "status_url":request.build_absolute_uri(
-            f"/api/generate-pdf/status/?lead_magnet_id={body.get('lead_magnet_id')}&job_id={job_id}"),
-        "retry_after_seconds":3,
-    }, status=202)
-
-
-@api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
-def generate_pdf_status_compat(request):
-    lm_id  = request.query_params.get("lead_magnet_id")
-    job_id = request.query_params.get("job_id")
-    if not lm_id:
-        return Response({"error":"lead_magnet_id is required"}, status=400)
-
-    job_data = None
-    if job_id:
-        job_data = _get_job(job_id)
-    
-    if not job_data:
-        # Fallback: get the latest job for this Lead Magnet
-        latest_job = PDFGenerationJob.objects.filter(lead_magnet_id=lm_id).first()
-        if latest_job:
-            job_data = _get_job(latest_job.job_id)
-
-    try:
-        lm = LeadMagnet.objects.get(id=lm_id, owner=request.user)
-    except LeadMagnet.DoesNotExist:
-        return Response({"error":"Lead magnet not found"}, status=404)
-
-    if str(lm.status) == "completed" and lm.pdf_file:
-        return Response({"status":"ready","pdf_url":f"/api/lead-magnets/{lm_id}/download/"})
-    
-    if job_data:
-        if job_data.get("status") == "complete" and lm.pdf_file:
-            return Response({"status":"ready","pdf_url":f"/api/lead-magnets/{lm_id}/download/"})
-        if job_data.get("status") in ("failed","error"):
-            return Response({"status":"error","error":job_data.get("error","Generation failed")})
-        if job_data.get("status") in ("cancelled", "terminated"):
-            return Response({"status":"error","error":"Job was stopped or cancelled"})
-            
-    return Response({"status":"pending"})
-
-
-from cloudinary.utils import cloudinary_url as _cld_url
-
-@api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
-def download_lead_magnet_pdf(request, lead_magnet_id: int):
-    try:
-        try:
-            lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
->>>>>>> Kaashifs-Branch
         except LeadMagnet.DoesNotExist:
             return Response({"error":"Lead magnet not found"}, status=404)
         if not lm.pdf_file:
@@ -1112,32 +678,6 @@ def download_lead_magnet_pdf(request, lead_magnet_id: int):
         logger.error(f"Download error LM {lead_magnet_id}: {e}")
         return Response({"error":"Failed to retrieve file"}, status=500)
 
-<<<<<<< HEAD
-        if str(lead_magnet.status) == 'error':
-            details = ''
-            try:
-                details = (lead_magnet.description or '').strip()
-            except Exception:
-                pass
-            payload = {'status': 'error', 'error': 'Generation failed'}
-            if details:
-                payload['details'] = details
-            return Response(payload, status=status.HTTP_200_OK)
-
-        if str(lead_magnet.status) == 'completed' and lead_magnet.pdf_file:
-            try:
-                # Use a relative URL so the frontend can handle it with its baseURL
-                download_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
-                
-                logger.info(f"GeneratePDFStatusView: PDF ready for lead magnet {lead_magnet_id}, download_url: {download_url}")
-                return Response({'status': 'ready', 'pdf_url': download_url}, status=status.HTTP_200_OK)
-            except Exception as e:
-                logger.error(f"GeneratePDFStatusView: Error generating download URL: {str(e)}")
-                return Response({'status': 'error', 'error': 'Could not generate download URL'}, status=status.HTTP_200_OK)
-
-        return Response({'status': 'pending'}, status=status.HTTP_200_OK)
-=======
->>>>>>> Kaashifs-Branch
 
 class CreateLeadMagnetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -1157,34 +697,6 @@ class ListTemplatesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         try:
-<<<<<<< HEAD
-            template_service = DocRaptorService()
-            templates = template_service.list_templates()
-
-            for template in templates:
-                template_id = template['id']
-                preview_filename = f"{template_id}.jpg"
-                preview_path = os.path.join(settings.MEDIA_ROOT, 'template_previews', preview_filename)
-
-                if os.path.exists(preview_path):
-                    template['preview_url'] = request.build_absolute_uri(
-                        f"{settings.MEDIA_URL}template_previews/{preview_filename}"
-                    )
-                else:
-                    template['preview_url'] = request.build_absolute_uri(
-                        f"{settings.MEDIA_URL}template_previews/default.jpg"
-                    )
-
-            return Response({'success': True, 'templates': templates, 'count': len(templates)})
-
-        except ValueError as e:
-            return Response({
-                'success': False,
-                'error': 'API configuration error',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-=======
             db = Template.objects.all()
             if db.exists():
                 return Response({"success":True,"templates":TemplateSerializer(db,many=True,context={"request":request}).data,"count":db.count()})
@@ -1195,7 +707,7 @@ class ListTemplatesView(APIView):
                 t["preview_url"] = request.build_absolute_uri(
                     f"{settings.MEDIA_URL}template_previews/{''+t['id']+'.jpg' if os.path.exists(p) else 'default.jpg'}")
             return Response({"success":True,"templates":tmpls,"count":len(tmpls)})
->>>>>>> Kaashifs-Branch
+
         except Exception as e:
             return Response({"success":False,"error":str(e)}, status=500)
 
