@@ -697,16 +697,25 @@ class ListTemplatesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         try:
-            db = Template.objects.all()
-            if db.exists():
-                return Response({"success":True,"templates":TemplateSerializer(db,many=True,context={"request":request}).data,"count":db.count()})
+            # 1. Get disk templates
             svc = WeasyPrintService()
             tmpls = svc.list_templates()
             for t in tmpls:
-                p = os.path.join(settings.MEDIA_ROOT,"template_previews",f"{t['id']}.jpg")
+                p = os.path.join(settings.MEDIA_ROOT, "template_previews", f"{t['id']}.jpg")
                 t["preview_url"] = request.build_absolute_uri(
-                    f"{settings.MEDIA_URL}template_previews/{''+t['id']+'.jpg' if os.path.exists(p) else 'default.jpg'}")
-            return Response({"success":True,"templates":tmpls,"count":len(tmpls)})
+                    f"{settings.MEDIA_URL}template_previews/{t['id']}.jpg" if os.path.exists(p) else f"{settings.MEDIA_URL}template_previews/default.jpg"
+                )
+            
+            # 2. Add database templates that aren't already in the list
+            db_templates = Template.objects.all()
+            if db_templates.exists():
+                db_data = TemplateSerializer(db_templates, many=True, context={"request": request}).data
+                existing_ids = {t['id'] for t in tmpls}
+                for dbt in db_data:
+                    if dbt['id'] not in existing_ids:
+                        tmpls.append(dbt)
+            
+            return Response({"success": True, "templates": tmpls, "count": len(tmpls)})
 
         except Exception as e:
             return Response({"success":False,"error":str(e)}, status=500)

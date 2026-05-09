@@ -219,13 +219,17 @@ class WeasyPrintService:
 
     def list_templates(self) -> list:
         templates = []
-        for tid, fname in self.TEMPLATE_REGISTRY.items():
-            fpath = os.path.join(self.TEMPLATES_DIR, fname)
-            templates.append({
-                "id":          tid,
-                "name":        tid.replace("-", " ").title(),
-                "file_exists": os.path.exists(fpath),
-            })
+        if not os.path.exists(self.TEMPLATES_DIR):
+            return templates
+            
+        for filename in os.listdir(self.TEMPLATES_DIR):
+            if filename.endswith(".html"):
+                tid = filename.lower().replace(".html", "")
+                templates.append({
+                    "id": tid,
+                    "name": tid.replace("-", " ").replace("_", " ").title(),
+                    "file_exists": True,
+                })
         return templates
 
     def preview_template(self, template_id: str, variables: dict) -> str:
