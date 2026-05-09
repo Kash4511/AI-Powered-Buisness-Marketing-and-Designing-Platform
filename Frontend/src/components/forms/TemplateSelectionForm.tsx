@@ -9,6 +9,23 @@ import './TemplateSelectionForm.css';
 import '../CreateLeadMagnet.css';
 import Modal from '../Modal';
 
+// Import local images for the modern template
+import modernFront from '../../images/tmp1-front.png';
+import modernBack from '../../images/temp1-back.png';
+
+const NEW_TEMPLATES: PDFTemplate[] = [
+  { id: 'corporate-pro', name: 'Corporate Professional', preview_url: null, hover_preview_url: null },
+  { id: 'creative-folio', name: 'Creative Portfolio', preview_url: null, hover_preview_url: null },
+  { id: 'ecommerce-focus', name: 'E-commerce Focused', preview_url: null, hover_preview_url: null },
+  { id: 'blog-editorial', name: 'Blog Editorial', preview_url: null, hover_preview_url: null },
+  { id: 'tech-blueprint', name: 'Tech Blueprint', preview_url: null, hover_preview_url: null },
+  { id: 'luxury-boutique', name: 'Luxury Boutique', preview_url: null, hover_preview_url: null },
+  { id: 'data-insights', name: 'Data Insights', preview_url: null, hover_preview_url: null },
+  { id: 'vibrant-startup', name: 'Vibrant Startup', preview_url: null, hover_preview_url: null },
+  { id: 'minimal-swiss', name: 'Minimalist Swiss', preview_url: null, hover_preview_url: null },
+  { id: 'industrial-loft', name: 'Industrial Loft', preview_url: null, hover_preview_url: null },
+];
+
 interface TemplateSelectionFormProps {
   onClose: () => void;
   onSubmit: (templateId: string, templateName: string, architecturalImages?: File[]) => void;
@@ -41,7 +58,7 @@ const TemplateSelectionForm: React.FC<TemplateSelectionFormProps> = ({
         const photoUrl = `${baseUrl}/media/photo.png`;
         const hoverTempUrl = `${baseUrl}/media/tempphoto1.png`;
         
-        const mapped: PDFTemplate[] = (data || []).map((t: any) => {
+        let mapped: PDFTemplate[] = (data || []).map((t: any) => {
           const name = (t.name || '').toLowerCase();
           const isTemplate1 = name.includes('modern') || name.includes('template 1');
           
@@ -52,6 +69,9 @@ const TemplateSelectionForm: React.FC<TemplateSelectionFormProps> = ({
             secondary_preview_url: t.secondary_preview_url || t.image2 || t.hover_preview_url || null,
           };
         });
+
+        // Inject 10 additional unique templates
+        mapped = [...mapped, ...NEW_TEMPLATES];
         
         setTemplates(mapped);
       } catch (err: unknown) {
@@ -96,35 +116,63 @@ const TemplateSelectionForm: React.FC<TemplateSelectionFormProps> = ({
     setShowImageUpload(true);
   };
 
-  const renderTemplateThumbnail = (template: PDFTemplate) => {
-    const isTemplate1 = template.name.toLowerCase().includes('modern') || template.name.toLowerCase().includes('template 1');
+  const renderTemplateThumbnail = (template: PDFTemplate, index: number) => {
+    const name = template.name.toLowerCase();
+    const isModernTemplate = name.includes('modern') || name.includes('template 1');
     const hasError = imageErrors[template.id];
+    const isEager = index < 3;
 
-    if (hasError || !template.preview_url) {
+    // Placeholder content for new templates without images
+    const renderPlaceholder = (type: string) => {
+      let icon = <FileText size={48} />;
+      let label = template.name;
+      let bgColor = 'linear-gradient(135deg, #3a3a3e 0%, #2a2a2e 100%)';
+
+      switch (template.id) {
+        case 'corporate-pro': bgColor = 'linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%)'; break;
+        case 'creative-folio': bgColor = 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)'; break;
+        case 'ecommerce-focus': bgColor = 'linear-gradient(135deg, #059669 0%, #064e3b 100%)'; break;
+        case 'blog-editorial': bgColor = 'linear-gradient(135deg, #d97706 0%, #78350f 100%)'; break;
+        case 'tech-blueprint': bgColor = 'linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)'; break;
+        case 'luxury-boutique': bgColor = 'linear-gradient(135deg, #111827 0%, #000000 100%)'; break;
+        case 'data-insights': bgColor = 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)'; break;
+        case 'vibrant-startup': bgColor = 'linear-gradient(135deg, #ec4899 0%, #9d174d 100%)'; break;
+        case 'minimal-swiss': bgColor = 'linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%)'; break;
+        case 'industrial-loft': bgColor = 'linear-gradient(135deg, #4b5563 0%, #1f2937 100%)'; break;
+      }
+
       return (
-        <div className="template-placeholder">
-          <FileText size={48} />
+        <div className="template-placeholder" style={{ background: bgColor }}>
+          {icon}
+          <span style={{ color: template.id === 'minimal-swiss' ? '#1f2937' : 'inherit' }}>{label}</span>
+        </div>
+      );
+    };
+
+    // Special case for the modern template to use local images with hover interaction
+    if (isModernTemplate) {
+      return (
+        <div className="template-thumbnail-new">
+          <img
+            src={modernFront}
+            alt={`${template.name} front`}
+            className="image-primary"
+            loading={isEager ? "eager" : "lazy"}
+            onError={() => setImageErrors(prev => ({ ...prev, [template.id]: true }))}
+          />
+          <img
+            src={modernBack}
+            alt={`${template.name} back`}
+            className="image-hover"
+            loading="lazy"
+            onError={() => setImageErrors(prev => ({ ...prev, [template.id]: true }))}
+          />
         </div>
       );
     }
 
-    if (isTemplate1 && template.secondary_preview_url) {
-      return (
-        <div className="template-thumbnail-new template-dual-preview">
-          <img
-            src={template.preview_url}
-            alt={template.name}
-            className="dual-image-left"
-            onError={() => setImageErrors(prev => ({ ...prev, [template.id]: true }))}
-          />
-          <img
-            src={template.secondary_preview_url}
-            alt={`${template.name} secondary`}
-            className="dual-image-right"
-            onError={() => setImageErrors(prev => ({ ...prev, [template.id]: true }))}
-          />
-        </div>
-      );
+    if (hasError || !template.preview_url) {
+      return renderPlaceholder(template.id);
     }
 
     return (
@@ -133,6 +181,7 @@ const TemplateSelectionForm: React.FC<TemplateSelectionFormProps> = ({
           src={template.preview_url}
           alt={template.name}
           className="image-primary"
+          loading={isEager ? "eager" : "lazy"}
           onError={() => setImageErrors(prev => ({ ...prev, [template.id]: true }))}
         />
         {template.hover_preview_url && (
@@ -140,6 +189,7 @@ const TemplateSelectionForm: React.FC<TemplateSelectionFormProps> = ({
             src={template.hover_preview_url}
             alt={`${template.name} hover`}
             className="image-hover"
+            loading="lazy"
             onError={() => setImageErrors(prev => ({ ...prev, [template.id]: true }))}
           />
         )}
@@ -187,7 +237,7 @@ const TemplateSelectionForm: React.FC<TemplateSelectionFormProps> = ({
         </div>
 
         <div className="template-grid-new">
-          {templates.map((template) => (
+          {templates.map((template, index) => (
             <motion.div
               key={template.id}
               className={`template-card ${selectedTemplate?.id === template.id ? 'selected' : ''}`}
@@ -201,12 +251,9 @@ const TemplateSelectionForm: React.FC<TemplateSelectionFormProps> = ({
                 </div>
               )}
               <div className="template-thumbnail-wrapper-new">
-                {renderTemplateThumbnail(template)}
+                {renderTemplateThumbnail(template, index)}
               </div>
-              <div className="template-info-new">
-                <h3>{template.name}</h3>
-              </div>
-            </motion.div>
+              </motion.div>
           ))}
         </div>
 
