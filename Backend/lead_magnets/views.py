@@ -659,8 +659,14 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
         logger.critical(f"Critical job error: {exc}\n{traceback.format_exc()}")
         _set_job(job_id, status="failed", error=str(exc))
 
-        except LeadMagnet.DoesNotExist:
-            return Response({"error":"Lead magnet not found"}, status=404)
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def download_lead_magnet_pdf(request, lead_magnet_id):
+    try:
+        lm = LeadMagnet.objects.get(id=lead_magnet_id)
+    except LeadMagnet.DoesNotExist:
+        return Response({"error":"Lead magnet not found"}, status=404)
+    try:
         if not lm.pdf_file:
             return Response({"error":"PDF not generated yet"}, status=404)
 
