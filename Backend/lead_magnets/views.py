@@ -755,27 +755,41 @@ class ListTemplatesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         try:
-            # 1. Get disk templates
+            tmpls = []
+            existing_ids = set()
+
+            # 1. Get database templates (Primary Source)
+            db_templates = Template.objects.all()
+            if db_templates.exists():
+                db_data = TemplateSerializer(db_templates, many=True, context={"request": request}).data
+                for dbt in db_data:
+                    tmpls.append(dbt)
+                    existing_ids.add(dbt['id'])
+            
+            # 2. Get disk templates (Fallback/Discovery)
             svc = WeasyPrintService()
-            tmpls = svc.list_templates()
-            for t in tmpls:
+            disk_tmpls = svc.list_templates()
+            for t in disk_tmpls:
+                # Deduplicate: Skip if already in DB
+                if t['id'] in existing_ids:
+                    continue
+                
+                # Special Case: Skip generic 'template' if we already have specific templates
+                # This prevents "Template" from appearing alongside "Modern Guide"
+                if t['id'] == 'template' and len(tmpls) > 0:
+                    continue
+                
                 p = os.path.join(settings.MEDIA_ROOT, "template_previews", f"{t['id']}.jpg")
                 t["preview_url"] = request.build_absolute_uri(
                     f"{settings.MEDIA_URL}template_previews/{t['id']}.jpg" if os.path.exists(p) else f"{settings.MEDIA_URL}template_previews/default.jpg"
                 )
-            
-            # 2. Add database templates that aren't already in the list
-            db_templates = Template.objects.all()
-            if db_templates.exists():
-                db_data = TemplateSerializer(db_templates, many=True, context={"request": request}).data
-                existing_ids = {t['id'] for t in tmpls}
-                for dbt in db_data:
-                    if dbt['id'] not in existing_ids:
-                        tmpls.append(dbt)
+                tmpls.append(t)
+                existing_ids.add(t['id'])
             
             return Response({"success": True, "templates": tmpls, "count": len(tmpls)})
 
         except Exception as e:
+            logger.error(f"❌ [LIST TEMPLATES ERROR]: {e}")
             return Response({"success":False,"error":str(e)}, status=500)
 
 
