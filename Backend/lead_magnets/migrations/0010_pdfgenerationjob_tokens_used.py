@@ -10,9 +10,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='pdfgenerationjob',
-            name='tokens_used',
-            field=models.IntegerField(default=0),
-        ),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name='pdfgenerationjob',
+                    name='tokens_used',
+                    field=models.IntegerField(default=0),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE lead_magnets_pdfgenerationjob ADD COLUMN IF NOT EXISTS tokens_used integer NOT NULL DEFAULT 0;",
+                    reverse_sql="ALTER TABLE lead_magnets_pdfgenerationjob DROP COLUMN IF EXISTS tokens_used;"
+                )
+            ]
+        )
     ]
