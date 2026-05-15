@@ -31,7 +31,7 @@ DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,django-msvx.onrender.com,django-jrl5.onrender.com,django-8dru.onrender.com"
+    "localhost,127.0.0.1,django-msvx.onrender.com,django-jrl5.onrender.com,django-8dru.onrender.com,django-six-gamma.vercel.app"
 ).replace(" ", "").split(",")
 
 # Allow all Render and Vercel subdomains so preview branches work automatically
