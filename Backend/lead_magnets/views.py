@@ -226,12 +226,29 @@ class LeadMagnetListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self): 
         try:
-            return LeadMagnet.objects.filter(owner=self.request.user)
+            user = self.request.user
+            if not user or user.is_anonymous:
+                logger.warning("Attempt to access lead magnets by anonymous user")
+                return LeadMagnet.objects.none()
+            
+            qs = LeadMagnet.objects.filter(owner=user).select_related('generation_data')
+            logger.info(f"Fetching {qs.count()} lead magnets for user {user.email}")
+            return qs
         except Exception as e:
             user_email = getattr(self.request.user, "email", "anonymous")
             logger.error(f"❌ [LM LIST ERROR] {user_email}: {e}\n{traceback.format_exc()}")
             raise
             
+    def list(self, request, *args, **kwargs):
+        try:
+            return super().list(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"❌ [LM LIST VIEW ERROR]: {e}\n{traceback.format_exc()}")
+            return Response({
+                "error": "Failed to fetch lead magnets",
+                "details": str(e)
+            }, status=500)
+
     def perform_create(self, s): 
         try:
             s.save(owner=self.request.user)

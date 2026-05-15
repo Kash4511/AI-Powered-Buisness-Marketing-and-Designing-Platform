@@ -100,10 +100,13 @@ class LeadMagnetSerializer(serializers.ModelSerializer):
 
     def get_generation_data(self, obj):
         try:
-            if hasattr(obj, 'generation_data'):
-                return LeadMagnetGenerationSerializer(obj.generation_data).data
-        except Exception:
-            pass
+            # Safely check for the related object
+            gen_data = getattr(obj, 'generation_data', None)
+            if gen_data:
+                return LeadMagnetGenerationSerializer(gen_data).data
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error serializing generation_data for LM {obj.id}: {e}")
         return None
 
     class Meta:
