@@ -16,12 +16,12 @@ class DocRaptorService:
         self.test_mode = True
 
     def list_templates(self) -> List[Dict[str, Any]]:
-        template_path = os.path.join(self.templates_dir, 'template1.html')
+        template_path = os.path.join(self.templates_dir, 'template.html')
         return [
             {
                 'id': 'modern-guide',
                 'name': 'Modern Guide Template',
-                'description': 'Single template rendered from lead_magnets/templates/template1.html',
+                'description': 'Single template rendered from lead_magnets/templates/template.html',
                 'category': 'guide',
                 'path': template_path,
             }
@@ -32,10 +32,16 @@ class DocRaptorService:
             loader=FileSystemLoader(self.templates_dir),
             autoescape=select_autoescape(['html'])
         )
-        # Choose template by id; default to main template1.html
-        template_name = 'template1.html'
+        # Choose template by id; 
+        # 1. Try exact filename match
+        # 2. Default to 'template.html'
+        template_name = f"{template_id}.html"
+        if not os.path.exists(os.path.join(self.templates_dir, template_name)):
+             template_name = 'template.html'
+             
         if str(template_id).lower() in ('brand-assets', 'brand_assets', 'brand-assets-preview'):
             template_name = 'BrandAssetsPreview.html'
+            
         template = env.get_template(template_name)
         rendered_html = template.render(**variables)
 

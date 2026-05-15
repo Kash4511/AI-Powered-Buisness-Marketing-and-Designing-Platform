@@ -199,22 +199,36 @@ class WeasyPrintService:
     # TEMPLATE REGISTRY — Strict type-to-template mapping
     # ─────────────────────────────────────────────────────────────────────────────
     TEMPLATE_REGISTRY = {
-        "guide":             "template1.html",
-        "checklist":         "template1.html",
-        "case_study":        "template1.html",
-        "roi_calculator":    "template1.html",
-        "trends_report":     "template1.html",
-        "design_portfolio":  "template1.html",
-        "client_onboarding": "template1.html",
-        "custom":            "template1.html",
-        "default":           "template1.html",
+        "guide":             "template.html",
+        "checklist":         "template.html",
+        "case_study":        "template.html",
+        "roi_calculator":    "template.html",
+        "trends_report":     "template.html",
+        "design_portfolio":  "template.html",
+        "client_onboarding": "template.html",
+        "custom":            "template.html",
+        "default":           "template.html",
     }
 
     def __init__(self):
         logger.info("WeasyPrintService initialised | TEMPLATES_DIR=%s", self.TEMPLATES_DIR)
 
     def _get_template_path(self, template_id: str) -> str:
-        filename = self.TEMPLATE_REGISTRY.get(template_id, f"{template_id}.html")
+        """
+        Resolves the template path. 
+        1. Checks if {template_id}.html exists in TEMPLATES_DIR.
+        2. If not, checks the TEMPLATE_REGISTRY.
+        3. Defaults to 'template.html'.
+        """
+        # Try exact filename match first
+        filename = f"{template_id}.html"
+        path = os.path.join(self.TEMPLATES_DIR, filename)
+        
+        if os.path.exists(path):
+            return path
+            
+        # Try registry lookup
+        filename = self.TEMPLATE_REGISTRY.get(template_id, "template.html")
         return os.path.join(self.TEMPLATES_DIR, filename)
 
     def list_templates(self) -> list:
