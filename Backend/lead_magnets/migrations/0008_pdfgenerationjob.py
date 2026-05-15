@@ -5,7 +5,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('lead_magnets', '0006_templateselection_image_upload_preference'),
+        ('lead_magnets', '0007_alter_leadmagnet_status'),
     ]
 
     operations = [

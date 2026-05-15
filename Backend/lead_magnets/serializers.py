@@ -96,7 +96,15 @@ class CreateLeadMagnetSerializer(serializers.Serializer):
 
 # ---- Read Serializer ----
 class LeadMagnetSerializer(serializers.ModelSerializer):
-    generation_data = LeadMagnetGenerationSerializer(read_only=True)
+    generation_data = serializers.SerializerMethodField()
+
+    def get_generation_data(self, obj):
+        try:
+            if hasattr(obj, 'generation_data'):
+                return LeadMagnetGenerationSerializer(obj.generation_data).data
+        except Exception:
+            pass
+        return None
 
     class Meta:
         model = LeadMagnet

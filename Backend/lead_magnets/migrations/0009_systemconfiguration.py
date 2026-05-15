@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('lead_magnets', '0007_pdfgenerationjob'),
+        ('lead_magnets', '0008_pdfgenerationjob'),
     ]
 
     operations = [

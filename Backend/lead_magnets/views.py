@@ -228,7 +228,8 @@ class LeadMagnetListCreateView(generics.ListCreateAPIView):
         try:
             return LeadMagnet.objects.filter(owner=self.request.user)
         except Exception as e:
-            logger.error(f"❌ [LM LIST ERROR] {self.request.user.email}: {e}\n{traceback.format_exc()}")
+            user_email = getattr(self.request.user, "email", "anonymous")
+            logger.error(f"❌ [LM LIST ERROR] {user_email}: {e}\n{traceback.format_exc()}")
             raise
             
     def perform_create(self, s): 
