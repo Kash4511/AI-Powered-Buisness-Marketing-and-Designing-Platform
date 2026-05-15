@@ -86,6 +86,40 @@ def health_check(request):
 # HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
+TARGET_CHARS_PER_PAGE = 2200
+MAX_CHARS_PER_PAGE = 2800
+MIN_FILL_RATIO = 0.4
+
+def _cld_url(public_id, **kwargs):
+    import cloudinary.utils
+    return cloudinary.utils.cloudinary_url(public_id, **kwargs)
+
+
+def create_page_html(content_html, page_num, kicker, title, image_html=""):
+    num_str = str(page_num).zfill(2)
+    return f"""
+        <div class="page content-page" style="clear: both;">
+            <div class="string-container">
+                <span class="page-header-kicker">{kicker}</span>
+                <div class="page-header-title">{title}</div>
+            </div>
+
+            <div class="page-body">
+                <div class="section-intro-block">
+                    <div class="section-intro-num">{num_str}</div>
+                    <div class="section-headline">{title}</div>
+                </div>
+                
+                {image_html}
+                
+                <div class="section-content">
+                    {content_html}
+                </div>
+            </div>
+        </div>
+    """
+
+
 def _resolve_image_url(img) -> str:
     if not img:
         return ""
@@ -312,7 +346,7 @@ def get_theme_palette(request):
         palette.update({"surface":"#1a202c","onSurface":"#f7fafc","accent":"#2d3748","highlight":"#4a5568"})
     return Response(palette)
 
-def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content, user_answers, architectural_images):
+def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content, user_answers, architectural_images, job_id):
     """Background task for PDF generation to avoid HTTP timeouts"""
     try:
         from accounts.models import User
@@ -784,6 +818,69 @@ class HealthView(APIView):
     def get(self, request): return Response({"status":"ok"})
     def options(self, request, *a, **k): return Response({"status":"ok"})
 
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_start(request):
+    lm_id = request.data.get("lead_magnet_id")
+    if not lm_id:
+        return Response({"error": "lead_magnet_id is required"}, status=400)
+    
+    # Cancel existing jobs for this lead magnet
+    PDFGenerationJob.objects.filter(lead_magnet_id=lm_id, status__in=["pending", "processing"]).update(
+        status="cancelled", stop_requested=True
+    )
+
+    job_id = str(uuid.uuid4())
+    _set_job(job_id, status="pending", progress=0, message="Initializing...", lead_magnet_id=lm_id)
+    
+    # Start thread
+    thread = threading.Thread(
+        target=run_pdf_generation_task,
+        args=(
+            lm_id, 
+            request.user.id, 
+            request.data.get("template_id", "modern-guide"),
+            request.data.get("use_ai_content", True),
+            request.data.get("user_answers"),
+            request.data.get("architectural_images", []),
+            job_id
+        ),
+        daemon=True
+    )
+    thread.start()
+    
+    return Response({"job_id": job_id}, status=202)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_status(request, job_id):
+    return Response(_get_job(job_id))
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_stop(request, job_id):
+    PDFGenerationJob.objects.filter(job_id=job_id).update(status="terminated", stop_requested=True)
+    return Response({"status": "ok"})
+
+# Compatibility routes
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_compat(request):
+    return generate_pdf_start(request)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def generate_pdf_status_compat(request):
+    lm_id = request.query_params.get("lead_magnet_id")
+    if not lm_id:
+        return Response({"error": "lead_magnet_id is required"}, status=400)
+    
+    latest_job = PDFGenerationJob.objects.filter(lead_magnet_id=lm_id).order_by("-created_at").first()
+    if not latest_job:
+        return Response({"status": "not_found"}, status=404)
+    
+    return Response(_get_job(latest_job.job_id))
 
 class FormaAIConversationView(APIView):
     permission_classes = [permissions.IsAuthenticated]
