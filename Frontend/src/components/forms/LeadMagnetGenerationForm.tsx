@@ -1,394 +1,276 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, ArrowLeft, Sparkles } from 'lucide-react'
 import type { LeadMagnetGeneration } from '../../lib/dashboardApi'
 import { dashboardApi } from '../../lib/dashboardApi'
-import './LeadMagnetGenerationForm.css'
 
-interface LeadMagnetGenerationFormProps {
-  onSubmit: (data: LeadMagnetGeneration) => void
-  loading?: boolean
-}
+const T = {
+  bg:'#ffffff', bg2:'#f7f7f5', bg3:'#f0f0ec',
+  dark:'#0a0a0a', bd:'rgba(0,0,0,0.08)', bd2:'rgba(0,0,0,0.15)',
+  t1:'#111111', t2:'#666666', t3:'#aaaaaa',
+} as const
+
+const Styles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Instrument+Sans:wght@400;500;600&display=swap');
+    .lmf-chip{position:relative;display:flex;align-items:center;justify-content:center;padding:11px 14px;border:1px solid ${T.bd};border-radius:9px;cursor:pointer;transition:all 0.15s;background:${T.bg2};font-family:'Instrument Sans',sans-serif;font-size:0.82rem;font-weight:500;color:${T.t2};text-align:center;user-select:none;}
+    .lmf-chip:hover{border-color:${T.bd2};color:${T.t1};background:#fff;}
+    .lmf-chip.sel{background:${T.dark};border-color:${T.dark};color:#fff;font-weight:600;}
+    .lmf-chip input{position:absolute;opacity:0;pointer-events:none;}
+    .lmf-chk{display:flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid ${T.bd};border-radius:9px;cursor:pointer;transition:all 0.15s;background:${T.bg2};font-family:'Instrument Sans',sans-serif;font-size:0.82rem;font-weight:500;color:${T.t2};user-select:none;}
+    .lmf-chk:hover{border-color:${T.bd2};color:${T.t1};background:#fff;}
+    .lmf-chk.sel{background:${T.dark};border-color:${T.dark};color:#fff;}
+    .lmf-chk input{position:absolute;opacity:0;pointer-events:none;}
+    .lmf-chkbox{width:16px;height:16px;border-radius:4px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.5;}
+    .lmf-chk.sel .lmf-chkbox{opacity:1;background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.5);}
+    .lmf-ta{width:100%;padding:12px 14px;background:${T.bg2};border:1px solid ${T.bd};border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:0.83rem;color:${T.t1};outline:none;resize:vertical;transition:all 0.2s;line-height:1.6;}
+    .lmf-ta:focus{border-color:${T.bd2};background:#fff;box-shadow:0 0 0 3px rgba(0,0,0,0.04);}
+    .lmf-ta::placeholder{color:${T.t3};}
+    .lmf-in{width:100%;padding:11px 14px;background:${T.bg2};border:1px solid ${T.bd};border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:0.83rem;color:${T.t1};outline:none;transition:all 0.2s;}
+    .lmf-in:focus{border-color:${T.bd2};background:#fff;box-shadow:0 0 0 3px rgba(0,0,0,0.04);}
+    .lmf-in::placeholder{color:${T.t3};}
+    .lmf-btn-p{display:inline-flex;align-items:center;gap:7px;padding:11px 22px;background:${T.dark};color:#fff;border:none;border-radius:10px;font-family:'Instrument Sans',sans-serif;font-size:0.83rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+    .lmf-btn-p:hover:not(:disabled){background:#2a2a2a;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,0.15);}
+    .lmf-btn-p:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none;}
+    .lmf-btn-s{display:inline-flex;align-items:center;gap:7px;padding:11px 18px;background:none;border:1px solid ${T.bd2};border-radius:10px;font-family:'Instrument Sans',sans-serif;font-size:0.83rem;font-weight:500;color:${T.t2};cursor:pointer;transition:all 0.2s;}
+    .lmf-btn-s:hover:not(:disabled){border-color:rgba(0,0,0,0.25);color:${T.t1};background:${T.bg2};}
+    .lmf-btn-s:disabled{opacity:0.45;cursor:not-allowed;}
+    .lmf-btn-g{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:${T.bg2};border:1px solid ${T.bd};border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:0.78rem;font-weight:500;color:${T.t2};cursor:pointer;transition:all 0.2s;}
+    .lmf-btn-g:hover:not(:disabled){border-color:${T.bd2};color:${T.t1};}
+    .lmf-btn-g:disabled{opacity:0.45;cursor:not-allowed;}
+    @keyframes lmf-spin{to{transform:rotate(360deg);}}
+  `}</style>
+)
 
 const LEAD_MAGNET_TYPES = [
-  { value: 'guide', label: 'Guide' },
-  { value: 'case-study', label: 'Case Study' },
-  { value: 'checklist', label: 'Checklist' },
-  { value: 'roi-calculator', label: 'ROI Calculator' },
-  { value: 'trends-report', label: 'Trends Report' },
-  { value: 'onboarding-flow', label: 'Client Onboarding Flow' },
-  { value: 'design-portfolio', label: 'Design Portfolio' },
-  { value: 'custom', label: 'Custom' }
+  {value:'guide',label:'Guide'},{value:'case-study',label:'Case Study'},
+  {value:'checklist',label:'Checklist'},{value:'roi-calculator',label:'ROI Calculator'},
+  {value:'trends-report',label:'Trends Report'},{value:'onboarding-flow',label:'Client Onboarding Flow'},
+  {value:'design-portfolio',label:'Design Portfolio'},{value:'custom',label:'Custom'},
 ]
-
 const MAIN_TOPICS = [
-  { value: 'sustainable-architecture', label: 'Sustainable Architecture' },
-  { value: 'smart-homes', label: 'Smart Homes' },
-  { value: 'adaptive-reuse', label: 'Adaptive Reuse' },
-  { value: 'wellness-biophilic', label: 'Wellness/Biophilic' },
-  { value: 'modular-prefab', label: 'Modular/Prefab' },
-  { value: 'urban-placemaking', label: 'Urban Placemaking' },
-  { value: 'passive-house', label: 'Passive House/Net-Zero' },
-  { value: 'climate-resilient', label: 'Climate-Resilient' },
-  { value: 'project-roi', label: 'Project ROI' },
-  { value: 'branding-differentiation', label: 'Branding & Differentiation' },
-  { value: 'custom', label: 'Custom' }
+  {value:'sustainable-architecture',label:'Sustainable Architecture'},{value:'smart-homes',label:'Smart Homes'},
+  {value:'adaptive-reuse',label:'Adaptive Reuse'},{value:'wellness-biophilic',label:'Wellness / Biophilic'},
+  {value:'modular-prefab',label:'Modular / Prefab'},{value:'urban-placemaking',label:'Urban Placemaking'},
+  {value:'passive-house',label:'Passive House / Net-Zero'},{value:'climate-resilient',label:'Climate-Resilient'},
+  {value:'project-roi',label:'Project ROI'},{value:'branding-differentiation',label:'Branding & Differentiation'},
+  {value:'custom',label:'Custom'},
 ]
+const TARGET_AUDIENCES = ['Homeowners','Developers','Commercial Clients','Government','Architects/Peers','Contractors','Real Estate Agents','Nonprofits','Facility Managers','Other']
+const PAIN_POINTS = ['High costs','ROI uncertainty','Compliance issues','Sustainability demands','Risk management','Long timelines','Tech complexity','Poor communication','Competition','Approvals','Energy efficiency','Health/Wellness','Vendor reliability','Other']
 
-const TARGET_AUDIENCES = [
-  'Homeowners',
-  'Developers', 
-  'Commercial Clients',
-  'Government',
-  'Architects/Peers',
-  'Contractors',
-  'Real Estate Agents',
-  'Nonprofits',
-  'Facility Managers',
-  'Other'
-]
+const STEPS = ['Type & Topic','Target Audience','Pain Points','Outcome & CTA']
 
-const PAIN_POINTS = [
-  'High costs',
-  'ROI uncertainty',
-  'Compliance issues', 
-  'Sustainability demands',
-  'Risk management',
-  'Long timelines',
-  'Tech complexity',
-  'Poor communication',
-  'Competition',
-  'Approvals',
-  'Energy efficiency',
-  'Health/Wellness',
-  'Vendor reliability',
-  'Other'
-]
+interface Props { onSubmit:(data:LeadMagnetGeneration)=>void; loading?:boolean }
 
-const LeadMagnetGenerationForm: React.FC<LeadMagnetGenerationFormProps> = ({ 
-  onSubmit, 
-  loading = false 
-}) => {
-  const [formData, setFormData] = useState<Partial<LeadMagnetGeneration>>({
-    lead_magnet_type: 'guide',
-    main_topic: 'sustainable-architecture',
-    target_audience: [],
-    audience_pain_points: [],
-    desired_outcome: '',
-    call_to_action: '',
-    special_requests: ''
+const LeadMagnetGenerationForm: React.FC<Props> = ({ onSubmit, loading=false }) => {
+  const [fd, setFd] = useState<Partial<LeadMagnetGeneration>>({
+    lead_magnet_type:'guide', main_topic:'sustainable-architecture',
+    target_audience:[], audience_pain_points:[],
+    desired_outcome:'', call_to_action:'', special_requests:'',
   })
+  const [step, setStep]           = useState(0)
+  const [sloganLoading, setSL]    = useState(false)
+  const [sloganError, setSE]      = useState('')
 
-  const [currentStep, setCurrentStep] = useState(0)
-  const [slogan, setSlogan] = useState('');
-  const [sloganLoading, setSloganLoading] = useState(false);
-  const [sloganError, setSloganError] = useState('');
-
-  const steps = [
-    'Type & Topic',
-    'Target Audience',
-    'Pain Points',
-    'Outcome & CTA'
-  ]
-
-  const handleInputChange = (field: keyof LeadMagnetGeneration, value: string | string[]) => {
-    if (field === 'desired_outcome' || field === 'call_to_action') {
-      setSloganError('')
-    }
-    setFormData(prev => ({ ...prev, [field]: value }))
+  const set = (f:keyof LeadMagnetGeneration, v:string|string[]) => {
+    if (f==='desired_outcome'||f==='call_to_action') setSE('')
+    setFd(p=>({...p,[f]:v}))
+  }
+  const toggle = (f:'target_audience'|'audience_pain_points', item:string) => {
+    const cur = (fd[f] as string[])||[]
+    set(f, cur.includes(item)?cur.filter(i=>i!==item):[...cur,item])
   }
 
-  const handleArrayToggle = (field: 'target_audience' | 'audience_pain_points', item: string) => {
-    const current = formData[field] || []
-    const updated = current.includes(item)
-      ? current.filter(i => i !== item)
-      : [...current, item]
-    handleInputChange(field, updated)
-  }
-
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
-    } else {
-      handleSubmit()
+  const isValid = () => {
+    switch(step){
+      case 0: return !!(fd.lead_magnet_type&&fd.main_topic)
+      case 1: return (fd.target_audience?.length??0)>0
+      case 2: return (fd.audience_pain_points?.length??0)>0
+      case 3: return !!(fd.desired_outcome&&fd.call_to_action)
+      default:return false
     }
   }
 
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
+  const next = () => {
+    if(step<STEPS.length-1){setStep(s=>s+1);return}
+    const out=(fd.desired_outcome||'').trim(), cta=(fd.call_to_action||'').trim()
+    if(out.length<15){setSE('Please describe your desired outcome in at least 15 characters');return}
+    if(cta.length<15){setSE('Please describe your call to action in at least 15 characters');return}
+    setSE(''); onSubmit(fd as LeadMagnetGeneration)
   }
 
-  const handleSubmit = () => {
-    const desiredOutcome = formData.desired_outcome || ''
-    const callToAction = formData.call_to_action || ''
-    if (!desiredOutcome || desiredOutcome.trim().length < 15) {
-      setSloganError('Please describe your desired outcome in at least 15 characters')
-      return
-    }
-    if (!callToAction || callToAction.trim().length < 15) {
-      setSloganError('Please describe your call to action in at least 15 characters')
-      return
-    }
-    if (isFormValid()) {
-      setSloganError('')
-      onSubmit(formData as LeadMagnetGeneration)
-    }
-  }
-
-  const handleGenerateSlogan = async () => {
-    setSloganLoading(true);
-    setSloganError('');
+  const generateSlogan = async () => {
+    setSL(true); setSE('')
     try {
-      const firmProfile = await dashboardApi.getFirmProfile();
-      const response = await dashboardApi.generateSlogan({
-        user_answers: formData as unknown as Record<string, unknown>,
-        firm_profile: firmProfile as unknown as Record<string, unknown>,
-      });
-      setSlogan(response.slogan);
-      handleInputChange('special_requests', response.slogan);
-    } catch (error) {
-      setSloganError('Failed to generate slogan. Please try again.');
-    } finally {
-      setSloganLoading(false);
-    }
-  };
-
-  const isStepValid = () => {
-    switch (currentStep) {
-      case 0:
-        return formData.lead_magnet_type && formData.main_topic
-      case 1:
-        return (formData.target_audience?.length || 0) > 0
-      case 2:
-        return (formData.audience_pain_points?.length || 0) > 0
-      case 3:
-        return formData.desired_outcome && formData.call_to_action
-      default:
-        return false
-    }
+      const fp = await dashboardApi.getFirmProfile()
+      const r  = await dashboardApi.generateSlogan({user_answers:fd as unknown as Record<string,unknown>, firm_profile:fp as unknown as Record<string,unknown>})
+      set('special_requests', r.slogan)
+    } catch { setSE('Failed to generate slogan. Please try again.') }
+    finally { setSL(false) }
   }
 
-  const isFormValid = () => {
-    return formData.lead_magnet_type &&
-           formData.main_topic &&
-           (formData.target_audience?.length || 0) > 0 &&
-           (formData.audience_pain_points?.length || 0) > 0 &&
-           formData.desired_outcome &&
-           formData.call_to_action
-  }
+  const Label = ({children,optional}:{children:React.ReactNode;optional?:boolean}) => (
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+      <span style={{fontSize:'0.78rem',fontWeight:600,color:T.t1}}>{children}</span>
+      {optional&&<span style={{fontSize:'0.68rem',color:T.t3,fontWeight:400}}>optional</span>}
+    </div>
+  )
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <div className="form-step">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="form-group"
-            >
-              <label className="form-label">Lead Magnet Type *</label>
-              <div className="option-grid">
-                {LEAD_MAGNET_TYPES.map((type) => (
-                  <label key={type.value} className={`option-card ${formData.lead_magnet_type === type.value ? 'selected' : ''}`}>
-                    <input
-                      type="radio"
-                      name="lead_magnet_type"
-                      value={type.value}
-                      checked={formData.lead_magnet_type === type.value}
-                      onChange={(e) => handleInputChange('lead_magnet_type', e.target.value)}
-                    />
-                    <span className="option-label">{type.label}</span>
-                  </label>
-                ))}
-              </div>
-            </motion.div>
+  const Tick = () => (
+    <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+      <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="form-group"
-            >
-              <label className="form-label">Main Topic *</label>
-              <div className="option-grid">
-                {MAIN_TOPICS.map((topic) => (
-                  <label key={topic.value} className={`option-card ${formData.main_topic === topic.value ? 'selected' : ''}`}>
-                    <input
-                      type="radio"
-                      name="main_topic"
-                      value={topic.value}
-                      checked={formData.main_topic === topic.value}
-                      onChange={(e) => handleInputChange('main_topic', e.target.value)}
-                    />
-                    <span className="option-label">{topic.label}</span>
-                  </label>
-                ))}
-              </div>
-            </motion.div>
+  const renderStep = () => {
+    const variants = {initial:{opacity:0,x:12},animate:{opacity:1,x:0},exit:{opacity:0,x:-12}}
+    switch(step){
+      case 0: return (
+        <motion.div key="s0" {...variants}>
+          <div style={{marginBottom:28}}>
+            <Label>Lead Magnet Type *</Label>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+              {LEAD_MAGNET_TYPES.map(t=>(
+                <label key={t.value} className={`lmf-chip${fd.lead_magnet_type===t.value?' sel':''}`}>
+                  <input type="radio" name="lmt" value={t.value} checked={fd.lead_magnet_type===t.value} onChange={e=>set('lead_magnet_type',e.target.value)}/>
+                  {t.label}
+                </label>
+              ))}
+            </div>
           </div>
-        )
-
-      case 1:
-        return (
-          <div className="form-step">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="form-group"
-            >
-              <label className="form-label">Target Audience (select all that apply) *</label>
-              <div className="checkbox-grid">
-                {TARGET_AUDIENCES.map((audience) => (
-                  <label key={audience} className="checkbox-option">
-                    <input
-                      type="checkbox"
-                      checked={(formData.target_audience || []).includes(audience)}
-                      onChange={() => handleArrayToggle('target_audience', audience)}
-                    />
-                    <span className="checkbox-label">{audience}</span>
-                  </label>
-                ))}
-              </div>
-            </motion.div>
+          <div>
+            <Label>Main Topic *</Label>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+              {MAIN_TOPICS.map(t=>(
+                <label key={t.value} className={`lmf-chip${fd.main_topic===t.value?' sel':''}`}>
+                  <input type="radio" name="mt" value={t.value} checked={fd.main_topic===t.value} onChange={e=>set('main_topic',e.target.value)}/>
+                  {t.label}
+                </label>
+              ))}
+            </div>
           </div>
-        )
-
-      case 2:
-        return (
-          <div className="form-step">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="form-group"
-            >
-              <label className="form-label">Audience Pain Points / Challenges (select all that apply) *</label>
-              <div className="checkbox-grid">
-                {PAIN_POINTS.map((pain) => (
-                  <label key={pain} className="checkbox-option">
-                    <input
-                      type="checkbox"
-                      checked={(formData.audience_pain_points || []).includes(pain)}
-                      onChange={() => handleArrayToggle('audience_pain_points', pain)}
-                    />
-                    <span className="checkbox-label">{pain}</span>
-                  </label>
-                ))}
-              </div>
-            </motion.div>
+        </motion.div>
+      )
+      case 1: return (
+        <motion.div key="s1" {...variants}>
+          <Label>Target Audience — select all that apply *</Label>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+            {TARGET_AUDIENCES.map(a=>{
+              const chk=(fd.target_audience||[]).includes(a)
+              return(
+                <label key={a} className={`lmf-chk${chk?' sel':''}`}>
+                  <input type="checkbox" checked={chk} onChange={()=>toggle('target_audience',a)}/>
+                  <div className="lmf-chkbox">{chk&&<Tick/>}</div>
+                  {a}
+                </label>
+              )
+            })}
           </div>
-        )
-
-      case 3:
-        return (
-          <div className="form-step">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="form-group"
-            >
-              <label className="form-label">Desired Outcome / Solution *</label>
-              <textarea
-                className="form-textarea"
-                value={formData.desired_outcome || ''}
-                onChange={(e) => handleInputChange('desired_outcome', e.target.value)}
-                placeholder="Describe the main outcome or solution your lead magnet will provide..."
-                rows={4}
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="form-group"
-            >
-              <label className="form-label">Call-to-Action *</label>
-              <input
-                type="text"
-                className="form-input"
-                value={formData.call_to_action || ''}
-                onChange={(e) => handleInputChange('call_to_action', e.target.value)}
-                placeholder="e.g., Schedule Consultation, Download Portfolio, Get Quote"
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="form-group"
-            >
-              <label className="form-label">Special Requests or Additional Sections</label>
-              <textarea
-                className="form-textarea"
-                value={formData.special_requests || ''}
-                onChange={(e) => handleInputChange('special_requests', e.target.value)}
-                placeholder="Any specific requirements, additional sections, or customizations..."
-                rows={3}
-              />
-              <button
-                type="button"
-                className="btn btn-secondary mt-2"
-                onClick={handleGenerateSlogan}
-                disabled={sloganLoading}
-              >
-                {sloganLoading ? 'Generating...' : 'Generate Slogan'}
+        </motion.div>
+      )
+      case 2: return (
+        <motion.div key="s2" {...variants}>
+          <Label>Audience Pain Points — select all that apply *</Label>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+            {PAIN_POINTS.map(p=>{
+              const chk=(fd.audience_pain_points||[]).includes(p)
+              return(
+                <label key={p} className={`lmf-chk${chk?' sel':''}`}>
+                  <input type="checkbox" checked={chk} onChange={()=>toggle('audience_pain_points',p)}/>
+                  <div className="lmf-chkbox">{chk&&<Tick/>}</div>
+                  {p}
+                </label>
+              )
+            })}
+          </div>
+        </motion.div>
+      )
+      case 3: return (
+        <motion.div key="s3" {...variants} style={{display:'flex',flexDirection:'column',gap:20}}>
+          <div>
+            <Label>Desired Outcome / Solution *</Label>
+            <textarea className="lmf-ta" rows={4} value={fd.desired_outcome||''} onChange={e=>set('desired_outcome',e.target.value)} placeholder="Describe the main outcome or solution your lead magnet will provide…"/>
+          </div>
+          <div>
+            <Label>Call-to-Action *</Label>
+            <input className="lmf-in" type="text" value={fd.call_to_action||''} onChange={e=>set('call_to_action',e.target.value)} placeholder="e.g., Schedule Consultation, Download Portfolio, Get Quote"/>
+          </div>
+          <div>
+            <Label optional>Special Requests or Additional Sections</Label>
+            <textarea className="lmf-ta" rows={3} value={fd.special_requests||''} onChange={e=>set('special_requests',e.target.value)} placeholder="Any specific requirements, additional sections, or customizations…"/>
+            <div style={{marginTop:10}}>
+              <button type="button" className="lmf-btn-g" onClick={generateSlogan} disabled={sloganLoading}>
+                {sloganLoading
+                  ? <><div style={{width:12,height:12,border:`2px solid ${T.bd}`,borderTopColor:T.t2,borderRadius:'50%',animation:'lmf-spin 0.8s linear infinite'}}/> Generating…</>
+                  : <><Sparkles size={12}/> Generate Slogan</>}
               </button>
-              {sloganError && <p className="text-red-500 text-sm mt-2">{sloganError}</p>}
-            </motion.div>
+            </div>
+            {sloganError && (
+              <div style={{marginTop:10,fontSize:'0.78rem',color:'#b00020',background:'#fff2f2',border:'1px solid rgba(200,50,50,0.15)',borderRadius:8,padding:'9px 13px'}}>
+                {sloganError}
+              </div>
+            )}
           </div>
-        )
-
-      default:
-        return null
+        </motion.div>
+      )
+      default: return null
     }
   }
 
   return (
-    <div className="lead-magnet-form">
-      <div className="form-header">
-        <h1 className="form-title">Create Lead Magnet</h1>
-        <div className="form-progress">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-            />
-          </div>
-          <span className="progress-text">
-            Step {currentStep + 1} of {steps.length}: {steps[currentStep]}
+    <>
+      <Styles/>
+
+      {/* HEADER */}
+      <div style={{padding:'20px 28px',borderBottom:`1px solid ${T.bd}`,background:'#fff'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+          <span style={{fontFamily:"'Fraunces',serif",fontSize:'1rem',fontWeight:700,color:T.dark,letterSpacing:'-0.2px'}}>
+            {STEPS[step]}
           </span>
+          <span style={{fontSize:'0.72rem',color:T.t3}}>Step {step+1} of {STEPS.length}</span>
+        </div>
+        {/* Segmented progress */}
+        <div style={{display:'flex',gap:6,marginBottom:8}}>
+          {STEPS.map((_,i)=>(
+            <div key={i} style={{flex:1,height:3,borderRadius:2,background:i<=step?T.dark:T.bg3,transition:'background 0.3s'}}/>
+          ))}
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between'}}>
+          {STEPS.map((s,i)=>(
+            <span key={s} style={{fontSize:'0.62rem',color:i===step?T.t1:i<step?T.t2:T.t3,fontWeight:i===step?600:400,transition:'color 0.2s'}}>
+              {s}
+            </span>
+          ))}
         </div>
       </div>
 
-      <div className="form-content">
-        {renderStepContent()}
+      {/* BODY */}
+      <div style={{padding:'28px',background:'#fff',minHeight:300}}>
+        <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
       </div>
 
-      <div className="form-actions">
-        {currentStep > 0 && (
-          <button 
-            type="button" 
-            className="btn btn-secondary"
-            onClick={handlePrevious}
-            disabled={loading}
-          >
-            Previous
+      {/* FOOTER */}
+      <div style={{padding:'18px 28px',borderTop:`1px solid ${T.bd}`,display:'flex',alignItems:'center',justifyContent:'space-between',background:T.bg2}}>
+        <span style={{fontSize:'0.72rem',color:T.t3}}>
+          {step===STEPS.length-1?'Required fields must be at least 15 characters':'Select options to continue'}
+        </span>
+        <div style={{display:'flex',gap:10}}>
+          {step>0&&(
+            <button className="lmf-btn-s" onClick={()=>setStep(s=>s-1)} disabled={loading}>
+              <ArrowLeft size={14}/> Previous
+            </button>
+          )}
+          <button className="lmf-btn-p" onClick={next} disabled={!isValid()||loading}>
+            {loading
+              ? <><div style={{width:14,height:14,border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'lmf-spin 0.8s linear infinite'}}/> Creating…</>
+              : step===STEPS.length-1
+                ? <>Create Lead Magnet <ArrowRight size={14}/></>
+                : <>Continue <ArrowRight size={14}/></>}
           </button>
-        )}
-        
-        <button 
-          type="button" 
-          className="btn btn-primary"
-          onClick={handleNext}
-          disabled={!isStepValid() || loading}
-        >
-          {loading ? 'Creating...' : (currentStep === steps.length - 1 ? 'Create Lead Magnet' : 'Next')}
-        </button>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

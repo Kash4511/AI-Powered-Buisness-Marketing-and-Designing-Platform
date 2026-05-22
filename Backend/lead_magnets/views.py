@@ -942,54 +942,64 @@ class FormaAIConversationView(APIView):
         job_id = str(uuid.uuid4())
         _set_job(job_id, status="pending", progress=0, message="Initializing AI strategist...")
         
-        # We need to capture the FILES before starting the thread as they might be closed
-        # But since we are using threading.Thread, we can try to pass them if they are in memory
-        # Better: just return the conversation ID and let the frontend poll or wait
-        
-        def _run_chat_ai_job(jid, msg, user_id, conv_id):
+        # Capture necessary context for the thread
+        user_id = request.user.id
+        conv_id = conv.id
+
+        def _run_chat_ai_job(jid, msg, uid, cid):
             try:
                 from django.contrib.auth import get_user_model
                 User = get_user_model()
-                user = User.objects.get(id=user_id)
-                conv = FormaAIConversation.objects.get(id=conv_id)
+                user = User.objects.get(id=uid)
+                conv = FormaAIConversation.objects.get(id=cid)
                 
-                conv.messages.append({"role":"user","content":msg})
-                conv.save()
+                # Append user message
+                if not any(m.get('content') == msg and m.get('role') == 'user' for m in conv.messages):
+                    conv.messages.append({"role":"user","content":msg})
+                    conv.save()
                 
                 firm = _build_firm_profile(user)
-                ua   = {"main_topic":msg,"lead_magnet_type":"Custom Guide","industry":"Architecture"}
-                ai   = GroqClient()
-                svc  = WeasyPrintService()
+                # User description is the base for the whole document
+                ua = {
+                    "main_topic": msg,
+                    "lead_magnet_type": "guide", # Default to guide for comprehensive analysis
+                    "industry": firm.get("industry", "Architecture"),
+                    "target_audience": "Stakeholders",
+                    "desired_outcome": "Strategic clarity and actionable insights",
+                    "call_to_action": f"Contact {firm.get('firm_name', 'us')} for a consultation"
+                }
+                
+                ai = GroqClient()
+                svc = WeasyPrintService()
 
-                _set_job(jid, status="processing", progress=20, message="AI is drafting your guide...")
-                sig  = ai.get_semantic_signals(ua)
-                raw  = ai.generate_lead_magnet_json(sig, firm)
+                _set_job(jid, status="processing", progress=10, message="AI Strategist is analyzing your business description...")
+                
+                # Use semantic signals to better understand the user's intent from the raw message
+                sig = ai.get_semantic_signals(ua)
+                
+                # Directly generate full content based on the description
+                _set_job(jid, status="processing", progress=30, message="Generating deep strategic analysis...")
+                raw = ai.generate_lead_magnet_json(sig, firm)
                 cont = ai.normalize_ai_output(raw)
                 
-                _set_job(jid, status="processing", progress=60, message="Formatting content...")
+                _set_job(jid, status="processing", progress=70, message="Formatting your custom Lead Magnet...")
+                
+                # Mapping to template variables
                 tvars = ai.map_to_template_vars(cont, firm, sig)
                 tvars["companyName"]  = tvars.get("companyName")  or firm.get("firm_name") or "Your Company"
                 tvars["emailAddress"] = tvars.get("emailAddress") or firm.get("work_email","")
                 tvars["website"]      = tvars.get("website")      or firm.get("firm_website","")
 
-                # Smart Pagination & Content Fitting for Chat
+                # Reuse the established PDF generation pipeline logic
                 sections_html_list = []
                 toc_html_list = []
                 page_count = 4
-                
-                # Image usage tracking
-                used_image_indices = set()
-                architectural_images = [] # In chat thread, we'd need to handle files if passed
-
-                def get_next_img(is_vertical=False):
-                    return "" # Placeholder for now as files are tricky in background threads
 
                 for idx, key in enumerate(ai.SECTION_KEYS):
                     content_html = cont.get(key, "")
                     if not content_html: continue
                     section_title = tvars.get(f"customTitle{idx+1}", key.replace("_", " ").title())
                     
-                    # TOC
                     toc_html_list.append(f'<div class="toc-item"><span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span><span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span></div>')
                     
                     chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>)', content_html, flags=re.DOTALL)
@@ -998,15 +1008,10 @@ class FormaAIConversationView(APIView):
                     curr_content = []
                     curr_chars = 0
                     
-                    for c_idx, chunk in enumerate(chunks):
+                    for chunk in chunks:
                         chunk_len = len(re.sub('<[^<]+?>', '', chunk))
-                        is_last = (c_idx == len(chunks) - 1)
-                        overflow = (curr_chars + chunk_len) - TARGET_CHARS_PER_PAGE
-                        can_squeeze = is_last and overflow < (MAX_CHARS_PER_PAGE - TARGET_CHARS_PER_PAGE)
-
-                        if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE and not can_squeeze:
-                            img = get_next_img() if curr_chars / MAX_CHARS_PER_PAGE < MIN_FILL_RATIO else ""
-                            sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Analysis", section_title, img))
+                        if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE:
+                            sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Strategy", section_title))
                             page_count += 1
                             curr_content = [chunk]
                             curr_chars = chunk_len
@@ -1015,31 +1020,57 @@ class FormaAIConversationView(APIView):
                             curr_chars += chunk_len
                     
                     if curr_content:
-                        sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Analysis", section_title, ""))
+                        sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Strategy", section_title))
                         page_count += 1
 
                 tvars["sections_html"] = "\n".join(sections_html_list)
                 tvars["toc_html"]      = "\n".join(toc_html_list)
+
+                # Save the final result (in this case, we'd typically generate a PDF and save it)
+                # For chat, we'll notify the user it's ready
                 
-                conv.messages.append({"role":"assistant","content":f"AI has generated your document: {tvars.get('mainTitle')}."})
+                # Create the LeadMagnet record so it shows up in dashboard
+                with transaction.atomic():
+                    lm = LeadMagnet.objects.create(
+                        title=tvars.get("mainTitle", "AI Generated Lead Magnet"),
+                        owner=user,
+                        status="completed"
+                    )
+                    # Add generation data link
+                    LeadMagnetGeneration.objects.create(
+                        lead_magnet=lm,
+                        lead_magnet_type="guide",
+                        main_topic=msg[:50],
+                        desired_outcome=ua["desired_outcome"],
+                        call_to_action=ua["call_to_action"]
+                    )
+                    
+                    # Generate the actual PDF
+                    pdf_res = svc.generate_pdf(template_id, tvars)
+                    if pdf_res.get("success"):
+                        from django.core.files.base import ContentFile
+                        lm.pdf_file.save(f"ai_gen_{lm.id}.pdf", ContentFile(pdf_res["pdf_data"]))
+                        lm.save()
+                        
+                        _set_job(jid, status="complete", progress=100, message="PDF Generated successfully!", lead_magnet_id=lm.id, pdf_url=lm.pdf_file.url)
+                    else:
+                        raise Exception(f"PDF rendering failed: {pdf_res.get('details')}")
+
+                conv.messages.append({"role":"assistant","content":f"I've analyzed your business and generated a custom Lead Magnet: **{lm.title}**. You can find it in your dashboard."})
                 conv.save()
-                _set_job(jid, status="complete", progress=100, message="AI analysis complete!")
                 
             except Exception as e:
-                logger.error(f"Chat AI Error: {e}")
+                logger.error(f"Chat AI Error: {e}\n{traceback.format_exc()}")
                 _set_job(jid, status="failed", error=str(e))
 
-        # threading.Thread(target=_run_chat_ai_job, args=(job_id, message, request.user.id, conv.id), daemon=True).start()
-        
-        # ACTUALLY: The user's log shows /api/generate-pdf/start/ timeout. 
-        # This is a standard POST that should return 202 immediately.
-        # If it's timing out, it means the thread start or the DB cancel logic is hanging.
+        # Start the background thread correctly
+        threading.Thread(target=_run_chat_ai_job, args=(job_id, message, user_id, conv_id), daemon=True).start()
         
         return Response({
             "success": True,
             "job_id": job_id,
             "conversation_id": conv.id,
-            "message": "AI strategist is working on your request. Please check status in a moment."
+            "message": "AI strategist is analyzing your business. This will take a few minutes."
         }, status=202)
 
 

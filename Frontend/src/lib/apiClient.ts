@@ -119,8 +119,23 @@ apiClient.interceptors.response.use(
     const canRefresh = error.response?.status === 401 && !originalRequest._retry && !isAuthRequest;
     
     if (!canRefresh) {
-      console.error(`[API Response Error] ${error.response?.status} ${error.config?.url}`, error.response?.data || error.message);
-      if (error.response?.status === 401 && !isAuthRequest) {
+      const status = error.response?.status;
+      const url = error.config?.url;
+      const data = error.response?.data;
+      
+      console.error(`[API Response Error] ${status} ${url}`, data || error.message);
+      
+      // Enhanced error parsing for 500 errors
+      if (status === 500) {
+        let errorMessage = 'Internal Server Error';
+        if (data && typeof data === 'object') {
+          errorMessage = data.error || data.message || JSON.stringify(data);
+        }
+        // You could trigger a toast notification here if a toast library is available
+        console.error('Critical Server Error:', errorMessage);
+      }
+
+      if (status === 401 && !isAuthRequest) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         window.dispatchEvent(new CustomEvent('auth:expired'));
