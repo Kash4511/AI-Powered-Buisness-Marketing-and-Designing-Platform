@@ -917,161 +917,161 @@ class FormaAIConversationView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        message         = request.data.get("message")
-        files           = request.data.get("files",[])
-        conversation_id = request.data.get("conversation_id")
-        generate_pdf    = request.data.get("generate_pdf", True)
-        template_id     = request.data.get("template_id","modern-guide")
-        arch_imgs       = []
+        try:
+            message         = request.data.get("message")
+            files           = request.data.get("files",[])
+            conversation_id = request.data.get("conversation_id")
+            generate_pdf    = request.data.get("generate_pdf", True)
+            template_id     = request.data.get("template_id","modern-guide")
+            arch_imgs       = []
 
-        # We'll handle images later in the thread or just pass them if small
-        # For now, let's keep the logic but move the heavy lifting to a thread
+            if not message:
+                return Response({"error":"Message is required"}, status=400)
 
-        if not message:
-            return Response({"error":"Message is required"}, status=400)
+            if conversation_id:
+                try:
+                    conv = FormaAIConversation.objects.get(id=conversation_id, user=request.user)
+                except (FormaAIConversation.DoesNotExist, ValueError):
+                    # Handle invalid UUIDs or missing records
+                    conv = FormaAIConversation.objects.create(user=request.user, messages=[])
+            else:
+                conv = FormaAIConversation.objects.create(user=request.user, messages=[])
 
-        if conversation_id:
-            try:
-                conv = FormaAIConversation.objects.get(id=conversation_id, user=request.user)
-            except FormaAIConversation.DoesNotExist:
-                return Response({"error":"Conversation not found"}, status=404)
-        else:
-            conv = FormaAIConversation.objects.create(user=request.user, messages=[])
+            # Start background processing to avoid timeout
+            job_id = str(uuid.uuid4())
+            _set_job(job_id, status="pending", progress=0, message="Initializing AI strategist...", lead_magnet_id=None)
+            
+            # Capture necessary context for the thread
+            user_id = request.user.id
+            conv_id = conv.id
 
-        # Start background processing to avoid timeout
-        job_id = str(uuid.uuid4())
-        _set_job(job_id, status="pending", progress=0, message="Initializing AI strategist...")
-        
-        # Capture necessary context for the thread
-        user_id = request.user.id
-        conv_id = conv.id
-
-        def _run_chat_ai_job(jid, msg, uid, cid):
-            try:
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
-                user = User.objects.get(id=uid)
-                conv = FormaAIConversation.objects.get(id=cid)
-                
-                # Append user message
-                if not any(m.get('content') == msg and m.get('role') == 'user' for m in conv.messages):
-                    conv.messages.append({"role":"user","content":msg})
-                    conv.save()
-                
-                firm = _build_firm_profile(user)
-                # User description is the base for the whole document
-                ua = {
-                    "main_topic": msg,
-                    "lead_magnet_type": "guide", # Default to guide for comprehensive analysis
-                    "industry": firm.get("industry", "Architecture"),
-                    "target_audience": "Stakeholders",
-                    "desired_outcome": "Strategic clarity and actionable insights",
-                    "call_to_action": f"Contact {firm.get('firm_name', 'us')} for a consultation"
-                }
-                
-                ai = GroqClient()
-                svc = WeasyPrintService()
-
-                _set_job(jid, status="processing", progress=10, message="AI Strategist is analyzing your business description...")
-                
-                # Use semantic signals to better understand the user's intent from the raw message
-                sig = ai.get_semantic_signals(ua)
-                
-                # Directly generate full content based on the description
-                _set_job(jid, status="processing", progress=30, message="Generating deep strategic analysis...")
-                raw = ai.generate_lead_magnet_json(sig, firm)
-                cont = ai.normalize_ai_output(raw)
-                
-                _set_job(jid, status="processing", progress=70, message="Formatting your custom Lead Magnet...")
-                
-                # Mapping to template variables
-                tvars = ai.map_to_template_vars(cont, firm, sig)
-                tvars["companyName"]  = tvars.get("companyName")  or firm.get("firm_name") or "Your Company"
-                tvars["emailAddress"] = tvars.get("emailAddress") or firm.get("work_email","")
-                tvars["website"]      = tvars.get("website")      or firm.get("firm_website","")
-
-                # Reuse the established PDF generation pipeline logic
-                sections_html_list = []
-                toc_html_list = []
-                page_count = 4
-
-                for idx, key in enumerate(ai.SECTION_KEYS):
-                    content_html = cont.get(key, "")
-                    if not content_html: continue
-                    section_title = tvars.get(f"customTitle{idx+1}", key.replace("_", " ").title())
+            def _run_chat_ai_job(jid, msg, uid, cid):
+                try:
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    user = User.objects.get(id=uid)
+                    conv = FormaAIConversation.objects.get(id=cid)
                     
-                    toc_html_list.append(f'<div class="toc-item"><span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span><span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span></div>')
+                    # Append user message
+                    if not any(m.get('content') == msg and m.get('role') == 'user' for m in conv.messages):
+                        conv.messages.append({"role":"user","content":msg})
+                        conv.save()
                     
-                    chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>)', content_html, flags=re.DOTALL)
-                    chunks = [c.strip() for c in chunks if c.strip()]
+                    firm = _build_firm_profile(user)
+                    # User description is the base for the whole document
+                    ua = {
+                        "main_topic": msg,
+                        "lead_magnet_type": "guide", # Default to guide for comprehensive analysis
+                        "industry": firm.get("industry", "Architecture"),
+                        "target_audience": "Stakeholders",
+                        "desired_outcome": "Strategic clarity and actionable insights",
+                        "call_to_action": f"Contact {firm.get('firm_name', 'us')} for a consultation"
+                    }
                     
-                    curr_content = []
-                    curr_chars = 0
+                    ai = GroqClient()
+                    svc = WeasyPrintService()
+
+                    _set_job(jid, status="processing", progress=10, message="AI Strategist is analyzing your business description...")
                     
-                    for chunk in chunks:
-                        chunk_len = len(re.sub('<[^<]+?>', '', chunk))
-                        if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE:
+                    # Use semantic signals to better understand the user's intent from the raw message
+                    sig = ai.get_semantic_signals(ua)
+                    
+                    # Directly generate full content based on the description
+                    _set_job(jid, status="processing", progress=30, message="Generating deep strategic analysis...")
+                    raw = ai.generate_lead_magnet_json(sig, firm)
+                    cont = ai.normalize_ai_output(raw)
+                    
+                    _set_job(jid, status="processing", progress=70, message="Formatting your custom Lead Magnet...")
+                    
+                    # Mapping to template variables
+                    tvars = ai.map_to_template_vars(cont, firm, sig)
+                    tvars["companyName"]  = tvars.get("companyName")  or firm.get("firm_name") or "Your Company"
+                    tvars["emailAddress"] = tvars.get("emailAddress") or firm.get("work_email","")
+                    tvars["website"]      = tvars.get("website")      or firm.get("firm_website","")
+
+                    # Reuse the established PDF generation pipeline logic
+                    sections_html_list = []
+                    toc_html_list = []
+                    page_count = 4
+
+                    for idx, key in enumerate(ai.SECTION_KEYS):
+                        content_html = cont.get(key, "")
+                        if not content_html: continue
+                        section_title = tvars.get(f"customTitle{idx+1}", key.replace("_", " ").title())
+                        
+                        toc_html_list.append(f'<div class="toc-item"><span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span><span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span></div>')
+                        
+                        chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>)', content_html, flags=re.DOTALL)
+                        chunks = [c.strip() for c in chunks if c.strip()]
+                        
+                        curr_content = []
+                        curr_chars = 0
+                        
+                        for chunk in chunks:
+                            chunk_len = len(re.sub('<[^<]+?>', '', chunk))
+                            if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE:
+                                sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Strategy", section_title))
+                                page_count += 1
+                                curr_content = [chunk]
+                                curr_chars = chunk_len
+                            else:
+                                curr_content.append(chunk)
+                                curr_chars += chunk_len
+                        
+                        if curr_content:
                             sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Strategy", section_title))
                             page_count += 1
-                            curr_content = [chunk]
-                            curr_chars = chunk_len
-                        else:
-                            curr_content.append(chunk)
-                            curr_chars += chunk_len
-                    
-                    if curr_content:
-                        sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Strategy", section_title))
-                        page_count += 1
 
-                tvars["sections_html"] = "\n".join(sections_html_list)
-                tvars["toc_html"]      = "\n".join(toc_html_list)
+                    tvars["sections_html"] = "\n".join(sections_html_list)
+                    tvars["toc_html"]      = "\n".join(toc_html_list)
 
-                # Save the final result (in this case, we'd typically generate a PDF and save it)
-                # For chat, we'll notify the user it's ready
-                
-                # Create the LeadMagnet record so it shows up in dashboard
-                with transaction.atomic():
-                    lm = LeadMagnet.objects.create(
-                        title=tvars.get("mainTitle", "AI Generated Lead Magnet"),
-                        owner=user,
-                        status="completed"
-                    )
-                    # Add generation data link
-                    LeadMagnetGeneration.objects.create(
-                        lead_magnet=lm,
-                        lead_magnet_type="guide",
-                        main_topic=msg[:50],
-                        desired_outcome=ua["desired_outcome"],
-                        call_to_action=ua["call_to_action"]
-                    )
-                    
-                    # Generate the actual PDF
-                    pdf_res = svc.generate_pdf(template_id, tvars)
-                    if pdf_res.get("success"):
-                        from django.core.files.base import ContentFile
-                        lm.pdf_file.save(f"ai_gen_{lm.id}.pdf", ContentFile(pdf_res["pdf_data"]))
-                        lm.save()
+                    # Save the final result
+                    with transaction.atomic():
+                        lm = LeadMagnet.objects.create(
+                            title=tvars.get("mainTitle", "AI Generated Lead Magnet"),
+                            owner=user,
+                            status="completed"
+                        )
+                        # Add generation data link
+                        LeadMagnetGeneration.objects.create(
+                            lead_magnet=lm,
+                            lead_magnet_type="guide",
+                            main_topic=msg[:50],
+                            desired_outcome=ua["desired_outcome"],
+                            call_to_action=ua["call_to_action"]
+                        )
                         
-                        _set_job(jid, status="complete", progress=100, message="PDF Generated successfully!", lead_magnet_id=lm.id, pdf_url=lm.pdf_file.url)
-                    else:
-                        raise Exception(f"PDF rendering failed: {pdf_res.get('details')}")
+                        # Generate the actual PDF
+                        pdf_res = svc.generate_pdf(template_id, tvars)
+                        if pdf_res.get("success"):
+                            from django.core.files.base import ContentFile
+                            lm.pdf_file.save(f"ai_gen_{lm.id}.pdf", ContentFile(pdf_res["pdf_data"]))
+                            lm.save()
+                            
+                            _set_job(jid, status="complete", progress=100, message="PDF Generated successfully!", lead_magnet_id=lm.id, pdf_url=lm.pdf_file.url)
+                        else:
+                            raise Exception(f"PDF rendering failed: {pdf_res.get('details')}")
 
-                conv.messages.append({"role":"assistant","content":f"I've analyzed your business and generated a custom Lead Magnet: **{lm.title}**. You can find it in your dashboard."})
-                conv.save()
-                
-            except Exception as e:
-                logger.error(f"Chat AI Error: {e}\n{traceback.format_exc()}")
-                _set_job(jid, status="failed", error=str(e))
+                    conv.messages.append({"role":"assistant","content":f"I've analyzed your business and generated a custom Lead Magnet: **{lm.title}**. You can find it in your dashboard."})
+                    conv.save()
+                    
+                except Exception as e:
+                    logger.error(f"Chat AI Error: {e}\n{traceback.format_exc()}")
+                    _set_job(jid, status="failed", error=str(e))
 
-        # Start the background thread correctly
-        threading.Thread(target=_run_chat_ai_job, args=(job_id, message, user_id, conv_id), daemon=True).start()
-        
-        return Response({
-            "success": True,
-            "job_id": job_id,
-            "conversation_id": conv.id,
-            "message": "AI strategist is analyzing your business. This will take a few minutes."
-        }, status=202)
+            # Start the background thread
+            threading.Thread(target=_run_chat_ai_job, args=(job_id, message, user_id, conv_id), daemon=True).start()
+            
+            return Response({
+                "success": True,
+                "job_id": job_id,
+                "conversation_id": conv.id,
+                "message": "AI strategist is analyzing your business. This will take a few minutes."
+            }, status=202)
+            
+        except Exception as e:
+            logger.error(f"FormaAIConversationView Critical Error: {e}\n{traceback.format_exc()}")
+            return Response({"error": "An unexpected error occurred", "details": str(e)}, status=500)
 
 
 class GenerateDocumentPreviewView(APIView):
