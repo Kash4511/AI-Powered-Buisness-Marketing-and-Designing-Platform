@@ -29,12 +29,14 @@ TESTING = 'test' in sys.argv or 'pytest' in sys.argv
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
+# URL configuration
+APPEND_SLASH = True
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
     "localhost,127.0.0.1,django-msvx.onrender.com,django-jrl5.onrender.com,django-8dru.onrender.com,django-six-gamma.vercel.app"
 ).replace(" ", "").split(",")
 
-# Allow all Render and Vercel subdomains so preview branches work automatically
+# Allow all Render and Vercel subdomains
 ALLOWED_HOSTS.append(".onrender.com")
 ALLOWED_HOSTS.append(".vercel.app")
 

@@ -7,10 +7,10 @@ import time
 import traceback
 import threading
 from datetime import datetime
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from django.db.models import Q
 from django.db import transaction
 from django.conf import settings
@@ -22,7 +22,7 @@ from django.db import connection
 from .models import (
     LeadMagnet, Lead, Download, FirmProfile,
     FormaAIConversation, TemplateSelection, Template,
-    PDFGenerationJob,
+    PDFGenerationJob, LeadMagnetGeneration,
 )
 from .serializers import (
     LeadMagnetSerializer, LeadSerializer, DashboardStatsSerializer,
@@ -35,7 +35,33 @@ from .groq_client import GroqClient
 logger = logging.getLogger(__name__)
 
 def _set_job(job_id: str, **kwargs):
-    PDFGenerationJob.objects.update_or_create(job_id=job_id, defaults=kwargs)
+    """
+    Sets or updates a PDFGenerationJob. 
+    Ensures lead_magnet_id is preserved if already set and not provided in kwargs.
+    """
+    # Normalize lead_magnet vs lead_magnet_id
+    if 'lead_magnet' in kwargs:
+        lm = kwargs.pop('lead_magnet')
+        if lm:
+            kwargs['lead_magnet_id'] = lm.id if hasattr(lm, 'id') else lm
+
+    # If lead_magnet_id is still not provided, try to find it from existing job
+    if not kwargs.get('lead_magnet_id'):
+        try:
+            existing_lm_id = PDFGenerationJob.objects.filter(
+                job_id=job_id
+            ).values_list('lead_magnet_id', flat=True).first()
+            if existing_lm_id:
+                kwargs['lead_magnet_id'] = existing_lm_id
+        except Exception:
+            pass
+            
+    # Use update_or_create to handle both new and existing jobs
+    # We use job_id as the lookup field
+    PDFGenerationJob.objects.update_or_create(
+        job_id=job_id, 
+        defaults=kwargs
+    )
 
 
 def _get_job(job_id: str) -> dict:
@@ -739,6 +765,7 @@ def download_lead_magnet_pdf(request, lead_magnet_id):
 
 class CreateLeadMagnetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
         try:
             s = CreateLeadMagnetSerializer(data=request.data, context={"request":request})
@@ -913,165 +940,207 @@ def generate_pdf_status_compat(request):
     
     return Response(_get_job(latest_job.job_id))
 
+def _get_ai_client():
+    """Helper to get GroqClient with validation."""
+    try:
+        ai = GroqClient()
+        if not ai.client:
+            logger.warning("GroqClient initialized but no primary client (GROQ_API_KEY missing)")
+        return ai
+    except Exception as e:
+        logger.error(f"Failed to instantiate GroqClient: {e}\n{traceback.format_exc()}")
+        raise RuntimeError(f"AI Service Initialization Error: {str(e)}")
+
+
+"""
+Drop this into your views.py — add the URL to urls.py as:
+    path('api/ai-chat/', FormaAIChatView.as_view()),
+
+Then update FormaAI.tsx to POST to /api/ai-chat/ instead of /api/ai-conversation/
+"""
+
+# DEPLOYED: Simplified AI Conversation view - v4
+
 class FormaAIConversationView(APIView):
+    """
+    Simplified AI Conversation view.
+    Only handles chat, does not create database records for PDF generation.
+    Uses GroqClient for AI processing.
+    """
     permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """Simple health check for this specific endpoint"""
+        return Response({
+            "status": "ready",
+            "endpoint": "ai-conversation",
+            "message": "AI Conversation endpoint is active. Use POST to chat."
+        })
 
     def post(self, request):
         try:
-            message         = request.data.get("message")
-            files           = request.data.get("files",[])
-            conversation_id = request.data.get("conversation_id")
-            generate_pdf    = request.data.get("generate_pdf", True)
-            template_id     = request.data.get("template_id","modern-guide")
-            arch_imgs       = []
-
+            message = request.data.get("message")
             if not message:
-                return Response({"error":"Message is required"}, status=400)
+                return Response({"error": "Message is required"}, status=400)
 
-            if conversation_id:
-                try:
-                    conv = FormaAIConversation.objects.get(id=conversation_id, user=request.user)
-                except (FormaAIConversation.DoesNotExist, ValueError):
-                    # Handle invalid UUIDs or missing records
-                    conv = FormaAIConversation.objects.create(user=request.user, messages=[])
-            else:
-                conv = FormaAIConversation.objects.create(user=request.user, messages=[])
+            ai = GroqClient()
+            if not ai.client:
+                return Response({
+                    "error": "AI service is not configured. GROQ_API_KEY is missing on the server."
+                }, status=503)
 
-            # Start background processing to avoid timeout
-            job_id = str(uuid.uuid4())
-            _set_job(job_id, status="pending", progress=0, message="Initializing AI strategist...", lead_magnet_id=None)
-            
-            # Capture necessary context for the thread
-            user_id = request.user.id
-            conv_id = conv.id
-
-            def _run_chat_ai_job(jid, msg, uid, cid):
-                try:
-                    from django.contrib.auth import get_user_model
-                    User = get_user_model()
-                    user = User.objects.get(id=uid)
-                    conv = FormaAIConversation.objects.get(id=cid)
-                    
-                    # Append user message
-                    if not any(m.get('content') == msg and m.get('role') == 'user' for m in conv.messages):
-                        conv.messages.append({"role":"user","content":msg})
-                        conv.save()
-                    
-                    firm = _build_firm_profile(user)
-                    # User description is the base for the whole document
-                    ua = {
-                        "main_topic": msg,
-                        "lead_magnet_type": "guide", # Default to guide for comprehensive analysis
-                        "industry": firm.get("industry", "Architecture"),
-                        "target_audience": "Stakeholders",
-                        "desired_outcome": "Strategic clarity and actionable insights",
-                        "call_to_action": f"Contact {firm.get('firm_name', 'us')} for a consultation"
+            response = ai.client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are Forma AI, a helpful business assistant for architecture firms. Help users create better lead magnets and grow their business."
+                    },
+                    {
+                        "role": "user",
+                        "content": message
                     }
-                    
-                    ai = GroqClient()
-                    svc = WeasyPrintService()
+                ],
+                max_tokens=1000,
+                temperature=0.7,
+            )
 
-                    _set_job(jid, status="processing", progress=10, message="AI Strategist is analyzing your business description...")
-                    
-                    # Use semantic signals to better understand the user's intent from the raw message
-                    sig = ai.get_semantic_signals(ua)
-                    
-                    # Directly generate full content based on the description
-                    _set_job(jid, status="processing", progress=30, message="Generating deep strategic analysis...")
-                    raw = ai.generate_lead_magnet_json(sig, firm)
-                    cont = ai.normalize_ai_output(raw)
-                    
-                    _set_job(jid, status="processing", progress=70, message="Formatting your custom Lead Magnet...")
-                    
-                    # Mapping to template variables
-                    tvars = ai.map_to_template_vars(cont, firm, sig)
-                    tvars["companyName"]  = tvars.get("companyName")  or firm.get("firm_name") or "Your Company"
-                    tvars["emailAddress"] = tvars.get("emailAddress") or firm.get("work_email","")
-                    tvars["website"]      = tvars.get("website")      or firm.get("firm_website","")
-
-                    # Reuse the established PDF generation pipeline logic
-                    sections_html_list = []
-                    toc_html_list = []
-                    page_count = 4
-
-                    for idx, key in enumerate(ai.SECTION_KEYS):
-                        content_html = cont.get(key, "")
-                        if not content_html: continue
-                        section_title = tvars.get(f"customTitle{idx+1}", key.replace("_", " ").title())
-                        
-                        toc_html_list.append(f'<div class="toc-item"><span class="toc-num">{str(idx+1).zfill(2)}</span><span class="toc-label">{section_title}</span><span class="toc-dots"></span><span class="toc-pg">{str(page_count).zfill(2)}</span></div>')
-                        
-                        chunks = re.split(r'(<h3.*?>.*?</h3>|<p.*?>.*?</p>|<ul.*?>.*?</ul>)', content_html, flags=re.DOTALL)
-                        chunks = [c.strip() for c in chunks if c.strip()]
-                        
-                        curr_content = []
-                        curr_chars = 0
-                        
-                        for chunk in chunks:
-                            chunk_len = len(re.sub('<[^<]+?>', '', chunk))
-                            if curr_chars + chunk_len > TARGET_CHARS_PER_PAGE:
-                                sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Strategy", section_title))
-                                page_count += 1
-                                curr_content = [chunk]
-                                curr_chars = chunk_len
-                            else:
-                                curr_content.append(chunk)
-                                curr_chars += chunk_len
-                        
-                        if curr_content:
-                            sections_html_list.append(create_page_html("\n".join(curr_content), page_count, "AI Strategy", section_title))
-                            page_count += 1
-
-                    tvars["sections_html"] = "\n".join(sections_html_list)
-                    tvars["toc_html"]      = "\n".join(toc_html_list)
-
-                    # Save the final result
-                    with transaction.atomic():
-                        lm = LeadMagnet.objects.create(
-                            title=tvars.get("mainTitle", "AI Generated Lead Magnet"),
-                            owner=user,
-                            status="completed"
-                        )
-                        # Add generation data link
-                        LeadMagnetGeneration.objects.create(
-                            lead_magnet=lm,
-                            lead_magnet_type="guide",
-                            main_topic=msg[:50],
-                            desired_outcome=ua["desired_outcome"],
-                            call_to_action=ua["call_to_action"]
-                        )
-                        
-                        # Generate the actual PDF
-                        pdf_res = svc.generate_pdf(template_id, tvars)
-                        if pdf_res.get("success"):
-                            from django.core.files.base import ContentFile
-                            lm.pdf_file.save(f"ai_gen_{lm.id}.pdf", ContentFile(pdf_res["pdf_data"]))
-                            lm.save()
-                            
-                            _set_job(jid, status="complete", progress=100, message="PDF Generated successfully!", lead_magnet_id=lm.id, pdf_url=lm.pdf_file.url)
-                        else:
-                            raise Exception(f"PDF rendering failed: {pdf_res.get('details')}")
-
-                    conv.messages.append({"role":"assistant","content":f"I've analyzed your business and generated a custom Lead Magnet: **{lm.title}**. You can find it in your dashboard."})
-                    conv.save()
-                    
-                except Exception as e:
-                    logger.error(f"Chat AI Error: {e}\n{traceback.format_exc()}")
-                    _set_job(jid, status="failed", error=str(e))
-
-            # Start the background thread
-            threading.Thread(target=_run_chat_ai_job, args=(job_id, message, user_id, conv_id), daemon=True).start()
-            
             return Response({
-                "success": True,
-                "job_id": job_id,
-                "conversation_id": conv.id,
-                "message": "AI strategist is analyzing your business. This will take a few minutes."
-            }, status=202)
-            
+                "response": response.choices[0].message.content
+            })
+
         except Exception as e:
-            logger.error(f"FormaAIConversationView Critical Error: {e}\n{traceback.format_exc()}")
-            return Response({"error": "An unexpected error occurred", "details": str(e)}, status=500)
+            logger.error(f"FormaAIConversationView error: {e}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+            # Resolve base64 images → URLs via Cloudinary
+            import cloudinary.uploader
+            from io import BytesIO
+            import base64, re as _re
+
+            for i, b64 in enumerate(arch_images[:6]):
+                try:
+                    # Strip data URI prefix if present
+                    raw = _re.sub(r'^data:image/[^;]+;base64,', '', b64)
+                    data = base64.b64decode(raw)
+                    up   = cloudinary.uploader.upload(
+                        BytesIO(data),
+                        folder="architectural_images",
+                        public_id=f"arch_{user_id}_{uuid.uuid4().hex[:6]}",
+                    )
+                    firm[f"image_{i+1}_url"] = up.get("secure_url", "")
+                except Exception as ie:
+                    logger.warning(f"Image {i+1} upload failed: {ie}")
+
+            ua = {
+                "main_topic":       message,
+                "lead_magnet_type": "guide",
+                "target_audience":  "Stakeholders",
+                "desired_outcome":  "Strategic clarity and actionable insights",
+                "call_to_action":   f"Contact {firm.get('firm_name','us')} for a consultation",
+            }
+
+            ai  = _get_ai_client()
+            svc = WeasyPrintService()
+
+            upd(status="processing", progress=10, message="Analysing your request...")
+            signals = ai.get_semantic_signals(ua)
+
+            upd(status="processing", progress=30, message="Generating AI content...")
+            raw_ai  = ai.generate_lead_magnet_json(signals, firm)
+            content = ai.normalize_ai_output(raw_ai)
+
+            upd(status="processing", progress=65, message="Mapping to template...")
+            tvars = ai.map_to_template_vars(content, firm, signals)
+            tvars.setdefault("companyName",  firm.get("firm_name", ""))
+            tvars.setdefault("emailAddress", firm.get("work_email", ""))
+            tvars.setdefault("website",      firm.get("firm_website", ""))
+
+            # Build sections HTML
+            sections_html, toc_html = [], []
+            doc_type       = ua.get("lead_magnet_type", "guide")
+            actual_sections = ai.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai.GUIDE_SECTIONS)
+
+            for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
+                section_title = tvars.get(f"customTitle{idx+1}", dtitle)
+                content_html  = tvars.get(f"section_{key}_full_html", "")
+                num = str(idx + 1).zfill(2)
+                toc_html.append(
+                    f'<div class="toc-item"><span class="toc-num">{num}</span>'
+                    f'<span class="toc-label">{section_title}</span>'
+                    f'<span class="toc-dots"></span>'
+                    f'<span class="toc-pg"><a href="#sec-{idx}" class="toc-link" style="text-decoration:none;color:inherit;"></a></span></div>'
+                )
+                sections_html.append(
+                    f'<div class="page content-page" id="sec-{idx}" style="clear:both;">'
+                    f'<div class="string-container"><span class="page-header-kicker">{dkicker}</span>'
+                    f'<div class="page-header-title">{section_title}</div></div>'
+                    f'<div class="page-body"><div class="section-intro-block">'
+                    f'<div class="section-intro-num">{num}</div>'
+                    f'<div class="section-headline">{section_title}</div></div>'
+                    f'<div class="section-content">{content_html}</div></div></div>'
+                )
+
+            tvars["sections_html"] = "\n".join(sections_html)
+            tvars["toc_html"]      = "\n".join(toc_html)
+
+            upd(status="processing", progress=80, message="Rendering PDF...")
+            pdf_res = svc.generate_pdf(template_id, tvars)
+
+            if not pdf_res.get("success"):
+                raise Exception(f"PDF render failed: {pdf_res.get('details','')}")
+
+            # Save PDF
+            try:
+                import cloudinary.uploader as _cup
+                up = _cup.upload(
+                    pdf_res["pdf_data"],
+                    resource_type="raw",
+                    folder="lead_magnets",
+                    public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}",
+                )
+                lm.pdf_file = up.get("public_id", "")
+                pdf_url     = up.get("secure_url", "")
+            except Exception as ce:
+                logger.warning(f"Cloudinary upload failed, using local: {ce}")
+                lm.pdf_file.save(f"ai_chat_{lm_id}.pdf", ContentFile(pdf_res["pdf_data"]))
+                pdf_url = lm.pdf_file.url
+
+            lm.title  = tvars.get("mainTitle", lm.title)
+            lm.status = "completed"
+            lm.save()
+
+            # Save generation data
+            LeadMagnetGeneration.objects.get_or_create(
+                lead_magnet=lm,
+                defaults={
+                    "lead_magnet_type": "guide",
+                    "main_topic":       "custom",
+                    "desired_outcome":  ua["desired_outcome"],
+                    "call_to_action":   ua["call_to_action"],
+                },
+            )
+
+            conv.messages.append({
+                "role":    "assistant",
+                "content": f"Your lead magnet **{lm.title}** is ready. Find it in your dashboard.",
+            })
+            conv.save()
+
+            upd(status="complete", progress=100,
+                message="PDF ready!", pdf_url=pdf_url)
+
+        except Exception as e:
+            logger.error(f"FormaAIChatView._run error: {e}\n{traceback.format_exc()}")
+            PDFGenerationJob.objects.filter(job_id=job_id).update(
+                status="failed",
+                error=str(e),
+                lead_magnet_id=lm_id,   # still preserve it even on failure
+            )
+            try:
+                LeadMagnet.objects.filter(id=lm_id).update(status="error")
+            except Exception:
+                pass
 
 
 class GenerateDocumentPreviewView(APIView):
@@ -1084,7 +1153,7 @@ class GenerateDocumentPreviewView(APIView):
             if not isinstance(ua,dict) or not isinstance(fp,dict):
                 return Response({"error":"user_answers and firm_profile must be objects"}, status=400)
 
-            ai   = GroqClient()
+            ai   = _get_ai_client()
             sig  = ai.get_semantic_signals(ua)
             raw  = ai.generate_lead_magnet_json(sig, fp)
             cont = ai.normalize_ai_output(raw)

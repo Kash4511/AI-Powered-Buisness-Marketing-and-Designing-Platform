@@ -2,6 +2,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # AI Conversation (Main chat endpoint)
+    path('ai-conversation/', views.FormaAIConversationView.as_view(), name='ai-conversation'),
+    
+    # Optional/Deprecated
+    path('ai-chat/', views.FormaAIConversationView.as_view(), name='ai-chat'),
+    
     path('dashboard/stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
     path('lead-magnets/', views.LeadMagnetListCreateView.as_view(), name='lead-magnet-list-create'),
     path('lead-magnets/<int:pk>/', views.LeadMagnetDetailView.as_view(), name='lead-magnet-detail'),
@@ -23,9 +29,6 @@ urlpatterns = [
     path('brand-assets/preview-pdf/', views.BrandAssetsPDFPreviewView.as_view(), name='brand-assets-preview-pdf'),
     path('preview-template/', views.PreviewTemplateView.as_view(), name='preview-template'),
     path('generate-document-preview/', views.GenerateDocumentPreviewView.as_view(), name='generate-document-preview'),
-    
-    # AI Conversation
-    path('ai-conversation/', views.FormaAIConversationView.as_view(), name='ai-conversation'),
     path('db-status/', views.DBStatusView.as_view(), name='db-status'),
     # Relative download route expected by frontend polling
     path('lead-magnets/<int:lead_magnet_id>/download/', views.download_lead_magnet_pdf, name='lead-magnet-download'),

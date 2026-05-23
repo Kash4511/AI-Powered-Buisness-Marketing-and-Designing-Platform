@@ -609,32 +609,42 @@ class GroqClient:
     SECTION_KEYS     = [s[0] for s in GUIDE_SECTIONS]
 
     def __init__(self, api_key: str = None):
+        # Helper to get env and treat empty strings as None
+        def get_env_safe(key):
+            val = os.getenv(key)
+            return val if val and val.strip() else None
+
         # 1. Groq Client (Primary)
-        groq_api_key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_API_KEY")
-        self.groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
-        if not self.groq_client:
+        groq_api_key = api_key or get_env_safe("GROQ_API_KEY") or get_env_safe("GROQ_API_KEY_API_KEY")
+        if groq_api_key:
+            try:
+                self.groq_client = Groq(api_key=groq_api_key)
+            except Exception as e:
+                logger.error(f"Groq SDK failed to initialize: {e}")
+                self.groq_client = None
+        else:
+            self.groq_client = None
             logger.warning("⚠️ GROQ_API_KEY is not set.")
 
         # 2. Anthropic Client (Fallback 1)
-        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        anthropic_api_key = get_env_safe("ANTHROPIC_API_KEY")
         self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key) if anthropic_api_key else None
-        if not self.anthropic_client:
-            logger.info("ℹ️ ANTHROPIC_API_KEY is not set (optional fallback).")
 
         # 3. OpenAI Client (Fallback 2)
-        openai_api_key = os.getenv("OPENAI_API_KEY")
+        openai_api_key = get_env_safe("OPENAI_API_KEY")
         self.openai_client = openai.OpenAI(api_key=openai_api_key) if openai_api_key else None
-        if not self.openai_client:
-            logger.info("ℹ️ OPENAI_API_KEY is not set (optional fallback).")
 
         # 4. Google Client (Fallback 3)
-        google_api_key = os.getenv("GOOGLE_API_KEY")
+        google_api_key = get_env_safe("GOOGLE_API_KEY")
         if google_api_key:
-            genai.configure(api_key=google_api_key)
-            self.google_model = genai.GenerativeModel(AI_CONFIGS["google"]["model"])
+            try:
+                genai.configure(api_key=google_api_key)
+                self.google_model = genai.GenerativeModel(AI_CONFIGS["google"]["model"])
+            except Exception as e:
+                logger.error(f"Google GenAI failed to initialize: {e}")
+                self.google_model = None
         else:
             self.google_model = None
-            logger.info("ℹ️ GOOGLE_API_KEY is not set (optional fallback).")
 
         # Backwards compatibility
         self.client      = self.groq_client

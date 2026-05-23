@@ -2,47 +2,41 @@ import axios from 'axios';
 
 // Resolve API base URL from environment for deployment
 const getApiBaseUrl = () => {
-  // 1. Check for Vite environment variables (try both standard and '1' suffix from screenshot)
+  // 1. Check for Vite environment variables
   const env = (import.meta as any).env || {};
-  const baseUrl = env.VITE_API_BASE_URL || env.VITE_API_BASE_URL1;
-  
-  if (baseUrl) {
-    return baseUrl;
-  }
+  let baseUrl = env.VITE_API_BASE_URL || env.VITE_API_BASE_URL1 || env.VITE_API_URL;
   
   // 2. Check for global window variable
-  if (typeof window !== 'undefined' && (window as any).__API_BASE_URL) {
-    return (window as any).__API_BASE_URL;
+  if (!baseUrl && typeof window !== 'undefined' && (window as any).__API_BASE_URL) {
+    baseUrl = (window as any).__API_BASE_URL;
   }
   
   // 3. Robust detection for local/cloud development
-  if (typeof window !== 'undefined') {
+  if (!baseUrl && typeof window !== 'undefined') {
     const { protocol, hostname } = window.location;
     
-    // Handle Replit environment
     if (hostname.includes('replit.dev')) {
-      return `${protocol}//${hostname}:8000`;
+      baseUrl = `${protocol}//${hostname}:8000`;
+    } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      baseUrl = `http://${hostname}:8000`;
+    } else {
+      const isProduction = hostname.includes('vercel.app') || hostname.includes('onrender.com');
+      if (isProduction) {
+        // If we are on Vercel, the backend is on Render. 
+        // If we are on Render, we use the current origin.
+        baseUrl = hostname.includes('vercel.app') 
+          ? 'https://django-msvx.onrender.com' 
+          : `${protocol}//${hostname}`;
+      } else {
+        baseUrl = `${protocol}//${hostname}:8000`;
+      }
     }
-    
-    // Default to port 8000 on current hostname (handles localhost, 127.0.0.1, etc.)
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `http://${hostname}:8000`;
-    }
-    
-    // For other cases, if we're not on a known production domain, try port 8000
-    // But if we're on a production-like domain (vercel.app, onrender.com), 
-    // we should probably use relative path or the same origin
-    const isProduction = hostname.includes('vercel.app') || hostname.includes('onrender.com');
-    if (!isProduction) {
-      return `${protocol}//${hostname}:8000`;
-    }
-
-    // Same-origin fallback
-    return `${protocol}//${hostname}`;
   }
   
-  // 4. Final fallback
-  return 'http://localhost:8000';
+  baseUrl = baseUrl || 'https://django-msvx.onrender.com';
+
+  // Sanitize: Remove trailing slashes (Django + Axios work best with leading slashes in requests)
+  return baseUrl.replace(/\/+$/, "");
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -60,41 +54,76 @@ const apiClient = axios.create({
 if (!apiClient.defaults.baseURL || typeof apiClient.defaults.baseURL !== 'string') {
   // Hard fallback to localhost if baseURL is falsy
   apiClient.defaults.baseURL = 'http://localhost:8000';
-  // Non-fatal warning to help debugging on environments with missing env vars
-  try {
-    console.warn('API base URL was missing; defaulted to', apiClient.defaults.baseURL);
-  } catch {}
 }
 
-// Add request interceptor to inject JWT token
+// Helper to sanitize paths: ALWAYS ensures a leading slash
+// This works perfectly with baseURLs that have no trailing slash
+const fixPath = (path: string) => {
+  if (!path) return path;
+  if (path.startsWith('http')) return path;
+  
+  let cleaned = path;
+  // Ensure leading slash
+  if (!cleaned.startsWith('/')) {
+    cleaned = `/${cleaned}`;
+  }
+  // Ensure trailing slash for Django endpoints (unless it has a file extension)
+  if (!cleaned.endsWith('/') && !cleaned.includes('.')) {
+    cleaned = `${cleaned}/`;
+  }
+  return cleaned;
+};
+
+// Add request interceptor to handle path cleaning and auth
 apiClient.interceptors.request.use(
   (config) => {
-    // Log request for debugging 400/500 errors
+    // 1. Fix path joining
+    if (config.url) {
+      config.url = fixPath(config.url);
+    }
+
+    // 2. If data is FormData, let the browser/axios set the Content-Type with boundary
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+      }
+    }
+
+    // 3. Log request for debugging
+    const fullUrl = config.url?.startsWith('http') 
+      ? config.url 
+      : `${config.baseURL}${config.url}`;
+      
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
+      console.log(`[API Request] ${config.method?.toUpperCase()} ${fullUrl}`, {
+        path: config.url,
+        baseURL: config.baseURL,
+        data: config.data
+      });
     }
 
     const token = localStorage.getItem('access_token');
     
-    // Skip token for auth endpoints to avoid expired token blocking login (401)
-    const isAuthEndpoint = config.url?.includes('/api/auth/login/') || 
-                          config.url?.includes('/api/auth/register/');
+    // Improved check for auth and same origin
+    const isAuthEndpoint = config.url?.includes('/auth/login/') || 
+                          config.url?.includes('/auth/register/');
     
-    // Only send Authorization header if:
-    // 1. We have a token
-    // 2. The request is NOT to an auth endpoint
-    // 3. The request is to our own API (starts with /api or matches baseURL)
-    const isRelative = config.url?.startsWith('/') || !config.url?.startsWith('http');
+    // Check if same origin (either relative path or matches baseURL)
+    const isRelative = !config.url?.startsWith('http');
     const isSameOrigin = config.url?.startsWith(apiClient.defaults.baseURL || '');
     
     if (token && !isAuthEndpoint && (isRelative || isSameOrigin)) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (token && !isAuthEndpoint) {
+      // Diagnostic log for why token was skipped
+      console.debug(`[apiClient] Skipping token for ${config.url}: isRelative=${isRelative}, isSameOrigin=${isSameOrigin}`);
     }
     
     return config;
   },
   (error) => {
-    console.error('[API Request Error]', error);
+    // Suppress console spam for aborted requests or known 404 retries handled by UI
+    if (axios.isCancel(error)) return Promise.reject(error);
     return Promise.reject(error);
   }
 );
@@ -102,37 +131,70 @@ apiClient.interceptors.request.use(
 // Add response interceptor to handle token refresh and debug responses
 apiClient.interceptors.response.use(
   (response) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[API Response] ${response.status} ${response.config.url}`, response.data);
-    }
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
+    const url = originalRequest?.url;
     
     // Skip token refresh logic for auth endpoints
-    const isAuthRequest = originalRequest.url?.includes('/api/auth/login/') || 
-                         originalRequest.url?.includes('/api/auth/register/') ||
-                         originalRequest.url?.includes('/api/auth/token/refresh/');
+    const isAuthRequest = url?.includes('/api/auth/login/') || 
+                         url?.includes('/api/auth/register/') ||
+                         url?.includes('/api/auth/token/refresh/');
     
     // If it's a 401 that we can refresh, don't log an error yet to avoid console clutter
-    const canRefresh = error.response?.status === 401 && !originalRequest._retry && !isAuthRequest;
+    const canRefresh = status === 401 && !originalRequest._retry && !isAuthRequest;
     
     if (!canRefresh) {
-      const status = error.response?.status;
-      const url = error.config?.url;
       const data = error.response?.data;
       
-      console.error(`[API Response Error] ${status} ${url}`, data || error.message);
-      
-      // Enhanced error parsing for 500 errors
-      if (status === 500) {
-        let errorMessage = 'Internal Server Error';
-        if (data && typeof data === 'object') {
-          errorMessage = data.error || data.message || JSON.stringify(data);
+      // ── 404 Not Found Handling ──
+      if (status === 404) {
+        const isAIEndpoint = url?.includes('/api/ai-chat/') || url?.includes('/api/ai-conversation/');
+        const fullUrl = `${apiClient.defaults.baseURL}${url}`;
+        let msg = `Endpoint not found: ${url}`;
+        let details = `The server returned a 404 for ${fullUrl}. Check if the backend route is registered in urls.py.`;
+        
+        if (isAIEndpoint) {
+          msg = 'AI Service Unavailable (404)';
+          details = `The AI service endpoint (${fullUrl}) was not found. This often happens if the backend deployment is not complete or the route name changed.`;
         }
-        // You could trigger a toast notification here if a toast library is available
-        console.error('Critical Server Error:', errorMessage);
+        
+        console.error(`[apiClient] 404 Error: ${msg}`, { url, fullUrl, details });
+        const finalError = new Error(msg);
+        (finalError as any).details = details;
+        (finalError as any).status = 404;
+        (finalError as any).fullUrl = fullUrl;
+        (finalError as any).response = error.response;
+        return Promise.reject(finalError);
+      }
+
+      // ── 500 Internal Server Error Handling ──
+      if (status === 500) {
+        let errorMessage = 'Server Error (500)';
+        let errorDetails = '';
+        
+        // Handle ArrayBuffer responses
+        if (data instanceof ArrayBuffer) {
+          try {
+            const text = new TextDecoder('utf-8').decode(data);
+            if (text.trim().startsWith('{')) {
+              const jsonData = JSON.parse(text);
+              errorMessage = jsonData.error || jsonData.message || errorMessage;
+              errorDetails = jsonData.details || '';
+            }
+          } catch (e) {}
+        } else if (data && typeof data === 'object') {
+          errorMessage = data.error || data.message || errorMessage;
+          errorDetails = data.details || '';
+        }
+        
+        const finalError = new Error(errorMessage);
+        (finalError as any).details = errorDetails;
+        (finalError as any).status = 500;
+        (finalError as any).response = error.response;
+        return Promise.reject(finalError);
       }
 
       if (status === 401 && !isAuthRequest) {

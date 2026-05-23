@@ -20,7 +20,7 @@ const Styles = () => (
     .lmf-chk{display:flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid ${T.bd};border-radius:9px;cursor:pointer;transition:all 0.15s;background:${T.bg2};font-family:'Instrument Sans',sans-serif;font-size:0.82rem;font-weight:500;color:${T.t2};user-select:none;}
     .lmf-chk:hover{border-color:${T.bd2};color:${T.t1};background:#fff;}
     .lmf-chk.sel{background:${T.dark};border-color:${T.dark};color:#fff;}
-    .lmf-chk input{position:absolute;opacity:0;pointer-events:none;}
+    .lmf-chk input{display:none;}
     .lmf-chkbox{width:16px;height:16px;border-radius:4px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.5;}
     .lmf-chk.sel .lmf-chkbox{opacity:1;background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.5);}
     .lmf-ta{width:100%;padding:12px 14px;background:${T.bg2};border:1px solid ${T.bd};border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:0.83rem;color:${T.t1};outline:none;resize:vertical;transition:all 0.2s;line-height:1.6;}
@@ -160,7 +160,11 @@ const LeadMagnetGenerationForm: React.FC<Props> = ({ onSubmit, loading=false }) 
               const chk=(fd.target_audience||[]).includes(a)
               return(
                 <label key={a} className={`lmf-chk${chk?' sel':''}`}>
-                  <input type="checkbox" checked={chk} onChange={()=>toggle('target_audience',a)}/>
+                  <input
+                    type="checkbox"
+                    checked={chk}
+                    onChange={()=>toggle('target_audience',a)}
+                  />
                   <div className="lmf-chkbox">{chk&&<Tick/>}</div>
                   {a}
                 </label>
@@ -177,7 +181,11 @@ const LeadMagnetGenerationForm: React.FC<Props> = ({ onSubmit, loading=false }) 
               const chk=(fd.audience_pain_points||[]).includes(p)
               return(
                 <label key={p} className={`lmf-chk${chk?' sel':''}`}>
-                  <input type="checkbox" checked={chk} onChange={()=>toggle('audience_pain_points',p)}/>
+                  <input
+                    type="checkbox"
+                    checked={chk}
+                    onChange={()=>toggle('audience_pain_points',p)}
+                  />
                   <div className="lmf-chkbox">{chk&&<Tick/>}</div>
                   {p}
                 </label>

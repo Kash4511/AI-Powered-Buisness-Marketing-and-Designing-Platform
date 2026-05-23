@@ -28,6 +28,7 @@ const GlobalStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Instrument+Sans:wght@400;500;600&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { overflow-x:hidden; max-width:100vw; }
     body { font-family:'Instrument Sans',sans-serif; background:${T.bg2}; color:${T.t1}; }
     a { text-decoration:none; color:inherit; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -192,8 +193,9 @@ const Dashboard: React.FC = () => {
       {/* ════════════════════ NAV ════════════════════ */}
       <nav style={{
         height:62, display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'0 36px', background:'#fff', borderBottom:`1px solid ${T.bd}`,
-        position:'sticky', top:0, zIndex:100,
+        padding:'0 24px', background:'#fff', borderBottom:`1px solid ${T.bd}`,
+        position:'fixed', top:0, left:0, right:0, zIndex:200,
+        overflow:'hidden',
       }}>
         {/* Brand */}
         <div style={{ fontFamily:"'Fraunces',serif", fontWeight:900, fontSize:'1.35rem', color:T.dark, letterSpacing:'-0.5px' }}>
@@ -232,14 +234,22 @@ const Dashboard: React.FC = () => {
         </button>
       </nav>
 
+      {/* Spacer so content isn't hidden behind fixed nav */}
+      <div style={{ height:62 }} />
+
       {/* ════════════════════ BODY ════════════════════ */}
-      <div style={{ display:'grid', gridTemplateColumns:'228px 1fr', minHeight:'calc(100vh - 62px)' }}>
+      <div style={{ display:'flex', minHeight:'calc(100vh - 62px)', width:'100%' }}>
+
+        {/* ── SIDEBAR (fixed, see above) — placeholder to push main content right ── */}
+        <div style={{ width:228, flexShrink:0 }} />
 
         {/* ── SIDEBAR ── */}
         <aside style={{
           background:'#fff', borderRight:`1px solid ${T.bd}`,
           padding:'28px 16px', display:'flex', flexDirection:'column', gap:28,
-          position:'sticky', top:62, height:'calc(100vh - 62px)', overflowY:'auto',
+          position:'fixed', top:62, left:0,
+          width:228, height:'calc(100vh - 62px)',
+          overflowY:'auto', overflowX:'hidden', zIndex:100,
         }}>
           {/* Brand block */}
           <div style={{ display:'flex', alignItems:'center', gap:11, padding:'0 4px' }}>
@@ -294,14 +304,14 @@ const Dashboard: React.FC = () => {
         </aside>
 
         {/* ── MAIN ── */}
-        <main style={{ padding:'40px 44px', background:T.bg2 }}>
+        <main style={{ flex:1, padding:'40px 32px', background:T.bg2, minWidth:0, overflowX:'hidden' }}>
 
           {/* Header */}
           <div style={{ marginBottom:32 }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, marginBottom:6, minWidth:0 }}>
               <motion.h1
                 initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
-                style={{ fontFamily:"'Fraunces',serif", fontSize:'2rem', fontWeight:900, color:T.dark, letterSpacing:'-1px', lineHeight:1.05 }}
+                style={{ fontFamily:"'Fraunces',serif", fontSize:'2rem', fontWeight:900, color:T.dark, letterSpacing:'-1px', lineHeight:1.05, minWidth:0, flexShrink:1 }}
               >
                 My Lead Magnets
               </motion.h1>
@@ -309,6 +319,7 @@ const Dashboard: React.FC = () => {
                 initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.08 }}
                 className="forma-create-btn"
                 onClick={handleCreateLeadMagnet}
+                style={{ flexShrink:0 }}
               >
                 <Plus size={16} />
                 Create Lead Magnet

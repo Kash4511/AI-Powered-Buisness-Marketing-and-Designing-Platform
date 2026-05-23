@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             database_operations=[
                 migrations.RunSQL(
                     sql="""
-                    CREATE TABLE IF NOT EXISTS lead_magnets_pdfgenerationjob (
+                    CREATE TABLE lead_magnets_pdfgenerationjob (
                         id bigserial PRIMARY KEY,
                         job_id varchar(100) NOT NULL UNIQUE,
                         status varchar(20) NOT NULL DEFAULT 'pending',
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                         updated_at timestamptz NOT NULL DEFAULT now(),
                         lead_magnet_id bigint NOT NULL REFERENCES lead_magnets_leadmagnet(id) ON DELETE CASCADE
                     );
-                    CREATE INDEX IF NOT EXISTS lead_magnets_pdfgenerationjob_lead_magnet_id_idx ON lead_magnets_pdfgenerationjob(lead_magnet_id);
+                    CREATE INDEX lead_magnets_pdfgenerationjob_lead_magnet_id_idx ON lead_magnets_pdfgenerationjob(lead_magnet_id);
                     """,
                     reverse_sql="DROP TABLE IF EXISTS lead_magnets_pdfgenerationjob;"
                 )

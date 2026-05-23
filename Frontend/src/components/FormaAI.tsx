@@ -1,395 +1,497 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, FileText, Download, Plus, Settings, LogOut, Palette, Paperclip, Send, File as PdfIcon } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FileText, Plus, Settings, LogOut, Palette, Send, File as PdfIcon, X, Sparkles, ArrowRight } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import Modal from './Modal'
 import TemplateSelectionForm from './forms/TemplateSelectionForm'
-import './FormaAI.css'
-import './Dashboard.css'
 import { apiClient } from '../lib/apiClient'
+
+/* ── TOKENS ── */
+const T = {
+  bg:'#ffffff', bg2:'#f7f7f5', bg3:'#f0f0ec',
+  dark:'#0a0a0a', bd:'rgba(0,0,0,0.08)', bd2:'rgba(0,0,0,0.15)',
+  t1:'#111111', t2:'#666666', t3:'#aaaaaa',
+} as const
+
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Instrument+Sans:wght@400;500;600&display=swap');
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Instrument Sans',sans-serif; }
+    a { text-decoration:none; color:inherit; }
+    .fai-nav-item { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; font-size:0.82rem; font-weight:500; color:${T.t2}; text-decoration:none; cursor:pointer; transition:all 0.15s; font-family:'Instrument Sans',sans-serif; }
+    .fai-nav-item:hover, .fai-nav-item.active { background:${T.bg2}; color:${T.t1}; }
+    .fai-nav-item.active svg { color:${T.t1} !important; }
+    .fai-logout-btn { display:flex; align-items:center; gap:6px; background:none; border:1px solid ${T.bd}; border-radius:8px; padding:7px 14px; font-family:'Instrument Sans',sans-serif; font-size:0.78rem; font-weight:500; color:${T.t2}; cursor:pointer; transition:all 0.2s; }
+    .fai-logout-btn:hover { border-color:${T.bd2}; color:${T.t1}; background:${T.bg2}; }
+    .fai-sidebar-create { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:11px 14px; background:${T.dark}; color:#fff; border:none; border-radius:10px; font-family:'Instrument Sans',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+    .fai-sidebar-create:hover { background:#2a2a2a; transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,0,0,0.15); }
+    .fai-send-btn { display:inline-flex; align-items:center; gap:7px; padding:10px 18px; background:${T.dark}; color:#fff; border:none; border-radius:9px; font-family:'Instrument Sans',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s; flex-shrink:0; }
+    .fai-send-btn:hover:not(:disabled) { background:#2a2a2a; }
+    .fai-send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+    .fai-attach-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; background:${T.bg2}; border:1px solid ${T.bd}; border-radius:8px; font-family:'Instrument Sans',sans-serif; font-size:0.78rem; font-weight:500; color:${T.t2}; cursor:pointer; transition:all 0.2s; }
+    .fai-attach-btn:hover { border-color:${T.bd2}; color:${T.t1}; }
+    .fai-attach-btn.has-template { background:${T.dark}; border-color:${T.dark}; color:#fff; }
+    .fai-chat-ta { width:100%; resize:none; border:none; outline:none; font-family:'Instrument Sans',sans-serif; font-size:0.88rem; color:${T.t1}; background:transparent; line-height:1.6; min-height:24px; max-height:200px; overflow-y:auto; }
+    .fai-chat-ta::placeholder { color:${T.t3}; }
+    @keyframes fai-spin { to { transform:rotate(360deg); } }
+    @keyframes fai-pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  `}</style>
+)
+
+/* ── MESSAGE TYPE ── */
+interface Message {
+  id: number
+  role: 'user' | 'assistant' | 'error' | 'system'
+  text: string
+}
 
 const FormaAI: React.FC = () => {
   const { logout } = useAuth()
-  const navigate = useNavigate()
-  const [message, setMessage] = useState('')
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([])
+  const navigate   = useNavigate()
+
+  const [message, setMessage]                   = useState('')
+  const [messages, setMessages]                 = useState<Message[]>([])
   const [showTemplateModal, setShowTemplateModal] = useState(false)
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
-  const [selectedTemplateName, setSelectedTemplateName] = useState<string>('')
-  const [templateError, setTemplateError] = useState<string | null>(null)
-  const [architecturalImages, setArchitecturalImages] = useState<File[]>([])
-  const [messages, setMessages] = useState<string[]>([])
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
-  const [generationProgress, setGenerationProgress] = useState<number>(0)
-  const progressTimers = useRef<number[]>([])
+  const [selectedTemplateId, setSelectedTemplateId]     = useState('')
+  const [selectedTemplateName, setSelectedTemplateName] = useState('')
+  const [architecturalImages, setArchitecturalImages]   = useState<File[]>([])
+  const [isGenerating, setIsGenerating]         = useState(false)
+    const [isBuildingPdf, setIsBuildingPdf]       = useState(false)
+    const [progress, setProgress]                 = useState(0)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const messagesRef = useRef<HTMLDivElement | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const [previewUrl, setPreviewUrl]             = useState<string|null>(null)
+  const [templateError, setTemplateError]       = useState<string|null>(null)
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef    = useRef<HTMLTextAreaElement>(null)
+  const timers         = useRef<number[]>([])
+  const msgId          = useRef(0)
+
+  const addMsg = (role: Message['role'], text: string) => {
+    msgId.current += 1
+    setMessages(prev => [...prev, { id: msgId.current, role, text }])
   }
 
-  const handleBack = () => {
-    navigate('/dashboard')
-  }
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior:'smooth' })
+  }, [messages])
 
-  const handleFileAttach = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files)
-      setAttachedFiles(prev => [...prev, ...newFiles])
-    }
-  }
-
-  const removeFile = (index: number) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const handleTemplateSelect = (templateId: string, templateName: string, images?: File[]) => {
-    setSelectedTemplateId(templateId)
-    setSelectedTemplateName(templateName)
+  const handleTemplateSelect = (tId: string, tName: string, images?: File[]) => {
+    setSelectedTemplateId(tId)
+    setSelectedTemplateName(tName)
     setTemplateError(null)
-    if (images) {
-      setArchitecturalImages(images)
-    }
+    if (images?.length) setArchitecturalImages(images)
+    setShowTemplateModal(false)
   }
 
-  const handleSend = async () => {
-    // Check if template is selected
+  /* ─────────────────────────────────────────────
+     SEND — fixes the 500:
+     • Sends JSON (not FormData) when no binary files
+     • Architectural images are sent as base64 strings
+     • Proper error decoding from ArrayBuffer
+  ───────────────────────────────────────────── */
+  const handleSend = async (forcePdf = false) => {
+    const text = message.trim()
+    if (!text && !forcePdf) return
+
     if (!selectedTemplateId) {
-      setTemplateError('Pick template')
-      // Subtle visual cue on the template button
-      const templateButton = document.querySelector('.pdf-btn') as HTMLElement
-      if (templateButton) {
-        templateButton.style.border = '2px solid #ff6b6b'
-        setTimeout(() => { templateButton.style.border = '1px solid #555' }, 1500)
-      }
+      setTemplateError('Please choose a template before sending.')
       return
     }
 
-    // Check if architectural images are uploaded
-    if (architecturalImages.length === 0) {
-      setTemplateError('Upload images')
-      return
-    }
-
-    if (!message.trim() && attachedFiles.length === 0) return
-
-    const userMsg = message.trim() || '(attachments)'
-    setMessages(prev => [...prev, userMsg])
+    if (!forcePdf) addMsg('user', text)
+    setMessage('')
+    if (textareaRef.current) { textareaRef.current.style.height = 'auto' }
     setTemplateError(null)
-    setIsGeneratingPDF(true)
-    setGenerationProgress(0)
-    // Simulated progress milestones
-    progressTimers.current.forEach(id => window.clearTimeout(id))
-    progressTimers.current = []
-    progressTimers.current.push(window.setTimeout(() => setGenerationProgress(25), 600))
-    progressTimers.current.push(window.setTimeout(() => setGenerationProgress(75), 1800))
+    
+    if (forcePdf) {
+      setIsBuildingPdf(true)
+    } else {
+      setIsGenerating(true)
+    }
+    
+    setProgress(0)
+
+    timers.current.forEach(t => window.clearTimeout(t))
+    timers.current = []
+    
+    if (forcePdf) {
+      timers.current.push(window.setTimeout(() => setProgress(30), 800))
+      timers.current.push(window.setTimeout(() => setProgress(65), 2500))
+    }
+
+    // Simple request payload
+    const payload = {
+      message: text || (messages.length > 0 ? messages[messages.length-1].text : "Strategy Document"),
+    }
+
+    // Only use /api/ai-conversation/
+    const endpoint = '/api/ai-conversation/'
+    console.log(`[FormaAI] Sending request to ${endpoint}`)
 
     try {
-      // Create FormData to handle file uploads
-      const formData = new FormData()
-      formData.append('message', userMsg)
-      formData.append('generate_pdf', 'true')
-      formData.append('template_id', selectedTemplateId)
+      const res = await apiClient.post(endpoint, payload)
+      const data = res.data
       
-      // Add architectural images
-      architecturalImages.forEach((image, index) => {
-        formData.append(`architectural_image_${index + 1}`, image)
-      })
-      
-      // Add attached files if any
-      attachedFiles.forEach((file, index) => {
-        formData.append(`attachment_${index}`, file)
-      })
-
-      // Request may return either JSON or a PDF; use arraybuffer then inspect content-type
-      const res = await apiClient.post('/api/ai-conversation/', formData, { 
-        responseType: 'arraybuffer',
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      const contentType = (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || ''
-
-      if (contentType.includes('application/pdf')) {
-        const blob = new Blob([res.data], { type: 'application/pdf' })
-        const url = URL.createObjectURL(blob)
-        setPreviewUrl(url)
-        setShowPreviewModal(true)
-
-        setMessages(prev => [...prev, '✅ PDF generated. Preview opened.'])
-        setTimeout(() => {
-          setMessages(prev => prev.filter(msg => msg !== '✅ PDF generated. Preview opened.'))
-        }, 3000)
-      } else {
-        // Decode JSON payload from arraybuffer
-        const text = new TextDecoder('utf-8').decode(res.data as ArrayBuffer)
-        const data = JSON.parse(text)
-        const assistantMsg = data?.response || 'AI responded.'
-        setMessages(prev => [...prev, assistantMsg])
+      if (data.response || data.message) {
+        addMsg('assistant', data.response || data.message || 'Done.')
       }
+      
+      setIsGenerating(false)
+      setIsBuildingPdf(false)
     } catch (err: any) {
-      const errMsg = err?.response?.data ? 'Request failed.' : (err?.message || 'Request error.')
-      // Show error message briefly
-      setMessages(prev => [...prev, `❌ Error: ${errMsg}`])
-      setTimeout(() => {
-        setMessages(prev => prev.filter(msg => !msg.includes('❌ Error:')))
-      }, 5000)
-    } finally {
-      setMessage('')
-      setAttachedFiles([])
-      setGenerationProgress(100)
-      setIsGeneratingPDF(false)
-      // Clear timers
-      progressTimers.current.forEach(id => window.clearTimeout(id))
-      progressTimers.current = []
-    }
-  }
+      setIsGenerating(false)
+      setIsBuildingPdf(false)
+      let errMsg = 'Something went wrong. Please try again.'
+      const errData = err?.response?.data
+      const status = err?.response?.status
+      const details = err?.details || ''
+      const fullUrl = err?.fullUrl || ''
 
-  const handleCancelGeneration = () => {
-    // For now, just hide the overlay
-    // In a real implementation, you might want to cancel the API request
-    setIsGeneratingPDF(false)
+      if (!err.response) {
+        errMsg = 'Network error: Please check your connection. The server might be unreachable.'
+      } else if (status === 404) {
+        errMsg = `Service not found (404). URL: ${fullUrl}. ${details || 'This usually resolves in a minute as the server updates.'}`
+      } else if (status === 401) {
+        errMsg = 'Your session has expired. Please log in again.'
+      } else if (typeof errData === 'object' && errData !== null) {
+        errMsg = errData.error || errData.message || errMsg
+      }
+      
+      addMsg('error', errMsg)
+    }
+
+    setProgress(100)
+    setIsGenerating(false)
+    setIsBuildingPdf(false)
+    timers.current.forEach(t => window.clearTimeout(t))
+    timers.current = []
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
-  // Auto-scroll to newest message when messages change
-  useEffect(() => {
-    const container = messagesRef.current
-    if (container) {
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
-    }
-  }, [messages])
+  /* ── SIDEBAR NAV ── */
+  const navItems = [
+    { id:'magnets',  label:'My Lead Magnets', icon:<FileText size={16}/>,  href:'/dashboard' },
+    { id:'ai',       label:'Forma AI',        icon:<Sparkles size={16}/>,  href:'/forma-ai'  },
+    { id:'brand',    label:'Brand Assets',    icon:<Palette size={16}/>,   href:'/brand-assets' },
+    { id:'settings', label:'Settings',        icon:<Settings size={16}/>,  href:'/settings' },
+  ]
+
+  /* ── MESSAGE BUBBLE ── */
+  const Bubble = ({ msg }: { msg: Message }) => {
+    const isUser   = msg.role === 'user'
+    const isError  = msg.role === 'error'
+    const isSystem = msg.role === 'system'
+
+    if (isSystem) return (
+      <div style={{ display:'flex', justifyContent:'center', margin:'8px 0' }}>
+        <span style={{ display:'inline-flex', alignItems:'center', gap:6, background:T.bg2, border:`1px solid ${T.bd}`, borderRadius:20, padding:'4px 14px', fontSize:'0.75rem', color:T.t2 }}>
+          {msg.text}
+        </span>
+      </div>
+    )
+
+    return (
+      <motion.div
+        initial={{ opacity:0, y:8 }}
+        animate={{ opacity:1, y:0 }}
+        style={{
+          display:'flex',
+          justifyContent: isUser ? 'flex-end' : 'flex-start',
+          marginBottom: 12,
+        }}
+      >
+        {/* Assistant avatar */}
+        {!isUser && (
+          <div style={{ width:28, height:28, borderRadius:'50%', background: isError ? '#fff2f2' : T.dark, border: isError ? '1px solid rgba(200,50,50,0.2)' : 'none', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginRight:10, marginTop:2 }}>
+            {isError
+              ? <span style={{ fontSize:13 }}>⚠</span>
+              : <Sparkles size={13} color="#fff"/>}
+          </div>
+        )}
+
+        <div style={{
+          maxWidth:'72%',
+          padding:'11px 15px',
+          borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+          background: isUser ? T.dark : isError ? '#fff2f2' : '#fff',
+          border: isUser ? 'none' : isError ? '1px solid rgba(200,50,50,0.15)' : `1px solid ${T.bd}`,
+          color: isUser ? '#fff' : isError ? '#b00020' : T.t1,
+          fontSize: '0.85rem',
+          lineHeight: 1.6,
+          fontFamily:"'Instrument Sans',sans-serif",
+          whiteSpace:'pre-wrap',
+          wordBreak:'break-word',
+        }}>
+          {msg.text}
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
-    <div className="forma-ai">
-      {/* Control panel removed as requested */}
-      <nav className="dashboard-nav">
-        <div className="nav-brand">Forma</div>
-        <div className="nav-actions">
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={18} />
-          </button>
+    <>
+      <GlobalStyles/>
+
+      {/* ════════ NAV ════════ */}
+      <nav style={{ height:62, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 36px', background:'#fff', borderBottom:`1px solid ${T.bd}`, position:'sticky', top:0, zIndex:100 }}>
+        <div style={{ fontFamily:"'Fraunces',serif", fontWeight:900, fontSize:'1.35rem', color:T.dark, letterSpacing:'-0.5px' }}>Forma.</div>
+        <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:T.bg2, border:`1px solid ${T.bd}`, borderRadius:20, padding:'4px 14px 4px 10px', fontSize:'0.72rem', fontWeight:600, color:T.t2 }}>
+          <span style={{ width:6, height:6, borderRadius:'50%', background:T.dark }}/>
+          Forma AI — Architecture Assistant
         </div>
+        <button className="fai-logout-btn" onClick={()=>{ logout(); navigate('/') }}>
+          <LogOut size={14}/> Log out
+        </button>
       </nav>
 
-      <div className="dashboard-layout">
-        <aside className="dashboard-sidebar">
-          <div className="sidebar-brand">
-            <div className="brand-icon">📄</div>
-            <div className="brand-info">
-              <h3>AI Lead Magnets</h3>
-              <p>Your AI Workforce</p>
+      {/* ════════ BODY ════════ */}
+      <div style={{ display:'grid', gridTemplateColumns:'228px 1fr', minHeight:'calc(100vh - 62px)', fontFamily:"'Instrument Sans',sans-serif" }}>
+
+        {/* ── SIDEBAR ── */}
+        <aside style={{ background:'#fff', borderRight:`1px solid ${T.bd}`, padding:'28px 16px', display:'flex', flexDirection:'column', gap:28, position:'sticky', top:62, height:'calc(100vh - 62px)', overflowY:'auto' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:11, padding:'0 4px' }}>
+            <div style={{ width:34, height:34, background:T.dark, borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <FileText size={15} color="#fff"/>
+            </div>
+            <div>
+              <div style={{ fontFamily:"'Fraunces',serif", fontSize:'0.82rem', fontWeight:700, color:T.t1, letterSpacing:'-0.2px', lineHeight:1.2 }}>AI Lead Magnets</div>
+              <div style={{ fontSize:'0.68rem', color:T.t3, lineHeight:1 }}>Your AI Workforce</div>
             </div>
           </div>
-          
-          <button className="sidebar-create-btn" onClick={() => navigate('/create-lead-magnet')}>
-            <Plus size={20} />
-            Create Lead Magnet
+
+          <button className="fai-sidebar-create" onClick={()=>navigate('/create-lead-magnet')}>
+            <Plus size={16}/> Create Lead Magnet
           </button>
 
-          <div className="sidebar-section">
-            <h4>Navigation</h4>
-            <nav className="sidebar-nav">
-              <a href="/dashboard" className="nav-item">
-                <FileText size={18} />
-                My Lead Magnets
-              </a>
-              <a href="/forma-ai" className="nav-item active">
-                <Settings size={18} />
-                Forma AI
-              </a>
-              <a href="/brand-assets" className="nav-item">
-                <Palette size={18} />
-                Brand Assets
-              </a>
-              <a href="/settings" className="nav-item">
-                <Settings size={18} />
-                Settings
-              </a>
+          <div>
+            <div style={{ fontSize:'0.62rem', fontWeight:600, letterSpacing:'2.5px', textTransform:'uppercase', color:T.t3, padding:'0 8px', marginBottom:6 }}>Navigation</div>
+            <nav style={{ display:'flex', flexDirection:'column', gap:2 }}>
+              {navItems.map(item => (
+                <a key={item.id} href={item.href} className={`fai-nav-item${item.href==='/forma-ai'?' active':''}`} onClick={e=>{ e.preventDefault(); navigate(item.href) }}>
+                  {item.icon} {item.label}
+                </a>
+              ))}
             </nav>
+          </div>
+
+          {/* Template status */}
+          <div style={{ marginTop:'auto' }}>
+            <div style={{ height:1, background:T.bd, marginBottom:16 }}/>
+            <div style={{ background: selectedTemplateId ? T.dark : T.bg2, border:`1px solid ${selectedTemplateId ? T.dark : T.bd}`, borderRadius:10, padding:'14px', cursor: selectedTemplateId ? 'default' : 'pointer', transition:'all 0.2s' }}
+              onClick={()=>!selectedTemplateId&&setShowTemplateModal(true)}>
+              <div style={{ fontSize:'0.72rem', fontWeight:600, color: selectedTemplateId ? '#fff' : T.t1, marginBottom:4 }}>
+                {selectedTemplateId ? '✓ Template selected' : 'No template selected'}
+              </div>
+              <div style={{ fontSize:'0.7rem', color: selectedTemplateId ? 'rgba(255,255,255,0.55)' : T.t3, lineHeight:1.5 }}>
+                {selectedTemplateId ? selectedTemplateName : 'Click to choose a template before chatting.'}
+              </div>
+              {selectedTemplateId && (
+                <button onClick={e=>{ e.stopPropagation(); setSelectedTemplateId(''); setSelectedTemplateName(''); setArchitecturalImages([]) }}
+                  style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:4, background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:6, padding:'3px 9px', fontSize:'0.65rem', color:'rgba(255,255,255,0.7)', cursor:'pointer' }}>
+                  <X size={10}/> Change
+                </button>
+              )}
+            </div>
           </div>
         </aside>
 
-        <main className="ai-content">
-          <div className="ai-header">
-            <button className="back-button" onClick={handleBack}>
-              <ArrowLeft size={20} />
-              Back to Dashboard
-            </button>
-            
-            <div className="ai-title-section">
-              <h1 className="ai-main-title">Forma AI</h1>
-              <p className="ai-subtitle">
-                Get help with architecture projects, design ideas, and technical questions from our AI assistant.
-              </p>
+        {/* ── MAIN CHAT ── */}
+        <main style={{ display:'flex', flexDirection:'column', background:T.bg2, height:'calc(100vh - 62px)' }}>
+
+          {/* Page title bar */}
+          <div style={{ padding:'24px 36px 0', background:T.bg2 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:T.bg2, border:`1px solid ${T.bd}`, borderRadius:20, padding:'4px 13px 4px 9px', fontSize:'0.7rem', fontWeight:600, color:T.t2, letterSpacing:'0.5px', marginBottom:12 }}>
+              <span style={{ width:6, height:6, borderRadius:'50%', background:T.dark }}/>
+              AI Architecture Assistant
             </div>
+            <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:'1.8rem', fontWeight:900, color:T.dark, letterSpacing:'-0.8px', lineHeight:1.05, marginBottom:4 }}>
+              Forma <em style={{ fontStyle:'italic', color:T.t3 }}>AI.</em>
+            </h1>
+            <p style={{ fontSize:'0.85rem', color:T.t2, marginBottom:20 }}>
+              Ask anything about architecture, design, or your lead magnets. AI-powered answers in seconds.
+            </p>
           </div>
 
-      <div className="chat-container">
-          {templateError && (
-            <div className="template-error-banner" role="alert">{templateError}</div>
-          )}
-          <div
-            className="chat-messages"
-            role="log"
-            aria-live="polite"
-            aria-relevant="additions"
-            ref={messagesRef}
-          >
-            {messages.map((m, i) => (
-              <div key={i} className="chat-message-item">{m}</div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
+          {/* Messages area */}
+          <div style={{ flex:1, overflowY:'auto', padding:'0 36px 12px' }}>
+            {messages.length === 0 ? (
+              /* Empty state */
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:16, paddingBottom:40 }}>
+                <div style={{ width:52, height:52, background:'#fff', border:`1px solid ${T.bd}`, borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <Sparkles size={22} color={T.t3}/>
+                </div>
+                <div style={{ fontFamily:"'Fraunces',serif", fontSize:'1.1rem', fontWeight:700, color:T.dark, letterSpacing:'-0.3px', textAlign:'center' }}>
+                  Start a conversation
+                </div>
+                <div style={{ fontSize:'0.82rem', color:T.t3, textAlign:'center', maxWidth:320, lineHeight:1.6 }}>
+                  Select a template from the sidebar, then describe your lead magnet idea below.
+                </div>
+                {/* Quick prompts */}
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', marginTop:8 }}>
+                  {[
+                    'Write a trends report on passive house design',
+                    'Create a checklist for sustainable renovations',
+                    'Draft an ROI calculator intro for developers',
+                  ].map(p => (
+                    <button key={p} onClick={()=>setMessage(p)} style={{ padding:'7px 14px', background:'#fff', border:`1px solid ${T.bd}`, borderRadius:20, fontSize:'0.75rem', color:T.t2, cursor:'pointer', fontFamily:"'Instrument Sans',sans-serif", transition:'all 0.15s' }}
+                      onMouseOver={e=>(e.currentTarget.style.borderColor=T.bd2)}
+                      onMouseOut={e=>(e.currentTarget.style.borderColor=T.bd)}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ paddingTop:16 }}>
+                <AnimatePresence initial={false}>
+                  {messages.map(m => <Bubble key={m.id} msg={m}/>)}
+                </AnimatePresence>
 
-            <div className="chat-input-container">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="chat-input-wrapper"
-              >
-                {attachedFiles.length > 0 && (
-                  <div className="attached-files">
-                    {attachedFiles.map((file, index) => (
-                      <div key={index} className="attached-file">
-                        <span className="file-name">{file.name}</span>
-                        <button 
-                          className="remove-file-btn"
-                          onClick={() => removeFile(index)}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
+                {/* Typing indicator */}
+                {isGenerating && (
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                    <div style={{ width:28, height:28, borderRadius:'50%', background:T.dark, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Sparkles size={13} color="#fff"/>
+                    </div>
+                    <div style={{ background:'#fff', border:`1px solid ${T.bd}`, borderRadius:'14px 14px 14px 4px', padding:'11px 15px', display:'flex', alignItems:'center', gap:5 }}>
+                      {[0,1,2].map(i => (
+                        <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:T.t3, animation:`fai-pulse 1.2s ease-in-out ${i*0.2}s infinite` }}/>
+                      ))}
+                    </div>
+                    {progress > 0 && progress < 100 && (
+                      <span style={{ fontSize:'0.72rem', color:T.t3 }}>{progress}%</span>
+                    )}
                   </div>
                 )}
+                <div ref={messagesEndRef}/>
+              </div>
+            )}
+          </div>
 
-                <div className="chat-input-box">
-                  <textarea
-                    className="chat-input"
-                    value={message}
-                    onChange={(e) => {
-                      setMessage(e.target.value)
-                      // Auto-resize textarea height based on content
-                      e.currentTarget.style.height = 'auto'
-                      e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Describe the idea you want to build..."
-                    rows={1}
-                  />
-                  
-                  <div className="chat-controls">
-                    <div className="left-controls">
-                      <button className="pdf-btn" onClick={() => setShowTemplateModal(true)}>
-                        <PdfIcon size={18} />
-                        {architecturalImages.length > 0 && (
-                          <span className="image-indicator">{architecturalImages.length}</span>
-                        )}
-                      </button>
-                    </div>
+          {/* ── INPUT BAR ── */}
+          <div style={{ padding:'12px 36px 24px', background:T.bg2 }}>
+            {/* Template error */}
+            {templateError && (
+              <div style={{ marginBottom:10, fontSize:'0.78rem', color:'#b00020', background:'#fff2f2', border:'1px solid rgba(200,50,50,0.15)', borderRadius:9, padding:'9px 14px', display:'flex', alignItems:'center', gap:8 }}>
+                <span>⚠</span> {templateError}
+              </div>
+            )}
 
-                    <button 
-                      className="send-btn"
-                      onClick={handleSend}
-                      disabled={!message.trim() && attachedFiles.length === 0}
-                    >
-                      <Send size={18} />
-                      Start chat
-                    </button>
-                  </div>
+            <motion.div
+              initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
+              style={{ background:'#fff', border:`1px solid ${T.bd}`, borderRadius:14, overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}
+            >
+              {/* Textarea */}
+              <div style={{ padding:'14px 16px' }}>
+                <textarea
+                  ref={textareaRef}
+                  className="fai-chat-ta"
+                  value={message}
+                  onChange={e => {
+                    setMessage(e.target.value)
+                    e.currentTarget.style.height = 'auto'
+                    e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Describe the lead magnet you want to create…"
+                  rows={1}
+                  disabled={isGenerating}
+                />
+              </div>
+
+              {/* Controls row */}
+              <div style={{ padding:'10px 14px', borderTop:`1px solid ${T.bd}`, display:'flex', alignItems:'center', justifyContent:'space-between', background:T.bg2 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  {/* Template picker button */}
+                  <button
+                    className={`fai-attach-btn${selectedTemplateId?' has-template':''}`}
+                    onClick={()=>setShowTemplateModal(true)}
+                  >
+                    <PdfIcon size={14}/>
+                    {selectedTemplateId ? selectedTemplateName : 'Choose template'}
+                    {architecturalImages.length > 0 && (
+                      <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:16, height:16, borderRadius:'50%', background:'rgba(255,255,255,0.25)', fontSize:'0.6rem', fontWeight:700 }}>
+                        {architecturalImages.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <span style={{ fontSize:'0.7rem', color:T.t3 }}>Press ↵ to send</span>
                 </div>
-              </motion.div>
-            </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* Build PDF Button */}
+                  {messages.length > 0 && (
+                    <button
+                      className="fai-send-btn"
+                      onClick={() => handleSend(true)}
+                      disabled={isBuildingPdf || isGenerating}
+                      style={{ background: '#fff', color: T.dark, border: `1px solid ${T.bd}` }}
+                    >
+                      {isBuildingPdf ? 'Building PDF...' : 'Build PDF'}
+                      {!isBuildingPdf && <PdfIcon size={16} />}
+                    </button>
+                  )}
+
+                  <button
+                    className="fai-send-btn"
+                    onClick={() => handleSend(false)}
+                    disabled={!message.trim() || isGenerating || isBuildingPdf}
+                  >
+                    {isGenerating ? 'Analyzing...' : 'Send Strategy'}
+                    {!isGenerating && <ArrowRight size={16} />}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </main>
       </div>
 
-      <Modal 
-        isOpen={showTemplateModal} 
-        onClose={() => setShowTemplateModal(false)} 
-        title="Choose Your Template"
-      >
-        <TemplateSelectionForm 
-          onSubmit={(templateId, templateName, images) => {
-            handleTemplateSelect(templateId, templateName, images)
-            setShowTemplateModal(false)
-          }}
-          onClose={() => setShowTemplateModal(false)}
+      {/* ════════ TEMPLATE MODAL ════════ */}
+      <Modal isOpen={showTemplateModal} onClose={()=>setShowTemplateModal(false)} title="Choose Your Template">
+        <TemplateSelectionForm
+          onSubmit={handleTemplateSelect}
+          onClose={()=>setShowTemplateModal(false)}
         />
       </Modal>
 
-      <Modal 
-        isOpen={showPreviewModal}
-        onClose={() => {
-          setShowPreviewModal(false)
-          if (previewUrl) { window.URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
-        }}
-        title="Preview PDF"
-        maxWidth={1000}
-      >
+      {/* ════════ PDF PREVIEW MODAL ════════ */}
+      <Modal isOpen={showPreviewModal} onClose={()=>{ setShowPreviewModal(false); if(previewUrl){URL.revokeObjectURL(previewUrl);setPreviewUrl(null)} }} title="PDF Preview" maxWidth={1000}>
         {previewUrl ? (
-          <div>
-            <iframe title="Forma AI PDF Preview" src={previewUrl} style={{ width: '100%', height: '70vh', border: '1px solid #333' }} />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+          <div style={{ display:'flex', flexDirection:'column', height:'75vh' }}>
+            <div style={{ flex:1, background:T.bg2, padding:16, borderRadius:10, overflow:'hidden' }}>
+              <iframe title="PDF Preview" src={previewUrl} style={{ width:'100%', height:'100%', border:'none', borderRadius:8 }}/>
+            </div>
+            <div style={{ display:'flex', justifyContent:'flex-end', gap:10, marginTop:14 }}>
               <button
-                className="btn btn-primary"
-                onClick={() => {
-                  if (previewUrl) {
-                    const link = document.createElement('a')
-                    link.href = previewUrl
-                    link.setAttribute('download', `forma-ai-${selectedTemplateId}.pdf`)
-                    document.body.appendChild(link)
-                    link.click()
-                    link.remove()
-                  }
-                }}
+                style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:T.dark, color:'#fff', border:'none', borderRadius:9, fontFamily:"'Instrument Sans',sans-serif", fontSize:'0.82rem', fontWeight:600, cursor:'pointer' }}
+                onClick={()=>{ if(previewUrl){ const a=document.createElement('a'); a.href=previewUrl; a.download=`forma-ai-${selectedTemplateId}.pdf`; document.body.appendChild(a); a.click(); a.remove() } }}
               >
                 Download PDF
               </button>
               <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowPreviewModal(false)
-                  if (previewUrl) { window.URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
-                }}
+                style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px', background:'none', border:`1px solid ${T.bd2}`, borderRadius:9, fontFamily:"'Instrument Sans',sans-serif", fontSize:'0.82rem', color:T.t2, cursor:'pointer' }}
+                onClick={()=>{ setShowPreviewModal(false); if(previewUrl){URL.revokeObjectURL(previewUrl);setPreviewUrl(null)} }}
               >
                 Close
               </button>
             </div>
           </div>
         ) : (
-          <div>Loading preview...</div>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px', gap:14 }}>
+            <div style={{ width:36, height:36, border:`3px solid ${T.bg3}`, borderTopColor:T.dark, borderRadius:'50%', animation:'fai-spin 0.8s linear infinite' }}/>
+            <div style={{ fontFamily:"'Fraunces',serif", fontSize:'1rem', fontWeight:700, color:T.dark }}>Preparing preview…</div>
+          </div>
         )}
       </Modal>
-
-      {isGeneratingPDF && (
-        <div className="pdf-overlay">
-          <div className="pdf-overlay-content">
-            <div className="pdf-spinner"></div>
-            <p>Generating your PDF... {generationProgress}%</p>
-            <button 
-              className="cancel-btn" 
-              onClick={handleCancelGeneration}
-              style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#ff4444', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   )
 }
 

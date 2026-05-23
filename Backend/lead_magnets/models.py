@@ -98,7 +98,7 @@ class Download(models.Model):
 class PDFGenerationJob(models.Model):
     """Tracks background PDF generation jobs."""
     job_id = models.CharField(max_length=100, unique=True)
-    lead_magnet = models.ForeignKey(LeadMagnet, on_delete=models.CASCADE, related_name='pdf_jobs')
+    lead_magnet = models.ForeignKey(LeadMagnet, on_delete=models.CASCADE, related_name='pdf_jobs', null=True, blank=True)
     status = models.CharField(max_length=20, default='pending')
     progress = models.IntegerField(default=0)
     message = models.CharField(max_length=255, blank=True)
