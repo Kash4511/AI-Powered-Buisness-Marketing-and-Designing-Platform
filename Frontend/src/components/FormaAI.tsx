@@ -58,8 +58,7 @@ const FormaAI: React.FC = () => {
   const [selectedTemplateName, setSelectedTemplateName] = useState('')
   const [architecturalImages, setArchitecturalImages]   = useState<File[]>([])
   const [isGenerating, setIsGenerating]         = useState(false)
-    const [isBuildingPdf, setIsBuildingPdf]       = useState(false)
-    const [progress, setProgress]                 = useState(0)
+  const [progress, setProgress]                 = useState(0)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [previewUrl, setPreviewUrl]             = useState<string|null>(null)
   const [templateError, setTemplateError]       = useState<string|null>(null)
@@ -92,82 +91,82 @@ const FormaAI: React.FC = () => {
      • Architectural images are sent as base64 strings
      • Proper error decoding from ArrayBuffer
   ───────────────────────────────────────────── */
-  const handleSend = async (forcePdf = false) => {
+  const handleSend = async () => {
     const text = message.trim()
-    if (!text && !forcePdf) return
+    if (!text) return
 
     if (!selectedTemplateId) {
       setTemplateError('Please choose a template before sending.')
       return
     }
 
-    if (!forcePdf) addMsg('user', text)
+    addMsg('user', text)
     setMessage('')
     if (textareaRef.current) { textareaRef.current.style.height = 'auto' }
     setTemplateError(null)
-    
-    if (forcePdf) {
-      setIsBuildingPdf(true)
-    } else {
-      setIsGenerating(true)
-    }
-    
+    setIsGenerating(true)
     setProgress(0)
 
     timers.current.forEach(t => window.clearTimeout(t))
     timers.current = []
-    
-    if (forcePdf) {
-      timers.current.push(window.setTimeout(() => setProgress(30), 800))
-      timers.current.push(window.setTimeout(() => setProgress(65), 2500))
-    }
-
-    // Simple request payload
-    const payload = {
-      message: text || (messages.length > 0 ? messages[messages.length-1].text : "Strategy Document"),
-    }
-
-    // Only use /api/ai-chat/
-    const endpoint = '/api/ai-chat/'
-    console.log('[FormaAI] Sending request to /api/ai-chat/')
+    timers.current.push(window.setTimeout(() => setProgress(30), 800))
+    timers.current.push(window.setTimeout(() => setProgress(65), 2500))
 
     try {
-      const res = await apiClient.post(endpoint, payload)
+      // Convert architectural images to base64 so we can send JSON (avoids FormData parsing issues on Django)
+      const imageDataUrls: string[] = await Promise.all(
+        architecturalImages.slice(0, 6).map(file =>
+          new Promise<string>((res, rej) => {
+            const reader = new FileReader()
+            reader.onload  = () => res(reader.result as string)
+            reader.onerror = rej
+            reader.readAsDataURL(file)
+          })
+        )
+      )
+
+      const payload = {
+        message:               text,
+        generate_pdf:          true,
+        template_id:           selectedTemplateId,
+        architectural_images:  imageDataUrls,   // base64 array — Django can decode these
+      }
+
+      // POST to new clean endpoint — returns 202 JSON
+      const res = await apiClient.post('/api/ai-chat/', payload, {
+        headers: { 'Content-Type': 'application/json' },
+      })
+
       const data = res.data
-      
-      if (data.response || data.message) {
-        addMsg('assistant', data.response || data.message || 'Done.')
+      if (data?.job_id) {
+        const typeLabel = data?.lm_label ?? 'lead magnet'
+        addMsg('assistant',
+          `Got it! I'm creating your **${typeLabel}** based on your business description. ` +
+          `This takes 2–5 minutes — check your dashboard when it's ready.`
+        )
+      } else if (data?.message) {
+        addMsg('assistant', data.message)
       }
-      
-      setIsGenerating(false)
-      setIsBuildingPdf(false)
     } catch (err: any) {
-      setIsGenerating(false)
-      setIsBuildingPdf(false)
-      let errMsg = 'Something went wrong. Please try again.'
       const errData = err?.response?.data
-      const status = err?.response?.status
-      const details = err?.details || ''
-      const fullUrl = err?.fullUrl || ''
-
-      if (!err.response) {
-        errMsg = 'Network error: Please check your connection. The server might be unreachable.'
-      } else if (status === 404) {
-        errMsg = `Service not found (404). URL: ${fullUrl}. ${details || 'This usually resolves in a minute as the server updates.'}`
-      } else if (status === 401) {
-        errMsg = 'Your session has expired. Please log in again.'
-      } else if (typeof errData === 'object' && errData !== null) {
-        errMsg = errData.error || errData.message || errMsg
+      let errMsg = 'Something went wrong. Please try again.'
+      if (typeof errData === 'object' && errData !== null) {
+        errMsg = errData.error ?? errData.details ?? errData.message ?? errMsg
+      } else if (err?.message) {
+        errMsg = err.message
       }
-      
-      addMsg('error', errMsg)
+      // 400 means missing type — show as assistant guidance, not red error
+      if (err?.response?.status === 400) {
+        addMsg('assistant', errMsg)
+      } else {
+        addMsg('error', errMsg)
+      }
+    } finally {
+      setProgress(100)
+      setIsGenerating(false)
+      timers.current.forEach(t => window.clearTimeout(t))
+      timers.current = []
     }
-
-    setProgress(100)
-    setIsGenerating(false)
-    setIsBuildingPdf(false)
-    timers.current.forEach(t => window.clearTimeout(t))
-    timers.current = []
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -314,7 +313,7 @@ const FormaAI: React.FC = () => {
               Forma <em style={{ fontStyle:'italic', color:T.t3 }}>AI.</em>
             </h1>
             <p style={{ fontSize:'0.85rem', color:T.t2, marginBottom:20 }}>
-              Ask anything about architecture, design, or your lead magnets. AI-powered answers in seconds.
+              Describe your business and the type of lead magnet you want. AI generates a full branded PDF in minutes.
             </p>
           </div>
 
@@ -327,17 +326,18 @@ const FormaAI: React.FC = () => {
                   <Sparkles size={22} color={T.t3}/>
                 </div>
                 <div style={{ fontFamily:"'Fraunces',serif", fontSize:'1.1rem', fontWeight:700, color:T.dark, letterSpacing:'-0.3px', textAlign:'center' }}>
-                  Start a conversation
+                  Describe your business
                 </div>
                 <div style={{ fontSize:'0.82rem', color:T.t3, textAlign:'center', maxWidth:320, lineHeight:1.6 }}>
-                  Select a template from the sidebar, then describe your lead magnet idea below.
+                  Describe your business — what you do, who you serve, and what type of lead magnet you want (Guide, Checklist, Trends Report, etc).
                 </div>
                 {/* Quick prompts */}
                 <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', marginTop:8 }}>
                   {[
-                    'Write a trends report on passive house design',
-                    'Create a checklist for sustainable renovations',
-                    'Draft an ROI calculator intro for developers',
+                    'I run a perfume business selling 3,5,10 and 35ml bottles — create a Trends Report',
+                    'I have an architecture firm specialising in sustainable homes — make a Checklist',
+                    'I own a real estate agency in Dubai — create a Guide for first-time buyers',
+                    'I run a SaaS company for HR teams — build an ROI Calculator',
                   ].map(p => (
                     <button key={p} onClick={()=>setMessage(p)} style={{ padding:'7px 14px', background:'#fff', border:`1px solid ${T.bd}`, borderRadius:20, fontSize:'0.75rem', color:T.t2, cursor:'pointer', fontFamily:"'Instrument Sans',sans-serif", transition:'all 0.15s' }}
                       onMouseOver={e=>(e.currentTarget.style.borderColor=T.bd2)}
@@ -399,7 +399,7 @@ const FormaAI: React.FC = () => {
                     e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Describe the lead magnet you want to create…"
+                  placeholder="Describe your business and mention the type of lead magnet you want (e.g. Guide, Checklist, Trends Report)…"
                   rows={1}
                   disabled={isGenerating}
                 />
@@ -425,29 +425,11 @@ const FormaAI: React.FC = () => {
                   <span style={{ fontSize:'0.7rem', color:T.t3 }}>Press ↵ to send</span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {/* Build PDF Button */}
-                  {messages.length > 0 && (
-                    <button
-                      className="fai-send-btn"
-                      onClick={() => handleSend(true)}
-                      disabled={isBuildingPdf || isGenerating}
-                      style={{ background: '#fff', color: T.dark, border: `1px solid ${T.bd}` }}
-                    >
-                      {isBuildingPdf ? 'Building PDF...' : 'Build PDF'}
-                      {!isBuildingPdf && <PdfIcon size={16} />}
-                    </button>
-                  )}
-
-                  <button
-                    className="fai-send-btn"
-                    onClick={() => handleSend(false)}
-                    disabled={!message.trim() || isGenerating || isBuildingPdf}
-                  >
-                    {isGenerating ? 'Analyzing...' : 'Send Strategy'}
-                    {!isGenerating && <ArrowRight size={16} />}
-                  </button>
-                </div>
+                <button className="fai-send-btn" onClick={handleSend} disabled={!message.trim()||isGenerating}>
+                  {isGenerating
+                    ? <><div style={{ width:13, height:13, border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'fai-spin 0.8s linear infinite' }}/> Generating…</>
+                    : <><Send size={13}/> Send <ArrowRight size={13}/></>}
+                </button>
               </div>
             </motion.div>
           </div>

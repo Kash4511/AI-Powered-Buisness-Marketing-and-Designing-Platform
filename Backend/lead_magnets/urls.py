@@ -2,11 +2,11 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # AI Conversation (Main chat endpoint)
-    path('ai-conversation/', views.FormaAIConversationView.as_view(), name='ai-conversation'),
+    # AI Chat (Main endpoint)
+    path('ai-chat/', views.FormaAIChatView.as_view(), name='ai-chat'),
     
     # Optional/Deprecated
-    path('ai-chat/', views.FormaAIConversationView.as_view(), name='ai-chat'),
+    path('ai-conversation/', views.FormaAIChatView.as_view(), name='ai-conversation'),
     
     path('dashboard/stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
     path('lead-magnets/', views.LeadMagnetListCreateView.as_view(), name='lead-magnet-list-create'),
