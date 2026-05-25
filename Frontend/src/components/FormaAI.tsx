@@ -127,9 +127,9 @@ const FormaAI: React.FC = () => {
       message: text || (messages.length > 0 ? messages[messages.length-1].text : "Strategy Document"),
     }
 
-    // Only use /api/ai-conversation/
-    const endpoint = '/api/ai-conversation/'
-    console.log(`[FormaAI] Sending request to ${endpoint}`)
+    // Only use /api/ai-chat/
+    const endpoint = '/api/ai-chat/'
+    console.log('[FormaAI] Sending request to /api/ai-chat/')
 
     try {
       const res = await apiClient.post(endpoint, payload)

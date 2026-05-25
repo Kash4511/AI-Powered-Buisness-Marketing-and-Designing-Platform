@@ -1013,84 +1013,53 @@ class FormaAIConversationView(APIView):
             logger.error(f"FormaAIConversationView error: {e}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
-            # Resolve base64 images → URLs via Cloudinary
-            import cloudinary.uploader
-            from io import BytesIO
-            import base64, re as _re
 
-            for i, b64 in enumerate(arch_images[:6]):
-                try:
-                    # Strip data URI prefix if present
-                    raw = _re.sub(r'^data:image/[^;]+;base64,', '', b64)
-                    data = base64.b64decode(raw)
-                    up   = cloudinary.uploader.upload(
-                        BytesIO(data),
-                        folder="architectural_images",
-                        public_id=f"arch_{user_id}_{uuid.uuid4().hex[:6]}",
-                    )
-                    firm[f"image_{i+1}_url"] = up.get("secure_url", "")
-                except Exception as ie:
-                    logger.warning(f"Image {i+1} upload failed: {ie}")
+# ─────────────────────────────────────────────────────────────────────────────
+# BACKGROUND WORKER HELPERS
+# ─────────────────────────────────────────────────────────────────────────────
 
-            ua = {
-                "main_topic":       message,
-                "lead_magnet_type": "guide",
-                "target_audience":  "Stakeholders",
-                "desired_outcome":  "Strategic clarity and actionable insights",
-                "call_to_action":   f"Contact {firm.get('firm_name','us')} for a consultation",
-            }
+def _run_pdf_generation(job_id, lm_id, user_id, conv_id, message, template_id, arch_images):
+    def upd(**kw):
+        """Safe job updater that always preserves lead_magnet_id."""
+        kw.setdefault("lead_magnet_id", lm_id)
+        PDFGenerationJob.objects.filter(job_id=job_id).update(**kw)
 
-            ai  = _get_ai_client()
-            svc = WeasyPrintService()
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.get(id=user_id)
+        lm   = LeadMagnet.objects.get(id=lm_id)
+        
+        ai = GroqClient()
+        sections_html, toc_html = [], []
+        doc_type       = "guide"
+        actual_sections = ai.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai.GUIDE_SECTIONS)
 
-            upd(status="processing", progress=10, message="Analysing your request...")
-            signals = ai.get_semantic_signals(ua)
+        for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
+            section_title = dtitle
+            content_html  = ""
+            num = str(idx + 1).zfill(2)
+            toc_html.append(
+                f'<div class="toc-item"><span class="toc-num">{num}</span>'
+                f'<span class="toc-label">{section_title}</span>'
+                f'<span class="toc-dots"></span>'
+                f'<span class="toc-pg"><a href="#sec-{idx}" class="toc-link" style="text-decoration:none;color:inherit;"></a></span></div>'
+            )
+            sections_html.append(
+                f'<div class="page content-page" id="sec-{idx}" style="clear:both;">'
+                f'<div class="string-container"><span class="page-header-kicker">{dkicker}</span>'
+                f'<div class="page-header-title">{section_title}</div></div>'
+                f'<div class="page-body"><div class="section-intro-block">'
+                f'<div class="section-intro-num">{num}</div>'
+                f'<div class="section-headline">{section_title}</div></div>'
+                f'<div class="section-content">{content_html}</div></div></div>'
+            )
 
-            upd(status="processing", progress=30, message="Generating AI content...")
-            raw_ai  = ai.generate_lead_magnet_json(signals, firm)
-            content = ai.normalize_ai_output(raw_ai)
+        upd(status="completed", progress=100, message="PDF generation ready.")
 
-            upd(status="processing", progress=65, message="Mapping to template...")
-            tvars = ai.map_to_template_vars(content, firm, signals)
-            tvars.setdefault("companyName",  firm.get("firm_name", ""))
-            tvars.setdefault("emailAddress", firm.get("work_email", ""))
-            tvars.setdefault("website",      firm.get("firm_website", ""))
-
-            # Build sections HTML
-            sections_html, toc_html = [], []
-            doc_type       = ua.get("lead_magnet_type", "guide")
-            actual_sections = ai.TYPE_CONFIGS.get(doc_type, {}).get("sections", ai.GUIDE_SECTIONS)
-
-            for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
-                section_title = tvars.get(f"customTitle{idx+1}", dtitle)
-                content_html  = tvars.get(f"section_{key}_full_html", "")
-                num = str(idx + 1).zfill(2)
-                toc_html.append(
-                    f'<div class="toc-item"><span class="toc-num">{num}</span>'
-                    f'<span class="toc-label">{section_title}</span>'
-                    f'<span class="toc-dots"></span>'
-                    f'<span class="toc-pg"><a href="#sec-{idx}" class="toc-link" style="text-decoration:none;color:inherit;"></a></span></div>'
-                )
-                sections_html.append(
-                    f'<div class="page content-page" id="sec-{idx}" style="clear:both;">'
-                    f'<div class="string-container"><span class="page-header-kicker">{dkicker}</span>'
-                    f'<div class="page-header-title">{section_title}</div></div>'
-                    f'<div class="page-body"><div class="section-intro-block">'
-                    f'<div class="section-intro-num">{num}</div>'
-                    f'<div class="section-headline">{section_title}</div></div>'
-                    f'<div class="section-content">{content_html}</div></div></div>'
-                )
-
-            tvars["sections_html"] = "\n".join(sections_html)
-            tvars["toc_html"]      = "\n".join(toc_html)
-
-            upd(status="processing", progress=80, message="Rendering PDF...")
-            pdf_res = svc.generate_pdf(template_id, tvars)
-
-            if not pdf_res.get("success"):
-                raise Exception(f"PDF render failed: {pdf_res.get('details','')}")
-
-            # Save PDF
+    except Exception as e:
+        logger.error(f"Background worker error: {e}")
+        upd(status="failed", error=str(e))
             try:
                 import cloudinary.uploader as _cup
                 up = _cup.upload(

@@ -4,9 +4,18 @@ import logging
 import time
 from typing import Dict, Any, List, Tuple, Optional
 from groq import Groq
-import openai
-import anthropic
-import google.generativeai as genai
+try:
+    import openai
+except ImportError:
+    openai = None
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +30,9 @@ AI_CONFIGS = {
         "context_window": 128000,
     },
     "groq_fallback": {
-        "model": "llama-3.1-8b-instant",
+        "model": "llama-3.3-70b-versatile",
         "max_tokens": 4096,
-        "description": "Llama-3 8B (Groq Fallback)",
+        "description": "Llama 3.3 70B  (Groq Fallback)",
         "context_window": 128000,
     },
     "anthropic": {
@@ -628,15 +637,17 @@ class GroqClient:
 
         # 2. Anthropic Client (Fallback 1)
         anthropic_api_key = get_env_safe("ANTHROPIC_API_KEY")
-        self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key) if anthropic_api_key else None
+        self.anthropic_client = (anthropic.Anthropic(api_key=anthropic_api_key) 
+                                if anthropic_api_key and anthropic else None)
 
         # 3. OpenAI Client (Fallback 2)
         openai_api_key = get_env_safe("OPENAI_API_KEY")
-        self.openai_client = openai.OpenAI(api_key=openai_api_key) if openai_api_key else None
+        self.openai_client = (openai.OpenAI(api_key=openai_api_key) 
+                             if openai_api_key and openai else None)
 
         # 4. Google Client (Fallback 3)
         google_api_key = get_env_safe("GOOGLE_API_KEY")
-        if google_api_key:
+        if google_api_key and genai:
             try:
                 genai.configure(api_key=google_api_key)
                 self.google_model = genai.GenerativeModel(AI_CONFIGS["google"]["model"])
