@@ -1060,56 +1060,6 @@ def _run_pdf_generation(job_id, lm_id, user_id, conv_id, message, template_id, a
     except Exception as e:
         logger.error(f"Background worker error: {e}")
         upd(status="failed", error=str(e))
-            try:
-                import cloudinary.uploader as _cup
-                up = _cup.upload(
-                    pdf_res["pdf_data"],
-                    resource_type="raw",
-                    folder="lead_magnets",
-                    public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}",
-                )
-                lm.pdf_file = up.get("public_id", "")
-                pdf_url     = up.get("secure_url", "")
-            except Exception as ce:
-                logger.warning(f"Cloudinary upload failed, using local: {ce}")
-                lm.pdf_file.save(f"ai_chat_{lm_id}.pdf", ContentFile(pdf_res["pdf_data"]))
-                pdf_url = lm.pdf_file.url
-
-            lm.title  = tvars.get("mainTitle", lm.title)
-            lm.status = "completed"
-            lm.save()
-
-            # Save generation data
-            LeadMagnetGeneration.objects.get_or_create(
-                lead_magnet=lm,
-                defaults={
-                    "lead_magnet_type": "guide",
-                    "main_topic":       "custom",
-                    "desired_outcome":  ua["desired_outcome"],
-                    "call_to_action":   ua["call_to_action"],
-                },
-            )
-
-            conv.messages.append({
-                "role":    "assistant",
-                "content": f"Your lead magnet **{lm.title}** is ready. Find it in your dashboard.",
-            })
-            conv.save()
-
-            upd(status="complete", progress=100,
-                message="PDF ready!", pdf_url=pdf_url)
-
-        except Exception as e:
-            logger.error(f"FormaAIChatView._run error: {e}\n{traceback.format_exc()}")
-            PDFGenerationJob.objects.filter(job_id=job_id).update(
-                status="failed",
-                error=str(e),
-                lead_magnet_id=lm_id,   # still preserve it even on failure
-            )
-            try:
-                LeadMagnet.objects.filter(id=lm_id).update(status="error")
-            except Exception:
-                pass
 
 
 class GenerateDocumentPreviewView(APIView):
