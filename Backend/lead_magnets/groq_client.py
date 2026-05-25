@@ -26,13 +26,13 @@ AI_CONFIGS = {
     "groq": {
         "model": "llama-3.3-70b-versatile",
         "max_tokens": 4096,
-        "description": "High-speed Llama-3 (Groq)",
+        "description": "High-speed llama-3.3-70b-versatile (Groq)",
         "context_window": 128000,
     },
     "groq_fallback": {
         "model": "llama-3.3-70b-versatile",
         "max_tokens": 4096,
-        "description": "Llama 3.3 70B  (Groq Fallback)",
+        "description": "llama-3.3-70b-versatile (Groq Fallback)",
         "context_window": 128000,
     },
     "anthropic": {

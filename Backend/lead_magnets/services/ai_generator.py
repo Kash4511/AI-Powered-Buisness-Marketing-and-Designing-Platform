@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class LeadMagnetAIService:
     """
-    Service for generating high-quality business lead magnet content using Groq and Llama-3.1-8B-Instant.
+    Service for generating high-quality business lead magnet content using Groq and Llama-3.3-70b-versatile.
     """
 
     def __init__(self):
@@ -40,7 +40,7 @@ class LeadMagnetAIService:
             )
             
         self.client = Groq(api_key=api_key)
-        self.model = "llama-3.1-8b-instant"
+        self.model = "llama-3.3-70b-versatile"
         self.temperature = 0.4
         self.max_tokens = 1500
 

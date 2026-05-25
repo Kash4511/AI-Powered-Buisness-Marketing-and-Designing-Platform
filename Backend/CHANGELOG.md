@@ -1,9 +1,8 @@
 # Changelog
 
-## [2026-03-06] - Cost Optimization Switch to llama-3.1-8b-instant
-
-### Changed
-- **Groq Model Update**: Replaced `llama-3.3-70b-versatile` with `llama-3.1-8b-instant` in `groq_client.py`.
+## [2026-05-25] - Fix Decommissioned Groq Models
+- **Groq Model Update**: Replaced all decommissioned `llama3-8b-8192`, `llama-3.1-8b-instant`, and `llama-3.1-70b-versatile` with `llama-3.3-70b-versatile` across the codebase.
+- **FormaAIChatView**: Updated to use the correct model via `GroqClient`.
 
 ### Performance & Cost Benefits
 - **Token Efficiency**: Reduces token consumption by approximately 90% per request compared to the 70b model.
