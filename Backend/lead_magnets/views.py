@@ -706,7 +706,7 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 import cloudinary.uploader
                 up = cloudinary.uploader.upload(
                     pdf_data, resource_type="raw", folder="lead_magnets",
-                    public_id=f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}",
+                    public_id=f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}.pdf",
                 )
                 lead_magnet.pdf_file = up.get("public_id")
                 lead_magnet.status   = "completed"
@@ -1220,7 +1220,7 @@ class FormaAIChatView(APIView):
                     pdf_res["pdf_data"],
                     resource_type="raw",
                     folder="lead_magnets",
-                    public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}",
+                    public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}.pdf",
                 )
                 lm.pdf_file = up.get("public_id", "")
                 pdf_url     = up.get("secure_url", "")
