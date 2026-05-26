@@ -25,6 +25,7 @@ urlpatterns = [
     path('generate-pdf/start/', views.generate_pdf_start, name='generate_pdf_start'),
     path('generate-pdf/status/<str:job_id>/', views.generate_pdf_status, name='generate_pdf_status'),
     path('pdf-status/<str:job_id>/', views.generate_pdf_status, name='pdf-status-alias'),
+    path('pdf-generation/status/<str:job_id>/', views.generate_pdf_status, name='pdf-generation-status-alias'),
     path('generate-pdf/stop/<str:job_id>/', views.generate_pdf_stop, name='generate_pdf_stop'),
     path('health/', views.HealthView.as_view(), name='health'),
     path('brand-assets/preview-pdf/', views.BrandAssetsPDFPreviewView.as_view(), name='brand-assets-preview-pdf'),

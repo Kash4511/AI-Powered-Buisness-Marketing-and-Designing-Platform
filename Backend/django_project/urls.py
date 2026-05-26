@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/pdf-status/<str:job_id>/', generate_pdf_status),
+    path('api/pdf-generation/status/<str:job_id>/', generate_pdf_status),
     path('api/', include('lead_magnets.urls')),
 ]
 # Serve media files in development
