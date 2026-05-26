@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Plus, Settings, LogOut, Palette, Send, File as PdfIcon, X, Sparkles, ArrowRight } from 'lucide-react'
+import { FileText, Plus, Settings, LogOut, Palette, Send, File as PdfIcon, X, Sparkles, ArrowRight, Download } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import Modal from './Modal'
 import TemplateSelectionForm from './forms/TemplateSelectionForm'
@@ -43,8 +43,10 @@ const GlobalStyles = () => (
 /* ── MESSAGE TYPE ── */
 interface Message {
   id: number
-  role: 'user' | 'assistant' | 'error' | 'system'
+  role: 'user' | 'assistant' | 'error' | 'system' | 'pdf'
   text: string
+  pdfUrl?: string
+  pdfTitle?: string
 }
 
 const FormaAI: React.FC = () => {
@@ -132,7 +134,7 @@ const FormaAI: React.FC = () => {
         architectural_images:  imageDataUrls,   // base64 array — Django can decode these
       }
 
-      // POST to new clean endpoint — returns 202 JSON
+      // POST to new clean endpoint — returns 202 JSON with job_id
       const res = await apiClient.post('/api/ai-chat/', payload, {
         headers: { 'Content-Type': 'application/json' },
       })
@@ -140,10 +142,11 @@ const FormaAI: React.FC = () => {
       const data = res.data
       if (data?.job_id) {
         const typeLabel = data?.lm_label ?? 'lead magnet'
-        addMsg('assistant',
-          `Got it! I'm creating your **${typeLabel}** based on your business description. ` +
-          `This takes 2–5 minutes — check your dashboard when it's ready.`
-        )
+        const lmTitle   = `${typeLabel}: ${text.slice(0, 60)}${text.length > 60 ? '…' : ''}`
+        addMsg('system', `✦ Generating your ${typeLabel}… this takes 2–5 minutes.`)
+
+        // Poll for completion
+        await pollForPDF(data.job_id, lmTitle)
       } else if (data?.message) {
         addMsg('assistant', data.message)
       }
@@ -169,6 +172,74 @@ const FormaAI: React.FC = () => {
     }
   }
 
+  /* ── Poll job until complete, then show PDF inline ── */
+  const pollForPDF = async (jobId: string, title: string) => {
+    const MAX_POLLS  = 90   // 90 × 4s = 6 minutes max
+    const INTERVAL   = 4000 // 4 seconds
+
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await new Promise(r => setTimeout(r, INTERVAL))
+      try {
+        const status = await apiClient.get(`/api/pdf-generation/status/${jobId}/`)
+        const job    = status.data
+
+        if (job.status === 'complete' || job.status === 'completed') {
+          // Job done — fetch the PDF as a blob for inline preview
+          const pdfUrl = job.pdf_url || ''
+          if (pdfUrl) {
+            try {
+              const pdfRes  = await fetch(pdfUrl)
+              const blob    = await pdfRes.blob()
+              const blobUrl = URL.createObjectURL(blob)
+              // Add PDF preview message
+              msgId.current += 1
+              setMessages(prev => [...prev, {
+                id:       msgId.current,
+                role:     'pdf',
+                text:     title,
+                pdfUrl:   blobUrl,
+                pdfTitle: title,
+              }])
+            } catch {
+              // If blob fetch fails (CORS), just show a download link
+              msgId.current += 1
+              setMessages(prev => [...prev, {
+                id:       msgId.current,
+                role:     'pdf',
+                text:     title,
+                pdfUrl:   pdfUrl,
+                pdfTitle: title,
+              }])
+            }
+          } else {
+            addMsg('assistant', `✅ Your ${title} is ready! Check your dashboard to download it.`)
+          }
+          return
+        }
+
+        if (job.status === 'failed' || job.status === 'error') {
+          addMsg('error', `Generation failed: ${job.error || 'Unknown error'}`)
+          return
+        }
+
+        // Still processing — update the last system message with progress
+        const pct = job.progress ?? 0
+        const msg = job.message  ?? 'Processing…'
+        setMessages(prev => {
+          const last = prev[prev.length - 1]
+          if (last?.role === 'system' && last.text.startsWith('✦')) {
+            return [...prev.slice(0, -1), { ...last, text: `✦ ${msg} (${pct}%)` }]
+          }
+          return prev
+        })
+      } catch {
+        // polling error — keep trying silently
+      }
+    }
+    // Timed out
+    addMsg('error', 'Generation is taking longer than expected. Check your dashboard — it may still complete.')
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
@@ -186,6 +257,7 @@ const FormaAI: React.FC = () => {
     const isUser   = msg.role === 'user'
     const isError  = msg.role === 'error'
     const isSystem = msg.role === 'system'
+    const isPDF    = msg.role === 'pdf'
 
     if (isSystem) return (
       <div style={{ display:'flex', justifyContent:'center', margin:'8px 0' }}>
@@ -193,6 +265,46 @@ const FormaAI: React.FC = () => {
           {msg.text}
         </span>
       </div>
+    )
+
+    if (isPDF) return (
+      <motion.div
+        initial={{ opacity:0, y:10 }}
+        animate={{ opacity:1, y:0 }}
+        style={{ marginBottom:16 }}
+      >
+        {/* PDF preview card */}
+        <div style={{ background:'#fff', border:`1px solid ${T.bd}`, borderRadius:14, overflow:'hidden', maxWidth:540 }}>
+          {/* Card header */}
+          <div style={{ padding:'14px 18px', borderBottom:`1px solid ${T.bd}`, display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:32, height:32, background:T.dark, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <FileText size={15} color="#fff"/>
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontFamily:"'Fraunces',serif", fontSize:'0.88rem', fontWeight:700, color:T.dark, letterSpacing:'-0.2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                {msg.pdfTitle}
+              </div>
+              <div style={{ fontSize:'0.68rem', color:T.t3, marginTop:1 }}>PDF ready — preview below</div>
+            </div>
+            {/* Download button */}
+            <a
+              href={msg.pdfUrl}
+              download={`${msg.pdfTitle ?? 'lead-magnet'}.pdf`}
+              style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'8px 14px', background:T.dark, color:'#fff', borderRadius:8, fontSize:'0.75rem', fontWeight:600, textDecoration:'none', flexShrink:0, fontFamily:"'Instrument Sans',sans-serif" }}
+            >
+              <Download size={13}/> Download PDF
+            </a>
+          </div>
+          {/* Iframe preview */}
+          <div style={{ height:480, background:T.bg2, position:'relative' }}>
+            <iframe
+              src={msg.pdfUrl}
+              title={msg.pdfTitle}
+              style={{ width:'100%', height:'100%', border:'none' }}
+            />
+          </div>
+        </div>
+      </motion.div>
     )
 
     return (

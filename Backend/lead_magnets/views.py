@@ -952,322 +952,335 @@ def _get_ai_client():
         raise RuntimeError(f"AI Service Initialization Error: {str(e)}")
 
 
-# ── Lead magnet type keywords → model values ────────────────────────────── 
-LM_TYPE_MAP = { 
-    "guide":            ["guide", "how to", "how-to", "handbook", "manual"], 
-    "case-study":       ["case study", "case-study", "success story", "success stories", "example"], 
-    "checklist":        ["checklist", "check list", "checklists", "list of steps", "step by step", "step-by-step"], 
-    "roi-calculator":   ["roi", "calculator", "return on investment", "roi calculator"], 
-    "trends-report":    ["trends", "trend report", "trends report", "industry report", "market report", "insights report"], 
-    "onboarding-flow":  ["onboarding", "onboard", "welcome flow", "getting started", "client onboarding"], 
-    "design-portfolio": ["portfolio", "design portfolio", "showcase", "work samples"], 
-    "custom":           ["custom", "other"], 
-} 
- 
-def _detect_lm_type(message: str): 
-    """Return (type_value, type_label) or (None, None) if not found.""" 
-    msg = message.lower() 
-    for type_value, keywords in LM_TYPE_MAP.items(): 
-        for kw in keywords: 
-            if kw in msg: 
-                label_map = { 
-                    "guide": "Guide", 
-                    "case-study": "Case Study", 
-                    "checklist": "Checklist", 
-                    "roi-calculator": "ROI Calculator", 
-                    "trends-report": "Trends Report", 
-                    "onboarding-flow": "Client Onboarding Flow", 
-                    "design-portfolio": "Design Portfolio", 
-                    "custom": "Custom", 
-                } 
-                return type_value, label_map[type_value] 
-    return None, None 
- 
- 
-class FormaAIChatView(APIView): 
-    """ 
-    Forma AI — business description → deep PDF lead magnet. 
- 
-    User must mention their business AND the type of lead magnet they want. 
-    If no type is detected, returns a helpful 400 with examples. 
-    """ 
-    permission_classes = [permissions.IsAuthenticated] 
-    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser] 
- 
-    def post(self, request): 
-        try: 
-            message     = (request.data.get("message") or "").strip() 
-            template_id = request.data.get("template_id") or "modern-guide" 
-            arch_images = request.data.get("architectural_images", [])  # base64 strings 
- 
-            if not message: 
-                return Response({"error": "Please describe your business and what type of lead magnet you want."}, status=400) 
- 
-            # ── Detect lead magnet type from message ────────────────────── 
-            lm_type, lm_label = _detect_lm_type(message) 
- 
-            if not lm_type: 
-                return Response({ 
-                    "error": ( 
-                        "Please mention the type of lead magnet you want. For example:\n\n" 
-                        "• \"...create a Guide about my perfume business\"\n" 
-                        "• \"...make a Checklist for my architecture firm\"\n" 
-                        "• \"...build a Trends Report for my real estate agency\"\n" 
-                        "• \"...generate a Case Study for my consulting firm\"\n" 
-                        "• \"...write an ROI Calculator for my SaaS product\"\n" 
-                        "• \"...create a Client Onboarding Flow for my agency\"\n\n" 
-                        "Available types: Guide, Case Study, Checklist, ROI Calculator, " 
-                        "Trends Report, Client Onboarding Flow, Design Portfolio, Custom" 
-                    ) 
-                }, status=400) 
- 
-            # ── 1. Create LeadMagnet first (FK anchor) ──────────────────── 
-            lm = LeadMagnet.objects.create( 
-                owner=request.user, 
-                title=f"{lm_label}: {message[:80]}", 
-                status="processing", 
-            ) 
- 
-            # ── 2. Create PDFGenerationJob with lead_magnet set ─────────── 
-            job_id = str(uuid.uuid4()) 
-            PDFGenerationJob.objects.create( 
-                job_id=job_id, 
-                lead_magnet=lm, 
-                status="pending", 
-                progress=0, 
-                message="Queued — AI is reading your business description...", 
-            ) 
- 
-            # ── 3. Log conversation ─────────────────────────────────────── 
-            conv = FormaAIConversation.objects.create( 
-                user=request.user, 
-                messages=[{"role": "user", "content": message}], 
-                lead_magnet=lm, 
-            ) 
- 
-            # ── 4. Fire background thread ───────────────────────────────── 
-            threading.Thread( 
-                target=FormaAIChatView._run, 
-                args=(job_id, lm.id, request.user.id, conv.id, 
-                      message, lm_type, lm_label, template_id, arch_images), 
-                daemon=True, 
-            ).start() 
- 
-            return Response({ 
-                "success":         True, 
-                "job_id":          job_id, 
-                "lead_magnet_id":  lm.id, 
-                "conversation_id": conv.id, 
-                "lm_type":         lm_type, 
-                "lm_label":        lm_label, 
-                "message": ( 
-                    f"Got it! Creating a **{lm_label}** based on your business description. " 
-                    f"This usually takes 2–5 minutes. Check your dashboard when it's ready." 
-                ), 
-            }, status=202) 
- 
-        except Exception as e: 
-            logger.error(f"FormaAIChatView.post error: {e}\n{traceback.format_exc()}") 
-            return Response({"error": str(e)}, status=500) 
- 
-    # ── Background PDF generation worker ───────────────────────────────── 
-    @staticmethod 
-    def _run(job_id, lm_id, user_id, conv_id, message, lm_type, lm_label, template_id, arch_images): 
- 
-        def upd(**kw): 
-            """Update job — always preserves lead_magnet_id.""" 
-            kw["lead_magnet_id"] = lm_id 
-            try: 
-                PDFGenerationJob.objects.filter(job_id=job_id).update(**kw) 
-            except Exception as e: 
-                logger.warning(f"upd() failed: {e}") 
- 
-        try: 
-            from django.contrib.auth import get_user_model 
-            User = get_user_model() 
-            user = User.objects.get(id=user_id) 
-            lm   = LeadMagnet.objects.get(id=lm_id) 
-            conv = FormaAIConversation.objects.get(id=conv_id) 
- 
-            firm = _build_firm_profile(user) 
- 
-            # ── Resolve base64 architectural images → Cloudinary URLs ───── 
-            import cloudinary.uploader, base64 as _b64, re as _re 
-            from io import BytesIO 
- 
-            for i, b64str in enumerate(arch_images[:6]): 
-                try: 
-                    raw  = _re.sub(r'^data:image/[^;]+;base64,', '', b64str) 
-                    data = _b64.b64decode(raw) 
-                    up   = cloudinary.uploader.upload( 
-                        BytesIO(data), 
-                        folder="architectural_images", 
-                        public_id=f"forma_ai_{user_id}_{uuid.uuid4().hex[:6]}", 
-                    ) 
-                    firm[f"image_{i+1}_url"] = up.get("secure_url", "") 
-                    logger.info(f"Uploaded image {i+1} for user {user_id}") 
-                except Exception as ie: 
-                    logger.warning(f"Image {i+1} upload failed: {ie}") 
- 
-            # ── Build AI input from the user's business description ─────── 
-            # The full message IS the business description — AI uses it all 
-            ua = { 
-                "lead_magnet_type": lm_type, 
-                "main_topic":       "custom", 
-                "target_audience":  ["Potential clients"], 
-                "audience_pain_points": ["Finding the right service provider"], 
-                "desired_outcome":  f"Reader understands {firm.get('firm_name','the business')} and takes action", 
-                "call_to_action":   f"Contact {firm.get('firm_name','us')} today", 
-                "special_requests": message,   # ← full business description goes here 
-                "industry":         "Business", 
-                "document_type":    lm_type, 
-            } 
- 
-            ai  = _get_ai_client() 
-            svc = WeasyPrintService() 
- 
-            upd(status="processing", progress=10, 
-                message="AI is analysing your business description...") 
- 
-            signals = ai.get_semantic_signals(ua) 
- 
-            upd(status="processing", progress=25, 
-                message=f"Generating deep {lm_label} content...") 
- 
-            raw_ai  = ai.generate_lead_magnet_json(signals, firm) 
-            content = ai.normalize_ai_output(raw_ai) 
- 
-            tokens_used = raw_ai.get("tokens_used", 0) 
-            upd(status="processing", progress=60, 
-                message="Mapping content to template...", 
-                tokens_used=tokens_used) 
- 
-            tvars = ai.map_to_template_vars(content, firm, signals) 
-            tvars.setdefault("companyName",        firm.get("firm_name", "")) 
-            tvars.setdefault("emailAddress",        firm.get("work_email", "")) 
-            tvars.setdefault("website",             firm.get("firm_website", "")) 
-            tvars.setdefault("documentTypeLabel",   lm_label) 
- 
-            # ── Build sections HTML ─────────────────────────────────────── 
-            doc_type        = lm_type 
-            actual_sections = ai.TYPE_CONFIGS.get( 
-                doc_type, {} 
-            ).get("sections", ai.GUIDE_SECTIONS) 
- 
-            sections_html, toc_html = [], [] 
- 
-            for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections): 
-                section_title = tvars.get(f"customTitle{idx+1}", dtitle) 
-                content_html  = tvars.get(f"section_{key}_full_html", "") 
-                num = str(idx + 1).zfill(2) 
- 
-                toc_html.append( 
-                    f'<div class="toc-item">' 
-                    f'<span class="toc-num">{num}</span>' 
-                    f'<span class="toc-label">{section_title}</span>' 
-                    f'<span class="toc-dots"></span>' 
-                    f'<span class="toc-pg">' 
-                    f'<a href="#sec-{idx}" class="toc-link" style="text-decoration:none;color:inherit;"></a>' 
-                    f'</span></div>' 
-                ) 
- 
-                # Image: alternate placement every 2 sections 
-                img_url = firm.get(f"image_{(idx % 6) + 1}_url", "") 
-                img_html = ( 
-                    f'<div class="img-block horizontal center">' 
-                    f'<img src="{img_url}" alt=""></div>' 
-                ) if img_url else "" 
- 
-                sections_html.append( 
-                    f'<div class="page content-page" id="sec-{idx}" style="clear:both;">' 
-                    f'<div class="string-container">' 
-                    f'<span class="page-header-kicker">{dkicker}</span>' 
-                    f'<div class="page-header-title">{section_title}</div></div>' 
-                    f'<div class="page-body">' 
-                    f'<div class="section-intro-block">' 
-                    f'<div class="section-intro-num">{num}</div>' 
-                    f'<div class="section-headline">{section_title}</div></div>' 
-                    f'{img_html}' 
-                    f'<div class="section-content">{content_html}</div>' 
-                    f'</div></div>' 
-                ) 
- 
-            tvars["sections_html"] = "\n".join(sections_html) 
-            tvars["toc_html"]      = "\n".join(toc_html) 
- 
-            upd(status="processing", progress=78, message="Rendering PDF...") 
- 
-            pdf_res = svc.generate_pdf(template_id, tvars) 
-            if not pdf_res.get("success"): 
-                raise Exception(f"PDF render failed: {pdf_res.get('details', 'unknown error')}") 
- 
-            # ── Save PDF ────────────────────────────────────────────────── 
-            pdf_url = "" 
-            try: 
-                import cloudinary.uploader as _cup 
-                up = _cup.upload( 
-                    pdf_res["pdf_data"], 
-                    resource_type="raw", 
-                    folder="lead_magnets", 
-                    public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}", 
-                ) 
-                lm.pdf_file = up.get("public_id", "") 
-                pdf_url     = up.get("secure_url", "") 
-            except Exception as ce: 
-                logger.warning(f"Cloudinary upload failed, using local: {ce}") 
-                from django.core.files.base import ContentFile 
-                lm.pdf_file.save( 
-                    f"ai_chat_{lm_id}.pdf", 
-                    ContentFile(pdf_res["pdf_data"]) 
-                ) 
-                pdf_url = lm.pdf_file.url 
- 
-            lm.title  = tvars.get("mainTitle", lm.title) 
-            lm.status = "completed" 
-            lm.save() 
- 
-            # ── Save generation data ────────────────────────────────────── 
-            LeadMagnetGeneration.objects.get_or_create( 
-                lead_magnet=lm, 
-                defaults={ 
-                    "lead_magnet_type":     lm_type, 
-                    "main_topic":           "custom", 
-                    "target_audience":      ua["target_audience"], 
-                    "audience_pain_points": ua["audience_pain_points"], 
-                    "desired_outcome":      ua["desired_outcome"], 
-                    "call_to_action":       ua["call_to_action"], 
-                    "special_requests":     message, 
-                }, 
-            ) 
- 
-            # ── Update conversation ─────────────────────────────────────── 
-            conv.messages.append({ 
-                "role":    "assistant", 
-                "content": ( 
-                    f"Your **{lm_label}** is ready! " 
-                    f"Find it in your dashboard as \"{lm.title}\"." 
-                ), 
-            }) 
-            conv.save() 
- 
-            upd(status="complete", progress=100, 
-                message=f"{lm_label} PDF ready!", 
-                pdf_url=pdf_url, 
-                tokens_used=tokens_used) 
- 
-            logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | type={lm_type}") 
- 
-        except Exception as e: 
-            logger.error(f"FormaAIChatView._run error: {e}\n{traceback.format_exc()}") 
-            PDFGenerationJob.objects.filter(job_id=job_id).update( 
-                status="failed", 
-                error=str(e), 
-                lead_magnet_id=lm_id, 
-            ) 
-            try: 
-                LeadMagnet.objects.filter(id=lm_id).update(status="error") 
-            except Exception: 
-                pass 
+"""
+Replace the FormaAIChatView class in your views.py with this.
+URL: path('api/ai-chat/', FormaAIChatView.as_view()),
+
+What this does:
+- Parses the user's message to detect lead magnet type and business description
+- Returns a 400 error if no lead magnet type is mentioned
+- Creates LeadMagnet + PDFGenerationJob atomically (lead_magnet_id never null)
+- Generates a deep, business-specific PDF using the detected type
+"""
+
+# ── Lead magnet type keywords → model values ──────────────────────────────
+LM_TYPE_MAP = {
+    "guide":            ["guide", "how to", "how-to", "handbook", "manual"],
+    "case-study":       ["case study", "case-study", "success story", "success stories", "example"],
+    "checklist":        ["checklist", "check list", "checklists", "list of steps", "step by step", "step-by-step"],
+    "roi-calculator":   ["roi", "calculator", "return on investment", "roi calculator"],
+    "trends-report":    ["trends", "trend report", "trends report", "industry report", "market report", "insights report"],
+    "onboarding-flow":  ["onboarding", "onboard", "welcome flow", "getting started", "client onboarding"],
+    "design-portfolio": ["portfolio", "design portfolio", "showcase", "work samples"],
+    "custom":           ["custom", "other"],
+}
+
+def _detect_lm_type(message: str):
+    """Return (type_value, type_label) or (None, None) if not found."""
+    msg = message.lower()
+    for type_value, keywords in LM_TYPE_MAP.items():
+        for kw in keywords:
+            if kw in msg:
+                label_map = {
+                    "guide": "Guide",
+                    "case-study": "Case Study",
+                    "checklist": "Checklist",
+                    "roi-calculator": "ROI Calculator",
+                    "trends-report": "Trends Report",
+                    "onboarding-flow": "Client Onboarding Flow",
+                    "design-portfolio": "Design Portfolio",
+                    "custom": "Custom",
+                }
+                return type_value, label_map[type_value]
+    return None, None
+
+
+class FormaAIChatView(APIView):
+    """
+    Forma AI — business description → deep PDF lead magnet.
+
+    User must mention their business AND the type of lead magnet they want.
+    If no type is detected, returns a helpful 400 with examples.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser]
+
+    def post(self, request):
+        try:
+            message     = (request.data.get("message") or "").strip()
+            template_id = request.data.get("template_id") or "modern-guide"
+            arch_images = request.data.get("architectural_images", [])  # base64 strings
+
+            if not message:
+                return Response({"error": "Please describe your business and what type of lead magnet you want."}, status=400)
+
+            # ── Detect lead magnet type from message ──────────────────────
+            lm_type, lm_label = _detect_lm_type(message)
+
+            if not lm_type:
+                return Response({
+                    "error": (
+                        "Please mention the type of lead magnet you want. For example:\n\n"
+                        "• \"...create a Guide about my perfume business\"\n"
+                        "• \"...make a Checklist for my architecture firm\"\n"
+                        "• \"...build a Trends Report for my real estate agency\"\n"
+                        "• \"...generate a Case Study for my consulting firm\"\n"
+                        "• \"...write an ROI Calculator for my SaaS product\"\n"
+                        "• \"...create a Client Onboarding Flow for my agency\"\n\n"
+                        "Available types: Guide, Case Study, Checklist, ROI Calculator, "
+                        "Trends Report, Client Onboarding Flow, Design Portfolio, Custom"
+                    )
+                }, status=400)
+
+            # ── 1. Create LeadMagnet first (FK anchor) ────────────────────
+            lm = LeadMagnet.objects.create(
+                owner=request.user,
+                title=f"{lm_label}: {message[:80]}",
+                status="processing",
+            )
+
+            # ── 2. Create PDFGenerationJob with lead_magnet set ───────────
+            job_id = str(uuid.uuid4())
+            PDFGenerationJob.objects.create(
+                job_id=job_id,
+                lead_magnet=lm,
+                status="pending",
+                progress=0,
+                message="Queued — AI is reading your business description...",
+            )
+
+            # ── 3. Log conversation ───────────────────────────────────────
+            conv = FormaAIConversation.objects.create(
+                user=request.user,
+                messages=[{"role": "user", "content": message}],
+                lead_magnet=lm,
+            )
+
+            # ── 4. Fire background thread ─────────────────────────────────
+            threading.Thread(
+                target=FormaAIChatView._run,
+                args=(job_id, lm.id, request.user.id, conv.id,
+                      message, lm_type, lm_label, template_id, arch_images),
+                daemon=True,
+            ).start()
+
+            return Response({
+                "success":         True,
+                "job_id":          job_id,
+                "lead_magnet_id":  lm.id,
+                "conversation_id": conv.id,
+                "lm_type":         lm_type,
+                "lm_label":        lm_label,
+                "message": (
+                    f"Got it! Creating a **{lm_label}** based on your business description. "
+                    f"This usually takes 2–5 minutes. Check your dashboard when it's ready."
+                ),
+            }, status=202)
+
+        except Exception as e:
+            logger.error(f"FormaAIChatView.post error: {e}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+    # ── Background PDF generation worker ─────────────────────────────────
+    @staticmethod
+    def _run(job_id, lm_id, user_id, conv_id, message, lm_type, lm_label, template_id, arch_images):
+
+        def upd(**kw):
+            """Update job — always preserves lead_magnet_id."""
+            kw["lead_magnet_id"] = lm_id
+            try:
+                PDFGenerationJob.objects.filter(job_id=job_id).update(**kw)
+            except Exception as e:
+                logger.warning(f"upd() failed: {e}")
+
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            user = User.objects.get(id=user_id)
+            lm   = LeadMagnet.objects.get(id=lm_id)
+            conv = FormaAIConversation.objects.get(id=conv_id)
+
+            firm = _build_firm_profile(user)
+
+            # ── Resolve base64 architectural images → Cloudinary URLs ─────
+            import cloudinary.uploader, base64 as _b64, re as _re
+            from io import BytesIO
+
+            for i, b64str in enumerate(arch_images[:6]):
+                try:
+                    raw  = _re.sub(r'^data:image/[^;]+;base64,', '', b64str)
+                    data = _b64.b64decode(raw)
+                    up   = cloudinary.uploader.upload(
+                        BytesIO(data),
+                        folder="architectural_images",
+                        public_id=f"forma_ai_{user_id}_{uuid.uuid4().hex[:6]}",
+                    )
+                    firm[f"image_{i+1}_url"] = up.get("secure_url", "")
+                    logger.info(f"Uploaded image {i+1} for user {user_id}")
+                except Exception as ie:
+                    logger.warning(f"Image {i+1} upload failed: {ie}")
+
+            # ── Build AI input from the user's business description ───────
+            # The full message IS the business description — AI uses it all
+            ua = {
+                "lead_magnet_type": lm_type,
+                "main_topic":       "custom",
+                "target_audience":  ["Potential clients"],
+                "audience_pain_points": ["Finding the right service provider"],
+                "desired_outcome":  f"Reader understands {firm.get('firm_name','the business')} and takes action",
+                "call_to_action":   f"Contact {firm.get('firm_name','us')} today",
+                "special_requests": message,   # ← full business description goes here
+                "industry":         "Business",
+                "document_type":    lm_type,
+            }
+
+            ai  = _get_ai_client()
+            svc = WeasyPrintService()
+
+            upd(status="processing", progress=10,
+                message="AI is analysing your business description...")
+
+            signals = ai.get_semantic_signals(ua)
+
+            upd(status="processing", progress=25,
+                message=f"Generating deep {lm_label} content...")
+
+            raw_ai  = ai.generate_lead_magnet_json(signals, firm)
+            content = ai.normalize_ai_output(raw_ai)
+
+            tokens_used = raw_ai.get("tokens_used", 0)
+            upd(status="processing", progress=60,
+                message="Mapping content to template...",
+                tokens_used=tokens_used)
+
+            tvars = ai.map_to_template_vars(content, firm, signals)
+            tvars.setdefault("companyName",        firm.get("firm_name", ""))
+            tvars.setdefault("emailAddress",        firm.get("work_email", ""))
+            tvars.setdefault("website",             firm.get("firm_website", ""))
+            tvars.setdefault("documentTypeLabel",   lm_label)
+
+            # ── Build sections HTML ───────────────────────────────────────
+            doc_type        = lm_type
+            actual_sections = ai.TYPE_CONFIGS.get(
+                doc_type, {}
+            ).get("sections", ai.GUIDE_SECTIONS)
+
+            sections_html, toc_html = [], []
+
+            for idx, (key, dtitle, dkicker, dlabel, dicon) in enumerate(actual_sections):
+                section_title = tvars.get(f"customTitle{idx+1}", dtitle)
+                content_html  = tvars.get(f"section_{key}_full_html", "")
+                num = str(idx + 1).zfill(2)
+
+                toc_html.append(
+                    f'<div class="toc-item">'
+                    f'<span class="toc-num">{num}</span>'
+                    f'<span class="toc-label">{section_title}</span>'
+                    f'<span class="toc-dots"></span>'
+                    f'<span class="toc-pg">'
+                    f'<a href="#sec-{idx}" class="toc-link" style="text-decoration:none;color:inherit;"></a>'
+                    f'</span></div>'
+                )
+
+                # Image: alternate placement every 2 sections
+                img_url = firm.get(f"image_{(idx % 6) + 1}_url", "")
+                img_html = (
+                    f'<div class="img-block horizontal center">'
+                    f'<img src="{img_url}" alt=""></div>'
+                ) if img_url else ""
+
+                sections_html.append(
+                    f'<div class="page content-page" id="sec-{idx}" style="clear:both;">'
+                    f'<div class="string-container">'
+                    f'<span class="page-header-kicker">{dkicker}</span>'
+                    f'<div class="page-header-title">{section_title}</div></div>'
+                    f'<div class="page-body">'
+                    f'<div class="section-intro-block">'
+                    f'<div class="section-intro-num">{num}</div>'
+                    f'<div class="section-headline">{section_title}</div></div>'
+                    f'{img_html}'
+                    f'<div class="section-content">{content_html}</div>'
+                    f'</div></div>'
+                )
+
+            tvars["sections_html"] = "\n".join(sections_html)
+            tvars["toc_html"]      = "\n".join(toc_html)
+
+            upd(status="processing", progress=78, message="Rendering PDF...")
+
+            pdf_res = svc.generate_pdf(template_id, tvars)
+            if not pdf_res.get("success"):
+                raise Exception(f"PDF render failed: {pdf_res.get('details', 'unknown error')}")
+
+            # ── Save PDF ──────────────────────────────────────────────────
+            pdf_url = ""
+            try:
+                import cloudinary.uploader as _cup
+                up = _cup.upload(
+                    pdf_res["pdf_data"],
+                    resource_type="raw",
+                    folder="lead_magnets",
+                    public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}",
+                )
+                lm.pdf_file = up.get("public_id", "")
+                pdf_url     = up.get("secure_url", "")
+            except Exception as ce:
+                logger.warning(f"Cloudinary upload failed, using local: {ce}")
+                from django.core.files.base import ContentFile
+                lm.pdf_file.save(
+                    f"ai_chat_{lm_id}.pdf",
+                    ContentFile(pdf_res["pdf_data"])
+                )
+                pdf_url = lm.pdf_file.url
+
+            lm.title  = tvars.get("mainTitle", lm.title)
+            lm.status = "completed"
+            lm.save()
+
+            # ── Save generation data ──────────────────────────────────────
+            LeadMagnetGeneration.objects.get_or_create(
+                lead_magnet=lm,
+                defaults={
+                    "lead_magnet_type":     lm_type,
+                    "main_topic":           "custom",
+                    "target_audience":      ua["target_audience"],
+                    "audience_pain_points": ua["audience_pain_points"],
+                    "desired_outcome":      ua["desired_outcome"],
+                    "call_to_action":       ua["call_to_action"],
+                    "special_requests":     message,
+                },
+            )
+
+            # ── Update conversation ───────────────────────────────────────
+            conv.messages.append({
+                "role":    "assistant",
+                "content": (
+                    f"Your **{lm_label}** is ready! "
+                    f"Find it in your dashboard as \"{lm.title}\"."
+                ),
+            })
+            conv.save()
+
+            upd(status="complete", progress=100,
+                message=f"{lm_label} PDF ready! Opening preview…",
+                pdf_url=pdf_url,          # full https Cloudinary URL
+                tokens_used=tokens_used)
+
+            logger.info(f"✅ PDF URL for frontend: {pdf_url}")
+
+            logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | type={lm_type}")
+
+        except Exception as e:
+            logger.error(f"FormaAIChatView._run error: {e}\n{traceback.format_exc()}")
+            PDFGenerationJob.objects.filter(job_id=job_id).update(
+                status="failed",
+                error=str(e),
+                lead_magnet_id=lm_id,
+            )
+            try:
+                LeadMagnet.objects.filter(id=lm_id).update(status="error")
+            except Exception:
+                pass
 
 
 # ─────────────────────────────────────────────────────────────────────────────
