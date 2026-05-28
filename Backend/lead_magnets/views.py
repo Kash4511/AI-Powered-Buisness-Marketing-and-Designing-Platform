@@ -743,91 +743,39 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 @xframe_options_exempt
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id):
+    """
+    Returns a signed Cloudinary URL for the PDF instead of proxying the stream.
+    This avoids Render 502/timeout issues for large file transfers.
+    """
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id)
-    except LeadMagnet.DoesNotExist:
-        return Response({"error":"Lead magnet not found"}, status=404)
-    
-    try:
         if not lm.pdf_file:
-            return Response({"error":"PDF not generated yet"}, status=404)
+            return Response({"error": "PDF not generated yet"}, status=404)
 
-        # ── 1. Resolve Public ID ──────────────────────────────────────────
-        raw_id = str(lm.pdf_file.name)
-        public_id = raw_id
+        public_id = str(lm.pdf_file.name)
         
-        # If it's a full URL, extract the part after /upload/
-        if "http" in raw_id:
+        # Resolve clean public_id if stored as full URL
+        if public_id.startswith('http'):
             import re as _re
-            # Extract everything after the version (e.g., v123456789/) or after /upload/
-            match = _re.search(r'/upload/(?:v\d+/)?(.+)$', raw_id)
+            match = _re.search(r'/upload/(?:v\d+/)?(.+)$', public_id)
             if match:
                 public_id = match.group(1)
-        
-        # Cloudinary specific: sometimes the folder is part of the name, sometimes not.
-        # We ensure we don't double up the folder prefix.
-        if public_id.startswith('lead_magnets/lead_magnets/'):
-            public_id = public_id.replace('lead_magnets/lead_magnets/', 'lead_magnets/')
-        
-        # ── 2. Proxy Request with Fallbacks ──────────────────────────────
-        # We try 'raw' first, then 'image' if that fails.
-        success_proxy = None
-        last_url = ""
-        
-        for rtype in ["raw", "image"]:
-            try:
-                # Use cloudinary.utils.cloudinary_url directly for better control
-                import cloudinary.utils
-                signed_url, _ = cloudinary.utils.cloudinary_url(
-                    public_id, 
-                    resource_type=rtype, 
-                    sign_url=True, 
-                    secure=True
-                )
-                last_url = signed_url
-                
-                logger.info(f"PDF Proxy attempt ({rtype}): {public_id}")
-                
-                # Use a smaller timeout for the first attempt
-                proxy_res = requests.get(signed_url, stream=True, timeout=10)
-                if proxy_res.status_code == 200:
-                    success_proxy = proxy_res
-                    break
-                else:
-                    logger.warning(f"Proxy ({rtype}) failed with status {proxy_res.status_code}")
-            except Exception as e:
-                logger.error(f"Proxy error ({rtype}): {e}")
 
-        if not success_proxy:
-            # Mask the signature in the URL for the error response
-            masked_url = last_url.split('?')[0] if '?' in last_url else last_url
-            return Response({
-                "error": "Could not retrieve PDF from Cloudinary",
-                "details": f"Checked raw and image types for ID: {public_id}",
-                "last_url_tried": masked_url,
-                "hint": "Ensure the file was uploaded correctly and the public_id matches."
-            }, status=502)
+        # Generate signed URL
+        # We return the URL directly to the frontend to avoid proxying through Django
+        signed_url, _ = _cld_url(public_id, resource_type="raw", sign_url=True, secure=True)
+        
+        return Response({
+            "success": True,
+            "pdf_url": signed_url,
+            "filename": os.path.basename(public_id)
+        })
 
-        # ── 3. Return FileResponse ────────────────────────────────────────
-        filename = os.path.basename(public_id) or f"lead-magnet-{lead_magnet_id}.pdf"
-        if not filename.lower().endswith(".pdf"): filename += ".pdf"
-        
-        resp = FileResponse(success_proxy.raw, content_type="application/pdf")
-        resp["Content-Disposition"] = f'attachment; filename="{filename}"'
-        
-        # Security Headers for Cross-Domain Framing (Vercel -> Render)
-        # We set these very explicitly to override any middleware
-        resp["X-Frame-Options"] = "ALLOWALL"
-        resp["Content-Security-Policy"] = "frame-ancestors *"
-        resp["Access-Control-Allow-Origin"] = "*"
-        
-        if "Content-Length" in success_proxy.headers:
-            resp["Content-Length"] = success_proxy.headers["Content-Length"]
-            
-        return resp
+    except LeadMagnet.DoesNotExist:
+        return Response({"error": "Lead magnet not found"}, status=404)
     except Exception as e:
-        logger.error(f"Download error LM {lead_magnet_id}: {e}")
-        return Response({"error":"Failed to retrieve file"}, status=500)
+        logger.error(f"Download Error LM {lead_magnet_id}: {e}")
+        return Response({"error": str(e)}, status=500)
 
 
 class CreateLeadMagnetView(APIView):
