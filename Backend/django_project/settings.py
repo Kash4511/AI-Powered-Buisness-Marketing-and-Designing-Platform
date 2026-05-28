@@ -180,7 +180,9 @@ else:
 # -----------------------------
 # Clickjacking Protection
 # -----------------------------
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+# We allow framing from our own domains (Vercel/Render) via CSP in the views.
+# Setting this to None or removing it lets the decorators handle it.
+X_FRAME_OPTIONS = 'ALLOWALL' 
 
 # -----------------------------
 # Password Validation

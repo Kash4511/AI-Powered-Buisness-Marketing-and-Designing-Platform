@@ -740,67 +740,89 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
 @xframe_options_exempt
+@permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id):
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id)
     except LeadMagnet.DoesNotExist:
         return Response({"error":"Lead magnet not found"}, status=404)
+    
     try:
         if not lm.pdf_file:
             return Response({"error":"PDF not generated yet"}, status=404)
 
-        # ── 1. Generate signed URL ─────────────────────────────────────────
-        public_id = lm.pdf_file.name
+        # ── 1. Resolve Public ID ──────────────────────────────────────────
+        raw_id = str(lm.pdf_file.name)
+        public_id = raw_id
         
-        # Defensive: handle potential double-prefixing or full URLs
-        if public_id.startswith('http'):
-            from urllib.parse import urlparse
-            path = urlparse(public_id).path
-            # Cloudinary paths: /cloud_name/raw/upload/v123/public_id
-            parts = path.split('/')
-            if 'upload' in parts:
-                idx = parts.index('upload')
-                public_id = '/'.join(parts[idx+2:])
+        # If it's a full URL, extract the part after /upload/
+        if "http" in raw_id:
+            import re as _re
+            # Extract everything after the version (e.g., v123456789/) or after /upload/
+            match = _re.search(r'/upload/(?:v\d+/)?(.+)$', raw_id)
+            if match:
+                public_id = match.group(1)
         
-        # Clean up any potential double-prefix from storage backends
+        # Cloudinary specific: sometimes the folder is part of the name, sometimes not.
+        # We ensure we don't double up the folder prefix.
         if public_id.startswith('lead_magnets/lead_magnets/'):
             public_id = public_id.replace('lead_magnets/lead_magnets/', 'lead_magnets/')
         
-        # Ensure we use resource_type="raw"
-        signed_url, _ = _cld_url(public_id, resource_type="raw", sign_url=True, secure=True)
+        # ── 2. Proxy Request with Fallbacks ──────────────────────────────
+        # We try 'raw' first, then 'image' if that fails.
+        success_proxy = None
+        last_url = ""
         
-        logger.info(f"PDF Proxy: LM={lead_magnet_id} ID={public_id} URL={signed_url[:100]}...")
-        
-        # ── 2. Proxy the request ──────────────────────────────────────────
-        try:
-            proxy = requests.get(signed_url, stream=True, timeout=20)
-            
-            # If 404, try one more time as "image" (sometimes Cloudinary auto-assigns)
-            if proxy.status_code == 404:
-                logger.warning(f"404 for raw, trying image: {public_id}")
-                signed_url_img, _ = _cld_url(public_id, sign_url=True, secure=True)
-                proxy = requests.get(signed_url_img, stream=True, timeout=20)
-            
-            proxy.raise_for_status()
-        except Exception as re:
-            logger.error(f"Cloudinary proxy failed for {public_id}: {re}")
-            return Response({"error": f"Cloudinary error: {str(re)}"}, status=502)
+        for rtype in ["raw", "image"]:
+            try:
+                # Use cloudinary.utils.cloudinary_url directly for better control
+                import cloudinary.utils
+                signed_url, _ = cloudinary.utils.cloudinary_url(
+                    public_id, 
+                    resource_type=rtype, 
+                    sign_url=True, 
+                    secure=True
+                )
+                last_url = signed_url
+                
+                logger.info(f"PDF Proxy attempt ({rtype}): {public_id}")
+                
+                # Use a smaller timeout for the first attempt
+                proxy_res = requests.get(signed_url, stream=True, timeout=10)
+                if proxy_res.status_code == 200:
+                    success_proxy = proxy_res
+                    break
+                else:
+                    logger.warning(f"Proxy ({rtype}) failed with status {proxy_res.status_code}")
+            except Exception as e:
+                logger.error(f"Proxy error ({rtype}): {e}")
+
+        if not success_proxy:
+            # Mask the signature in the URL for the error response
+            masked_url = last_url.split('?')[0] if '?' in last_url else last_url
+            return Response({
+                "error": "Could not retrieve PDF from Cloudinary",
+                "details": f"Checked raw and image types for ID: {public_id}",
+                "last_url_tried": masked_url,
+                "hint": "Ensure the file was uploaded correctly and the public_id matches."
+            }, status=502)
 
         # ── 3. Return FileResponse ────────────────────────────────────────
         filename = os.path.basename(public_id) or f"lead-magnet-{lead_magnet_id}.pdf"
-        if not filename.endswith(".pdf"): filename += ".pdf"
+        if not filename.lower().endswith(".pdf"): filename += ".pdf"
         
-        resp = FileResponse(proxy.raw, content_type="application/pdf")
+        resp = FileResponse(success_proxy.raw, content_type="application/pdf")
         resp["Content-Disposition"] = f'attachment; filename="{filename}"'
         
-        # Set security headers to allow framing for the preview
+        # Security Headers for Cross-Domain Framing (Vercel -> Render)
+        # We set these very explicitly to override any middleware
         resp["X-Frame-Options"] = "ALLOWALL"
         resp["Content-Security-Policy"] = "frame-ancestors *"
+        resp["Access-Control-Allow-Origin"] = "*"
         
-        if "Content-Length" in proxy.headers:
-            resp["Content-Length"] = proxy.headers["Content-Length"]
+        if "Content-Length" in success_proxy.headers:
+            resp["Content-Length"] = success_proxy.headers["Content-Length"]
             
         return resp
     except Exception as e:
