@@ -1140,6 +1140,21 @@ class FormaAIChatView(APIView):
             upd(status="processing", progress=10,
                 message="AI is analysing your business description...")
 
+            # ── Extract signals from description ─────────────────────────
+            extracted = ai.extract_business_signals(message, lm_label)
+            
+            ua = {
+                "lead_magnet_type": lm_type,
+                "main_topic":       extracted.get("topic", "custom"),
+                "target_audience":  extracted.get("audience", "Potential clients"),
+                "audience_pain_points": extracted.get("pain_points", ["Finding the right service provider"]),
+                "desired_outcome":  extracted.get("desired_outcome", ""),
+                "call_to_action":   extracted.get("call_to_action", f"Contact {firm.get('firm_name','us')} today"),
+                "special_requests": message,
+                "industry":         extracted.get("industry", "Business"),
+                "document_type":    lm_type,
+            }
+
             signals = ai.get_semantic_signals(ua)
 
             upd(status="processing", progress=25,
@@ -1242,7 +1257,7 @@ class FormaAIChatView(APIView):
                 lead_magnet=lm,
                 defaults={
                     "lead_magnet_type":     lm_type,
-                    "main_topic":           "custom",
+                    "main_topic":           ua["main_topic"],
                     "target_audience":      ua["target_audience"],
                     "audience_pain_points": ua["audience_pain_points"],
                     "desired_outcome":      ua["desired_outcome"],
@@ -1263,10 +1278,10 @@ class FormaAIChatView(APIView):
 
             upd(status="complete", progress=100,
                 message=f"{lm_label} PDF ready! Opening preview…",
-                pdf_url=pdf_url,          # full https Cloudinary URL
+                pdf_url=f"/api/lead-magnets/{lm_id}/download/",
                 tokens_used=tokens_used)
 
-            logger.info(f"✅ PDF URL for frontend: {pdf_url}")
+            logger.info(f"✅ PDF URL for frontend: /api/lead-magnets/{lm_id}/download/")
 
             logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | type={lm_type}")
 

@@ -29,10 +29,22 @@ AI_CONFIGS = {
         "description": "High-speed llama-3.3-70b-versatile (Groq)",
         "context_window": 128000,
     },
-    "groq_fallback": {
-        "model": "llama-3.3-70b-versatile",
+    "groq_mixtral": {
+        "model": "mixtral-8x7b-32768",
         "max_tokens": 4096,
-        "description": "llama-3.3-70b-versatile (Groq Fallback)",
+        "description": "Mixtral 8x7b (Groq Fallback - Separate Quota)",
+        "context_window": 32768,
+    },
+    "groq_gemma": {
+        "model": "gemma2-9b-it",
+        "max_tokens": 4096,
+        "description": "Gemma 2 9b (Groq Fallback - Separate Quota)",
+        "context_window": 8192,
+    },
+    "groq_llama_instant": {
+        "model": "llama-3.1-8b-instant",
+        "max_tokens": 4096,
+        "description": "Llama 3.1 8b Instant (Groq Fallback)",
         "context_window": 128000,
     },
     "anthropic": {
@@ -670,11 +682,13 @@ class GroqClient:
         Returns (content, tokens_used).
         """
         providers = [
-            ("groq",          self.groq_client),
-            ("groq_fallback", self.groq_client),
-            ("anthropic",     self.anthropic_client),
-            ("openai",        self.openai_client),
-            ("google",        self.google_model)
+            ("groq",                self.groq_client),
+            ("groq_mixtral",        self.groq_client),
+            ("groq_gemma",          self.groq_client),
+            ("groq_llama_instant",  self.groq_client),
+            ("anthropic",           self.anthropic_client),
+            ("openai",              self.openai_client),
+            ("google",              self.google_model)
         ]
 
         errors = []
@@ -687,7 +701,7 @@ class GroqClient:
                 config = AI_CONFIGS[name]
                 logger.info(f"  → Calling {name} ({config['model']})…")
 
-                if name in ("groq", "groq_fallback"):
+                if name.startswith("groq"):
                     try:
                         resp = client.chat.completions.create(
                             model=config["model"],
@@ -771,6 +785,45 @@ class GroqClient:
             raise RuntimeError("No AI providers configured (missing API keys)")
         
         raise RuntimeError(f"All AI providers failed: {'; '.join(errors)}")
+
+    def extract_business_signals(self, description: str, lm_type: str) -> Dict[str, Any]:
+        """
+        Analyze a raw business description to extract structured lead magnet signals.
+        Returns a dictionary with topic, audience, pain_points, desired_outcome, and call_to_action.
+        """
+        system_prompt = (
+            "You are an expert business analyst and content strategist. "
+            "Analyze the user's business description and the requested lead magnet type. "
+            "Extract structured signals to be used for high-end professional content generation.\n\n"
+            "Respond ONLY with a JSON object containing:\n"
+            "{\n"
+            "  \"topic\": \"A clear, specific 2-4 word topic (e.g., 'Sustainable Luxury Homes', 'B2B SaaS Sales')\",\n"
+            "  \"audience\": \"The specific target audience (e.g., 'First-time home buyers', 'HR Directors in tech')\",\n"
+            "  \"pain_points\": [\"List 2-3 specific pain points the audience faces\"],\n"
+            "  \"desired_outcome\": \"The primary benefit the reader gets from this lead magnet\",\n"
+            "  \"call_to_action\": \"A professional next step related to the business\"\n"
+            "}"
+        )
+        user_prompt = f"Lead Magnet Type: {lm_type}\nBusiness Description: {description}"
+        
+        try:
+            raw, _ = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.3)
+            # Find the JSON block in case the AI added chatter
+            import json
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group(0))
+        except Exception as e:
+            logger.error(f"Signal extraction failed: {e}")
+            
+        # Fallback to generic signals if AI extraction fails
+        return {
+            "topic": "Strategic Business Insights",
+            "audience": "Potential Clients",
+            "pain_points": ["Lack of clear direction", "Market competition"],
+            "desired_outcome": "Improved business results and growth",
+            "call_to_action": "Schedule a consultation"
+        }
 
     # ──────────────────────────────────────────────────────────────────────
     # PUBLIC API

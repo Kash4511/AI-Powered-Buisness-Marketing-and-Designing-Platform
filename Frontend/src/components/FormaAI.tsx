@@ -64,6 +64,7 @@ const FormaAI: React.FC = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [previewUrl, setPreviewUrl]             = useState<string|null>(null)
   const [templateError, setTemplateError]       = useState<string|null>(null)
+  const [detectedType, setDetectedType]         = useState<string|null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef    = useRef<HTMLTextAreaElement>(null)
@@ -188,9 +189,9 @@ const FormaAI: React.FC = () => {
           const pdfUrl = job.pdf_url || ''
           if (pdfUrl) {
             try {
-              const pdfRes  = await fetch(pdfUrl)
-              const blob    = await pdfRes.blob()
-              const blobUrl = URL.createObjectURL(blob)
+              // Use apiClient to ensure Authorization headers are sent to the backend proxy
+              const pdfRes  = await apiClient.get(pdfUrl, { responseType: 'blob' })
+              const blobUrl = URL.createObjectURL(pdfRes.data)
               // Add PDF preview message
               msgId.current += 1
               setMessages(prev => [...prev, {
@@ -200,14 +201,16 @@ const FormaAI: React.FC = () => {
                 pdfUrl:   blobUrl,
                 pdfTitle: title,
               }])
-            } catch {
-              // If blob fetch fails (CORS), just show a download link
+            } catch (err) {
+              console.error('PDF fetch error:', err)
+              // If blob fetch fails, just show a download link
               msgId.current += 1
+              const fullUrl = pdfUrl.startsWith('http') ? pdfUrl : `${apiClient.defaults.baseURL}${pdfUrl}`
               setMessages(prev => [...prev, {
                 id:       msgId.current,
                 role:     'pdf',
                 text:     title,
-                pdfUrl:   pdfUrl,
+                pdfUrl:   fullUrl,
                 pdfTitle: title,
               }])
             }
