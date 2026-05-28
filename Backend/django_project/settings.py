@@ -178,6 +178,11 @@ else:
     print(f"DB name: {default_db.get('NAME', '')}")
 
 # -----------------------------
+# Clickjacking Protection
+# -----------------------------
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# -----------------------------
 # Password Validation
 # -----------------------------
 AUTH_PASSWORD_VALIDATORS = [

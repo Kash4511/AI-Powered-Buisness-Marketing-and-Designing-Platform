@@ -737,8 +737,11 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
         logger.critical(f"Critical job error: {exc}\n{traceback.format_exc()}")
         _set_job(job_id, status="failed", error=str(exc))
 
+from django.views.decorators.clickjacking import xframe_options_exempt
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
+@xframe_options_exempt
 def download_lead_magnet_pdf(request, lead_magnet_id):
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id)
@@ -748,15 +751,57 @@ def download_lead_magnet_pdf(request, lead_magnet_id):
         if not lm.pdf_file:
             return Response({"error":"PDF not generated yet"}, status=404)
 
-        signed_url, _ = _cld_url(lm.pdf_file.name, resource_type="raw", sign_url=True, secure=True)
-        proxy = requests.get(signed_url, stream=True, timeout=30)
-        proxy.raise_for_status()
-        filename = os.path.basename(lm.pdf_file.name) or f"lead-magnet-{lead_magnet_id}.pdf"
+        # ── 1. Generate signed URL ─────────────────────────────────────────
+        public_id = lm.pdf_file.name
+        
+        # Defensive: handle potential double-prefixing or full URLs
+        if public_id.startswith('http'):
+            from urllib.parse import urlparse
+            path = urlparse(public_id).path
+            # Cloudinary paths: /cloud_name/raw/upload/v123/public_id
+            parts = path.split('/')
+            if 'upload' in parts:
+                idx = parts.index('upload')
+                public_id = '/'.join(parts[idx+2:])
+        
+        # Clean up any potential double-prefix from storage backends
+        if public_id.startswith('lead_magnets/lead_magnets/'):
+            public_id = public_id.replace('lead_magnets/lead_magnets/', 'lead_magnets/')
+        
+        # Ensure we use resource_type="raw"
+        signed_url, _ = _cld_url(public_id, resource_type="raw", sign_url=True, secure=True)
+        
+        logger.info(f"PDF Proxy: LM={lead_magnet_id} ID={public_id} URL={signed_url[:100]}...")
+        
+        # ── 2. Proxy the request ──────────────────────────────────────────
+        try:
+            proxy = requests.get(signed_url, stream=True, timeout=20)
+            
+            # If 404, try one more time as "image" (sometimes Cloudinary auto-assigns)
+            if proxy.status_code == 404:
+                logger.warning(f"404 for raw, trying image: {public_id}")
+                signed_url_img, _ = _cld_url(public_id, sign_url=True, secure=True)
+                proxy = requests.get(signed_url_img, stream=True, timeout=20)
+            
+            proxy.raise_for_status()
+        except Exception as re:
+            logger.error(f"Cloudinary proxy failed for {public_id}: {re}")
+            return Response({"error": f"Cloudinary error: {str(re)}"}, status=502)
+
+        # ── 3. Return FileResponse ────────────────────────────────────────
+        filename = os.path.basename(public_id) or f"lead-magnet-{lead_magnet_id}.pdf"
         if not filename.endswith(".pdf"): filename += ".pdf"
+        
         resp = FileResponse(proxy.raw, content_type="application/pdf")
         resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+        
+        # Set security headers to allow framing for the preview
+        resp["X-Frame-Options"] = "ALLOWALL"
+        resp["Content-Security-Policy"] = "frame-ancestors *"
+        
         if "Content-Length" in proxy.headers:
             resp["Content-Length"] = proxy.headers["Content-Length"]
+            
         return resp
     except Exception as e:
         logger.error(f"Download error LM {lead_magnet_id}: {e}")
