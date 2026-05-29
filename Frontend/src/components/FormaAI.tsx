@@ -185,12 +185,10 @@ const FormaAI: React.FC = () => {
         const job    = status.data
 
         if (job.status === 'complete' || job.status === 'completed') {
-          // Job done — use the PDF URL directly for the iframe preview.
-          // Cloudinary URLs do not set X-Frame-Options, avoiding "sameorigin" blocks.
-          let pdfUrl = job.pdf_url || ''
+          // Job done — use the direct Cloudinary URL from the status response
+          const pdfUrl = job.pdf_url || ''
           
           if (pdfUrl) {
-            // Add PDF preview message using the direct URL
             msgId.current += 1
             setMessages(prev => [...prev, {
               id:       msgId.current,
@@ -200,23 +198,6 @@ const FormaAI: React.FC = () => {
               pdfTitle: title,
             }])
           } else {
-            // Fallback: If pdf_url is missing from status, try to get it from the download endpoint
-            try {
-              const res = await apiClient.get(`/api/lead-magnets/${job.lead_magnet_id}/download/`)
-              if (res.data?.pdf_url) {
-                msgId.current += 1
-                setMessages(prev => [...prev, {
-                  id:       msgId.current,
-                  role:     'pdf',
-                  text:     title,
-                  pdfUrl:   res.data.pdf_url,
-                  pdfTitle: title,
-                }])
-                return
-              }
-            } catch (err) {
-              console.error('Fallback download URL fetch error:', err)
-            }
             addMsg('assistant', `✅ Your ${title} is ready! Check your dashboard to download it.`)
           }
           return

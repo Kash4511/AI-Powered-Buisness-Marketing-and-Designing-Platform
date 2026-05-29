@@ -720,9 +720,6 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 _set_job(job_id, status="complete", progress=100, message="PDF ready (local storage fallback)!")
 
             logger.info(f"✅ PDF done | {time.time()-t0:.1f}s")
-            _set_job(job_id, status="complete", progress=100,
-                     pdf_url=f"/api/lead-magnets/{lead_magnet_id}/download/",
-                     message="Your PDF is ready!")
 
         except Exception as e:
             logger.error(f"❌ [PDF ERROR] {e}", exc_info=True)
@@ -1293,10 +1290,10 @@ class FormaAIChatView(APIView):
 
             upd(status="complete", progress=100,
                 message=f"{lm_label} PDF ready! Opening preview…",
-                pdf_url=f"/api/lead-magnets/{lm_id}/download/",
+                pdf_url=pdf_url,
                 tokens_used=tokens_used)
 
-            logger.info(f"✅ PDF URL for frontend: /api/lead-magnets/{lm_id}/download/")
+            logger.info(f"✅ PDF URL for frontend: {pdf_url}")
 
             logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | type={lm_type}")
 
