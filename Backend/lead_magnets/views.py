@@ -714,42 +714,49 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# DOWNLOAD ENDPOINT — returns signed Cloudinary URL as JSON (no streaming)
+# DOWNLOAD ENDPOINT — streams PDF file directly
 # ─────────────────────────────────────────────────────────────────────────────
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id):
+    """
+    Streams the PDF file directly. This allows the frontend to fetch the PDF
+    as a blob with the Authorization header.
+    """
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
     except LeadMagnet.DoesNotExist:
-        return Response({"error": "Not found"}, status=404)
+        return Response({"error": "Lead magnet not found"}, status=404)
 
     if not lm.pdf_file:
         return Response({"error": "PDF not generated yet"}, status=404)
 
     try:
         # Read the file name/path stored in the field
-        file_name = lm.pdf_file.name  # e.g. "lead_magnets/ai-chat-630-abc123.pdf"
+        file_name = lm.pdf_file.name
 
         # Try reading via the storage backend (works for both local and Cloudinary)
         from django.core.files.storage import default_storage
-        if default_storage.exists(file_name):
-            with default_storage.open(file_name, 'rb') as f:
-                pdf_bytes = f.read()
-        else:
-            # Fallback: fetch directly from Cloudinary URL
+        try:
+            if default_storage.exists(file_name):
+                with default_storage.open(file_name, 'rb') as f:
+                    pdf_bytes = f.read()
+            else:
+                raise FileNotFoundError(f"File {file_name} not found in storage")
+        except Exception as storage_err:
+            logger.warning(f"Storage fetch failed for {file_name}, trying URL: {storage_err}")
+            # Fallback: fetch directly from URL (Cloudinary)
             import requests as http_requests
-            url = lm.pdf_file.url  # generates the Cloudinary URL
+            url = lm.pdf_file.url
             resp = http_requests.get(url, timeout=30)
             resp.raise_for_status()
             pdf_bytes = resp.content
 
-        filename = os.path.basename(file_name)
+        filename = os.path.basename(file_name) if file_name else f"lead-magnet-{lead_magnet_id}.pdf"
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         response['X-Frame-Options'] = 'ALLOWALL'
-        response['Access-Control-Allow-Origin'] = '*'
         return response
 
     except Exception as e:

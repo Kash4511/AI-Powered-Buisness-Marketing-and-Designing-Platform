@@ -176,7 +176,6 @@ const FormaAI: React.FC = () => {
 
         if (job.status === 'complete' || job.status === 'completed') {
           // job.pdf_url is a relative path, e.g. "/api/lead-magnets/629/download/"
-          // apiClient prepends the backend base URL, so no localhost:5173 mismatch.
           const downloadPath = job.pdf_url || (lmId ? `/api/lead-magnets/${lmId}/download/` : null)
 
           if (!downloadPath) {
@@ -185,20 +184,29 @@ const FormaAI: React.FC = () => {
           }
 
           try {
-            // fetch via apiClient — sends Authorization header, uses correct base URL
+            // fetch via apiClient — sends Authorization header
             const blobRes   = await apiClient.get(downloadPath, { responseType: 'blob' })
             const blob      = new Blob([blobRes.data], { type: 'application/pdf' })
             const objectUrl = URL.createObjectURL(blob)
 
             msgId.current += 1
-            setMessages(prev => [...prev, {
+            const pdfMsg: Message = {
               id:       msgId.current,
               role:     'pdf',
               text:     title,
-              pdfUrl:   objectUrl,   // blob: URL — no CORS, no auth required in iframe
+              pdfUrl:   objectUrl,
               pdfTitle: title,
               lmId,
-            }])
+            }
+            setMessages(prev => [...prev, pdfMsg])
+
+            // Automatically download the file
+            const a = document.createElement('a')
+            a.href = objectUrl
+            a.download = `${title}.pdf`
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
           } catch (fetchErr) {
             console.error('PDF blob fetch failed:', fetchErr)
             addMsg('assistant', `Your ${title} is ready! Check your dashboard to download it.`)
