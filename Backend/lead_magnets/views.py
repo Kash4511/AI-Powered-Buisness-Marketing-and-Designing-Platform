@@ -720,33 +720,40 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id):
-    """
-    Streams the PDF file directly from storage.
-    Bypasses Cloudinary auth issues by serving bytes via Django.
-    """
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
     except LeadMagnet.DoesNotExist:
-        return Response({"error": "Lead magnet not found"}, status=404)
+        return Response({"error": "Not found"}, status=404)
 
     if not lm.pdf_file:
         return Response({"error": "PDF not generated yet"}, status=404)
 
     try:
-        # Use .open() and stream the response to handle potentially large files
-        # and different storage backends (local vs Cloudinary)
-        file_handle = lm.pdf_file.open('rb')
-        response = HttpResponse(file_handle, content_type="application/pdf")
-        
-        # Use the stored filename or generate one
-        filename = os.path.basename(lm.pdf_file.name) if lm.pdf_file.name else f"lead-magnet-{lead_magnet_id}.pdf"
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        response["X-Frame-Options"] = "ALLOWALL"
-        
-        # Note: file_handle will be closed by Django after response is sent
+        # Read the file name/path stored in the field
+        file_name = lm.pdf_file.name  # e.g. "lead_magnets/ai-chat-630-abc123.pdf"
+
+        # Try reading via the storage backend (works for both local and Cloudinary)
+        from django.core.files.storage import default_storage
+        if default_storage.exists(file_name):
+            with default_storage.open(file_name, 'rb') as f:
+                pdf_bytes = f.read()
+        else:
+            # Fallback: fetch directly from Cloudinary URL
+            import requests as http_requests
+            url = lm.pdf_file.url  # generates the Cloudinary URL
+            resp = http_requests.get(url, timeout=30)
+            resp.raise_for_status()
+            pdf_bytes = resp.content
+
+        filename = os.path.basename(file_name)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['X-Frame-Options'] = 'ALLOWALL'
+        response['Access-Control-Allow-Origin'] = '*'
         return response
+
     except Exception as e:
-        logger.error(f"Streaming Download Error LM {lead_magnet_id}: {e}\n{traceback.format_exc()}")
+        logger.error(f"Download error LM {lead_magnet_id}: {e}\n{traceback.format_exc()}")
         return Response({"error": f"Failed to serve PDF: {str(e)}"}, status=500)
 
 
