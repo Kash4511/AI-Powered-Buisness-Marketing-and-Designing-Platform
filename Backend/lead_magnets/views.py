@@ -19,6 +19,9 @@ from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
 import requests
+import cloudinary
+import cloudinary.utils
+import cloudinary.uploader
 from django.db import connection
 from .models import (
     LeadMagnet, Lead, Download, FirmProfile,
@@ -82,34 +85,46 @@ def _should_stop(job_id: str) -> bool:
 
 
 def _cld_url(public_id, **kwargs):
-    import cloudinary.utils
+    """
+    Generate a Cloudinary URL. Ensures absolute URL by using secure=True
+    and verifying cloudinary config from settings.
+    """
+    if not cloudinary.config().cloud_name:
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_STORAGE.get('CLOUD_NAME'),
+            api_key=settings.CLOUDINARY_STORAGE.get('API_KEY'),
+            api_secret=settings.CLOUDINARY_STORAGE.get('API_SECRET'),
+            secure=True
+        )
+    
+    # Force secure and absolute if not specified
+    kwargs.setdefault('secure', True)
+    
+    # cloudinary_url returns a tuple (url, options)
     return cloudinary.utils.cloudinary_url(public_id, **kwargs)
 
 
 def _get_signed_pdf_url(public_id: str) -> str:
     """
-    Generate a long-lived signed Cloudinary URL for a PDF public_id.
-    Returns empty string on failure.
+    Generate a Cloudinary URL for a PDF public_id.
+    Returns the URL directly without signing for public access.
     """
     try:
-        # Strip full URL down to just the public_id if needed
-        if public_id.startswith('http'):
-            match = re.search(r'/upload/(?:v\d+/)?(.+)$', public_id)
-            if match:
-                public_id = match.group(1)
+        if not public_id:
+            return ""
 
-        # Remove trailing .pdf extension from public_id for Cloudinary API call
-        # (Cloudinary stores it without extension in some configurations)
-        signed_url, _ = _cld_url(
+        if public_id.startswith('http'):
+            return public_id   # already a full URL, use as-is
+
+        url, _ = cloudinary.utils.cloudinary_url(
             public_id,
             resource_type="raw",
-            sign_url=True,
-            secure=True,
+            secure=True
+            # No sign_url=True — public delivery
         )
-        logger.info(f"Generated signed URL for {public_id}: {signed_url[:60]}...")
-        return signed_url
+        return url or ""
     except Exception as e:
-        logger.error(f"Failed to generate signed URL for {public_id}: {e}")
+        logger.error(f"Failed to build URL for {public_id}: {e}")
         return ""
 
 
@@ -674,6 +689,8 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 up = cloudinary.uploader.upload(
                     pdf_data,
                     resource_type="raw",
+                    type="upload",           # ← this is the key line
+                    access_mode="public",    # ← belt and suspenders
                     folder="lead_magnets",
                     public_id=f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}.pdf",
                 )
@@ -755,20 +772,20 @@ def download_lead_magnet_pdf(request, lead_magnet_id):
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_status(request, job_id):
+    """
+    Returns job status. Ensures pdf_url is always an absolute signed Cloudinary URL.
+    """
     job_data = _get_job(job_id)
     if not job_data:
         return Response({"status": "not_found"}, status=404)
 
     pdf_url = job_data.get("pdf_url", "")
 
-    # If stored pdf_url is a raw Cloudinary public_id (not `https://),`  sign it now
+    # If stored pdf_url is not a full URL, sign/fix it now
     if pdf_url and not pdf_url.startswith("http"):
-        try:
-            signed_url, _ = _cld_url(pdf_url, resource_type="raw", sign_url=True, secure=True)
-            if signed_url:
-                job_data["pdf_url"] = signed_url
-        except Exception as e:
-            logger.warning(f"Could not sign pdf_url {pdf_url}: {e}")
+        fresh_url = _get_signed_pdf_url(pdf_url)
+        if fresh_url:
+            job_data["pdf_url"] = fresh_url
 
     # If complete but pdf_url still missing, pull from LeadMagnet record
     if job_data.get("status") == "complete" and not job_data.get("pdf_url"):
@@ -778,13 +795,11 @@ def generate_pdf_status(request, job_id):
                 lm = LeadMagnet.objects.get(id=lm_id)
                 if lm.pdf_file:
                     public_id = str(lm.pdf_file.name if hasattr(lm.pdf_file, 'name') else lm.pdf_file)
-                    if public_id.startswith("http"):
-                        job_data["pdf_url"] = public_id
-                    else:
-                        signed_url, _ = _cld_url(public_id, resource_type="raw", sign_url=True, secure=True)
-                        if signed_url:
-                            job_data["pdf_url"] = signed_url
-                            PDFGenerationJob.objects.filter(job_id=job_id).update(pdf_url=signed_url)
+                    fresh_url = _get_signed_pdf_url(public_id)
+                    if fresh_url:
+                        job_data["pdf_url"] = fresh_url
+                        # Persist absolute URL for future polls
+                        PDFGenerationJob.objects.filter(job_id=job_id).update(pdf_url=fresh_url)
             except LeadMagnet.DoesNotExist:
                 pass
 
@@ -1204,6 +1219,8 @@ class FormaAIChatView(APIView):
                 up = _cup.upload(
                     pdf_res["pdf_data"],
                     resource_type="raw",
+                    type="upload",           # ← this is the key line
+                    access_mode="public",    # ← belt and suspenders
                     folder="lead_magnets",
                     public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}.pdf",
                 )
@@ -1375,3 +1392,21 @@ class BrandAssetsPDFPreviewView(APIView):
             return Response({"error": "PDF failed", "details": res.get("details", "")}, status=502)
         except Exception as e:
             return Response({"error": "Unexpected error", "details": str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def fix_cloudinary_pdf_access(request):
+    """One-time fix: change existing PDFs from authenticated to public."""
+    import cloudinary.uploader
+    try:
+        public_id = request.data.get("public_id")  # e.g. "lead_magnets/ai-chat-621-760dc6.pdf"
+        result = cloudinary.uploader.explicit(
+            public_id,
+            type="authenticated",      # current type
+            resource_type="raw",
+            access_mode="public",      # change to public
+        )
+        return Response({"success": True, "url": result.get("secure_url")})
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
