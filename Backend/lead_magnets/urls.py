@@ -37,7 +37,4 @@ urlpatterns = [
     
     # Dynamic Theming
     path('theme/', views.get_theme_palette, name='theme-palette'),
-    
-    # Fix existing PDF access
-    path('fix-pdf-access/', views.fix_cloudinary_pdf_access, name='fix-pdf-access'),
 ]
