@@ -185,7 +185,7 @@ const FormaAI: React.FC = () => {
         const job    = status.data
 
         if (job.status === 'complete' || job.status === 'completed') {
-          // Job done — use the direct Cloudinary URL from the status response
+          // Job done — use the direct Cloudinary URL from the status response.
           const pdfUrl = job.pdf_url || ''
           
           if (pdfUrl) {
