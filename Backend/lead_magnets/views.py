@@ -680,35 +680,19 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 logger.info(f"🛑 Job {job_id} terminated before upload")
                 return
 
+            # ── Save PDF to Django storage (no Cloudinary) ────────────────────────
             pdf_data = result["pdf_data"]
-            filename = result.get("filename", f"lead-magnet-{lead_magnet_id}.pdf")
-            pdf_url  = ""
+            filename = f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}.pdf"
 
-            try:
-                import cloudinary.uploader
-                up = cloudinary.uploader.upload(
-                    pdf_data,
-                    resource_type="raw",
-                    type="upload",           # ← this is the key line
-                    access_mode="public",    # ← belt and suspenders
-                    folder="lead_magnets",
-                    public_id=f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}.pdf",
-                )
-                lead_magnet.pdf_file = up.get("public_id")
-                lead_magnet.status   = "completed"
-                lead_magnet.save(update_fields=["pdf_file", "status"])
-                # Use the direct secure_url from Cloudinary upload response
-                pdf_url = up.get("secure_url", "")
-                logger.info(f"✅ Cloudinary upload success | url={pdf_url[:60]}...")
-            except Exception as ue:
-                logger.error(f"Cloudinary upload failed, using local storage: {ue}")
-                lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
-                lead_magnet.status = "completed"
-                lead_magnet.save(update_fields=["status"])
-                pdf_url = lead_magnet.pdf_file.url if lead_magnet.pdf_file else ""
+            lm.pdf_file.save(filename, ContentFile(pdf_data), save=True)
+            lm.status = "completed"
+            lm.save(update_fields=["status"])
+
+            # Build the download URL through your existing Django endpoint
+            pdf_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
 
             logger.info(f"✅ PDF done | {time.time() - t0:.1f}s")
-            # Set final job status with the REAL Cloudinary URL
+            # Set final job status with the REAL local download URL
             _set_job(job_id, status="complete", progress=100,
                      message="PDF ready!", pdf_url=pdf_url)
 
@@ -732,36 +716,22 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
 # ─────────────────────────────────────────────────────────────────────────────
 
 @api_view(['GET'])
-@xframe_options_exempt
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id):
-    """
-    Returns a signed Cloudinary URL for the PDF.
-    Does NOT stream the file through Django to avoid Render 502 timeouts.
-    Frontend should open/embed the returned pdf_url directly.
-    """
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
     except LeadMagnet.DoesNotExist:
-        return Response({"error": "Lead magnet not found"}, status=404)
+        return Response({"error": "Not found"}, status=404)
 
     if not lm.pdf_file:
         return Response({"error": "PDF not generated yet"}, status=404)
 
     try:
-        public_id = str(lm.pdf_file.name if hasattr(lm.pdf_file, 'name') else lm.pdf_file)
-        signed_url = _get_signed_pdf_url(public_id)
-
-        if not signed_url:
-            return Response({"error": "Could not generate download URL"}, status=500)
-
-        return Response({
-            "success":  True,
-            "pdf_url":  signed_url,
-            "filename": os.path.basename(public_id),
-        })
+        response = HttpResponse(lm.pdf_file.read(), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{os.path.basename(lm.pdf_file.name)}"'
+        response["X-Frame-Options"] = "ALLOWALL"
+        return response
     except Exception as e:
-        logger.error(f"Download Error LM {lead_magnet_id}: {e}")
         return Response({"error": str(e)}, status=500)
 
 
@@ -773,35 +743,20 @@ def download_lead_magnet_pdf(request, lead_magnet_id):
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_status(request, job_id):
     """
-    Returns job status. Ensures pdf_url is always an absolute signed Cloudinary URL.
+    Returns job status. Ensures pdf_url is always the local Django download URL.
     """
     job_data = _get_job(job_id)
     if not job_data:
         return Response({"status": "not_found"}, status=404)
 
-    pdf_url = job_data.get("pdf_url", "")
-
-    # If stored pdf_url is not a full URL, sign/fix it now
-    if pdf_url and not pdf_url.startswith("http"):
-        fresh_url = _get_signed_pdf_url(pdf_url)
-        if fresh_url:
-            job_data["pdf_url"] = fresh_url
-
-    # If complete but pdf_url still missing, pull from LeadMagnet record
-    if job_data.get("status") == "complete" and not job_data.get("pdf_url"):
+    # If complete but pdf_url still missing or doesn't look like our local API, fix it
+    if job_data.get("status") == "complete":
         lm_id = job_data.get("lead_magnet_id")
-        if lm_id:
-            try:
-                lm = LeadMagnet.objects.get(id=lm_id)
-                if lm.pdf_file:
-                    public_id = str(lm.pdf_file.name if hasattr(lm.pdf_file, 'name') else lm.pdf_file)
-                    fresh_url = _get_signed_pdf_url(public_id)
-                    if fresh_url:
-                        job_data["pdf_url"] = fresh_url
-                        # Persist absolute URL for future polls
-                        PDFGenerationJob.objects.filter(job_id=job_id).update(pdf_url=fresh_url)
-            except LeadMagnet.DoesNotExist:
-                pass
+        if lm_id and (not job_data.get("pdf_url") or "cloudinary" in job_data.get("pdf_url", "").lower()):
+            local_url = f"/api/lead-magnets/{lm_id}/download/"
+            job_data["pdf_url"] = local_url
+            # Persist local URL for future polls
+            PDFGenerationJob.objects.filter(job_id=job_id).update(pdf_url=local_url)
 
     return Response(job_data)
 
@@ -1212,30 +1167,17 @@ class FormaAIChatView(APIView):
             if not pdf_res.get("success"):
                 raise Exception(f"PDF render failed: {pdf_res.get('details', 'unknown error')}")
 
-            # ── Upload PDF and get the REAL URL ───────────────────────────
-            pdf_url = ""
-            try:
-                import cloudinary.uploader as _cup
-                up = _cup.upload(
-                    pdf_res["pdf_data"],
-                    resource_type="raw",
-                    type="upload",           # ← this is the key line
-                    access_mode="public",    # ← belt and suspenders
-                    folder="lead_magnets",
-                    public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}.pdf",
-                )
-                lm.pdf_file = up.get("public_id", "")
-                # Use the direct secure_url — this is a full https:// Cloudinary URL
-                pdf_url     = up.get("secure_url", "")
-                logger.info(f"✅ Cloudinary upload success | url={pdf_url[:60]}...")
-            except Exception as ce:
-                logger.warning(f"Cloudinary upload failed, using local: {ce}")
-                lm.pdf_file.save(f"ai_chat_{lm_id}.pdf", ContentFile(pdf_res["pdf_data"]))
-                pdf_url = lm.pdf_file.url if lm.pdf_file else ""
+            # ── Save PDF to Django storage (no Cloudinary) ────────────────────────
+            pdf_data = pdf_res["pdf_data"]
+            filename = f"ai_chat_{lm_id}_{uuid.uuid4().hex[:6]}.pdf"
 
+            lm.pdf_file.save(filename, ContentFile(pdf_data), save=True)
             lm.title  = tvars.get("mainTitle", lm.title)
             lm.status = "completed"
             lm.save()
+
+            # Build the download URL through your existing Django endpoint
+            pdf_url = f"/api/lead-magnets/{lm_id}/download/"
 
             LeadMagnetGeneration.objects.get_or_create(
                 lead_magnet=lm,
@@ -1256,16 +1198,16 @@ class FormaAIChatView(APIView):
             })
             conv.save()
 
-            # ── FINAL job update — store the REAL Cloudinary URL ──────────
+            # ── FINAL job update — store the REAL local download URL ──────
             upd(
                 status="complete",
                 progress=100,
                 message=f"{lm_label} PDF ready!",
-                pdf_url=pdf_url,          # ← direct https:// Cloudinary URL
+                pdf_url=pdf_url,
                 tokens_used=tokens_used,
             )
 
-            logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | pdf_url={pdf_url[:60]}...")
+            logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | pdf_url={pdf_url}...")
 
         except Exception as e:
             logger.error(f"FormaAIChatView._run error: {e}\n{traceback.format_exc()}")
