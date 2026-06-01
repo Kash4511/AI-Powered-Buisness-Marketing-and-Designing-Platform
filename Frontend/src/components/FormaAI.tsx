@@ -165,7 +165,7 @@ const FormaAI: React.FC = () => {
    * The resulting blob: URL works in an <iframe> without any auth or CORS issues.
    */
   const pollForPDF = async (jobId: string, title: string, lmId?: number) => {
-    const MAX_POLLS = 90    // 90 x 4 s = 6 min
+    const MAX_POLLS = 150    // 150 x 4 s = 10 min
     const INTERVAL  = 4000
 
     for (let i = 0; i < MAX_POLLS; i++) {
@@ -175,10 +175,10 @@ const FormaAI: React.FC = () => {
         const job       = statusRes.data
 
         if (job.status === 'complete' || job.status === 'completed') {
-          const downloadPath = job.pdf_url || (lmId ? `/api/lead-magnets/${lmId}/download/` : null)
+          const pdfUrl = job.pdf_url  // now a direct public Cloudinary URL
 
-          if (!downloadPath) {
-            addMsg('assistant', `Your ${title} is ready!`)
+          if (!pdfUrl) {
+            addMsg('assistant', `Your ${title} is ready! Check your dashboard.`)
             return
           }
 
@@ -192,10 +192,11 @@ const FormaAI: React.FC = () => {
           })
 
           try {
-            // Fetch via apiClient (sends auth token, uses correct base URL)
-            const blobRes = await apiClient.get(downloadPath, { responseType: 'blob' })
-            const blob    = new Blob([blobRes.data], { type: 'application/pdf' })
-            const url     = URL.createObjectURL(blob)
+            // Public Cloudinary URL — no auth needed, fetch directly
+            const resp = await fetch(pdfUrl)
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+            const blob = await resp.blob()
+            const url  = URL.createObjectURL(blob)
 
             // Auto-trigger download
             const a = document.createElement('a')

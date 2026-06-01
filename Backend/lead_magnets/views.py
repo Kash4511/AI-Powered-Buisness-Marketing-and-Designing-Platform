@@ -680,7 +680,7 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 logger.info(f"🛑 Job {job_id} terminated before upload")
                 return
 
-            # ── Upload PDF to Cloudinary (Standard Pipeline) ──────────────────
+            # ── Upload PDF with public access ──────────────────────────────────────
             pdf_data = result["pdf_data"]
             import cloudinary.uploader
             up = cloudinary.uploader.upload(
@@ -690,19 +690,18 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 folder="lead_magnets",
                 public_id=f"lm-{lead_magnet_id}-{uuid.uuid4().hex[:6]}",
             )
+            public_url = up.get("secure_url", "")
+            public_id  = up.get("public_id", "")
             
             # Store the public_id in the file field so .url works
-            lead_magnet.pdf_file.name = up.get("public_id", "")
+            lead_magnet.pdf_file.name = public_id
             lead_magnet.status = "completed"
             lead_magnet.save(update_fields=["pdf_file", "status"])
 
-            # Use local API URL for status polling/download
-            pdf_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
-
             logger.info(f"✅ PDF done | {time.time() - t0:.1f}s")
-            # Set final job status with the local API URL
+            # Set final job status with the direct Cloudinary URL
             _set_job(job_id, status="complete", progress=100,
-                     message="PDF ready!", pdf_url=pdf_url)
+                     message="PDF ready!", pdf_url=public_url)
 
         except Exception as e:
             logger.error(f"❌ [PDF ERROR] {e}", exc_info=True)
@@ -806,23 +805,11 @@ def download_lead_magnet_pdf(request, lead_magnet_id):
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_status(request, job_id):
     """
-    Returns job status. Ensures pdf_url is always the local Django download URL.
-    This avoids all Cloudinary authentication/signing issues.
+    Returns job status. Simply returns whatever pdf_url was stored in the job.
     """
     job_data = _get_job(job_id)
     if not job_data:
         return Response({"status": "not_found"}, status=404)
-
-    # If complete, always ensure we return our local API download URL
-    if job_data.get("status") == "complete":
-        lm_id = job_data.get("lead_magnet_id")
-        if lm_id:
-            local_url = f"/api/lead-magnets/{lm_id}/download/"
-            if job_data.get("pdf_url") != local_url:
-                job_data["pdf_url"] = local_url
-                # Persist the local URL so next poll is faster
-                PDFGenerationJob.objects.filter(job_id=job_id).update(pdf_url=local_url)
-
     return Response(job_data)
 
 
@@ -1232,27 +1219,24 @@ class FormaAIChatView(APIView):
             if not pdf_res.get("success"):
                 raise Exception(f"PDF render failed: {pdf_res.get('details', 'unknown error')}")
 
-            # ── Upload PDF to Cloudinary (Standard Pipeline) ──────────────────
+            # ── Upload PDF with public access ──────────────────────────────────────
             pdf_data = pdf_res["pdf_data"]
-            import cloudinary.uploader
-            up = cloudinary.uploader.upload(
+            import cloudinary.uploader as _cup
+            up = _cup.upload(
                 pdf_data,
                 resource_type="raw",
-                type="upload",           # public — no auth needed
+                type="upload",           # PUBLIC — no auth needed, no 401
                 folder="lead_magnets",
                 public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}",
             )
-            
-            # Store the public_id in the file field so .url works
-            lm.pdf_file.name = up.get("public_id", "")
-            lm.status = "completed"
-            lm.save(update_fields=["pdf_file", "status"])
+            public_url = up.get("secure_url", "")
+            public_id  = up.get("public_id", "")
 
-            # Use local API URL for status polling/download
-            pdf_url = f"/api/lead-magnets/{lm_id}/download/"
-
+            # Store public_id so .url works later
+            lm.pdf_file.name = public_id
             lm.title = tvars.get("mainTitle", lm.title)
-            lm.save(update_fields=["title"])
+            lm.status = "completed"
+            lm.save(update_fields=["pdf_file", "status", "title"])
 
             LeadMagnetGeneration.objects.get_or_create(
                 lead_magnet=lm,
@@ -1273,16 +1257,16 @@ class FormaAIChatView(APIView):
             })
             conv.save()
 
-            # ── FINAL job update — store the local API URL ────────────────────
+            # ── FINAL job update — store the direct Cloudinary URL ──────────
             upd(
                 status="complete",
                 progress=100,
                 message=f"{lm_label} PDF ready!",
-                pdf_url=pdf_url,
+                pdf_url=public_url,      # direct https://res.cloudinary.com/... URL
                 tokens_used=tokens_used,
             )
 
-            logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | pdf_url={pdf_url}...")
+            logger.info(f"✅ FormaAI PDF complete | job={job_id} | lm={lm_id} | pdf_url={public_url}...")
 
         except Exception as e:
             logger.error(f"FormaAIChatView._run error: {e}\n{traceback.format_exc()}")
