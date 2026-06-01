@@ -60,6 +60,7 @@ const FormaAI: React.FC = () => {
   const [isGenerating, setIsGenerating]                 = useState(false)
   const [progress, setProgress]                         = useState(0)
   const [templateError, setTemplateError]               = useState<string|null>(null)
+  const [showProModal, setShowProModal]                 = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef    = useRef<HTMLTextAreaElement>(null)
@@ -136,6 +137,14 @@ const FormaAI: React.FC = () => {
       }
     } catch (err: any) {
       const errData = err?.response?.data
+      
+      // Check for token limit exhausted error
+      if (err?.response?.status === 403 && errData?.error === 'token_limit_exhausted') {
+        setShowProModal(true)
+        addMsg('error', 'Token limit exhausted. Please upgrade to Pro to continue.')
+        return
+      }
+
       let errMsg = 'Something went wrong. Please try again.'
       if (typeof errData === 'object' && errData !== null) {
         errMsg = errData.error ?? errData.details ?? errData.message ?? errMsg
@@ -549,6 +558,34 @@ const FormaAI: React.FC = () => {
 
       <Modal isOpen={showTemplateModal} onClose={() => setShowTemplateModal(false)} title="Choose Your Template">
         <TemplateSelectionForm onSubmit={handleTemplateSelect} onClose={() => setShowTemplateModal(false)}/>
+      </Modal>
+
+      <Modal isOpen={showProModal} onClose={() => setShowProModal(false)} title="Upgrade to Pro">
+        <div style={{ padding: '24px', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, background: '#f7f7f5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <Sparkles size={32} color={T.dark}/>
+          </div>
+          <h3 style={{ fontFamily: "'Fraunces',serif", fontSize: '1.4rem', fontWeight: 700, color: T.dark, marginBottom: 12 }}>
+            Free Generations Exhausted
+          </h3>
+          <p style={{ fontSize: '0.9rem', color: T.t2, lineHeight: 1.6, marginBottom: 24 }}>
+            You've used all your free PDF generations. Subscribe to the Pro version to unlock unlimited lead magnet creation, premium templates, and advanced AI features.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button 
+              onClick={() => navigate('/subscription')}
+              style={{ width: '100%', padding: '14px', background: T.dark, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              Subscribe to Pro Now
+            </button>
+            <button 
+              onClick={() => setShowProModal(false)}
+              style={{ width: '100%', padding: '12px', background: 'transparent', color: T.t2, border: `1px solid ${T.bd}`, borderRadius: 10, fontWeight: 500, cursor: 'pointer' }}
+            >
+              Maybe Later
+            </button>
+          </div>
+        </div>
       </Modal>
     </>
   )

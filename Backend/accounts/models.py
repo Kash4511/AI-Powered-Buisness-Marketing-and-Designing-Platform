@@ -23,9 +23,19 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+    ROLE_CHOICES = [
+        ('developer', 'Developer'),
+        ('standard', 'Standard User'),
+    ]
+
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20, blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='standard')
+    
+    # Token tracking
+    tokens_allocated = models.IntegerField(default=2)  # Free tier default
+    tokens_used = models.IntegerField(default=0)
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -38,8 +48,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
 
+    def save(self, *args, **kwargs):
+        # Exclusive Developer role for Kaashifameen32@gmail.com
+        if self.email.lower().strip() == 'kaashifameen32@gmail.com':
+            self.role = 'developer'
+            self.tokens_allocated = 999999999  # Unlimited tokens
+            self.is_staff = True
+            self.is_superuser = True
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return str(self.email)
+
+    @property
+    def has_free_tokens(self):
+        if self.role == 'developer':
+            return True
+        return self.tokens_used < self.tokens_allocated
 
     class Meta:
         verbose_name = 'User'

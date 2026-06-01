@@ -675,21 +675,30 @@ class GroqClient:
         self.temperature = 0.72
         self.max_tokens  = AI_CONFIGS["groq"]["max_tokens"]
 
-    def _call_ai_with_fallback(self, system_msg: str, user_msg: str, temperature: float = 0.72) -> Tuple[str, int]:
+    def _call_ai_with_fallback(self, system_msg: str, user_msg: str, temperature=0.7, is_developer=False) -> Tuple[str, int]:
         """
         Executes AI call with automatic fallback logic across 4 providers.
         Attempts Groq (70B) -> Groq (8B) -> Anthropic -> OpenAI -> Google.
         Returns (content, tokens_used).
         """
-        providers = [
-            ("groq",                self.groq_client),
-            ("groq_mixtral",        self.groq_client),
-            ("groq_gemma",          self.groq_client),
-            ("groq_llama_instant",  self.groq_client),
-            ("anthropic",           self.anthropic_client),
-            ("openai",              self.openai_client),
-            ("google",              self.google_model)
-        ]
+        # Provision a separate, isolated developer-specific model instance for testing
+        if is_developer:
+            dev_providers = [
+                ("openai", self.openai_client),  # Use premium OpenAI for developer testing
+                ("groq",   self.groq_client),
+            ]
+            providers = dev_providers
+            logger.info("🚀 Using Developer-exclusive testing model instance")
+        else:
+            providers = [
+                ("groq",                self.groq_client),
+                ("groq_mixtral",        self.groq_client),
+                ("groq_gemma",          self.groq_client),
+                ("groq_llama_instant",  self.groq_client),
+                ("anthropic",           self.anthropic_client),
+                ("openai",              self.openai_client),
+                ("google",              self.google_model)
+            ]
 
         errors = []
         for name, client in providers:
@@ -877,7 +886,11 @@ class GroqClient:
         }
 
     def generate_lead_magnet_json(
-        self, signals: Dict[str, Any], firm_profile: Dict[str, Any], on_token_update: Optional[callable] = None
+        self, 
+        signals: Dict[str, Any], 
+        firm_profile: Dict[str, Any], 
+        on_token_update: Optional[callable] = None,
+        is_developer: bool = False
     ) -> Dict[str, Any]:
         if not self.client:
             raise RuntimeError(
@@ -897,7 +910,7 @@ class GroqClient:
         call_to_action   = str(signals.get("call_to_action", "") or "").strip()
         special_requests = str(signals.get("special_requests", "") or "").strip()
 
-        logger.info(f"🚀 Type-Strict Generation | type={doc_type} | topic={topic[:40]}")
+        logger.info(f"🚀 Type-Strict Generation | type={doc_type} | topic={topic[:40]} | is_developer={is_developer}")
 
         total_tokens = 0
 
@@ -918,7 +931,7 @@ class GroqClient:
                 f"Desired Outcome: {desired_outcome}\n"
                 f"RULES: Zero marketing fluff. No placeholders. Must feature '{topic}' prominently."
             )
-            raw_title_resp, title_tokens = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.7)
+            raw_title_resp, title_tokens = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.7, is_developer=is_developer)
             total_tokens += title_tokens
             if on_token_update:
                 on_token_update(total_tokens)
@@ -997,7 +1010,7 @@ class GroqClient:
             )
 
             try:
-                raw, tokens = self._call_ai_with_fallback(system_msg, user_msg, temperature=self.temperature)
+                raw, tokens = self._call_ai_with_fallback(system_msg, user_msg, temperature=self.temperature, is_developer=is_developer)
                 total_tokens += tokens
                 if on_token_update:
                     on_token_update(total_tokens)
@@ -1007,7 +1020,7 @@ class GroqClient:
 
                 if len(_html_to_text(raw)) < 50:
                     logger.warning(f"  ⚠️ Section {key} too short, retrying...")
-                    raw, tokens = self._call_ai_with_fallback(system_msg, user_msg, temperature=min(self.temperature + 0.1, 0.9))
+                    raw, tokens = self._call_ai_with_fallback(system_msg, user_msg, temperature=min(self.temperature + 0.1, 0.9), is_developer=is_developer)
                     total_tokens += tokens
                     raw = _sanitize_html(raw)
 

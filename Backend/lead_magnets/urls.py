@@ -37,4 +37,8 @@ urlpatterns = [
     
     # Dynamic Theming
     path('theme/', views.get_theme_palette, name='theme-palette'),
+
+    # Developer Admin routes
+    path('dev/stats/', views.DeveloperAdminDashboardView.as_view(), name='dev-stats'),
+    path('dev/reset-tokens/', views.DeveloperTokenResetView.as_view(), name='dev-reset-tokens'),
 ]

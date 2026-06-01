@@ -507,8 +507,16 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 def _on_tokens(t):
                     _set_job(job_id, tokens_used=t)
 
+                # Check if user is developer for exclusive model instance
+                is_developer = (user.role == 'developer')
+
                 try:
-                    raw_ai = ai_client.generate_lead_magnet_json(signals, firm_profile, on_token_update=_on_tokens)
+                    raw_ai = ai_client.generate_lead_magnet_json(
+                        signals, 
+                        firm_profile, 
+                        on_token_update=_on_tokens,
+                        is_developer=is_developer
+                    )
                 except Exception as e:
                     logger.error(f"AI Generation Failed: {e}")
                     _set_job(job_id, status="failed", error=str(e))
@@ -934,12 +942,89 @@ class HealthView(APIView):
         return Response({"status": "ok"})
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ADMIN / DEVELOPER VIEWS
+# ─────────────────────────────────────────────────────────────────────────────
+
+class DeveloperAdminDashboardView(APIView):
+    """Admin dashboard for developers to monitor and manage token usage."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'developer':
+            return Response({"error": "Unauthorized access"}, status=403)
+        
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.all().order_by('-date_joined')
+        
+        stats = {
+            "total_users": users.count(),
+            "total_tokens_used": users.aggregate(models.Sum('tokens_used'))['tokens_used__sum'] or 0,
+            "user_list": [{
+                "id": u.id,
+                "email": u.email,
+                "role": u.role,
+                "tokens_used": u.tokens_used,
+                "tokens_allocated": u.tokens_allocated,
+                "date_joined": u.date_joined,
+            } for u in users[:50]]
+        }
+        return Response(stats)
+
+
+class DeveloperTokenResetView(APIView):
+    """Allow developers to reset or adjust token allocation for any user."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'developer':
+            return Response({"error": "Unauthorized access"}, status=403)
+        
+        user_email = request.data.get('email')
+        new_allocation = request.data.get('tokens_allocated')
+        reset_usage = request.data.get('reset_usage', False)
+        
+        if not user_email:
+            return Response({"error": "User email is required"}, status=400)
+            
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        try:
+            target_user = User.objects.get(email=user_email)
+            if new_allocation is not None:
+                target_user.tokens_allocated = new_allocation
+            if reset_usage:
+                target_user.tokens_used = 0
+            target_user.save()
+            
+            logger.info(f"Developer {request.user.email} modified tokens for {user_email}")
+            return Response({"success": True, "message": f"Updated tokens for {user_email}"})
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def generate_pdf_start(request):
+    # Check token limits for standard users
+    user = request.user
+    if not user.has_free_tokens:
+        return Response({
+            "error": "token_limit_exhausted",
+            "message": "You have exhausted your free PDF generations. Please upgrade to Pro for unlimited access.",
+            "action": "upgrade_required"
+        }, status=403)
+
     lm_id = request.data.get("lead_magnet_id")
     if not lm_id:
         return Response({"error": "lead_magnet_id is required"}, status=400)
+
+    # Increment token usage for standard users
+    if user.role != 'developer':
+        user.tokens_used += 1
+        user.save(update_fields=['tokens_used'])
+        logger.info(f"Token consumed by {user.email}. Used: {user.tokens_used}/{user.tokens_allocated}")
 
     PDFGenerationJob.objects.filter(
         lead_magnet_id=lm_id, status__in=["pending", "processing"]
@@ -1033,12 +1118,27 @@ class FormaAIChatView(APIView):
 
     def post(self, request):
         try:
+            # Check token limits for standard users
+            user = request.user
+            if not user.has_free_tokens:
+                return Response({
+                    "error": "token_limit_exhausted",
+                    "message": "You have exhausted your free PDF generations. Please upgrade to Pro for unlimited access.",
+                    "action": "upgrade_required"
+                }, status=403)
+
             message     = (request.data.get("message") or "").strip()
             template_id = request.data.get("template_id") or "modern-guide"
             arch_images = request.data.get("architectural_images", [])
 
             if not message:
                 return Response({"error": "Please describe your business and what type of lead magnet you want."}, status=400)
+
+            # Increment token usage for standard users
+            if user.role != 'developer':
+                user.tokens_used += 1
+                user.save(update_fields=['tokens_used'])
+                logger.info(f"Token consumed by {user.email} (Forma AI). Used: {user.tokens_used}/{user.tokens_allocated}")
 
             lm_type, lm_label = _detect_lm_type(message)
 
@@ -1160,7 +1260,13 @@ class FormaAIChatView(APIView):
 
             upd(status="processing", progress=25, message=f"Generating deep {lm_label} content...")
 
-            raw_ai      = ai.generate_lead_magnet_json(signals, firm)
+            # Check if user is developer for exclusive model instance
+            from django.contrib.auth import get_user_model
+            UserModel = get_user_model()
+            user = UserModel.objects.get(id=user_id)
+            is_developer = (user.role == 'developer')
+
+            raw_ai      = ai.generate_lead_magnet_json(signals, firm, is_developer=is_developer)
             content     = ai.normalize_ai_output(raw_ai)
             tokens_used = raw_ai.get("tokens_used", 0)
 
