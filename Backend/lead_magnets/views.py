@@ -680,15 +680,21 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                 logger.info(f"🛑 Job {job_id} terminated before upload")
                 return
 
-            # ── Save PDF to Django storage ────────────────────────────────────
+            # ── Upload PDF to Cloudinary (Standard Pipeline) ──────────────────
             pdf_data = result["pdf_data"]
-            filename = f"lead-magnet-{lead_magnet_id}-{uuid.uuid4().hex[:8]}.pdf"
-
-            # This uses the default storage (Cloudinary in production, local in dev)
-            # but we serve it via our own API to avoid 401 issues.
-            lead_magnet.pdf_file.save(filename, ContentFile(pdf_data), save=True)
+            import cloudinary.uploader
+            up = cloudinary.uploader.upload(
+                pdf_data,
+                resource_type="raw",
+                type="upload",           # public — no auth needed
+                folder="lead_magnets",
+                public_id=f"lm-{lead_magnet_id}-{uuid.uuid4().hex[:6]}",
+            )
+            
+            # Store the public_id in the file field so .url works
+            lead_magnet.pdf_file.name = up.get("public_id", "")
             lead_magnet.status = "completed"
-            lead_magnet.save(update_fields=["status"])
+            lead_magnet.save(update_fields=["pdf_file", "status"])
 
             # Use local API URL for status polling/download
             pdf_url = f"/api/lead-magnets/{lead_magnet_id}/download/"
@@ -720,48 +726,76 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def download_lead_magnet_pdf(request, lead_magnet_id):
-    """
-    Streams the PDF file directly. This allows the frontend to fetch the PDF
-    as a blob with the Authorization header.
-    """
     try:
         lm = LeadMagnet.objects.get(id=lead_magnet_id, owner=request.user)
     except LeadMagnet.DoesNotExist:
-        return Response({"error": "Lead magnet not found"}, status=404)
+        return Response({"error": "Not found"}, status=404)
 
     if not lm.pdf_file:
         return Response({"error": "PDF not generated yet"}, status=404)
 
     try:
-        # Read the file name/path stored in the field
-        file_name = lm.pdf_file.name
+        file_name = str(lm.pdf_file.name or "")
+        logger.info(f"[DOWNLOAD] LM {lead_magnet_id} | file_name={file_name!r}")
 
-        # Try reading via the storage backend (works for both local and Cloudinary)
-        from django.core.files.storage import default_storage
+        # Strategy 1: get the URL from the file field
         try:
-            if default_storage.exists(file_name):
-                with default_storage.open(file_name, 'rb') as f:
-                    pdf_bytes = f.read()
-            else:
-                raise FileNotFoundError(f"File {file_name} not found in storage")
-        except Exception as storage_err:
-            logger.warning(f"Storage fetch failed for {file_name}, trying URL: {storage_err}")
-            # Fallback: fetch directly from URL (Cloudinary)
-            import requests as http_requests
-            url = lm.pdf_file.url
-            resp = http_requests.get(url, timeout=30)
-            resp.raise_for_status()
-            pdf_bytes = resp.content
+            cloudinary_url = lm.pdf_file.url
+            logger.info(f"[DOWNLOAD] Cloudinary URL: {cloudinary_url[:100]}")
+        except Exception as url_err:
+            logger.error(f"[DOWNLOAD] .url failed: {url_err}")
+            cloudinary_url = None
 
-        filename = os.path.basename(file_name) if file_name else f"lead-magnet-{lead_magnet_id}.pdf"
-        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        # Strategy 2: build URL manually if .url failed
+        if not cloudinary_url and file_name:
+            if file_name.startswith("http"):
+                cloudinary_url = file_name
+            else:
+                # Build raw Cloudinary URL manually
+                cloud_name = getattr(settings, 'CLOUDINARY_STORAGE', {}).get('CLOUD_NAME', '')
+                if cloud_name:
+                    clean = file_name.lstrip('/')
+                    cloudinary_url = f"https://res.cloudinary.com/{cloud_name}/raw/upload/{clean}"
+                    logger.info(f"[DOWNLOAD] Manually built URL: {cloudinary_url}")
+
+        if not cloudinary_url:
+            return Response({"error": "Cannot determine PDF URL", "file_name": file_name}, status=500)
+
+        import requests as http_req
+        resp = http_req.get(cloudinary_url, timeout=60)
+        logger.info(f"[DOWNLOAD] Cloudinary fetch status: {resp.status_code}")
+
+        if resp.status_code == 401:
+            # File was uploaded as "authenticated" — make it public
+            logger.warning(f"[DOWNLOAD] 401 from Cloudinary — file is authenticated type, attempting explicit...")
+            try:
+                result = cloudinary.uploader.explicit(
+                    file_name.replace('.pdf', '').lstrip('/'),
+                    type="authenticated",
+                    resource_type="raw",
+                    access_mode="public",
+                )
+                cloudinary_url = result.get("secure_url", cloudinary_url)
+                resp = http_req.get(cloudinary_url, timeout=60)
+                logger.info(f"[DOWNLOAD] After access_mode fix: {resp.status_code}")
+            except Exception as fix_err:
+                logger.error(f"[DOWNLOAD] access_mode fix failed: {fix_err}")
+
+        resp.raise_for_status()
+
+        filename = os.path.basename(file_name) or f"lead-magnet-{lead_magnet_id}.pdf"
+        response = HttpResponse(resp.content, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         response['X-Frame-Options'] = 'ALLOWALL'
         return response
 
     except Exception as e:
-        logger.error(f"Download error LM {lead_magnet_id}: {e}\n{traceback.format_exc()}")
-        return Response({"error": f"Failed to serve PDF: {str(e)}"}, status=500)
+        logger.error(f"[DOWNLOAD] FATAL LM {lead_magnet_id}: {e}\n{traceback.format_exc()}")
+        return Response({
+            "error": str(e),
+            "file_name": str(lm.pdf_file.name or ""),
+            "hint": "Check Render logs for [DOWNLOAD] entries"
+        }, status=500)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1198,13 +1232,19 @@ class FormaAIChatView(APIView):
             if not pdf_res.get("success"):
                 raise Exception(f"PDF render failed: {pdf_res.get('details', 'unknown error')}")
 
-            # ── Save PDF to Django storage ────────────────────────────────────
+            # ── Upload PDF to Cloudinary (Standard Pipeline) ──────────────────
             pdf_data = pdf_res["pdf_data"]
-            filename = f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}.pdf"
-
-            # This uses the default storage (Cloudinary in production, local in dev)
-            # but we serve it via our own API to avoid 401 issues.
-            lm.pdf_file.save(filename, ContentFile(pdf_data), save=True)
+            import cloudinary.uploader
+            up = cloudinary.uploader.upload(
+                pdf_data,
+                resource_type="raw",
+                type="upload",           # public — no auth needed
+                folder="lead_magnets",
+                public_id=f"ai-chat-{lm_id}-{uuid.uuid4().hex[:6]}",
+            )
+            
+            # Store the public_id in the file field so .url works
+            lm.pdf_file.name = up.get("public_id", "")
             lm.status = "completed"
             lm.save(update_fields=["pdf_file", "status"])
 

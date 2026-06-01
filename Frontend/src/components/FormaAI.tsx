@@ -175,41 +175,42 @@ const FormaAI: React.FC = () => {
         const job       = statusRes.data
 
         if (job.status === 'complete' || job.status === 'completed') {
-          // job.pdf_url is a relative path, e.g. "/api/lead-magnets/629/download/"
           const downloadPath = job.pdf_url || (lmId ? `/api/lead-magnets/${lmId}/download/` : null)
 
           if (!downloadPath) {
-            addMsg('assistant', `Your ${title} is ready! Check your dashboard to download it.`)
+            addMsg('assistant', `Your ${title} is ready!`)
             return
           }
 
-          try {
-            // fetch via apiClient — sends Authorization header
-            const blobRes   = await apiClient.get(downloadPath, { responseType: 'blob' })
-            const blob      = new Blob([blobRes.data], { type: 'application/pdf' })
-            const objectUrl = URL.createObjectURL(blob)
-
-            msgId.current += 1
-            const pdfMsg: Message = {
-              id:       msgId.current,
-              role:     'pdf',
-              text:     title,
-              pdfUrl:   objectUrl,
-              pdfTitle: title,
-              lmId,
+          // Update the progress message
+          setMessages(prev => {
+            const last = prev[prev.length - 1]
+            if (last?.role === 'system') {
+              return [...prev.slice(0, -1), { ...last, text: 'PDF ready! Downloading...' }]
             }
-            setMessages(prev => [...prev, pdfMsg])
+            return prev
+          })
 
-            // Automatically download the file
+          try {
+            // Fetch via apiClient (sends auth token, uses correct base URL)
+            const blobRes = await apiClient.get(downloadPath, { responseType: 'blob' })
+            const blob    = new Blob([blobRes.data], { type: 'application/pdf' })
+            const url     = URL.createObjectURL(blob)
+
+            // Auto-trigger download
             const a = document.createElement('a')
-            a.href = objectUrl
-            a.download = `${title}.pdf`
+            a.href     = url
+            a.download = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
+            setTimeout(() => URL.revokeObjectURL(url), 5000)
+
+            // Show success message in chat
+            addMsg('assistant', `✅ Your ${title} PDF has been downloaded! Check your downloads folder.`)
           } catch (fetchErr) {
-            console.error('PDF blob fetch failed:', fetchErr)
-            addMsg('assistant', `Your ${title} is ready! Check your dashboard to download it.`)
+            console.error('PDF download failed:', fetchErr)
+            addMsg('error', `PDF generated but download failed. Please check your dashboard.`)
           }
           return
         }
