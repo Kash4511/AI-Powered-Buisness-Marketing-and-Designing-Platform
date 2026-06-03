@@ -1,4 +1,5 @@
-from django.db import migrations
+from django.db import migrations, models
+import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
@@ -7,8 +8,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql='ALTER TABLE lead_magnets_pdfgenerationjob ALTER COLUMN lead_magnet_id DROP NOT NULL;',
-            reverse_sql='ALTER TABLE lead_magnets_pdfgenerationjob ALTER COLUMN lead_magnet_id SET NOT NULL;',
+        migrations.AlterField(
+            model_name='pdfgenerationjob',
+            name='lead_magnet',
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='pdf_jobs',
+                to='lead_magnets.leadmagnet'
+            ),
         ),
     ]
