@@ -1117,6 +1117,8 @@ class FormaAIChatView(APIView):
 
     def post(self, request):
         try:
+            logger.info(f"FormaAIChatView.post: received request from {request.user}")
+            
             # Check token limits for standard users
             user = request.user
             if not user.has_free_tokens:

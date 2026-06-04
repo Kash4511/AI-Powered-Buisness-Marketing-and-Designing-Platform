@@ -41,14 +41,12 @@ class CatchAllMiddleware:
             origin = request.META.get("HTTP_ORIGIN") or request.headers.get("Origin")
             
             if origin:
-                # We should check if the origin is allowed, but in a fatal error 
-                # catch-all, it's often better to just reflect the origin if it exists
-                # to allow the developer to see the actual error in the console.
+                # Always reflect the origin if it exists to allow the browser to show the error
                 response["Access-Control-Allow-Origin"] = origin
                 response["Vary"] = "Origin"
                 response["Access-Control-Allow-Credentials"] = "true"
                 response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-                response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+                response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
                 
             return response
 

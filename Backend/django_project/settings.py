@@ -265,18 +265,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+# Ensure CORS works for preflight requests
 CORS_ALLOW_CREDENTIALS = True
-
-# Also keep regexes for safety in some environments
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://django-.*\.vercel\.app$",
-    r"^https://django-.*-kash4511s-projects\.vercel\.app$",
-    r"^http://localhost:\d+$",
-    r"^http://127\.0\.0\.1:\d+$",
-]
-
-# Optional but helps with some older browsers
 CORS_PREFLIGHT_MAX_AGE = 86400
+
+# Required for CORS with credentials in modern browsers
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
 
 # -----------------------------
 # Upload Limits (Handle large image payloads in Forma AI)
