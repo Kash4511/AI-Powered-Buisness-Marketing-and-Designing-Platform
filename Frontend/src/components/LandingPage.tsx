@@ -307,7 +307,17 @@ const LandingPage: React.FC = () => {
 
       {/* FOOTER */}
       <footer style={{ padding: '28px 52px', borderTop: '1px solid rgba(0,0,0,0.08)', background: '#f7f7f5', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }} className="footer-pad">
-        <div className="fraunces" style={{ fontWeight: 900, fontSize: '1.1rem', color: '#0a0a0a', letterSpacing: '-0.3px' }}>Forma.</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="fraunces" style={{ fontWeight: 900, fontSize: '1.1rem', color: '#0a0a0a', letterSpacing: '-0.3px' }}>Forma.</div>
+          {/* Secret Developer Button */}
+          <span 
+            onClick={() => navigate('/signup/developer')}
+            style={{ fontSize: '0.65rem', color: 'rgba(0,0,0,0.02)', cursor: 'pointer', userSelect: 'none' }}
+            title="Developer access"
+          >
+            dev
+          </span>
+        </div>
         <div style={{ display: 'flex', gap: 24 }}>
           {['Features','Templates','Pricing','Documentation','Privacy'].map((l,i) => (
             <span key={i} className="footer-link-item">{l}</span>

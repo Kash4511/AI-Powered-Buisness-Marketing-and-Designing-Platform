@@ -951,7 +951,7 @@ class DeveloperAdminDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if request.user.role != 'developer':
+        if not request.user.is_developer:
             return Response({"error": "Unauthorized access"}, status=403)
         
         from django.contrib.auth import get_user_model
@@ -964,7 +964,6 @@ class DeveloperAdminDashboardView(APIView):
             "user_list": [{
                 "id": u.id,
                 "email": u.email,
-                "role": u.role,
                 "tokens_used": u.tokens_used,
                 "tokens_allocated": u.tokens_allocated,
                 "date_joined": u.date_joined,
@@ -978,7 +977,7 @@ class DeveloperTokenResetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        if request.user.role != 'developer':
+        if not request.user.is_developer:
             return Response({"error": "Unauthorized access"}, status=403)
         
         user_email = request.data.get('email')
@@ -1021,7 +1020,7 @@ def generate_pdf_start(request):
         return Response({"error": "lead_magnet_id is required"}, status=400)
 
     # Increment token usage for standard users
-    if user.role != 'developer':
+    if not user.is_developer:
         user.tokens_used += 1
         user.save(update_fields=['tokens_used'])
         logger.info(f"Token consumed by {user.email}. Used: {user.tokens_used}/{user.tokens_allocated}")
@@ -1135,7 +1134,7 @@ class FormaAIChatView(APIView):
                 return Response({"error": "Please describe your business and what type of lead magnet you want."}, status=400)
 
             # Increment token usage for standard users
-            if user.role != 'developer':
+            if not user.is_developer:
                 user.tokens_used += 1
                 user.save(update_fields=['tokens_used'])
                 logger.info(f"Token consumed by {user.email} (Forma AI). Used: {user.tokens_used}/{user.tokens_allocated}")
@@ -1260,11 +1259,10 @@ class FormaAIChatView(APIView):
 
             upd(status="processing", progress=25, message=f"Generating deep {lm_label} content...")
 
-            # Check if user is developer for exclusive model instance
             from django.contrib.auth import get_user_model
             UserModel = get_user_model()
             user = UserModel.objects.get(id=user_id)
-            is_developer = (user.role == 'developer')
+            is_developer = user.is_developer
 
             raw_ai      = ai.generate_lead_magnet_json(signals, firm, is_developer=is_developer)
             content     = ai.normalize_ai_output(raw_ai)

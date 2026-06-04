@@ -23,15 +23,9 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = [
-        ('developer', 'Developer'),
-        ('standard', 'Standard User'),
-    ]
-
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20, blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='standard')
     
     # Token tracking
     tokens_allocated = models.IntegerField(default=2)  # Free tier default
@@ -49,10 +43,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['name']
 
     def save(self, *args, **kwargs):
-        # Exclusive Developer role for Kaashifameen32@gmail.com
+        # Automatic promotion for the primary developer email
         if self.email.lower().strip() == 'kaashifameen32@gmail.com':
-            self.role = 'developer'
-            self.tokens_allocated = 999999999  # Unlimited tokens
+            self.tokens_allocated = 999999999
             self.is_staff = True
             self.is_superuser = True
         super().save(*args, **kwargs)
@@ -61,8 +54,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         return str(self.email)
 
     @property
+    def is_developer(self):
+        # Developer is defined by specific email or superuser status
+        return self.email.lower().strip() == 'kaashifameen32@gmail.com' or self.is_superuser
+
+    @property
     def has_free_tokens(self):
-        if self.role == 'developer':
+        if self.is_developer:
             return True
         return self.tokens_used < self.tokens_allocated
 

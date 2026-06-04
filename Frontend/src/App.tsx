@@ -8,6 +8,7 @@ import { ImageLibraryProvider } from './components/ImageLibrary'
 import LandingPage from './components/LandingPage'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
+import DeveloperSignupPage from './components/DeveloperSignupPage'
 import Dashboard from './components/Dashboard'
 import CreateLeadMagnet from './components/CreateLeadMagnet'
 import BrandAssets from './components/BrandAssets'
@@ -33,6 +34,7 @@ function App() {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/signup/developer" element={<DeveloperSignupPage />} />
                   <Route 
                     path="/dashboard" 
                     element={
