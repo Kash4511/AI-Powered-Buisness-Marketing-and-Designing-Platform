@@ -14,7 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string, phone_number: string) => Promise<void>
   register: (email: string, password: string, name: string, phone_number: string) => Promise<void>
-  registerDeveloper: (email: string, password: string, name: string, phone_number: string) => Promise<void>
+  registerDeveloper: (email: string, password: string, name: string, phone_number: string, devKey: string) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
 }
@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const registerDeveloper = async (email: string, password: string, name: string, phone_number: string) => {
+  const registerDeveloper = async (email: string, password: string, name: string, phone_number: string, devKey: string) => {
     try {
       const response = await apiClient.post('/api/auth/register/developer/', {
         email,
@@ -154,6 +154,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password_confirm: password,
         name,
         phone_number,
+        dev_key: devKey,
       })
       console.log('Developer registration successful:', response.data)
     } catch (error: unknown) {

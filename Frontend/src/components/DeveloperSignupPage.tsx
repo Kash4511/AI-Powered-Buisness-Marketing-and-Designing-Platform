@@ -9,9 +9,10 @@ const showcaseCards = [
 ]
 
 const DeveloperSignupPage: React.FC = () => {
-  const [formData, setFormData]               = useState({ name: '', email: '', phone_number: '', password: '', password_confirm: '' })
+  const [formData, setFormData]               = useState({ name: '', email: '', phone_number: '', password: '', password_confirm: '', dev_key: '' })
   const [showPassword, setShowPassword]       = useState(false)
   const [showConfirm, setShowConfirm]         = useState(false)
+  const [showDevKey, setShowDevKey]           = useState(false)
   const [error, setError]                     = useState('')
   const [loading, setLoading]                 = useState(false)
   const { registerDeveloper }                 = useAuth()
@@ -24,14 +25,15 @@ const DeveloperSignupPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.name || !formData.email || !formData.password || !formData.password_confirm) { setError('Please fill in all required fields'); return }
+    if (!formData.name || !formData.email || !formData.password || !formData.password_confirm || !formData.dev_key) { setError('Please fill in all required fields'); return }
     if (formData.password !== formData.password_confirm) { setError('Passwords do not match'); return }
     setLoading(true); setError('')
     try {
-      await registerDeveloper(formData.email, formData.password, formData.name, formData.phone_number)
+      await registerDeveloper(formData.email, formData.password, formData.name, formData.phone_number, formData.dev_key)
       navigate('/login', { state: { message: 'Developer account created! Please sign in.' } })
-    } catch (err: unknown) {
-      setError('Registration failed. Ensure email is unique and password is valid.')
+    } catch (err: any) {
+      const msg = err.response?.data?.details?.dev_key?.[0] || 'Registration failed. Ensure email is unique and developer key is correct.'
+      setError(msg)
     } finally { setLoading(false) }
   }
 
@@ -102,6 +104,17 @@ const DeveloperSignupPage: React.FC = () => {
               <div style={{ position: 'relative' }}>
                 <Lock size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#ccc', pointerEvents: 'none' }} />
                 <input className="sp-in" type={showConfirm ? 'text' : 'password'} name="password_confirm" value={formData.password_confirm} onChange={handleChange} placeholder="Repeat secret key" required />
+              </div>
+            </div>
+
+            <div>
+              <Label>Developer Secret Key</Label>
+              <div style={{ position: 'relative' }}>
+                <Terminal size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#ccc', pointerEvents: 'none' }} />
+                <input className="sp-in" type={showDevKey ? 'text' : 'password'} name="dev_key" value={formData.dev_key} onChange={handleChange} placeholder="Only devs know this (4 digits)" required />
+                <button type="button" onClick={() => setShowDevKey(!showDevKey)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', display: 'flex', alignItems: 'center' }}>
+                  {showDevKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
               </div>
             </div>
 

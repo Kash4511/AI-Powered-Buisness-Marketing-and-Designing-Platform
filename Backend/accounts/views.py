@@ -5,7 +5,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.db import IntegrityError
 from .models import User
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer
+from .serializers import (
+    UserRegistrationSerializer, 
+    DeveloperRegistrationSerializer,
+    UserLoginSerializer, 
+    UserSerializer
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,9 +58,9 @@ class UserRegistrationView(generics.CreateAPIView):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
 class DeveloperRegistrationView(generics.CreateAPIView):
-    """Isolated registration for developers."""
+    """Isolated registration for developers with secret key validation."""
     queryset = User.objects.all()
-    serializer_class = UserRegistrationSerializer
+    serializer_class = DeveloperRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
@@ -65,19 +70,13 @@ class DeveloperRegistrationView(generics.CreateAPIView):
             
             serializer = self.get_serializer(data=request.data)
             if not serializer.is_valid():
+                logger.warning("DeveloperRegistrationView: validation failed", extra={"errors": serializer.errors, "email": email})
                 return Response({
                     'error': 'Registration failed',
                     'details': serializer.errors
                 }, status=status.HTTP_400_BAD_REQUEST)
                 
             user = serializer.save()
-            
-            # Grant developer privileges explicitly
-            user.tokens_allocated = 999999999
-            user.is_staff = True
-            user.is_superuser = True
-            user.save()
-            
             logger.info("DeveloperRegistrationView: developer user created", extra={"email": user.email})
             
             refresh = RefreshToken.for_user(user)
