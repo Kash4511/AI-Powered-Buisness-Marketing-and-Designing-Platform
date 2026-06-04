@@ -1201,7 +1201,13 @@ class FormaAIChatView(APIView):
 
         except Exception as e:
             logger.error(f"FormaAIChatView.post error: {e}\n{traceback.format_exc()}")
-            return Response({"error": str(e)}, status=500)
+            return Response(
+                {
+                    "error": str(e),
+                    "details": traceback.format_exc() if settings.DEBUG else "Check server logs for details"
+                }, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @staticmethod
     def _run(job_id, lm_id, user_id, conv_id, message, lm_type, lm_label, template_id, arch_images):
@@ -1420,11 +1426,24 @@ class FormaAIConversationView(APIView):
                 temperature=0.7,
             )
 
-            return Response({"response": response.choices[0].message.content})
+            if not response or not response.choices:
+                return Response({"error": "AI service returned an empty response. Please try again later."}, status=502)
+
+            content = response.choices[0].message.content
+            if not content:
+                return Response({"error": "AI service returned empty content. Please try again later."}, status=502)
+
+            return Response({"response": content})
 
         except Exception as e:
             logger.error(f"FormaAIConversationView error: {e}\n{traceback.format_exc()}")
-            return Response({"error": str(e)}, status=500)
+            return Response(
+                {
+                    "error": str(e),
+                    "details": traceback.format_exc() if settings.DEBUG else "Check server logs for details"
+                }, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 # ─────────────────────────────────────────────────────────────────────────────

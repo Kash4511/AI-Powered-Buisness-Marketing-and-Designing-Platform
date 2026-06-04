@@ -118,7 +118,7 @@ const FormaAI: React.FC = () => {
       )
 
       const res  = await apiClient.post('/api/ai-chat/', {
-        message,
+        message: text,
         generate_pdf:         true,
         template_id:          selectedTemplateId,
         architectural_images: imageDataUrls,
@@ -136,6 +136,12 @@ const FormaAI: React.FC = () => {
         addMsg('assistant', data.message)
       }
     } catch (err: any) {
+      console.error('AI Chat Error:', err);
+      if (err.response) {
+        console.error('Error response data:', err.response.data);
+        console.error('Error status:', err.response.status);
+      }
+      
       const errData = err?.response?.data
       
       // Check for token limit exhausted error
