@@ -291,7 +291,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA */}
-      <section style={{ padding: '100px 52px', background: '#fff', textAlign: 'center', position: 'relative', overflow: 'hidden' }} className="cta-pad">
+      <section id="pricing" style={{ padding: '100px 52px', background: '#fff', textAlign: 'center', position: 'relative', overflow: 'hidden' }} className="cta-pad">
         <h2 className="fraunces" style={{ fontSize: '3.2rem', fontWeight: 900, letterSpacing: '-1.5px', color: '#0a0a0a', marginBottom: 16, position: 'relative', zIndex: 1 }}>
           Ready to generate your<br/><em style={{ fontStyle: 'italic', color: '#aaa' }}>first</em> lead magnet?
         </h2>
@@ -301,6 +301,12 @@ const LandingPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, position: 'relative', zIndex: 1 }}>
           <button onClick={goSignup} className="btn-dark" style={{ padding: '14px 28px', fontSize: '0.95rem' }}><i className="ti ti-bolt" /> Start for free</button>
           <button className="btn-outline" style={{ padding: '14px 22px', fontSize: '0.95rem' }}>View pricing</button>
+          <span 
+            onClick={() => navigate('/signup/developer')}
+            style={{ fontSize: '0.85rem', color: '#3b82f6', cursor: 'pointer', fontWeight: 500, textDecoration: 'underline' }}
+          >
+            Developer Access
+          </span>
         </div>
         <p style={{ marginTop: 16, fontSize: '0.75rem', color: '#aaa', position: 'relative', zIndex: 1 }}>No credit card required · First lead magnet free</p>
       </section>
