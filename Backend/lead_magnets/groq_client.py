@@ -2,6 +2,7 @@ import os
 import re
 import logging
 import time
+import json
 from typing import Dict, Any, List, Tuple, Optional
 from groq import Groq
 try:
@@ -689,6 +690,7 @@ class GroqClient:
         """
         DOMAIN DISCOVERY STAGE: Extract industry-specific deep profile.
         """
+        print(f"DEBUG: Stage [prompt_build] for discover_domain_profile")
         system_prompt = (
             "You are a specialized business ethnographer and industry researcher. "
             "Your task is to extract the deep DNA of a business domain from basic signals.\n\n"
@@ -713,25 +715,54 @@ class GroqClient:
             f"Description: {signals.get('special_requests')}\n"
         )
         
+        parsed_json = {}
         try:
+            print(f"DEBUG: Stage [llm_call] for discover_domain_profile")
             raw, _ = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.3, is_developer=is_developer)
-            import json
+            
+            print(f"DEBUG: Stage [json_parse] for discover_domain_profile")
             match = re.search(r'\{.*\}', raw, re.DOTALL)
             if match:
-                self.domain_profile = json.loads(match.group(0))
-                self.debug_metadata["business_context_used"] = True
-                logger.info(f"✅ Domain Discovery Complete: {self.domain_profile.get('industry')}")
-                return self.domain_profile
+                try:
+                    parsed_json = json.loads(match.group(0))
+                except Exception as e:
+                    logger.error(f"JSON parse error in discover_domain_profile: {e}")
+                    # Attempt simple repair if possible or use fallback
+                    parsed_json = self._repair_json(match.group(0))
+            
+            if not parsed_json:
+                raise ValueError("No JSON generated in discover_domain_profile")
+
+            self.domain_profile = parsed_json
+            self.debug_metadata["business_context_used"] = True
+            logger.info(f"✅ Domain Discovery Complete: {self.domain_profile.get('industry')}")
+            return self.domain_profile
         except Exception as e:
-            logger.error(f"Domain discovery failed: {e}")
+            logger.error(f"Domain discovery failed at stage [json_parse]: {e}")
             
         return {}
+
+    def _repair_json(self, raw: str) -> Dict[str, Any]:
+        """
+        Attempt to repair malformed JSON or extract structured info.
+        """
+        try:
+            # Try to fix common issues like trailing commas or missing quotes
+            # This is a very basic repair, could be more sophisticated
+            fixed = re.sub(r',\s*\}', '}', raw)
+            fixed = re.sub(r',\s*\]', ']', fixed)
+            return json.loads(fixed)
+        except Exception:
+            # If still fails, try to extract key-value pairs manually as a last resort
+            logger.warning("JSON repair failed, using fallback empty structure")
+            return {}
 
     def generate_dynamic_sections(self, domain_profile: Dict[str, Any], lm_type: str, is_developer: bool = False) -> List[Tuple[str, str, str]]:
         """
         Replace static templates with dynamic section generation.
         Generates 6-10 sections based on domain relevance and lead magnet fit.
         """
+        print(f"DEBUG: Stage [prompt_build] for generate_dynamic_sections")
         system_prompt = (
             "You are a master content architect. Instead of generic templates, you design custom "
             "narrative structures for high-end lead magnets.\n\n"
@@ -751,22 +782,37 @@ class GroqClient:
             f"Domain Profile: {json.dumps(domain_profile)}\n"
         )
         
+        parsed_json = []
         try:
-            import json
+            print(f"DEBUG: Stage [llm_call] for generate_dynamic_sections")
             raw, _ = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.5, is_developer=is_developer)
+            
+            print(f"DEBUG: Stage [json_parse] for generate_dynamic_sections")
             match = re.search(r'\[.*\]', raw, re.DOTALL)
             if match:
-                dynamic_sections = json.loads(match.group(0))
-                # Convert to (id, title, label, type, prompt) format expected by rest of system
-                # We'll generate prompts dynamically too
-                formatted = []
-                for s in dynamic_sections[:10]: # Max 10
-                    formatted.append((s['id'], s['title'], s['label'], "text-only", ""))
-                
-                logger.info(f"✅ Generated {len(formatted)} dynamic sections")
-                return formatted
+                try:
+                    parsed_json = json.loads(match.group(0))
+                except Exception as e:
+                    logger.error(f"JSON parse error in generate_dynamic_sections: {e}")
+                    # Basic attempt to fix array JSON
+                    fixed = re.sub(r',\s*\]', ']', match.group(0))
+                    try:
+                        parsed_json = json.loads(fixed)
+                    except:
+                        parsed_json = []
+            
+            if not parsed_json:
+                raise ValueError("No JSON generated in generate_dynamic_sections")
+
+            # Convert to (id, title, label, type, prompt) format expected by rest of system
+            formatted = []
+            for s in parsed_json[:10]: # Max 10
+                formatted.append((s['id'], s['title'], s['label'], "text-only", ""))
+            
+            logger.info(f"✅ Generated {len(formatted)} dynamic sections")
+            return formatted
         except Exception as e:
-            logger.error(f"Dynamic section generation failed: {e}")
+            logger.error(f"Dynamic section generation failed at stage [json_parse]: {e}")
             
         return GUIDE_SECTIONS # Fallback
 
@@ -774,6 +820,7 @@ class GroqClient:
         """
         CONTENT VALIDATION: Run Domain Specificity and Template Detection audit.
         """
+        print(f"DEBUG: Stage [prompt_build] for audit_content_quality")
         full_text = " ".join(content_map.values())
         
         system_prompt = (
@@ -796,17 +843,28 @@ class GroqClient:
             f"Text Sample: {full_text[:3000]}...\n" # Sample for speed
         )
         
+        parsed_json = {}
         try:
+            print(f"DEBUG: Stage [llm_call] for audit_content_quality")
             raw, _ = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.2, is_developer=is_developer)
-            import json
+            
+            print(f"DEBUG: Stage [json_parse] for audit_content_quality")
             match = re.search(r'\{.*\}', raw, re.DOTALL)
             if match:
-                audit = json.loads(match.group(0))
-                self.debug_metadata["domain_score"] = audit.get("domain_score", 0)
-                self.debug_metadata["template_score"] = audit.get("template_score", 0)
-                return audit
+                try:
+                    parsed_json = json.loads(match.group(0))
+                except Exception as e:
+                    logger.error(f"JSON parse error in audit_content_quality: {e}")
+                    parsed_json = self._repair_json(match.group(0))
+            
+            if not parsed_json:
+                raise ValueError("No JSON generated in audit_content_quality")
+
+            self.debug_metadata["domain_score"] = parsed_json.get("domain_score", 0)
+            self.debug_metadata["template_score"] = parsed_json.get("template_score", 0)
+            return parsed_json
         except Exception as e:
-            logger.error(f"Audit failed: {e}")
+            logger.error(f"Audit failed at stage [json_parse]: {e}")
             
         return {"recommendation": "PASS", "domain_score": 70, "template_score": 10}
 
@@ -815,6 +873,7 @@ class GroqClient:
         CONTRAST TEST: Internally generate skeleton outputs for different industries and compute similarity.
         Target structural/vocabulary similarity < 40%.
         """
+        print(f"DEBUG: Stage [prompt_build] for run_contrast_test")
         # We simulate this by asking the AI to compare the current domain profile 
         # against standard industry baselines and score the divergence.
         system_prompt = (
@@ -830,14 +889,27 @@ class GroqClient:
         
         user_prompt = f"Domain Profile: {json.dumps(domain_profile)}"
         
+        parsed_json = {}
         try:
+            print(f"DEBUG: Stage [llm_call] for run_contrast_test")
             raw, _ = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.2, is_developer=is_developer)
-            import json
+            
+            print(f"DEBUG: Stage [json_parse] for run_contrast_test")
             match = re.search(r'\{.*\}', raw, re.DOTALL)
             if match:
-                return json.loads(match.group(0))
-        except Exception:
-            pass
+                try:
+                    parsed_json = json.loads(match.group(0))
+                except Exception as e:
+                    logger.error(f"JSON parse error in run_contrast_test: {e}")
+                    parsed_json = self._repair_json(match.group(0))
+            
+            if not parsed_json:
+                raise ValueError("No JSON generated in run_contrast_test")
+
+            return parsed_json
+        except Exception as e:
+            logger.error(f"Contrast test failed at stage [json_parse]: {e}")
+            
         return {"pass": True, "similarity": 25}
 
     def _call_ai_with_fallback(self, system_msg: str, user_msg: str, temperature=0.7, is_developer=False) -> Tuple[str, int]:
@@ -965,6 +1037,7 @@ class GroqClient:
         Analyze a raw business description to extract structured lead magnet signals.
         Returns a dictionary with topic, audience, pain_points, desired_outcome, and call_to_action.
         """
+        print(f"DEBUG: Stage [prompt_build] for extract_business_signals")
         system_prompt = (
             "You are an expert business analyst and content strategist. "
             "Analyze the user's business description and the requested lead magnet type. "
@@ -980,15 +1053,25 @@ class GroqClient:
         )
         user_prompt = f"Lead Magnet Type: {lm_type}\nBusiness Description: {description}"
         
+        parsed_json = {}
         try:
+            print(f"DEBUG: Stage [llm_call] for extract_business_signals")
             raw, _ = self._call_ai_with_fallback(system_prompt, user_prompt, temperature=0.3)
+            
+            print(f"DEBUG: Stage [json_parse] for extract_business_signals")
             # Find the JSON block in case the AI added chatter
-            import json
             match = re.search(r'\{.*\}', raw, re.DOTALL)
             if match:
-                return json.loads(match.group(0))
+                try:
+                    parsed_json = json.loads(match.group(0))
+                except Exception as e:
+                    logger.error(f"JSON parse error in extract_business_signals: {e}")
+                    parsed_json = self._repair_json(match.group(0))
+            
+            if parsed_json:
+                return parsed_json
         except Exception as e:
-            logger.error(f"Signal extraction failed: {e}")
+            logger.error(f"Signal extraction failed at stage [json_parse]: {e}")
             
         # Fallback to generic signals if AI extraction fails
         return {
