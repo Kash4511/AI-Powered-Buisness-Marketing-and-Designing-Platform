@@ -1159,7 +1159,7 @@ class FormaAIChatView(APIView):
             lm = LeadMagnet.objects.create(
                 owner=request.user,
                 title=f"{lm_label}: {message[:80]}",
-                status="processing",
+                status="in-progress",
             )
 
             job_id = str(uuid.uuid4())

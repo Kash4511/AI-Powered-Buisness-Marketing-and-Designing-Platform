@@ -278,6 +278,13 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # Optional but helps with some older browsers
 CORS_PREFLIGHT_MAX_AGE = 86400
 
+# -----------------------------
+# Upload Limits (Handle large image payloads in Forma AI)
+# -----------------------------
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
+
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-requested-with",
     "content-type",
