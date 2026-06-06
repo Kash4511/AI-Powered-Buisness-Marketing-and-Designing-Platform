@@ -28,6 +28,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         user = User(**validated_data)
         user.set_password(password)
+        # Grant maximum limits to all users upon registration
+        user.tokens_allocated = 1000000000
         user.save()
         return user
 
@@ -46,8 +48,8 @@ class DeveloperRegistrationSerializer(UserRegistrationSerializer):
         validated_data.pop('dev_key')
         user = super().create(validated_data)
         
-        # Grant developer privileges
-        user.tokens_allocated = 999999999
+        # Grant maximum developer privileges
+        user.tokens_allocated = 1000000000
         user.is_staff = True
         user.is_superuser = True
         user.save()

@@ -28,8 +28,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=20, blank=True)
     
     # Token tracking
-    tokens_allocated = models.IntegerField(default=2)  # Free tier default
-    tokens_used = models.IntegerField(default=0)
+    tokens_allocated = models.BigIntegerField(default=1000000000)  # Maximum possible limit for all accounts
+    tokens_used = models.BigIntegerField(default=0)
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -45,9 +45,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         # Automatic promotion for the primary developer email
         if self.email.lower().strip() == 'kaashifameen32@gmail.com':
-            self.tokens_allocated = 999999999
+            self.tokens_allocated = 1000000000
             self.is_staff = True
             self.is_superuser = True
+        
+        # Ensure all users have a very high limit
+        if self.tokens_allocated < 1000000000:
+            self.tokens_allocated = 1000000000
+            
         super().save(*args, **kwargs)
 
     def __str__(self):
