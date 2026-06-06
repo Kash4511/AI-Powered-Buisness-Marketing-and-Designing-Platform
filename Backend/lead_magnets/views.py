@@ -508,7 +508,7 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
                     _set_job(job_id, tokens_used=t)
 
                 # Check if user is developer for exclusive model instance
-                is_developer = (user.role == 'developer')
+                is_developer = user.is_developer
 
                 try:
                     raw_ai = ai_client.generate_lead_magnet_json(
@@ -643,7 +643,7 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
         # ── PDF RENDERING ──────────────────────────────────────────────────
         pdf_service = WeasyPrintService()
         try:
-            _set_job(job_id, status="processing", progress=75, message="Rendering PDF via WeasyPrint...")
+            _set_job(job_id, status="processing", progress=82, message="WeasyPrint rendering PDF...")
             t0 = time.time()
 
             pdf_vars = template_vars.copy()
@@ -667,7 +667,7 @@ def run_pdf_generation_task(lead_magnet_id, user_id, template_id, use_ai_content
             pdf_vars.setdefault("bodyBackground", "#ffffff")
             pdf_vars.setdefault("borderRadius",   "8px")
 
-            _set_job(job_id, status="processing", progress=82, message="WeasyPrint rendering PDF...")
+            # Starting rendering process
             if _should_stop(job_id):
                 logger.info(f"🛑 Job {job_id} terminated before rendering")
                 return
@@ -1247,7 +1247,7 @@ class FormaAIChatView(APIView):
             ai  = _get_ai_client()
             svc = WeasyPrintService()
 
-            upd(status="processing", progress=10, message="AI is analysing your business description...")
+            upd(status="processing", progress=15, message="Generating AI content — 11 sections (~3–12 min)...")
 
             extracted = ai.extract_business_signals(message, lm_label)
 
@@ -1325,11 +1325,13 @@ class FormaAIChatView(APIView):
             tvars["sections_html"] = "\n".join(sections_html)
             tvars["toc_html"]      = "\n".join(toc_html)
 
-            upd(status="processing", progress=78, message="Rendering PDF...")
+            upd(status="processing", progress=82, message="WeasyPrint rendering PDF...")
 
             pdf_res = svc.generate_pdf(template_id, tvars)
             if not pdf_res.get("success"):
                 raise Exception(f"PDF render failed: {pdf_res.get('details', 'unknown error')}")
+
+            upd(status="processing", progress=92, message="Saving to Cloud Storage...")
 
             # ── Upload PDF with public access ──────────────────────────────────────
             pdf_data = pdf_res["pdf_data"]
